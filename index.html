@@ -50,6 +50,13 @@
   .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
   .upg .drop { color: var(--muted); }
   .empty { color: var(--muted); padding: 12px 0; }
+  .cr { font-weight: 700; }
+  .pct { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 10px; margin-left: 4px; background: var(--chip); color: var(--muted); }
+  .pct.hi { background: var(--good); color: #fff; }
+  .pct.mid { color: var(--good); }
+  tbody tr { cursor: pointer; }
+  tr.why td { text-align: left; white-space: normal; color: var(--muted); font-size: 12px; background: var(--chip); }
+  .tag.news { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -77,6 +84,7 @@
         <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
       </select>
       <label>Min games <input type="number" id="ming" min="0" max="7" value="0"></label>
+      <label>Min rating <input type="number" id="minr" min="0" step="0.5" value="0"></label>
       <label><input type="checkbox" id="left" checked> Remaining games only</label>
       <label><input type="checkbox" id="healthy"> Hide injured</label>
     </div>
@@ -87,12 +95,13 @@
       </table>
     </div>
   </div>
-  <p class="sub">Weekly projection = projected points per game × games. Points per game blends this season's average with ESPN's season projection, leaning on this season more as games pile up. All points use your league's scoring.</p>
+  <p class="sub"><b>Claude Rating</b> = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs) × 2.9 points per start. The badge is the percentile among forwards, defensemen or goalies on this page. Tap a row to see why.</p>
+  <p class="sub">Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use your league's scoring.</p>
 </main>
 <script>
-const state = { who: "all", sort: "week", data: null };
+const state = { who: "all", sort: "cr", data: null, open: null };
 const COLS = [
-  ["name", "Player"], ["team", "Team"], ["pos", "Pos"], ["games", "Games"], ["light", "Light"],
+  ["name", "Player"], ["team", "Team"], ["pos", "Pos"], ["cr", "Claude Rating"], ["games", "Games"], ["light", "Light"],
   ["ppg", "Proj/G"], ["week", "Week proj"], ["cur_ppg", "This yr/G"], ["last_ppg", "Last yr/G"], ["owned", "% Own"],
 ];
 const $ = id => document.getElementById(id);
@@ -108,13 +117,37 @@ function fits(p, pos) {
   return p.slots.includes(pos);
 }
 function val(p, key) { return key === "week" ? week(p) : key === "games" ? games(p) : key === "light" ? light(p) : p[key]; }
+// Value used to compare players: the Claude Rating when the data has it, else the old weekly projection
+function score(p) { return state.data.rated ? p.cr : week(p); }
+function pctBadge(p) {
+  if (p.cr_pct == null) return "";
+  return `<span class="pct ${p.cr_pct >= 90 ? "hi" : p.cr_pct >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} on this page">${p.cr_pct}</span>`;
+}
+function why(p) {
+  const w = p.cr_why || {}, parts = [];
+  const n = v => v == null ? "–" : (+v).toFixed(1);
+  if (p.pos === "G") {
+    parts.push(`Expected starts ${n(w.exp_starts)} of ${w.team_games} team games left`);
+    if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last 10`);
+    parts.push(`× ${n(p.cr_fpg)} pts per start`);
+  } else {
+    parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
+    if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
+    else parts.push("No NHL games yet this season");
+    if (w.last_fpg != null) parts.push(`last season ${n(w.last_fpg)} pts/game`);
+  }
+  if (p.injury) parts.push(`ESPN: ${p.injury.replace("_", " ").toLowerCase()}`);
+  if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
+  if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);
+  return parts.join(" · ");
+}
 
 function render() {
   const d = state.data;
   const q = $("q").value.trim().toLowerCase(), pos = $("pos").value, ming = +$("ming").value || 0;
   const list = d.players.filter(p =>
     (state.who === "all" || (state.who === "mine") === (p.owner === "mine")) &&
-    fits(p, pos) && games(p) >= ming &&
+    fits(p, pos) && games(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
     (!$("healthy").checked || !p.injury) &&
     (!q || p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q))
   );
@@ -126,12 +159,13 @@ function render() {
   });
   $("head").innerHTML = COLS.map(([key, label]) => `<th data-k="${key}" class="${key === k ? "sorted" : ""}">${label}</th>`).join("");
   $("rows").innerHTML = list.slice(0, 300).map(p => `
-    <tr class="${p.owner === "mine" ? "mine" : ""}">
-      <td>${esc(p.name)}${p.owner === "mine" ? '<span class="tag">mine</span>' : ""}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}${p.injury ? `<span class="tag inj">${esc(p.injury.replace("_", " ").toLowerCase())}</span>` : ""}${p.ir ? '<span class="tag">IR</span>' : ""}</td>
+    <tr class="${p.owner === "mine" ? "mine" : ""}" data-id="${p.id}" title="${esc(d.rated ? why(p) : "")}">
+      <td>${esc(p.name)}${p.owner === "mine" ? '<span class="tag">mine</span>' : ""}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}${p.injury ? `<span class="tag inj">${esc(p.injury.replace("_", " ").toLowerCase())}</span>` : ""}${p.ir ? '<span class="tag">IR</span>' : ""}${p.cr_news ? '<span class="tag news">news</span>' : ""}</td>
       <td>${esc(p.team)}</td><td>${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</td>
+      ${d.rated ? `<td><span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}</td>` : ""}
       <td>${games(p)}</td><td>${light(p)}</td><td>${fmt(p.ppg)}</td><td><b>${fmt(week(p))}</b></td>
       <td>${fmt(p.cur_ppg)}</td><td>${fmt(p.last_ppg)}</td><td>${fmt(p.owned)}</td>
-    </tr>`).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
+    </tr>${state.open === p.id && d.rated ? `<tr class="why"><td colspan="${COLS.length}">${esc(why(p))}</td></tr>` : ""}`).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   renderUpgrades();
 }
 
@@ -143,11 +177,11 @@ function renderUpgrades() {
   for (const pos of ["C", "LW", "RW", "D", "G"]) {
     const myAtPos = mine.filter(p => p.pos === pos);
     if (!myAtPos.length) continue;
-    const worst = myAtPos.reduce((a, b) => week(a) <= week(b) ? a : b);
-    const better = fas.filter(p => p.pos === pos && week(p) > week(worst) + 0.5).sort((a, b) => week(b) - week(a)).slice(0, 3);
+    const worst = myAtPos.reduce((a, b) => score(a) <= score(b) ? a : b);
+    const better = fas.filter(p => p.pos === pos && score(p) > score(worst) + 0.5).sort((a, b) => score(b) - score(a)).slice(0, 3);
     if (!better.length) continue;
-    cards.push(`<div class="upg"><b>${pos}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(week(worst))}</span>
-      ${better.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <span class="up">${fmt(week(p))} (+${fmt(week(p) - week(worst))})</span></div>`).join("")}</div>`);
+    cards.push(`<div class="upg"><b>${pos}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))}</span>
+      ${better.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <span class="up">${fmt(score(p))} (+${fmt(score(p) - score(worst))})</span></div>`).join("")}</div>`);
   }
   $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your weakest player at any position right now.</div>';
 }
@@ -160,13 +194,19 @@ function wire() {
     render();
   });
   $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) { state.sort = th.dataset.k; render(); } });
-  ["q", "pos", "ming", "left", "healthy"].forEach(id => $(id).addEventListener("input", render));
+  $("rows").addEventListener("click", e => {
+    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
+    state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
+    render();
+  });
+  ["q", "pos", "ming", "minr", "left", "healthy"].forEach(id => $(id).addEventListener("input", render));
 }
 
 fetch("data/players.json", { cache: "no-store" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => {
     state.data = d;
+    if (!d.rated) { state.sort = "week"; COLS.splice(COLS.findIndex(c => c[0] === "cr"), 1); $("minr").parentElement.remove(); }
     if (d.team) $("title").textContent = `${d.team} · Free Agent Finder`;
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
     $("nights").innerHTML = d.nights.map(n => `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>games</div>`).join("");
