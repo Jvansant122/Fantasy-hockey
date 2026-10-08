@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free Agent Finder</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #16191d; --muted: #5d6673; --line: #e2e5ea;
+    --accent: #0a6cff; --mine: #eaf2ff; --good: #0f8a4a; --warn: #b25e00; --chip: #eef0f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101215; --card: #191c20; --text: #e8eaed; --muted: #9aa3ae; --line: #2a2f35;
+      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  .sub { color: var(--muted); font-size: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 12px; }
+  .nights { display: flex; gap: 6px; overflow-x: auto; }
+  .night { flex: 1 0 64px; text-align: center; padding: 6px 4px; border-radius: 8px; background: var(--chip); font-size: 12px; }
+  .night b { display: block; font-size: 15px; }
+  .night.light { outline: 2px solid var(--good); }
+  .night.past { opacity: .45; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .controls label { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+  select, input[type=search], input[type=number] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  input[type=search] { flex: 1 1 160px; }
+  input[type=number] { width: 64px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button { font: inherit; border: 0; padding: 6px 10px; background: var(--card); color: var(--text); cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:nth-child(-n+3), td:nth-child(-n+3) { text-align: left; }
+  th { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card); }
+  th.sorted::after { content: " ▾"; }
+  tr.mine td { background: var(--mine); }
+  .tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--chip); color: var(--muted); margin-left: 4px; }
+  .tag.inj { color: var(--warn); }
+  .tag.wv { color: var(--accent); }
+  .up { color: var(--good); font-weight: 600; }
+  .upgrades { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
+  .upg .drop { color: var(--muted); }
+  .empty { color: var(--muted); padding: 12px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Free Agent Finder</h1>
+  <div class="sub" id="updated">Loading…</div>
+
+  <div class="card">
+    <h2>This matchup's nights <span class="sub">(green outline = light night)</span></h2>
+    <div class="nights" id="nights"></div>
+  </div>
+
+  <div class="card">
+    <h2>Upgrades <span class="sub">free agents projected above your weakest player at that position</span></h2>
+    <div class="upgrades" id="upgrades"></div>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <input type="search" id="q" placeholder="Search player or team">
+      <div class="seg" id="who">
+        <button data-v="all" class="on">All</button><button data-v="mine">My roster</button><button data-v="fa">Free agents</button>
+      </div>
+      <select id="pos">
+        <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
+      </select>
+      <label>Min games <input type="number" id="ming" min="0" max="7" value="0"></label>
+      <label><input type="checkbox" id="left" checked> Remaining games only</label>
+      <label><input type="checkbox" id="healthy"> Hide injured</label>
+    </div>
+    <div class="tablewrap" style="margin-top:10px">
+      <table>
+        <thead><tr id="head"></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <p class="sub">Weekly projection = projected points per game × games. Points per game blends this season's average with ESPN's season projection, leaning on this season more as games pile up. All points use your league's scoring.</p>
+</main>
+<script>
+const state = { who: "all", sort: "week", data: null };
+const COLS = [
+  ["name", "Player"], ["team", "Team"], ["pos", "Pos"], ["games", "Games"], ["light", "Light"],
+  ["ppg", "Proj/G"], ["week", "Week proj"], ["cur_ppg", "This yr/G"], ["last_ppg", "Last yr/G"], ["owned", "% Own"],
+];
+const $ = id => document.getElementById(id);
+const fmt = v => v == null ? "–" : (Math.round(v * 10) / 10).toFixed(1);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function games(p) { return $("left").checked ? p.games_left : p.games; }
+function light(p) { return $("left").checked ? p.light_left : p.light; }
+function week(p) { return (p.ppg || 0) * games(p); }
+function fits(p, pos) {
+  if (!pos) return true;
+  if (pos === "F") return ["C", "LW", "RW"].some(s => p.slots.includes(s));
+  return p.slots.includes(pos);
+}
+function val(p, key) { return key === "week" ? week(p) : key === "games" ? games(p) : key === "light" ? light(p) : p[key]; }
+
+function render() {
+  const d = state.data;
+  const q = $("q").value.trim().toLowerCase(), pos = $("pos").value, ming = +$("ming").value || 0;
+  const list = d.players.filter(p =>
+    (state.who === "all" || (state.who === "mine") === (p.owner === "mine")) &&
+    fits(p, pos) && games(p) >= ming &&
+    (!$("healthy").checked || !p.injury) &&
+    (!q || p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q))
+  );
+  const k = state.sort;
+  list.sort((a, b) => {
+    const x = val(a, k), y = val(b, k);
+    if (typeof x === "string") return x.localeCompare(y);
+    return (y ?? -1e9) - (x ?? -1e9);
+  });
+  $("head").innerHTML = COLS.map(([key, label]) => `<th data-k="${key}" class="${key === k ? "sorted" : ""}">${label}</th>`).join("");
+  $("rows").innerHTML = list.slice(0, 300).map(p => `
+    <tr class="${p.owner === "mine" ? "mine" : ""}">
+      <td>${esc(p.name)}${p.owner === "mine" ? '<span class="tag">mine</span>' : ""}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}${p.injury ? `<span class="tag inj">${esc(p.injury.replace("_", " ").toLowerCase())}</span>` : ""}${p.ir ? '<span class="tag">IR</span>' : ""}</td>
+      <td>${esc(p.team)}</td><td>${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</td>
+      <td>${games(p)}</td><td>${light(p)}</td><td>${fmt(p.ppg)}</td><td><b>${fmt(week(p))}</b></td>
+      <td>${fmt(p.cur_ppg)}</td><td>${fmt(p.last_ppg)}</td><td>${fmt(p.owned)}</td>
+    </tr>`).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
+  renderUpgrades();
+}
+
+function renderUpgrades() {
+  const d = state.data;
+  const mine = d.players.filter(p => p.owner === "mine" && !p.ir);
+  const fas = d.players.filter(p => p.owner !== "mine" && !p.injury);
+  const cards = [];
+  for (const pos of ["C", "LW", "RW", "D", "G"]) {
+    const myAtPos = mine.filter(p => p.pos === pos);
+    if (!myAtPos.length) continue;
+    const worst = myAtPos.reduce((a, b) => week(a) <= week(b) ? a : b);
+    const better = fas.filter(p => p.pos === pos && week(p) > week(worst) + 0.5).sort((a, b) => week(b) - week(a)).slice(0, 3);
+    if (!better.length) continue;
+    cards.push(`<div class="upg"><b>${pos}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(week(worst))}</span>
+      ${better.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <span class="up">${fmt(week(p))} (+${fmt(week(p) - week(worst))})</span></div>`).join("")}</div>`);
+  }
+  $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your weakest player at any position right now.</div>';
+}
+
+function wire() {
+  $("who").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    state.who = b.dataset.v;
+    [...$("who").children].forEach(x => x.classList.toggle("on", x === b));
+    render();
+  });
+  $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) { state.sort = th.dataset.k; render(); } });
+  ["q", "pos", "ming", "left", "healthy"].forEach(id => $(id).addEventListener("input", render));
+}
+
+fetch("data/players.json", { cache: "no-store" })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(d => {
+    state.data = d;
+    if (d.team) $("title").textContent = `${d.team} · Free Agent Finder`;
+    $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
+    $("nights").innerHTML = d.nights.map(n => `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>games</div>`).join("");
+    wire(); render();
+  })
+  .catch(() => { $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
+</script>
+</body>
+</html>
