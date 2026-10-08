@@ -132,7 +132,10 @@ def main():
     status = league["status"]
     period = status.get("currentMatchupPeriod") or 1
     today_sp = league.get("scoringPeriodId") or status.get("latestScoringPeriod") or 1
-    matchup_sps = [int(x) for x in league["settings"]["scheduleSettings"]["matchupPeriods"].get(str(period), [today_sp])]
+    # scheduleSettings.matchupPeriods lists matchup ids, not days, so take this Monday-Sunday week.
+    # One scoring period is one day, anchored on today's period.
+    weekday = datetime.now(ET).weekday()
+    matchup_sps = [sp for sp in range(today_sp - weekday, today_sp - weekday + 7) if sp >= 1]
 
     # Which team is mine
     team_id = os.environ.get("TEAM_ID")
