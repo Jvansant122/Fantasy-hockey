@@ -165,9 +165,14 @@ def main():
     }}
     pool = get(s, league_url, ["kona_player_info"], fa_filter, scoringPeriodId=today_sp)["players"]
     if my_ids:
-        mine_filter = {"players": {"filterIds": {"value": my_ids}, "limit": len(my_ids),
-                                   "filterStatsForTopScoringPeriodIds": stat_filter}}
-        pool += get(s, league_url, ["kona_player_info"], mine_filter, scoringPeriodId=today_sp)["players"]
+        mine_filter = {"players": {"filterIds": {"value": my_ids}, "filterStatsForTopScoringPeriodIds": stat_filter}}
+        try:
+            pool += get(s, league_url, ["kona_playercard"], mine_filter, scoringPeriodId=today_sp)["players"]
+        except requests.HTTPError as e:
+            # Fall back to the player data that comes with the roster (fewer stat lines)
+            print(f"Player card lookup for my roster failed ({e}); using roster data", file=sys.stderr)
+            pool += [{"player": e2["playerPoolEntry"]["player"]} for e2 in my_team["roster"]["entries"]
+                     if (e2.get("playerPoolEntry") or {}).get("player")]
 
     players = []
     seen = set()
