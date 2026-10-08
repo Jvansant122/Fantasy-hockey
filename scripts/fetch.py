@@ -9,7 +9,7 @@ scoring settings, so no stat-ID mapping is needed here.
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -61,6 +61,64 @@ def per_game(st, is_goalie):
     return round(total / games, 2), int(games)
 
 
+def pro_schedule(s, base, league_url, matchup_sps, today_sp):
+    """Return ({proTeamId: {abbrev, periods}}, {sp: game count}, {sp: date}).
+
+    Tries ESPN fantasy's proTeamsSchedules_wl view (season root, then the league endpoint),
+    and falls back to ESPN's public NHL scoreboard if neither has settings.proTeams.
+    """
+    for url in (base, league_url):
+        try:
+            data = get(s, url, ["proTeamsSchedules_wl"])
+        except requests.RequestException as e:
+            print(f"Schedule view failed at {url}: {e}", file=sys.stderr)
+            continue
+        pro_teams = (data.get("settings") or {}).get("proTeams") if isinstance(data, dict) else None
+        if pro_teams:
+            break
+        print(f"No settings.proTeams at {url}; got keys {list(data)[:10] if isinstance(data, dict) else type(data).__name__}",
+              file=sys.stderr)
+    else:
+        return scoreboard_schedule(s, matchup_sps, today_sp)
+
+    teams, night_ids, night_dates = {}, {}, {}
+    for pt in pro_teams:
+        games = pt.get("proGamesByScoringPeriod") or {}
+        teams[pt["id"]] = {"abbrev": pt.get("abbrev", ""), "periods": {int(k) for k in games}}
+        for sp, gl in games.items():
+            sp = int(sp)
+            night_ids.setdefault(sp, set()).update(g.get("id") for g in gl)
+            if gl and gl[0].get("date"):
+                night_dates[sp] = datetime.fromtimestamp(gl[0]["date"] / 1000, tz=timezone.utc).astimezone(ET)
+    # Both teams list each game, so count unique game ids per night
+    return teams, {sp: len(ids) for sp, ids in night_ids.items()}, night_dates
+
+
+def scoreboard_schedule(s, matchup_sps, today_sp):
+    """Build the schedule from ESPN's public NHL scoreboard. Scoring periods are consecutive days,
+    so today's period anchors the dates. ESPN team ids match fantasy proTeamIds."""
+    print("Using the public NHL scoreboard for the schedule", file=sys.stderr)
+    site = "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl"
+    teams = {}
+    for sport in s.get(f"{site}/teams", timeout=30).json().get("sports", []):
+        for league in sport.get("leagues", []):
+            for t in league.get("teams", []):
+                t = t.get("team", t)
+                teams[int(t["id"])] = {"abbrev": t.get("abbreviation", ""), "periods": set()}
+    today = datetime.now(ET).replace(hour=12, minute=0, second=0, microsecond=0)
+    night_counts, night_dates = {}, {}
+    for sp in matchup_sps:
+        day = today + timedelta(days=sp - today_sp)
+        night_dates[sp] = day
+        events = s.get(f"{site}/scoreboard", params={"dates": day.strftime("%Y%m%d")}, timeout=30).json().get("events", [])
+        night_counts[sp] = len(events)
+        for ev in events:
+            for comp in (ev.get("competitions") or [{}])[0].get("competitors", []):
+                tid = int(comp["team"]["id"])
+                teams.setdefault(tid, {"abbrev": comp["team"].get("abbreviation", ""), "periods": set()})["periods"].add(sp)
+    return teams, night_counts, night_dates
+
+
 def main():
     league_id = os.environ.get("LEAGUE_ID")
     if not league_id:
@@ -87,20 +145,7 @@ def main():
     team_names = {t["id"]: (t.get("name") or f"{t.get('location', '')} {t.get('nickname', '')}").strip() for t in league["teams"]}
 
     # Pro team schedule: games per scoring period (one period = one day)
-    pro = get(s, base, ["proTeamsSchedules_wl"])
-    teams = {}
-    night_counts = {}
-    night_dates = {}
-    for pt in pro["settings"]["proTeams"]:
-        games = pt.get("proGamesByScoringPeriod") or {}
-        teams[pt["id"]] = {"abbrev": pt.get("abbrev", ""), "periods": {int(k) for k in games}}
-        for sp, gl in games.items():
-            sp = int(sp)
-            night_counts.setdefault(sp, set()).update(g.get("id") for g in gl)
-            if gl and gl[0].get("date"):
-                night_dates[sp] = datetime.fromtimestamp(gl[0]["date"] / 1000, tz=timezone.utc).astimezone(ET)
-    # Both teams list each game, so count unique game ids per night
-    night_counts = {sp: len(ids) for sp, ids in night_counts.items()}
+    teams, night_counts, night_dates = pro_schedule(s, base, league_url, matchup_sps, today_sp)
     light = {sp for sp in matchup_sps if night_counts.get(sp, 0) <= LIGHT_NIGHT_MAX_GAMES}
     remaining = [sp for sp in matchup_sps if sp >= today_sp]
 
