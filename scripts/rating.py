@@ -61,6 +61,7 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 # usage x efficiency skater inputs (correlation research section 4): shrinkage minutes and last season's weight
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
+DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -182,6 +183,31 @@ def load_prev_goalie_season(s, season):
                             2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
                             + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0))
             for r in stats_report(s, "goalie/summary", season)}
+
+
+def displaced_skaters(by_player, team_games, healthy):
+    """When a regular (dressed 80%+ of his team's 5-20 games before the gap) has missed 3+ straight team games and
+    ESPN now lists him healthy or day-to-day, the team's skater at his position (F or D) with the least ice time in
+    the last game is the one who sits. healthy: NHL ids ESPN lists without a longer injury.
+    Returns {nhl id of the displaced player: (cut to P(dresses), regular's name)}."""
+    last = {}
+    for pid, gl in by_player.items():
+        tg = team_games.get(gl[-1]["team"], [])
+        if tg:
+            played = {g["game"] for g in gl}
+            streak = next((i for i, g in enumerate(reversed(tg)) if g in played), len(tg))
+            last[pid] = (gl[-1], tg, played, streak)
+    out = {}
+    for pid, (g, tg, played, streak) in last.items():
+        before = tg[:len(tg) - streak][-20:]
+        if streak < 3 or pid not in healthy or len(before) < 5 or sum(x in played for x in before) < 0.8 * len(before):
+            continue
+        grp = "D" if g["pos"] == "D" else "F"
+        depth = [(h["toi"], hid) for hid, (h, htg, _, hs) in last.items()
+                 if hs == 0 and h["team"] == g["team"] and h["game"] == tg[-1] and ("D" if h["pos"] == "D" else "F") == grp]
+        if depth:
+            out[min(depth)[1]] = (DISPLACED_CUT[grp], g["name"])
+    return out
 
 
 def load_xg(s, year):
@@ -787,6 +813,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_why"] = why
         if n:
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
+
+    # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)
+    by_nhl = {p["nhl_id"]: p for p in players if p.get("nhl_id") and p["pos"] != "G"}
+    healthy = {pid for pid, p in by_nhl.items() if p.get("injury") in (None, "", "DAY_TO_DAY")}
+    for pid, (cut, regular) in displaced_skaters(by_player, team_games, healthy).items():
+        p = by_nhl.get(pid)
+        if p and p["cr_dress"]:
+            dress = max(0.0, p["cr_dress"] - cut)
+            p["cr_games"] = round(p["games_left"] * dress, 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+            p["cr_dress"] = round(dress, 2)
+            p["cr_why"]["displaced"] = regular
 
     # percentile within F / D / G among the players on the site
     groups = {}

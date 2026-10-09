@@ -67,3 +67,16 @@ def test_matchup_move_limit_pools_the_daily_limit_over_the_matchup():
     assert fetch.matchup_move_limit(acq, 6, [7]) is None  # contradicted by the counter
     assert fetch.matchup_move_limit({"matchupAcquisitionLimit": 6}, 7, [2]) == 6
     assert fetch.matchup_move_limit({"matchupAcquisitionLimit": -1}, 7, [2]) is None
+
+
+def test_displaced_skater_is_least_used_at_the_returning_regulars_position():
+    tg = {"BOS": list(range(1, 11))}
+    g = lambda pid, game, pos, toi: {"id": pid, "game": game, "team": "BOS", "pos": pos, "toi": toi, "name": f"P{pid}"}
+    by_player = {
+        1: [g(1, n, "C", 18) for n in range(1, 8)],          # regular, missed games 8-10
+        2: [g(2, n, "L", 15) for n in range(1, 11)],
+        3: [g(3, n, "R", 8) for n in range(8, 11)],           # fill-in, least ice time
+        4: [g(4, n, "D", 6) for n in range(1, 11)],           # a defenseman: not displaced by a forward
+    }
+    assert rating.displaced_skaters(by_player, tg, healthy={1}) == {3: (0.08, "P1")}
+    assert rating.displaced_skaters(by_player, tg, healthy=set()) == {}  # still listed as out

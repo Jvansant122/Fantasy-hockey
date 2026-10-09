@@ -246,6 +246,7 @@ function why(p) {
   const back = p.cr_why?.back;
   if (back) parts.push(back.season ? "out for the season, per ESPN's note" : back.days != null ? `ESPN's note puts his return about ${back.days} day${back.days === 1 ? "" : "s"} away`
     : `players with this status usually miss about ${back.games} more game${back.games === "1" ? "" : "s"}`);
+  if (p.cr_why?.displaced) parts.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);
   return parts.join(" · ");
