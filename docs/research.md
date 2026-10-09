@@ -12,7 +12,7 @@ Last updated Oct 9, 2026 (findings through betting lines for goalies, availabili
 2. **Whether a player dresses matters more than anything else.** Scratches, injuries and trips to the AHL mean zero points. Accounting for that is worth more than any modeling trick.
 3. **Goalies are all about starts.** Ranking goalies by points per game × team games is no better than picking at random. Ranking by expected starts is about 60% better.
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
-5. **Use all 6 moves each week: 2-3 skater pickups on Monday, and the rest to stream goalies with a confirmed start** on nights your goalies leave a slot open, with injury swaps out of the same moves (sections 31 and 32). Re-pick for the schedule rather than holding a pickup.
+5. **Use all 6 moves each week: 2 skater pickups on Monday, and keep 4 for injury swaps and streaming goalies with a confirmed start** on nights your goalies leave a slot open (sections 31-33). Re-pick for the schedule rather than holding a pickup.
 6. **Drop the player with the lowest projected week**, not the lowest season total. That doubles what each move gains.
 7. **Empty lineup slots on light nights are the biggest pool of points left**, and the simple Monday plan captures them: add the 6 best projected weeks and drop your 6 lowest. Chasing single nights one at a time loses points.
 
@@ -166,7 +166,7 @@ Compared with dropping a typical bottom-of-roster skater (about 4.5 points a wee
 | 4th to 6th best | about +1.0 |
 | 7th to 12th best | +0.3 to +1.7, noisy |
 
-- **Use all 6 moves.** Even the 6th pickup beats the drop by about a point a week. (Sections 31 and 32 found it's better still to hold 3-4 of them for goalie streams and injuries.)
+- **Use all 6 moves.** Even the 6th pickup beats the drop by about a point a week. (Sections 31-33 found it's better still to hold 4 of them for goalie streams and injuries.)
 - **Re-pick each week.** A top pick scores 6.1 in his first week, then 4.4, 4.1 and 3.8. He's the same player per game; the first-week edge was his schedule, and some picks lose their spot over time.
 
 ## 10. Do ice-time jumps stick?
@@ -401,6 +401,20 @@ Section 31 split the 6 moves between Monday skaters and injury swaps. A goalie w
 Skater pickups 3 to 6 add less than a point together, while each of the first two or three goalie streams adds 2 to 4. A roster rarely has more than 3 nights a week with an open goalie slot, so a 4th stream often goes unused; those moves still cover injury swaps. The first stream costs a bench skater to make room.
 
 **On the site:** the advice now says 2-3 skater moves on Monday, the rest for goalie streams and injuries. A **Stream a goalie tonight** card appears for your team when fewer than two of your goalies are starting tonight (Daily Faceoff confirmed, or the start model when not yet confirmed). It lists free-agent goalies confirmed to start tonight, ranked by tonight's points per start (priced from the betting line), and your moves left when ESPN reports them. If your league caps goalie starts per week, streams are worth less once you near the cap; the card mentions the cap when ESPN's settings include one.
+
+## 33. Two on Monday, keep four
+
+Sections 31 and 32 tested injury swaps and goalie streams separately. Run together from one budget (injury swaps first each day, then streams), the best split moves to **2 skater moves on Monday and 4 held**:
+
+| Skater moves Monday | Gain vs all 6 on skaters | With a 7-start goalie cap |
+| --- | --- | --- |
+| 4 | +3.1 | +2.4 |
+| 3 | +4.9 | +3.7 |
+| **2** | **+5.8** | **+4.1** |
+
+Four spare moves leave room for an injury swap plus the 2-3 goalie streams a roster can use in a week. A cap on goalie starts cuts the gain by about a third but doesn't change the best split. The site's advice now says "2 on Monday, keep 4".
+
+Which free-agent goalie to stream matters much less than streaming one at all: across 627 nights, the best way of picking among confirmed wire starters (weak opponent, or his own points per start) beat a random one by about 0.4 points, against about 3 points for the stream itself. The site keeps ranking them by tonight's betting line, which already combines team and opponent strength.
 
 ## What the independent review changed
 
