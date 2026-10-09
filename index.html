@@ -109,8 +109,9 @@
     <div class="controls">
       <input type="search" id="q" placeholder="Search player or team">
       <select id="who" aria-label="Which players">
-        <option value="all">Free agents + my roster</option><option value="fa">Free agents</option><option value="every">Every player</option>
+        <option value="fa">Free agents</option><option value="every">Every player</option>
       </select>
+      <label id="addfa-wrap"><input type="checkbox" id="addfa" checked> + free agents</label>
       <select id="pos">
         <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
       </select>
@@ -134,8 +135,9 @@
 <script>
 const SLOTS = { F: 9, D: 5, UTL: 1, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
-const SAVED = ["who", "sort", "dir", "pos", "left", "healthy"];
-const state = { who: "all", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
+const SAVED = ["who", "sort", "dir", "pos", "left", "healthy", "addfa"];
+const CHECKS = ["left", "healthy", "addfa"];
+const state = { who: "mine", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
 // [key, label, align, shown on phones]
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Rating", "r", true],
@@ -245,9 +247,12 @@ function inView(p) {
   const w = state.who;
   if (w === "every") return true;
   if (w === "fa") return isFA(p);
-  if (w === "all") return isFA(p) || p.owner === "mine";
-  if (w === "mine") return p.owner === "mine";
-  return w.startsWith("t:") && String(p.team_id) === w.slice(2);
+  return inRoster(p) || ($("addfa").checked && isFA(p));
+}
+// A player on the roster picked in the "which players" menu
+function inRoster(p) {
+  const w = state.who;
+  return w === "mine" ? p.owner === "mine" : w.startsWith("t:") && String(p.team_id) === w.slice(2);
 }
 
 function render() {
@@ -273,12 +278,12 @@ function render() {
     `<th data-k="${key}" tabindex="0" class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
     const c = cells(p);
-    return `<tr class="${p.owner === "mine" ? "mine" : ""}" data-id="${p.id}">` +
+    return `<tr class="${p.owner === "mine" || inRoster(p) ? "mine" : ""}" data-id="${p.id}">` +
       COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
       (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   renderUpgrades();
-  store.set(Object.fromEntries(SAVED.map(key => [key, key === "left" || key === "healthy" ? $(key).checked : key === "pos" ? $("pos").value : state[key]])));
+  store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "pos" ? $("pos").value : state[key]])));
 }
 
 function renderUpgrades() {
@@ -311,6 +316,9 @@ function renderNights() {
   }).join("");
 }
 
+// The "+ free agents" box only means something when a roster is picked
+function showAddFA() { $("addfa-wrap").style.display = state.who === "fa" || state.who === "every" ? "none" : ""; }
+
 // Team rosters go in the "which players" picker, mine first
 function teamOptions(d) {
   state.teamNames = {};
@@ -320,6 +328,8 @@ function teamOptions(d) {
   for (const t of teams) state.teamNames[t.id] = t.name;
   $("who").insertAdjacentHTML("beforeend", `<optgroup label="Team rosters">${sorted.map(t =>
     `<option value="t:${t.id}">${esc(t.name)}${t.mine ? " (mine)" : ""}</option>`).join("")}</optgroup>`);
+  const mine = teams.find(t => t.mine);
+  state.who = mine ? `t:${mine.id}` : "fa";
 }
 
 function sortBy(key) {
@@ -329,7 +339,7 @@ function sortBy(key) {
 }
 
 function wire() {
-  $("who").addEventListener("input", () => { state.who = $("who").value; render(); });
+  $("who").addEventListener("input", () => { state.who = $("who").value; showAddFA(); render(); });
   $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) sortBy(th.dataset.k); });
   $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sortBy(th.dataset.k); } });
   $("rows").addEventListener("click", e => {
@@ -337,13 +347,15 @@ function wire() {
     state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
     render();
   });
-  ["q", "pos", "ming", "minr", "left", "healthy"].forEach(id => $(id).addEventListener("input", render));
+  ["q", "pos", "ming", "minr", "left", "healthy", "addfa"].forEach(id => $(id).addEventListener("input", render));
 }
 
 function restore() {
   const s = store.get();
   if (typeof s.who === "string" && [...$("who").options].some(o => o.value === s.who)) state.who = s.who;
   $("who").value = state.who;
+  if (typeof s.addfa === "boolean") $("addfa").checked = s.addfa;
+  showAddFA();
   if (COLS.some(c => c[0] === s.sort)) { state.sort = s.sort; state.dir = s.dir === 1 ? 1 : -1; }
   if (typeof s.pos === "string" && [...$("pos").options].some(o => o.value === s.pos)) $("pos").value = s.pos;
   if (typeof s.left === "boolean") $("left").checked = s.left;
