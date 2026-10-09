@@ -598,6 +598,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                 why["line"] = {"win_prob": round(lines[team], 2), "pps": round(line_pps, 2)}
                 fpg = ((starts - p_today) * fpg + p_today * line_pps) / starts
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
+            why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid else 0.0  # chance he starts tonight (stream card)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
             p_dress = None
         else:

@@ -12,7 +12,7 @@ Last updated Oct 9, 2026 (findings through betting lines for goalies, availabili
 2. **Whether a player dresses matters more than anything else.** Scratches, injuries and trips to the AHL mean zero points. Accounting for that is worth more than any modeling trick.
 3. **Goalies are all about starts.** Ranking goalies by points per game × team games is no better than picking at random. Ranking by expected starts is about 60% better.
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
-5. **Use all 6 moves each week, but make 4-5 on Monday and keep 1-2 for mid-week injuries** (section 31). Re-pick for the schedule rather than holding a pickup.
+5. **Use all 6 moves each week: 2-3 skater pickups on Monday, and the rest to stream goalies with a confirmed start** on nights your goalies leave a slot open, with injury swaps out of the same moves (sections 31 and 32). Re-pick for the schedule rather than holding a pickup.
 6. **Drop the player with the lowest projected week**, not the lowest season total. That doubles what each move gains.
 7. **Empty lineup slots on light nights are the biggest pool of points left**, and the simple Monday plan captures them: add the 6 best projected weeks and drop your 6 lowest. Chasing single nights one at a time loses points.
 
@@ -166,7 +166,7 @@ Compared with dropping a typical bottom-of-roster skater (about 4.5 points a wee
 | 4th to 6th best | about +1.0 |
 | 7th to 12th best | +0.3 to +1.7, noisy |
 
-- **Use all 6 moves.** Even the 6th pickup beats the drop by about a point a week. (Section 31 found it's better still to hold 1-2 of them for mid-week injuries.)
+- **Use all 6 moves.** Even the 6th pickup beats the drop by about a point a week. (Sections 31 and 32 found it's better still to hold 3-4 of them for goalie streams and injuries.)
 - **Re-pick each week.** A top pick scores 6.1 in his first week, then 4.4, 4.1 and 3.8. He's the same player per game; the first-week edge was his schedule, and some picks lose their spot over time.
 
 ## 10. Do ice-time jumps stick?
@@ -384,6 +384,23 @@ The Monday plan used to spend all 6 moves at once. A simulation of 12 rosters ov
 The 6th Monday move is worth about half a point to a point; replacing a player who has stopped dressing is worth 3-4, and a typical roster needs that about once every three weeks. Almost all of the gain is the injury swap, not the timing. ESPN's injury flags should do even better than "missed his last game" (a perfect flag gets +1.7 / +2.0).
 
 **On the site:** the Upgrades card now has a **Mid-week swaps** list for your team: any skater ESPN lists as out, on IR or suspended, or who sat his team's last game while it still plays this week, next to the best free agent at his position by Week rating. Out and IR players are marked IR-eligible, so you can use the IR slot instead of dropping them. A day-to-day star who sat one game is usually better benched than dropped. Goalies weren't part of this test.
+
+## 32. Spend spare moves streaming goalies
+
+Section 31 split the 6 moves between Monday skaters and injury swaps. A goalie with a confirmed start off the wire is worth about 3 points, and each stream costs one move. A simulation of 12 rosters over 67 weeks (each roster holding two good goalies, all 12 streaming against each other) tried every split:
+
+| Skater moves Monday + goalie streams | Points per roster per week | vs. all 6 on skaters |
+| --- | --- | --- |
+| 6 + 0 | 106.7 | |
+| 5 + 1 | 107.7 | +1.0 |
+| 4 + 2 | 109.9 | +3.2 |
+| **3 + 3** | **111.0** | **+4.3** |
+| **2 + 4** | **111.3** | **+4.6** |
+| 0 + 6 | 107.9 | +1.2 |
+
+Skater pickups 3 to 6 add less than a point together, while each of the first two or three goalie streams adds 2 to 4. A roster rarely has more than 3 nights a week with an open goalie slot, so a 4th stream often goes unused; those moves still cover injury swaps. The first stream costs a bench skater to make room.
+
+**On the site:** the advice now says 2-3 skater moves on Monday, the rest for goalie streams and injuries. A **Stream a goalie tonight** card appears for your team when fewer than two of your goalies are starting tonight (Daily Faceoff confirmed, or the start model when not yet confirmed). It lists free-agent goalies confirmed to start tonight, ranked by tonight's points per start (priced from the betting line), and your moves left when ESPN reports them. If your league caps goalie starts per week, streams are worth less once you near the cap; the card mentions the cap when ESPN's settings include one.
 
 ## What the independent review changed
 
