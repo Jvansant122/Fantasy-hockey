@@ -16,8 +16,9 @@ import math
 import re
 import sys
 import unicodedata
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -33,6 +34,8 @@ INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DA
 INJURY_LOG = ROOT / "data" / "injury_log.jsonl"
 INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # no NHL game in 14+ days while the team kept playing (outside what the research measured)
+ET = ZoneInfo("America/New_York")
+LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by the moneyline (findings section 30)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -251,11 +254,12 @@ def skater_features(games, prev, xg_now, xg_prev, team_games):
     return f
 
 
-def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None):
+def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
-    confirmed: {date: goalie id} of Daily Faceoff confirmed starters; those games count as 1 for him, 0 for the others."""
+    confirmed: {date: goalie id} of Daily Faceoff confirmed starters; those games count as 1 for him, 0 for the others.
+    today_p: if given, filled with each goalie's chance of starting today's game."""
     confirmed = confirmed or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -282,6 +286,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         if d >= today.isoformat():
             for gid in cands:
                 exp[gid] += p[gid]
+                if d == today.isoformat() and today_p is not None:
+                    today_p[gid] = p[gid]
         prev_p, prev_day = p, d
     return exp
 
@@ -309,10 +315,38 @@ def load_news():
     return dict(list(items.items())[:NEWS_CAP])
 
 
-def add_ratings(players, espn_season, today, monday, starters=()):
+def utcnow():
+    return datetime.now(timezone.utc)
+
+
+def win_prob(home_ml, away_ml):
+    """Home team's win probability from American moneylines, with the bookmaker's margin removed."""
+    imp = lambda ml: -ml / (-ml + 100) if ml < 0 else 100 / (ml + 100)
+    h, a = imp(home_ml), imp(away_ml)
+    return h / (h + a)
+
+
+def line_win_probs(odds, today, now=None):
+    """{NHL abbrev: win probability} for today's games that haven't started, from leads.fetch_odds."""
+    now = now or utcnow()
+    out = {}
+    for g in (odds or {}).get("games", []):
+        try:
+            start = datetime.fromisoformat(g["start_utc"].replace("Z", "+00:00"))
+            if start <= now or start.astimezone(ET).date() != today:
+                continue
+            ph = win_prob(g["home"]["MONEY_LINE_2_WAY"], g["away"]["MONEY_LINE_2_WAY"])
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            continue
+        out[g["home"]["team"]], out[g["away"]["team"]] = ph, 1 - ph
+    return out
+
+
+def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
 
-    starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week."""
+    starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
+    odds: today's betting lines (leads.fetch_odds); they price tonight's goalie starts (research section 30)."""
     s = requests.Session()
     season, prev_season = season_ids(espn_season)
     model = Model()
@@ -385,10 +419,11 @@ def add_ratings(players, espn_season, today, monday, starters=()):
                 tonight[g["team"]] = (cands[0], g.get("status"))
             if g.get("status") == "Confirmed":
                 confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
-    goalie_exp = {}
+    goalie_exp, goalie_today = {}, {}
+    lines = line_win_probs(odds, today)
     for team, dates in sched.items():
         goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today,
-                                        confirmed.get(team)))
+                                        confirmed.get(team), goalie_today))
 
     unmatched = 0
     injury_log = []
@@ -411,6 +446,12 @@ def add_ratings(players, espn_season, today, monday, starters=()):
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, base) if pid else base
+            # tonight's game priced by the betting line: 2.9 + 4.1 x (win probability - 0.5) per start
+            p_today = min(goalie_today.get(pid, 0.0), starts) if pid else 0.0
+            if team in lines and p_today > 0 and starts > 0:
+                line_pps = base + LINE_PPS_SLOPE * (lines[team] - 0.5)
+                why["line"] = {"win_prob": round(lines[team], 2), "pps": round(line_pps, 2)}
+                fpg = ((starts - p_today) * fpg + p_today * line_pps) / starts
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
             exp_games = starts * inj
             p_dress = None

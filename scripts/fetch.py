@@ -248,8 +248,13 @@ def main():
                 starters.append(leads.fetch_starters(web, day))
             except Exception as e:  # noqa: BLE001 - starters are a bonus, never block the update
                 lead_errors[f"starters {day}"] = repr(e)
+    odds = None
     try:
-        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters)
+        odds = leads.fetch_odds(web)
+    except Exception as e:  # noqa: BLE001
+        lead_errors["odds"] = repr(e)
+    try:
+        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds)
         rated = True
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
@@ -276,7 +281,7 @@ def main():
     path.write_text(json.dumps(out, indent=1))
     print(f"Wrote {len(players)} players ({len(my_ids)} mine) for matchup {period} to {path}")
     try:
-        leads.write_log(datetime.now(ET), players, starters, lead_errors, web)
+        leads.write_log(datetime.now(ET), players, starters, lead_errors, web, odds)
     except Exception as e:  # noqa: BLE001
         print(f"Lead log failed: {e!r}", file=sys.stderr)
     if not my_team:

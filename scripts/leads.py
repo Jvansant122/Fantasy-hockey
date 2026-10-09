@@ -95,10 +95,14 @@ def fetch_odds(s):
         for g in d.get("games", [])]}
 
 
-def write_log(now, players, starters, errors, s):
+def write_log(now, players, starters, errors, s, odds=None):
     """One gzipped JSON per run in data/log, named by ET date and time."""
     rec = {"run_at": now.isoformat(timespec="minutes"), "starters": starters, "errors": dict(errors)}
+    if odds is not None:
+        rec["odds"] = odds
     for key, fn in (("lineups", fetch_lineups), ("injuries", fetch_injuries), ("odds", fetch_odds)):
+        if key in rec:
+            continue
         try:
             rec[key] = fn(s)
         except Exception as e:  # noqa: BLE001 - the log is best-effort

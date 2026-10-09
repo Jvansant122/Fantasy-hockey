@@ -158,3 +158,43 @@ def test_goalie_starts_follow_confirmed_starter(run):
     assert sway["cr_games"] == pytest.approx(2, abs=0.02)
     assert stolarz["cr_games"] >= 1
     assert woll["cr_dress"] is None
+
+
+def test_win_prob_removes_the_margin():
+    assert rating.win_prob(-110, -110) == pytest.approx(0.5)
+    fav = rating.win_prob(-200, 170)
+    assert 0.62 < fav < 0.67
+    assert rating.win_prob(170, -200) == pytest.approx(1 - fav)
+
+
+def odds_game(home, away, home_ml, away_ml, start="2026-10-09T23:00:00Z"):
+    return {"start_utc": start, "home": {"team": home, "MONEY_LINE_2_WAY": home_ml}, "away": {"team": away, "MONEY_LINE_2_WAY": away_ml}}
+
+
+def test_line_win_probs_skips_started_and_other_days():
+    from datetime import datetime, timezone
+    odds = {"games": [odds_game("TOR", "BOS", -200, 170),
+                      odds_game("MTL", "OTT", -110, -110, start="2026-10-09T15:00:00Z"),  # already started
+                      odds_game("NYR", "NJD", -110, -110, start="2026-10-10T23:00:00Z")]}  # tomorrow
+    probs = rating.line_win_probs(odds, TODAY, now=datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    assert set(probs) == {"TOR", "BOS"} and probs["TOR"] > 0.6
+
+
+def test_tonights_line_prices_the_goalie_start(monkeypatch, tmp_path):
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
+    out = {}
+    for name, odds in (("none", None), ("fav", {"games": [odds_game("TOR", "BOS", -250, 210)]})):
+        players = [espn(112, "Anthony Stolarz", "TOR", "G"), espn(113, "Jeremy Swayman", "BOS", "G")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, starters, odds)
+        out[name] = {p["name"]: p for p in players}
+    assert "line" not in out["none"]["Anthony Stolarz"]["cr_why"]
+    assert out["fav"]["Anthony Stolarz"]["cr_why"]["line"]["win_prob"] > 0.65
+    assert out["fav"]["Anthony Stolarz"]["cr"] > out["none"]["Anthony Stolarz"]["cr"]
+    assert out["fav"]["Jeremy Swayman"]["cr"] < out["none"]["Jeremy Swayman"]["cr"]
+    # games left are unchanged; only points per start moves
+    assert out["fav"]["Jeremy Swayman"]["cr_games"] == out["none"]["Jeremy Swayman"]["cr_games"]
