@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 9, 2026 (findings through the weekly move optimizer, goalie streaming and the confidence-badge test). The research is ongoing; new findings are added here as they land.
+Last updated Oct 9, 2026 (findings through betting lines for goalies, availability, assists, upside and age). The research is ongoing; new findings are added here as they land.
 
 **League scoring:** goals 2, assists 1, power-play points 0.5, shorthanded points 0.5, shots 0.1, hits 0.1, blocks 0.5. Goalies: win 2, loss -1, overtime loss +1, goal against -1, save 0.2, shutout 3.
 
@@ -298,6 +298,34 @@ Every update also saves a log (in `data/log`) of things that might help but need
 | ESPN injury notes (expected return timing) | Do the notes predict games missed better than the flat 50% for day-to-day? |
 | DraftKings moneylines and totals (from the NHL's site) | Do betting odds predict a goalie's points per start? |
 | Each player's rating and ESPN's projection | Which one picks better free agents (section 25 of the research)? |
+
+## 24. Betting lines for goalies
+
+A goalie's points depend heavily on whether his team wins (a win and a loss are 3 points apart), and the betting line is the sharpest estimate of that. Across 3,308 starts with closing lines from 2021-22 and 2022-23:
+
+| Chance to win, from the betting line | Starts | Points per start |
+| --- | --- | --- |
+| under 35% | 475 | 2.8 |
+| 35-45% | 757 | 2.9 |
+| 45-55% | 844 | 3.7 |
+| 55-65% | 757 | 4.2 |
+| over 65% | 475 | 4.0 |
+
+- **The line is the first thing found that predicts points per start.** Season win %, goals against and shots against didn't (sections 6 and 20), because they're stale averages. The line already knows tonight's starters, rest and injuries.
+- **The site now uses it for tonight's game:** about 2.9 + 4.1 × (win chance − 50%) points per start, so roughly 2.3 for a 35% underdog and 3.5 for a 65% favorite. The lines come from DraftKings through the NHL's site and only exist for today, so the rest of the week still uses the goalie's own points per start. Tap a goalie's row to see tonight's line.
+- For skaters the line barely matters: players on teams expected to score 3.5+ goals score about 0.1 points more than usual. That's a tiebreak at most, so it isn't in the rating.
+
+## 25. More ideas that didn't change anything
+
+| Idea | Result |
+| --- | --- |
+| A fancier "will he dress" model (days since his last game, ice-time rank) | Slightly better, +0.02 points per pickup. The simple version stays. |
+| Short-handed ice time | Shorthanded points are rare and unpredictable. No gain. |
+| Separate models for forwards and defensemen | A hair better, within noise. |
+| Primary vs. secondary assists | Primary assists are more repeatable, but the model already captures it. |
+| An "upside" option for weeks you need a big score | High-ceiling players are just the high-projection players. When behind, pick the same players. |
+| Two-week matchups | Same per-game projection × two weeks of games. |
+| Age | Young players do improve and older ones decline, but recent ice time already shows it. |
 
 ## What the independent review changed
 
