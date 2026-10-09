@@ -1,5 +1,5 @@
 {
- "updated": "Fri Oct 9, 2:50 PM ET",
+ "updated": "Fri Oct 9, 3:16 PM ET",
  "team": "New York Mess",
  "matchup_period": 2,
  "nights": [
@@ -56,6 +56,7 @@
  "rated": true,
  "goalie_cap": null,
  "move_limit": 7,
+ "ir_slots": 2,
  "teams": [
   {
    "id": 1,
@@ -159,8 +160,8 @@
     13
    ],
    "dfo_out": null,
-   "cr": 5.9,
-   "cr_fpg": 3.25,
+   "cr": 5.94,
+   "cr_fpg": 3.27,
    "cr_season": 2.33,
    "cr_games": 1.82,
    "cr_dress": null,
@@ -176,8 +177,8 @@
      "status": "Confirmed"
     },
     "line": {
-     "win_prob": 0.43,
-     "pps": 2.59
+     "win_prob": 0.44,
+     "pps": 2.63
     },
     "sched": 0.62,
     "gs": 4,
@@ -214,8 +215,8 @@
     13
    ],
    "dfo_out": null,
-   "cr": 5.88,
-   "cr_fpg": 3.49,
+   "cr": 5.84,
+   "cr_fpg": 3.47,
    "cr_season": 2.66,
    "cr_games": 1.68,
    "cr_dress": null,
@@ -231,8 +232,8 @@
      "status": "Confirmed"
     },
     "line": {
-     "win_prob": 0.57,
-     "pps": 3.19
+     "win_prob": 0.56,
+     "pps": 3.15
     },
     "sched": 0.26,
     "gs": 2,
@@ -270,7 +271,7 @@
    "dfo_out": false,
    "cr": 5.33,
    "cr_fpg": 2.71,
-   "cr_season": 2.56,
+   "cr_season": 2.57,
    "cr_games": 1.97,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -324,7 +325,7 @@
    "dfo_out": false,
    "cr": 4.94,
    "cr_fpg": 2.51,
-   "cr_season": 2.31,
+   "cr_season": 2.32,
    "cr_games": 1.97,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -592,7 +593,7 @@
    "dfo_out": false,
    "cr": 4.2,
    "cr_fpg": 2.15,
-   "cr_season": 2.0,
+   "cr_season": 2.01,
    "cr_games": 1.95,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -613,7 +614,7 @@
     }
    },
    "cr_pct": 99,
-   "cr_season_pct": 94
+   "cr_season_pct": 95
   },
   {
    "id": 5149153,
@@ -807,7 +808,7 @@
    "dfo_out": false,
    "cr": 4.05,
    "cr_fpg": 2.08,
-   "cr_season": 1.91,
+   "cr_season": 1.92,
    "cr_games": 1.95,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -882,7 +883,7 @@
     }
    },
    "cr_pct": 98,
-   "cr_season_pct": 91
+   "cr_season_pct": 90
   },
   {
    "id": 4588165,
@@ -1026,7 +1027,7 @@
    "dfo_out": false,
    "cr": 3.98,
    "cr_fpg": 2.06,
-   "cr_season": 1.87,
+   "cr_season": 1.88,
    "cr_games": 1.94,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -1369,7 +1370,7 @@
     }
    },
    "cr_pct": 97,
-   "cr_season_pct": 86
+   "cr_season_pct": 85
   },
   {
    "id": 5080156,
@@ -1509,7 +1510,7 @@
    "dfo_out": false,
    "cr": 3.61,
    "cr_fpg": 1.88,
-   "cr_season": 1.69,
+   "cr_season": 1.7,
    "cr_games": 1.92,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -1564,7 +1565,7 @@
    "dfo_out": false,
    "cr": 3.58,
    "cr_fpg": 2.02,
-   "cr_season": 1.69,
+   "cr_season": 1.7,
    "cr_games": 1.78,
    "cr_dress": 0.89,
    "sat_last": false,
@@ -1617,7 +1618,7 @@
    "dfo_out": false,
    "cr": 3.56,
    "cr_fpg": 1.84,
-   "cr_season": 1.67,
+   "cr_season": 1.68,
    "cr_games": 1.93,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -1671,7 +1672,7 @@
    "dfo_out": false,
    "cr": 3.55,
    "cr_fpg": 1.83,
-   "cr_season": 1.6,
+   "cr_season": 1.61,
    "cr_games": 1.94,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -1692,7 +1693,7 @@
     }
    },
    "cr_pct": 97,
-   "cr_season_pct": 89
+   "cr_season_pct": 90
   },
   {
    "id": 4197146,
@@ -1745,7 +1746,7 @@
     }
    },
    "cr_pct": 97,
-   "cr_season_pct": 88
+   "cr_season_pct": 87
   },
   {
    "id": 5103645,
@@ -2252,7 +2253,7 @@
    "dfo_out": false,
    "cr": 3.27,
    "cr_fpg": 1.69,
-   "cr_season": 1.55,
+   "cr_season": 1.56,
    "cr_games": 1.94,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -2414,7 +2415,7 @@
    "dfo_out": false,
    "cr": 3.21,
    "cr_fpg": 1.68,
-   "cr_season": 1.47,
+   "cr_season": 1.48,
    "cr_games": 1.92,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -2490,7 +2491,7 @@
     }
    },
    "cr_pct": 94,
-   "cr_season_pct": 78
+   "cr_season_pct": 77
   },
   {
    "id": 3900169,
@@ -2524,7 +2525,7 @@
    "dfo_out": false,
    "cr": 3.19,
    "cr_fpg": 1.65,
-   "cr_season": 1.47,
+   "cr_season": 1.48,
    "cr_games": 1.93,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -2655,7 +2656,7 @@
     }
    },
    "cr_pct": 94,
-   "cr_season_pct": 75
+   "cr_season_pct": 74
   },
   {
    "id": 2590824,
@@ -2799,7 +2800,7 @@
    "dfo_out": false,
    "cr": 3.13,
    "cr_fpg": 1.61,
-   "cr_season": 1.44,
+   "cr_season": 1.45,
    "cr_games": 1.94,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -3243,7 +3244,7 @@
     }
    },
    "cr_pct": 92,
-   "cr_season_pct": 80
+   "cr_season_pct": 79
   },
   {
    "id": 3114777,
@@ -3351,7 +3352,7 @@
     }
    },
    "cr_pct": 92,
-   "cr_season_pct": 72
+   "cr_season_pct": 71
   },
   {
    "id": 3942292,
@@ -3484,7 +3485,7 @@
    "dfo_out": false,
    "cr": 2.95,
    "cr_fpg": 1.59,
-   "cr_season": 1.4,
+   "cr_season": 1.41,
    "cr_games": 1.86,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -3560,7 +3561,7 @@
     }
    },
    "cr_pct": 92,
-   "cr_season_pct": 71
+   "cr_season_pct": 70
   },
   {
    "id": 5746,
@@ -3592,7 +3593,7 @@
    "dfo_out": false,
    "cr": 2.94,
    "cr_fpg": 1.59,
-   "cr_season": 1.34,
+   "cr_season": 1.35,
    "cr_games": 1.85,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -3613,7 +3614,7 @@
     }
    },
    "cr_pct": 91,
-   "cr_season_pct": 75
+   "cr_season_pct": 77
   },
   {
    "id": 3114741,
@@ -3647,7 +3648,7 @@
    "dfo_out": false,
    "cr": 2.93,
    "cr_fpg": 1.59,
-   "cr_season": 1.38,
+   "cr_season": 1.39,
    "cr_games": 1.84,
    "cr_dress": 0.92,
    "sat_last": false,
@@ -3668,7 +3669,7 @@
     }
    },
    "cr_pct": 91,
-   "cr_season_pct": 72
+   "cr_season_pct": 73
   },
   {
    "id": 4565235,
@@ -3701,7 +3702,7 @@
    "dfo_out": false,
    "cr": 2.9,
    "cr_fpg": 1.53,
-   "cr_season": 1.35,
+   "cr_season": 1.36,
    "cr_games": 1.89,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -4067,7 +4068,7 @@
    "dfo_out": false,
    "cr": 2.84,
    "cr_fpg": 1.57,
-   "cr_season": 1.26,
+   "cr_season": 1.27,
    "cr_games": 1.81,
    "cr_dress": 0.9,
    "sat_last": false,
@@ -4189,60 +4190,6 @@
    "cr_season_pct": 49
   },
   {
-   "id": 3069836,
-   "name": "Jaccob Slavin",
-   "team": "CAR",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "mine",
-   "team_id": 12,
-   "ir": false,
-   "injury": null,
-   "owned": 20.0,
-   "gp": 5,
-   "ppg": 1.24,
-   "cur_ppg": 1.88,
-   "last_ppg": 1.13,
-   "proj_ppg": null,
-   "games": 4,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    8,
-    10,
-    12,
-    13
-   ],
-   "dfo_out": false,
-   "cr": 2.82,
-   "cr_fpg": 1.46,
-   "cr_season": 1.26,
-   "cr_games": 1.93,
-   "cr_dress": 0.96,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476958,
-   "cr_why": {
-    "toi5": 21.63,
-    "toi": 21.63,
-    "pp5": 0.06,
-    "sog": 1.4,
-    "blk": 2.6,
-    "gp": 5,
-    "last_fpg": 1.13,
-    "xfp": {
-     "gp": 5,
-     "fpg": 1.88,
-     "xfpg": 1.93
-    }
-   },
-   "cr_pct": 90,
-   "cr_season_pct": 71
-  },
-  {
    "id": 3899979,
    "name": "Brock Boeser",
    "team": "VAN",
@@ -4295,6 +4242,60 @@
    },
    "cr_pct": 90,
    "cr_season_pct": 69
+  },
+  {
+   "id": 3069836,
+   "name": "Jaccob Slavin",
+   "team": "CAR",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 13,
+   "ir": false,
+   "injury": null,
+   "owned": 20.0,
+   "gp": 5,
+   "ppg": 1.24,
+   "cur_ppg": 1.88,
+   "last_ppg": 1.13,
+   "proj_ppg": null,
+   "games": 4,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    8,
+    10,
+    12,
+    13
+   ],
+   "dfo_out": false,
+   "cr": 2.82,
+   "cr_fpg": 1.46,
+   "cr_season": 1.26,
+   "cr_games": 1.93,
+   "cr_dress": 0.96,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476958,
+   "cr_why": {
+    "toi5": 21.63,
+    "toi": 21.63,
+    "pp5": 0.06,
+    "sog": 1.4,
+    "blk": 2.6,
+    "gp": 5,
+    "last_fpg": 1.13,
+    "xfp": {
+     "gp": 5,
+     "fpg": 1.88,
+     "xfpg": 1.93
+    }
+   },
+   "cr_pct": 90,
+   "cr_season_pct": 70
   },
   {
    "id": 4378683,
@@ -4380,7 +4381,7 @@
    "dfo_out": false,
    "cr": 2.79,
    "cr_fpg": 1.43,
-   "cr_season": 1.25,
+   "cr_season": 1.26,
    "cr_games": 1.95,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -4434,7 +4435,7 @@
    "dfo_out": false,
    "cr": 2.74,
    "cr_fpg": 1.43,
-   "cr_season": 1.18,
+   "cr_season": 1.19,
    "cr_games": 1.91,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -4455,7 +4456,7 @@
     }
    },
    "cr_pct": 89,
-   "cr_season_pct": 62
+   "cr_season_pct": 63
   },
   {
    "id": 5032,
@@ -4488,7 +4489,7 @@
    "dfo_out": false,
    "cr": 2.74,
    "cr_fpg": 1.46,
-   "cr_season": 1.28,
+   "cr_season": 1.29,
    "cr_games": 1.88,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -4588,7 +4589,7 @@
    "dfo_out": false,
    "cr": 2.72,
    "cr_fpg": 1.5,
-   "cr_season": 1.09,
+   "cr_season": 1.1,
    "cr_games": 1.82,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -4609,7 +4610,7 @@
     }
    },
    "cr_pct": 89,
-   "cr_season_pct": 55
+   "cr_season_pct": 56
   },
   {
    "id": 4697404,
@@ -4769,7 +4770,7 @@
     }
    },
    "cr_pct": 88,
-   "cr_season_pct": 68
+   "cr_season_pct": 66
   },
   {
    "id": 2563060,
@@ -4802,7 +4803,7 @@
    "dfo_out": false,
    "cr": 2.64,
    "cr_fpg": 2.71,
-   "cr_season": 2.51,
+   "cr_season": 2.52,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -5120,7 +5121,7 @@
    "dfo_out": false,
    "cr": 2.52,
    "cr_fpg": 1.32,
-   "cr_season": 1.15,
+   "cr_season": 1.16,
    "cr_games": 1.91,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -5469,7 +5470,7 @@
     }
    },
    "cr_pct": 87,
-   "cr_season_pct": 62
+   "cr_season_pct": 61
   },
   {
    "id": 4781552,
@@ -5555,7 +5556,7 @@
    "dfo_out": false,
    "cr": 2.47,
    "cr_fpg": 1.28,
-   "cr_season": 1.11,
+   "cr_season": 1.12,
    "cr_games": 1.92,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -5576,7 +5577,7 @@
     }
    },
    "cr_pct": 87,
-   "cr_season_pct": 58
+   "cr_season_pct": 59
   },
   {
    "id": 3042109,
@@ -5676,7 +5677,7 @@
     }
    },
    "cr_pct": 86,
-   "cr_season_pct": 60
+   "cr_season_pct": 59
   },
   {
    "id": 4392260,
@@ -5708,7 +5709,7 @@
    "dfo_out": false,
    "cr": 2.46,
    "cr_fpg": 1.29,
-   "cr_season": 1.07,
+   "cr_season": 1.08,
    "cr_games": 1.91,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -5762,7 +5763,7 @@
    "dfo_out": false,
    "cr": 2.46,
    "cr_fpg": 2.51,
-   "cr_season": 2.33,
+   "cr_season": 2.34,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -5815,7 +5816,7 @@
    "dfo_out": false,
    "cr": 2.45,
    "cr_fpg": 1.33,
-   "cr_season": 1.12,
+   "cr_season": 1.13,
    "cr_games": 1.84,
    "cr_dress": 0.92,
    "sat_last": false,
@@ -5836,7 +5837,7 @@
     }
    },
    "cr_pct": 86,
-   "cr_season_pct": 60
+   "cr_season_pct": 61
   },
   {
    "id": 3067858,
@@ -5923,7 +5924,7 @@
    "dfo_out": false,
    "cr": 2.44,
    "cr_fpg": 1.3,
-   "cr_season": 1.1,
+   "cr_season": 1.11,
    "cr_games": 1.88,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -5976,7 +5977,7 @@
    "dfo_out": false,
    "cr": 2.44,
    "cr_fpg": 2.53,
-   "cr_season": 2.31,
+   "cr_season": 2.32,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -6051,7 +6052,7 @@
     }
    },
    "cr_pct": 85,
-   "cr_season_pct": 55
+   "cr_season_pct": 54
   },
   {
    "id": 5149172,
@@ -6084,7 +6085,7 @@
    "dfo_out": false,
    "cr": 2.43,
    "cr_fpg": 1.31,
-   "cr_season": 1.1,
+   "cr_season": 1.11,
    "cr_games": 1.86,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -6190,7 +6191,7 @@
    "dfo_out": false,
    "cr": 2.41,
    "cr_fpg": 2.51,
-   "cr_season": 2.27,
+   "cr_season": 2.28,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -6344,7 +6345,7 @@
    "dfo_out": false,
    "cr": 2.39,
    "cr_fpg": 1.26,
-   "cr_season": 1.1,
+   "cr_season": 1.11,
    "cr_games": 1.89,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -6420,7 +6421,7 @@
     }
    },
    "cr_pct": 84,
-   "cr_season_pct": 57
+   "cr_season_pct": 56
   },
   {
    "id": 3648002,
@@ -6556,7 +6557,7 @@
    "dfo_out": false,
    "cr": 2.37,
    "cr_fpg": 1.25,
-   "cr_season": 1.08,
+   "cr_season": 1.09,
    "cr_games": 1.89,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -6577,7 +6578,7 @@
     }
    },
    "cr_pct": 84,
-   "cr_season_pct": 53
+   "cr_season_pct": 54
   },
   {
    "id": 4587713,
@@ -6684,7 +6685,7 @@
     }
    },
    "cr_pct": 84,
-   "cr_season_pct": 58
+   "cr_season_pct": 57
   },
   {
    "id": 4781553,
@@ -6856,8 +6857,8 @@
     "F",
     "LW"
    ],
-   "owner": "other",
-   "team_id": 13,
+   "owner": "mine",
+   "team_id": 12,
    "ir": false,
    "injury": null,
    "owned": 19.4,
@@ -7039,7 +7040,7 @@
    "dfo_out": false,
    "cr": 2.31,
    "cr_fpg": 2.36,
-   "cr_season": 2.18,
+   "cr_season": 2.19,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -7303,7 +7304,7 @@
    "dfo_out": false,
    "cr": 2.27,
    "cr_fpg": 1.21,
-   "cr_season": 1.06,
+   "cr_season": 1.07,
    "cr_games": 1.88,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -7410,7 +7411,7 @@
    "dfo_out": true,
    "cr": 2.26,
    "cr_fpg": 1.2,
-   "cr_season": 1.01,
+   "cr_season": 1.02,
    "cr_games": 1.89,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -7431,7 +7432,7 @@
     }
    },
    "cr_pct": 80,
-   "cr_season_pct": 46
+   "cr_season_pct": 47
   },
   {
    "id": 4712146,
@@ -7565,7 +7566,7 @@
    "dfo_out": false,
    "cr": 2.26,
    "cr_fpg": 2.29,
-   "cr_season": 2.08,
+   "cr_season": 2.09,
    "cr_games": 0.99,
    "cr_dress": 0.99,
    "sat_last": false,
@@ -7586,7 +7587,7 @@
     }
    },
    "cr_pct": 80,
-   "cr_season_pct": 96
+   "cr_season_pct": 97
   },
   {
    "id": 3042083,
@@ -7726,7 +7727,7 @@
    "dfo_out": false,
    "cr": 2.25,
    "cr_fpg": 2.29,
-   "cr_season": 2.13,
+   "cr_season": 2.14,
    "cr_games": 0.99,
    "cr_dress": 0.99,
    "sat_last": false,
@@ -7779,7 +7780,7 @@
    "dfo_out": false,
    "cr": 2.25,
    "cr_fpg": 2.29,
-   "cr_season": 2.09,
+   "cr_season": 2.1,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -7834,7 +7835,7 @@
    "dfo_out": false,
    "cr": 2.24,
    "cr_fpg": 1.16,
-   "cr_season": 1.04,
+   "cr_season": 1.05,
    "cr_games": 1.93,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -7855,7 +7856,7 @@
     }
    },
    "cr_pct": 80,
-   "cr_season_pct": 49
+   "cr_season_pct": 50
   },
   {
    "id": 3096237,
@@ -7890,7 +7891,7 @@
    "dfo_out": false,
    "cr": 2.24,
    "cr_fpg": 1.2,
-   "cr_season": 1.04,
+   "cr_season": 1.05,
    "cr_games": 1.87,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -7911,7 +7912,7 @@
     }
    },
    "cr_pct": 80,
-   "cr_season_pct": 49
+   "cr_season_pct": 50
   },
   {
    "id": 4233594,
@@ -7998,7 +7999,7 @@
    "dfo_out": false,
    "cr": 2.23,
    "cr_fpg": 1.21,
-   "cr_season": 0.99,
+   "cr_season": 1.0,
    "cr_games": 1.84,
    "cr_dress": 0.92,
    "sat_last": false,
@@ -8051,7 +8052,7 @@
    "dfo_out": false,
    "cr": 2.22,
    "cr_fpg": 2.29,
-   "cr_season": 2.0,
+   "cr_season": 2.01,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -8072,7 +8073,7 @@
     }
    },
    "cr_pct": 79,
-   "cr_season_pct": 94
+   "cr_season_pct": 95
   },
   {
    "id": 2989376,
@@ -8107,7 +8108,7 @@
    "dfo_out": false,
    "cr": 2.21,
    "cr_fpg": 1.15,
-   "cr_season": 1.02,
+   "cr_season": 1.03,
    "cr_games": 1.92,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -8128,7 +8129,7 @@
     }
    },
    "cr_pct": 79,
-   "cr_season_pct": 47
+   "cr_season_pct": 48
   },
   {
    "id": 4233618,
@@ -8335,7 +8336,7 @@
     }
    },
    "cr_pct": 79,
-   "cr_season_pct": 97
+   "cr_season_pct": 96
   },
   {
    "id": 3041969,
@@ -8551,7 +8552,7 @@
     }
    },
    "cr_pct": 78,
-   "cr_season_pct": 96
+   "cr_season_pct": 95
   },
   {
    "id": 4331579,
@@ -8605,7 +8606,7 @@
     }
    },
    "cr_pct": 78,
-   "cr_season_pct": 46
+   "cr_season_pct": 45
   },
   {
    "id": 3025524,
@@ -8638,7 +8639,7 @@
    "dfo_out": false,
    "cr": 2.16,
    "cr_fpg": 1.19,
-   "cr_season": 0.99,
+   "cr_season": 1.0,
    "cr_games": 1.81,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -8746,7 +8747,7 @@
    "dfo_out": false,
    "cr": 2.14,
    "cr_fpg": 2.21,
-   "cr_season": 2.03,
+   "cr_season": 2.04,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -8875,7 +8876,7 @@
     }
    },
    "cr_pct": 77,
-   "cr_season_pct": 96
+   "cr_season_pct": 95
   },
   {
    "id": 3149843,
@@ -9017,7 +9018,7 @@
    "dfo_out": false,
    "cr": 2.09,
    "cr_fpg": 1.14,
-   "cr_season": 0.97,
+   "cr_season": 0.98,
    "cr_games": 1.84,
    "cr_dress": 0.92,
    "sat_last": false,
@@ -9038,7 +9039,7 @@
     }
    },
    "cr_pct": 76,
-   "cr_season_pct": 42
+   "cr_season_pct": 43
   },
   {
    "id": 4565236,
@@ -9124,7 +9125,7 @@
    "dfo_out": false,
    "cr": 2.08,
    "cr_fpg": 1.1,
-   "cr_season": 0.96,
+   "cr_season": 0.97,
    "cr_games": 1.89,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -9200,7 +9201,7 @@
     }
    },
    "cr_pct": 76,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 4319858,
@@ -9232,7 +9233,7 @@
    "dfo_out": false,
    "cr": 2.08,
    "cr_fpg": 2.19,
-   "cr_season": 1.87,
+   "cr_season": 1.88,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -9307,7 +9308,7 @@
     }
    },
    "cr_pct": 75,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 3899952,
@@ -9395,7 +9396,7 @@
    "dfo_out": false,
    "cr": 2.07,
    "cr_fpg": 2.19,
-   "cr_season": 1.99,
+   "cr_season": 2.0,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -9416,7 +9417,7 @@
     }
    },
    "cr_pct": 75,
-   "cr_season_pct": 93
+   "cr_season_pct": 94
   },
   {
    "id": 3114802,
@@ -9501,7 +9502,7 @@
    "dfo_out": false,
    "cr": 2.06,
    "cr_fpg": 2.11,
-   "cr_season": 1.92,
+   "cr_season": 1.93,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -9761,7 +9762,7 @@
    "dfo_out": false,
    "cr": 2.01,
    "cr_fpg": 1.1,
-   "cr_season": 0.87,
+   "cr_season": 0.88,
    "cr_games": 1.82,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -9837,7 +9838,7 @@
     }
    },
    "cr_pct": 73,
-   "cr_season_pct": 37
+   "cr_season_pct": 36
   },
   {
    "id": 4233563,
@@ -9998,7 +9999,7 @@
     }
    },
    "cr_pct": 75,
-   "cr_season_pct": 27
+   "cr_season_pct": 24
   },
   {
    "id": 5037,
@@ -10054,7 +10055,7 @@
     }
    },
    "cr_pct": 73,
-   "cr_season_pct": 91
+   "cr_season_pct": 90
   },
   {
    "id": 3899938,
@@ -10272,7 +10273,7 @@
     }
    },
    "cr_pct": 72,
-   "cr_season_pct": 27
+   "cr_season_pct": 26
   },
   {
    "id": 4233555,
@@ -10566,7 +10567,7 @@
    "dfo_out": false,
    "cr": 1.93,
    "cr_fpg": 1.06,
-   "cr_season": 0.91,
+   "cr_season": 0.92,
    "cr_games": 1.82,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -10587,7 +10588,7 @@
     }
    },
    "cr_pct": 70,
-   "cr_season_pct": 37
+   "cr_season_pct": 38
   },
   {
    "id": 4565231,
@@ -10835,7 +10836,7 @@
    "dfo_out": false,
    "cr": 1.9,
    "cr_fpg": 0.98,
-   "cr_season": 0.76,
+   "cr_season": 0.77,
    "cr_games": 1.94,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -10856,7 +10857,7 @@
     }
    },
    "cr_pct": 69,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 3899978,
@@ -10942,7 +10943,7 @@
    "dfo_out": false,
    "cr": 1.9,
    "cr_fpg": 1.94,
-   "cr_season": 1.76,
+   "cr_season": 1.77,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -11107,7 +11108,7 @@
    "dfo_out": false,
    "cr": 1.89,
    "cr_fpg": 1.98,
-   "cr_season": 1.78,
+   "cr_season": 1.79,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -11128,7 +11129,7 @@
     }
    },
    "cr_pct": 68,
-   "cr_season_pct": 87
+   "cr_season_pct": 88
   },
   {
    "id": 3941546,
@@ -11182,7 +11183,7 @@
     }
    },
    "cr_pct": 68,
-   "cr_season_pct": 32
+   "cr_season_pct": 31
   },
   {
    "id": 3648015,
@@ -11325,7 +11326,7 @@
    "dfo_out": false,
    "cr": 1.83,
    "cr_fpg": 1.88,
-   "cr_season": 1.67,
+   "cr_season": 1.68,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -11379,7 +11380,7 @@
    "dfo_out": false,
    "cr": 1.83,
    "cr_fpg": 1.88,
-   "cr_season": 1.71,
+   "cr_season": 1.72,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -11432,7 +11433,7 @@
    "dfo_out": false,
    "cr": 1.83,
    "cr_fpg": 1.93,
-   "cr_season": 1.72,
+   "cr_season": 1.73,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -11485,7 +11486,7 @@
    "dfo_out": false,
    "cr": 1.82,
    "cr_fpg": 1.94,
-   "cr_season": 1.7,
+   "cr_season": 1.71,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -11615,7 +11616,7 @@
     }
    },
    "cr_pct": 67,
-   "cr_season_pct": 27
+   "cr_season_pct": 26
   },
   {
    "id": 4874722,
@@ -11744,7 +11745,7 @@
    "dfo_out": false,
    "cr": 1.78,
    "cr_fpg": 1.86,
-   "cr_season": 1.63,
+   "cr_season": 1.64,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -11852,7 +11853,7 @@
    "dfo_out": false,
    "cr": 1.77,
    "cr_fpg": 1.81,
-   "cr_season": 1.6,
+   "cr_season": 1.61,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -11873,7 +11874,7 @@
     }
    },
    "cr_pct": 66,
-   "cr_season_pct": 81
+   "cr_season_pct": 82
   },
   {
    "id": 2976844,
@@ -11906,7 +11907,7 @@
    "dfo_out": false,
    "cr": 1.76,
    "cr_fpg": 1.85,
-   "cr_season": 1.62,
+   "cr_season": 1.63,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -12015,7 +12016,7 @@
    "dfo_out": false,
    "cr": 1.75,
    "cr_fpg": 1.91,
-   "cr_season": 1.55,
+   "cr_season": 1.56,
    "cr_games": 0.91,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -12091,7 +12092,7 @@
     }
    },
    "cr_pct": 65,
-   "cr_season_pct": 27
+   "cr_season_pct": 26
   },
   {
    "id": 4268771,
@@ -12123,7 +12124,7 @@
    "dfo_out": false,
    "cr": 1.74,
    "cr_fpg": 1.81,
-   "cr_season": 1.62,
+   "cr_season": 1.63,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -12332,7 +12333,7 @@
    "dfo_out": false,
    "cr": 1.71,
    "cr_fpg": 1.78,
-   "cr_season": 1.63,
+   "cr_season": 1.64,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -12440,7 +12441,7 @@
    "dfo_out": false,
    "cr": 1.7,
    "cr_fpg": 1.81,
-   "cr_season": 1.59,
+   "cr_season": 1.6,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -12571,7 +12572,7 @@
     }
    },
    "cr_pct": 64,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 5334662,
@@ -12624,7 +12625,7 @@
     }
    },
    "cr_pct": 71,
-   "cr_season_pct": 21
+   "cr_season_pct": 18
   },
   {
    "id": 5149192,
@@ -12656,7 +12657,7 @@
    "dfo_out": false,
    "cr": 1.68,
    "cr_fpg": 1.02,
-   "cr_season": 0.73,
+   "cr_season": 0.74,
    "cr_games": 1.65,
    "cr_dress": 0.82,
    "sat_last": false,
@@ -12677,7 +12678,7 @@
     }
    },
    "cr_pct": 71,
-   "cr_season_pct": 27
+   "cr_season_pct": 26
   },
   {
    "id": 4697405,
@@ -12732,7 +12733,7 @@
     }
    },
    "cr_pct": 63,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 4233637,
@@ -12765,7 +12766,7 @@
    "dfo_out": false,
    "cr": 1.68,
    "cr_fpg": 1.73,
-   "cr_season": 1.57,
+   "cr_season": 1.58,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -12868,7 +12869,7 @@
    "dfo_out": false,
    "cr": 1.68,
    "cr_fpg": 1.78,
-   "cr_season": 1.56,
+   "cr_season": 1.57,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -12996,7 +12997,7 @@
     }
    },
    "cr_pct": 63,
-   "cr_season_pct": 81
+   "cr_season_pct": 80
   },
   {
    "id": 4697397,
@@ -13051,7 +13052,7 @@
     }
    },
    "cr_pct": 63,
-   "cr_season_pct": 80
+   "cr_season_pct": 79
   },
   {
    "id": 4874911,
@@ -13085,7 +13086,7 @@
    "dfo_out": false,
    "cr": 1.66,
    "cr_fpg": 0.97,
-   "cr_season": 0.68,
+   "cr_season": 0.69,
    "cr_games": 1.71,
    "cr_dress": 0.85,
    "sat_last": false,
@@ -13106,7 +13107,7 @@
     }
    },
    "cr_pct": 62,
-   "cr_season_pct": 21
+   "cr_season_pct": 20
   },
   {
    "id": 4268466,
@@ -13246,7 +13247,7 @@
    "dfo_out": false,
    "cr": 1.65,
    "cr_fpg": 1.72,
-   "cr_season": 1.53,
+   "cr_season": 1.54,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -13300,7 +13301,7 @@
    "dfo_out": false,
    "cr": 1.65,
    "cr_fpg": 0.93,
-   "cr_season": 0.77,
+   "cr_season": 0.78,
    "cr_games": 1.78,
    "cr_dress": 0.89,
    "sat_last": false,
@@ -13352,7 +13353,7 @@
    "dfo_out": false,
    "cr": 1.64,
    "cr_fpg": 1.68,
-   "cr_season": 1.48,
+   "cr_season": 1.49,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -13373,7 +13374,7 @@
     }
    },
    "cr_pct": 69,
-   "cr_season_pct": 83
+   "cr_season_pct": 84
   },
   {
    "id": 3042095,
@@ -13427,7 +13428,7 @@
     }
    },
    "cr_pct": 61,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 4565239,
@@ -13534,7 +13535,7 @@
     }
    },
    "cr_pct": 61,
-   "cr_season_pct": 80
+   "cr_season_pct": 79
   },
   {
    "id": 4697446,
@@ -13566,7 +13567,7 @@
    "dfo_out": false,
    "cr": 1.63,
    "cr_fpg": 1.7,
-   "cr_season": 1.51,
+   "cr_season": 1.52,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -13688,7 +13689,7 @@
     }
    },
    "cr_pct": 61,
-   "cr_season_pct": 18
+   "cr_season_pct": 17
   },
   {
    "id": 5079,
@@ -13720,7 +13721,7 @@
    "dfo_out": false,
    "cr": 1.63,
    "cr_fpg": 1.67,
-   "cr_season": 1.49,
+   "cr_season": 1.5,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -13773,7 +13774,7 @@
    "dfo_out": false,
    "cr": 1.62,
    "cr_fpg": 1.68,
-   "cr_season": 1.47,
+   "cr_season": 1.48,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -13794,7 +13795,7 @@
     }
    },
    "cr_pct": 68,
-   "cr_season_pct": 82
+   "cr_season_pct": 83
   },
   {
    "id": 5160,
@@ -13827,7 +13828,7 @@
    "dfo_out": false,
    "cr": 1.62,
    "cr_fpg": 1.7,
-   "cr_season": 1.52,
+   "cr_season": 1.53,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -13880,7 +13881,7 @@
    "dfo_out": false,
    "cr": 1.62,
    "cr_fpg": 1.66,
-   "cr_season": 1.54,
+   "cr_season": 1.55,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -14041,7 +14042,7 @@
    "dfo_out": false,
    "cr": 1.59,
    "cr_fpg": 1.65,
-   "cr_season": 1.44,
+   "cr_season": 1.45,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -14170,7 +14171,7 @@
     }
    },
    "cr_pct": 59,
-   "cr_season_pct": 27
+   "cr_season_pct": 26
   },
   {
    "id": 5080171,
@@ -14278,7 +14279,7 @@
     }
    },
    "cr_pct": 59,
-   "cr_season_pct": 78
+   "cr_season_pct": 77
   },
   {
    "id": 3042017,
@@ -14332,7 +14333,7 @@
     }
    },
    "cr_pct": 58,
-   "cr_season_pct": 78
+   "cr_season_pct": 77
   },
   {
    "id": 5149186,
@@ -14365,7 +14366,7 @@
    "dfo_out": false,
    "cr": 1.57,
    "cr_fpg": 1.64,
-   "cr_season": 1.47,
+   "cr_season": 1.48,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -14439,7 +14440,7 @@
     }
    },
    "cr_pct": 58,
-   "cr_season_pct": 21
+   "cr_season_pct": 20
   },
   {
    "id": 4392642,
@@ -14493,7 +14494,7 @@
     }
    },
    "cr_pct": 66,
-   "cr_season_pct": 22
+   "cr_season_pct": 20
   },
   {
    "id": 4697457,
@@ -14545,7 +14546,7 @@
     }
    },
    "cr_pct": 66,
-   "cr_season_pct": 24
+   "cr_season_pct": 22
   },
   {
    "id": 4565225,
@@ -14577,7 +14578,7 @@
    "dfo_out": false,
    "cr": 1.55,
    "cr_fpg": 1.6,
-   "cr_season": 1.39,
+   "cr_season": 1.4,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -14739,7 +14740,7 @@
    "dfo_out": false,
    "cr": 1.51,
    "cr_fpg": 0.91,
-   "cr_season": 0.74,
+   "cr_season": 0.75,
    "cr_games": 1.67,
    "cr_dress": 0.83,
    "sat_last": false,
@@ -14760,7 +14761,7 @@
     }
    },
    "cr_pct": 57,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 3042088,
@@ -14792,7 +14793,7 @@
    "dfo_out": false,
    "cr": 1.51,
    "cr_fpg": 1.58,
-   "cr_season": 1.42,
+   "cr_season": 1.43,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -14846,7 +14847,7 @@
    "dfo_out": false,
    "cr": 1.51,
    "cr_fpg": 1.61,
-   "cr_season": 1.36,
+   "cr_season": 1.37,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -14975,7 +14976,7 @@
     }
    },
    "cr_pct": 57,
-   "cr_season_pct": 74
+   "cr_season_pct": 73
   },
   {
    "id": 3042056,
@@ -15063,7 +15064,7 @@
    "dfo_out": false,
    "cr": 1.49,
    "cr_fpg": 0.92,
-   "cr_season": 0.63,
+   "cr_season": 0.64,
    "cr_games": 1.62,
    "cr_dress": 0.81,
    "sat_last": false,
@@ -15084,7 +15085,7 @@
     }
    },
    "cr_pct": 56,
-   "cr_season_pct": 18
+   "cr_season_pct": 17
   },
   {
    "id": 4391255,
@@ -15118,7 +15119,7 @@
    "dfo_out": false,
    "cr": 1.49,
    "cr_fpg": 1.55,
-   "cr_season": 1.35,
+   "cr_season": 1.36,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -15193,7 +15194,7 @@
     }
    },
    "cr_pct": 56,
-   "cr_season_pct": 75
+   "cr_season_pct": 74
   },
   {
    "id": 2976833,
@@ -15386,7 +15387,7 @@
    "dfo_out": false,
    "cr": 1.45,
    "cr_fpg": 1.54,
-   "cr_season": 1.36,
+   "cr_season": 1.37,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -15495,7 +15496,7 @@
    "dfo_out": false,
    "cr": 1.44,
    "cr_fpg": 1.52,
-   "cr_season": 1.36,
+   "cr_season": 1.37,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -15601,7 +15602,7 @@
    "dfo_out": false,
    "cr": 1.43,
    "cr_fpg": 1.48,
-   "cr_season": 1.29,
+   "cr_season": 1.3,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -15938,7 +15939,7 @@
     }
    },
    "cr_pct": 61,
-   "cr_season_pct": 71
+   "cr_season_pct": 70
   },
   {
    "id": 4024968,
@@ -15991,7 +15992,7 @@
     }
    },
    "cr_pct": 60,
-   "cr_season_pct": 71
+   "cr_season_pct": 70
   },
   {
    "id": 4697448,
@@ -16045,7 +16046,7 @@
     }
    },
    "cr_pct": 59,
-   "cr_season_pct": 73
+   "cr_season_pct": 72
   },
   {
    "id": 5188591,
@@ -16077,7 +16078,7 @@
    "dfo_out": false,
    "cr": 1.39,
    "cr_fpg": 1.53,
-   "cr_season": 1.1,
+   "cr_season": 1.11,
    "cr_games": 0.9,
    "cr_dress": 0.9,
    "sat_last": false,
@@ -16152,7 +16153,7 @@
     }
    },
    "cr_pct": 58,
-   "cr_season_pct": 73
+   "cr_season_pct": 72
   },
   {
    "id": 3042191,
@@ -16184,7 +16185,7 @@
    "dfo_out": false,
    "cr": 1.38,
    "cr_fpg": 1.42,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -16237,7 +16238,7 @@
    "dfo_out": false,
    "cr": 1.38,
    "cr_fpg": 1.59,
-   "cr_season": 0.89,
+   "cr_season": 0.9,
    "cr_games": 0.86,
    "cr_dress": 0.86,
    "sat_last": false,
@@ -16290,7 +16291,7 @@
    "dfo_out": false,
    "cr": 1.37,
    "cr_fpg": 1.45,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -16344,7 +16345,7 @@
    "dfo_out": false,
    "cr": 1.37,
    "cr_fpg": 1.41,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -16365,7 +16366,7 @@
     }
    },
    "cr_pct": 54,
-   "cr_season_pct": 65
+   "cr_season_pct": 66
   },
   {
    "id": 3904178,
@@ -16397,7 +16398,7 @@
    "dfo_out": false,
    "cr": 1.37,
    "cr_fpg": 1.46,
-   "cr_season": 1.23,
+   "cr_season": 1.24,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -16418,7 +16419,7 @@
     }
    },
    "cr_pct": 57,
-   "cr_season_pct": 68
+   "cr_season_pct": 70
   },
   {
    "id": 4895214,
@@ -16472,7 +16473,7 @@
     }
    },
    "cr_pct": 54,
-   "cr_season_pct": 17
+   "cr_season_pct": 15
   },
   {
    "id": 5622,
@@ -16605,7 +16606,7 @@
    "dfo_out": false,
    "cr": 1.36,
    "cr_fpg": 1.4,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -16661,7 +16662,7 @@
    "dfo_out": false,
    "cr": 1.35,
    "cr_fpg": 1.4,
-   "cr_season": 1.24,
+   "cr_season": 1.25,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -16716,7 +16717,7 @@
    "dfo_out": false,
    "cr": 1.35,
    "cr_fpg": 1.39,
-   "cr_season": 1.24,
+   "cr_season": 1.25,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -16770,7 +16771,7 @@
    "dfo_out": false,
    "cr": 1.35,
    "cr_fpg": 1.41,
-   "cr_season": 1.25,
+   "cr_season": 1.26,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -16791,7 +16792,7 @@
     }
    },
    "cr_pct": 53,
-   "cr_season_pct": 67
+   "cr_season_pct": 68
   },
   {
    "id": 3069352,
@@ -16823,7 +16824,7 @@
    "dfo_out": false,
    "cr": 1.35,
    "cr_fpg": 1.4,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -16897,7 +16898,7 @@
     }
    },
    "cr_pct": 56,
-   "cr_season_pct": 68
+   "cr_season_pct": 66
   },
   {
    "id": 5149231,
@@ -16951,7 +16952,7 @@
     }
    },
    "cr_pct": 52,
-   "cr_season_pct": 57
+   "cr_season_pct": 56
   },
   {
    "id": 3114985,
@@ -16984,7 +16985,7 @@
    "dfo_out": false,
    "cr": 1.33,
    "cr_fpg": 1.36,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -17005,7 +17006,7 @@
     }
    },
    "cr_pct": 52,
-   "cr_season_pct": 65
+   "cr_season_pct": 66
   },
   {
    "id": 5219,
@@ -17219,7 +17220,7 @@
     }
    },
    "cr_pct": 54,
-   "cr_season_pct": 68
+   "cr_season_pct": 66
   },
   {
    "id": 3020803,
@@ -17251,7 +17252,7 @@
    "dfo_out": false,
    "cr": 1.32,
    "cr_fpg": 1.35,
-   "cr_season": 1.18,
+   "cr_season": 1.19,
    "cr_games": 0.98,
    "cr_dress": 0.98,
    "sat_last": false,
@@ -17360,7 +17361,7 @@
    "dfo_out": false,
    "cr": 1.31,
    "cr_fpg": 1.41,
-   "cr_season": 1.17,
+   "cr_season": 1.18,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -17381,7 +17382,7 @@
     }
    },
    "cr_pct": 51,
-   "cr_season_pct": 60
+   "cr_season_pct": 62
   },
   {
    "id": 5080160,
@@ -17468,7 +17469,7 @@
    "dfo_out": false,
    "cr": 1.31,
    "cr_fpg": 1.4,
-   "cr_season": 1.18,
+   "cr_season": 1.19,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -17489,7 +17490,7 @@
     }
    },
    "cr_pct": 51,
-   "cr_season_pct": 62
+   "cr_season_pct": 63
   },
   {
    "id": 4233884,
@@ -17521,7 +17522,7 @@
    "dfo_out": false,
    "cr": 1.31,
    "cr_fpg": 1.35,
-   "cr_season": 1.18,
+   "cr_season": 1.19,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -17759,7 +17760,7 @@
     }
    },
    "cr_pct": 50,
-   "cr_season_pct": 13
+   "cr_season_pct": 9
   },
   {
    "id": 2968818,
@@ -17812,7 +17813,7 @@
     }
    },
    "cr_pct": 53,
-   "cr_season_pct": 63
+   "cr_season_pct": 62
   },
   {
    "id": 4233583,
@@ -17898,7 +17899,7 @@
    "dfo_out": false,
    "cr": 1.29,
    "cr_fpg": 1.35,
-   "cr_season": 1.13,
+   "cr_season": 1.14,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -17951,7 +17952,7 @@
    "dfo_out": false,
    "cr": 1.28,
    "cr_fpg": 1.42,
-   "cr_season": 1.21,
+   "cr_season": 1.22,
    "cr_games": 0.91,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -18079,7 +18080,7 @@
     }
    },
    "cr_pct": 52,
-   "cr_season_pct": 65
+   "cr_season_pct": 64
   },
   {
    "id": 2562609,
@@ -18166,7 +18167,7 @@
    "dfo_out": false,
    "cr": 1.28,
    "cr_fpg": 1.37,
-   "cr_season": 1.18,
+   "cr_season": 1.19,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -18187,7 +18188,7 @@
     }
    },
    "cr_pct": 48,
-   "cr_season_pct": 62
+   "cr_season_pct": 63
   },
   {
    "id": 4587837,
@@ -18328,7 +18329,7 @@
    "dfo_out": false,
    "cr": 1.26,
    "cr_fpg": 1.3,
-   "cr_season": 1.04,
+   "cr_season": 1.05,
    "cr_games": 0.97,
    "cr_dress": 0.97,
    "sat_last": false,
@@ -18349,7 +18350,7 @@
     }
    },
    "cr_pct": 51,
-   "cr_season_pct": 51
+   "cr_season_pct": 52
   },
   {
    "id": 4697461,
@@ -18402,7 +18403,7 @@
     }
    },
    "cr_pct": 51,
-   "cr_season_pct": 63
+   "cr_season_pct": 62
   },
   {
    "id": 5136616,
@@ -18435,7 +18436,7 @@
    "dfo_out": false,
    "cr": 1.26,
    "cr_fpg": 1.33,
-   "cr_season": 0.95,
+   "cr_season": 0.96,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -18456,7 +18457,7 @@
     }
    },
    "cr_pct": 47,
-   "cr_season_pct": 41
+   "cr_season_pct": 42
   },
   {
    "id": 4874730,
@@ -18542,7 +18543,7 @@
    "dfo_out": false,
    "cr": 1.26,
    "cr_fpg": 1.32,
-   "cr_season": 1.17,
+   "cr_season": 1.18,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -18563,7 +18564,7 @@
     }
    },
    "cr_pct": 47,
-   "cr_season_pct": 60
+   "cr_season_pct": 62
   },
   {
    "id": 5833,
@@ -18748,7 +18749,7 @@
    "dfo_out": false,
    "cr": 1.24,
    "cr_fpg": 1.3,
-   "cr_season": 1.04,
+   "cr_season": 1.05,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -18769,7 +18770,7 @@
     }
    },
    "cr_pct": 51,
-   "cr_season_pct": 51
+   "cr_season_pct": 52
   },
   {
    "id": 3797,
@@ -18900,7 +18901,7 @@
    "dfo_out": false,
    "cr": 1.23,
    "cr_fpg": 1.32,
-   "cr_season": 1.15,
+   "cr_season": 1.16,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -19293,7 +19294,7 @@
     }
    },
    "cr_pct": 47,
-   "cr_season_pct": 57
+   "cr_season_pct": 56
   },
   {
    "id": 3941946,
@@ -19400,7 +19401,7 @@
     }
    },
    "cr_pct": 45,
-   "cr_season_pct": 55
+   "cr_season_pct": 54
   },
   {
    "id": 3149839,
@@ -19452,7 +19453,7 @@
     }
    },
    "cr_pct": 47,
-   "cr_season_pct": 57
+   "cr_season_pct": 56
   },
   {
    "id": 3069621,
@@ -19484,7 +19485,7 @@
    "dfo_out": false,
    "cr": 1.21,
    "cr_fpg": 1.26,
-   "cr_season": 1.11,
+   "cr_season": 1.12,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -19505,7 +19506,7 @@
     }
    },
    "cr_pct": 47,
-   "cr_season_pct": 58
+   "cr_season_pct": 59
   },
   {
    "id": 5550,
@@ -19560,7 +19561,7 @@
     }
    },
    "cr_pct": 45,
-   "cr_season_pct": 55
+   "cr_season_pct": 54
   },
   {
    "id": 5216907,
@@ -19647,7 +19648,7 @@
    "dfo_out": false,
    "cr": 1.19,
    "cr_fpg": 1.26,
-   "cr_season": 1.07,
+   "cr_season": 1.08,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -19668,7 +19669,7 @@
     }
    },
    "cr_pct": 44,
-   "cr_season_pct": 51
+   "cr_season_pct": 53
   },
   {
    "id": 5793,
@@ -19775,7 +19776,7 @@
     }
    },
    "cr_pct": 46,
-   "cr_season_pct": 58
+   "cr_season_pct": 57
   },
   {
    "id": 3939714,
@@ -19961,7 +19962,7 @@
    "dfo_out": false,
    "cr": 1.17,
    "cr_fpg": 1.23,
-   "cr_season": 1.09,
+   "cr_season": 1.1,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -19982,7 +19983,7 @@
     }
    },
    "cr_pct": 46,
-   "cr_season_pct": 55
+   "cr_season_pct": 56
   },
   {
    "id": 5080207,
@@ -20091,7 +20092,7 @@
     }
    },
    "cr_pct": 43,
-   "cr_season_pct": 55
+   "cr_season_pct": 54
   },
   {
    "id": 5216897,
@@ -20144,7 +20145,7 @@
     }
    },
    "cr_pct": 43,
-   "cr_season_pct": 46
+   "cr_season_pct": 45
   },
   {
    "id": 4587952,
@@ -20277,7 +20278,7 @@
    "dfo_out": false,
    "cr": 1.14,
    "cr_fpg": 1.23,
-   "cr_season": 1.0,
+   "cr_season": 1.01,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -20298,7 +20299,7 @@
     }
    },
    "cr_pct": 42,
-   "cr_season_pct": 44
+   "cr_season_pct": 45
   },
   {
    "id": 4755695,
@@ -20459,7 +20460,7 @@
     }
    },
    "cr_pct": 42,
-   "cr_season_pct": 37
+   "cr_season_pct": 36
   },
   {
    "id": 3096249,
@@ -20598,7 +20599,7 @@
    "dfo_out": false,
    "cr": 1.13,
    "cr_fpg": 1.19,
-   "cr_season": 1.02,
+   "cr_season": 1.03,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -20619,7 +20620,7 @@
     }
    },
    "cr_pct": 41,
-   "cr_season_pct": 47
+   "cr_season_pct": 48
   },
   {
    "id": 4392309,
@@ -20816,7 +20817,7 @@
    "dfo_out": false,
    "cr": 1.12,
    "cr_fpg": 1.18,
-   "cr_season": 0.85,
+   "cr_season": 0.86,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -20890,7 +20891,7 @@
     }
    },
    "cr_pct": 44,
-   "cr_season_pct": 47
+   "cr_season_pct": 46
   },
   {
    "id": 2593131,
@@ -20999,7 +21000,7 @@
     }
    },
    "cr_pct": 40,
-   "cr_season_pct": 46
+   "cr_season_pct": 45
   },
   {
    "id": 4331604,
@@ -21031,7 +21032,7 @@
    "dfo_out": false,
    "cr": 1.11,
    "cr_fpg": 1.22,
-   "cr_season": 0.98,
+   "cr_season": 0.99,
    "cr_games": 0.91,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -21052,7 +21053,7 @@
     }
    },
    "cr_pct": 44,
-   "cr_season_pct": 44
+   "cr_season_pct": 45
   },
   {
    "id": 5361709,
@@ -21085,7 +21086,7 @@
    "dfo_out": false,
    "cr": 1.11,
    "cr_fpg": 1.16,
-   "cr_season": 0.84,
+   "cr_season": 0.85,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -21106,7 +21107,7 @@
     }
    },
    "cr_pct": 40,
-   "cr_season_pct": 30
+   "cr_season_pct": 31
   },
   {
    "id": 2593311,
@@ -21192,7 +21193,7 @@
    "dfo_out": false,
    "cr": 1.1,
    "cr_fpg": 1.24,
-   "cr_season": 0.8,
+   "cr_season": 0.81,
    "cr_games": 0.89,
    "cr_dress": 0.89,
    "sat_last": false,
@@ -21246,7 +21247,7 @@
    "dfo_out": false,
    "cr": 1.1,
    "cr_fpg": 1.23,
-   "cr_season": 1.06,
+   "cr_season": 1.07,
    "cr_games": 0.89,
    "cr_dress": 0.89,
    "sat_last": false,
@@ -21612,7 +21613,7 @@
    "dfo_out": false,
    "cr": 1.09,
    "cr_fpg": 1.17,
-   "cr_season": 0.86,
+   "cr_season": 0.87,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -21688,7 +21689,7 @@
     }
    },
    "cr_pct": 38,
-   "cr_season_pct": 46
+   "cr_season_pct": 45
   },
   {
    "id": 2300,
@@ -21774,7 +21775,7 @@
    "dfo_out": false,
    "cr": 1.08,
    "cr_fpg": 1.15,
-   "cr_season": 0.94,
+   "cr_season": 0.95,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -21982,7 +21983,7 @@
    "dfo_out": false,
    "cr": 1.08,
    "cr_fpg": 1.16,
-   "cr_season": 0.98,
+   "cr_season": 0.99,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -22003,7 +22004,7 @@
     }
    },
    "cr_pct": 41,
-   "cr_season_pct": 44
+   "cr_season_pct": 45
   },
   {
    "id": 3941974,
@@ -22111,7 +22112,7 @@
     }
    },
    "cr_pct": 37,
-   "cr_season_pct": 46
+   "cr_season_pct": 45
   },
   {
    "id": 3151136,
@@ -22216,7 +22217,7 @@
     }
    },
    "cr_pct": 39,
-   "cr_season_pct": 36
+   "cr_season_pct": 35
   },
   {
    "id": 5275337,
@@ -22249,7 +22250,7 @@
    "dfo_out": false,
    "cr": 1.06,
    "cr_fpg": 1.14,
-   "cr_season": 0.86,
+   "cr_season": 0.87,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -22410,7 +22411,7 @@
    "dfo_out": false,
    "cr": 1.06,
    "cr_fpg": 1.15,
-   "cr_season": 0.9,
+   "cr_season": 0.91,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -22538,7 +22539,7 @@
     }
    },
    "cr_pct": 36,
-   "cr_season_pct": 34
+   "cr_season_pct": 33
   },
   {
    "id": 5216884,
@@ -22570,7 +22571,7 @@
    "dfo_out": false,
    "cr": 1.05,
    "cr_fpg": 1.19,
-   "cr_season": 0.72,
+   "cr_season": 0.73,
    "cr_games": 0.88,
    "cr_dress": 0.88,
    "sat_last": false,
@@ -22591,7 +22592,7 @@
     }
    },
    "cr_pct": 38,
-   "cr_season_pct": 25
+   "cr_season_pct": 24
   },
   {
    "id": 4894222,
@@ -22839,7 +22840,7 @@
    "dfo_out": false,
    "cr": 1.04,
    "cr_fpg": 1.12,
-   "cr_season": 0.97,
+   "cr_season": 0.98,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -22860,7 +22861,7 @@
     }
    },
    "cr_pct": 37,
-   "cr_season_pct": 43
+   "cr_season_pct": 44
   },
   {
    "id": 5216887,
@@ -22893,7 +22894,7 @@
    "dfo_out": false,
    "cr": 1.04,
    "cr_fpg": 1.08,
-   "cr_season": 0.73,
+   "cr_season": 0.74,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -22914,7 +22915,7 @@
     }
    },
    "cr_pct": 35,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 4991,
@@ -22967,7 +22968,7 @@
     }
    },
    "cr_pct": 37,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 4392471,
@@ -23312,7 +23313,7 @@
    "dfo_out": false,
    "cr": 1.02,
    "cr_fpg": 1.09,
-   "cr_season": 0.92,
+   "cr_season": 0.93,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -23387,7 +23388,7 @@
     }
    },
    "cr_pct": 33,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 4697717,
@@ -23419,7 +23420,7 @@
    "dfo_out": false,
    "cr": 1.01,
    "cr_fpg": 1.08,
-   "cr_season": 0.93,
+   "cr_season": 0.94,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -23473,7 +23474,7 @@
    "dfo_out": false,
    "cr": 1.01,
    "cr_fpg": 1.06,
-   "cr_season": 0.89,
+   "cr_season": 0.9,
    "cr_games": 0.96,
    "cr_dress": 0.96,
    "sat_last": false,
@@ -23494,7 +23495,7 @@
     }
    },
    "cr_pct": 33,
-   "cr_season_pct": 35
+   "cr_season_pct": 36
   },
   {
    "id": 4697470,
@@ -23528,7 +23529,7 @@
    "dfo_out": false,
    "cr": 1.01,
    "cr_fpg": 1.06,
-   "cr_season": 0.92,
+   "cr_season": 0.93,
    "cr_games": 0.95,
    "cr_dress": 0.95,
    "sat_last": false,
@@ -23549,7 +23550,7 @@
     }
    },
    "cr_pct": 33,
-   "cr_season_pct": 38
+   "cr_season_pct": 39
   },
   {
    "id": 5206628,
@@ -23582,7 +23583,7 @@
    "dfo_out": true,
    "cr": 1.0,
    "cr_fpg": 2.63,
-   "cr_season": 2.01,
+   "cr_season": 2.02,
    "cr_games": 0.38,
    "cr_dress": 0.38,
    "sat_last": true,
@@ -23745,7 +23746,7 @@
    "dfo_out": false,
    "cr": 0.99,
    "cr_fpg": 1.1,
-   "cr_season": 0.9,
+   "cr_season": 0.91,
    "cr_games": 0.9,
    "cr_dress": 0.9,
    "sat_last": false,
@@ -23819,7 +23820,7 @@
     }
    },
    "cr_pct": 34,
-   "cr_season_pct": 37
+   "cr_season_pct": 36
   },
   {
    "id": 5430,
@@ -23874,7 +23875,7 @@
     }
    },
    "cr_pct": 32,
-   "cr_season_pct": 32
+   "cr_season_pct": 31
   },
   {
    "id": 5157,
@@ -23927,7 +23928,7 @@
     }
    },
    "cr_pct": 34,
-   "cr_season_pct": 32
+   "cr_season_pct": 30
   },
   {
    "id": 4588175,
@@ -23980,7 +23981,7 @@
     }
    },
    "cr_pct": 33,
-   "cr_season_pct": 32
+   "cr_season_pct": 30
   },
   {
    "id": 3998,
@@ -24013,7 +24014,7 @@
    "dfo_out": false,
    "cr": 0.97,
    "cr_fpg": 1.06,
-   "cr_season": 0.86,
+   "cr_season": 0.87,
    "cr_games": 0.92,
    "cr_dress": 0.92,
    "sat_last": false,
@@ -24121,7 +24122,7 @@
    "dfo_out": false,
    "cr": 0.97,
    "cr_fpg": 1.03,
-   "cr_season": 0.87,
+   "cr_season": 0.88,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -24196,7 +24197,7 @@
     }
    },
    "cr_pct": 31,
-   "cr_season_pct": 37
+   "cr_season_pct": 36
   },
   {
    "id": 4874863,
@@ -24302,7 +24303,7 @@
     }
    },
    "cr_pct": 31,
-   "cr_season_pct": 35
+   "cr_season_pct": 34
   },
   {
    "id": 4393049,
@@ -24409,7 +24410,7 @@
     }
    },
    "cr_pct": 31,
-   "cr_season_pct": 30
+   "cr_season_pct": 29
   },
   {
    "id": 4352699,
@@ -24463,7 +24464,7 @@
     }
    },
    "cr_pct": 31,
-   "cr_season_pct": 34
+   "cr_season_pct": 33
   },
   {
    "id": 4341584,
@@ -24543,7 +24544,7 @@
    "dfo_out": false,
    "cr": 0.95,
    "cr_fpg": 1.07,
-   "cr_season": 0.91,
+   "cr_season": 0.92,
    "cr_games": 0.89,
    "cr_dress": 0.89,
    "sat_last": false,
@@ -24564,7 +24565,7 @@
     }
    },
    "cr_pct": 30,
-   "cr_season_pct": 37
+   "cr_season_pct": 38
   },
   {
    "id": 3042002,
@@ -24621,7 +24622,7 @@
     }
    },
    "cr_pct": 30,
-   "cr_season_pct": 86
+   "cr_season_pct": 85
   },
   {
    "id": 4565257,
@@ -24675,7 +24676,7 @@
     }
    },
    "cr_pct": 30,
-   "cr_season_pct": 30
+   "cr_season_pct": 29
   },
   {
    "id": 5361711,
@@ -24708,7 +24709,7 @@
    "dfo_out": false,
    "cr": 0.93,
    "cr_fpg": 1.01,
-   "cr_season": 0.7,
+   "cr_season": 0.71,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -24783,7 +24784,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 33
+   "cr_season_pct": 32
   },
   {
    "id": 3652598,
@@ -24838,7 +24839,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 30
+   "cr_season_pct": 29
   },
   {
    "id": 4064780,
@@ -24892,7 +24893,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 29
+   "cr_season_pct": 28
   },
   {
    "id": 3042086,
@@ -24925,7 +24926,7 @@
    "dfo_out": false,
    "cr": 0.93,
    "cr_fpg": 1.02,
-   "cr_season": 0.83,
+   "cr_season": 0.84,
    "cr_games": 0.91,
    "cr_dress": 0.91,
    "sat_last": false,
@@ -24999,7 +25000,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 33
+   "cr_season_pct": 32
   },
   {
    "id": 4233575,
@@ -25053,7 +25054,7 @@
     }
    },
    "cr_pct": 28,
-   "cr_season_pct": 32
+   "cr_season_pct": 31
   },
   {
    "id": 4024998,
@@ -25108,7 +25109,7 @@
     }
    },
    "cr_pct": 28,
-   "cr_season_pct": 30
+   "cr_season_pct": 29
   },
   {
    "id": 5172,
@@ -25142,7 +25143,7 @@
    "dfo_out": false,
    "cr": 0.92,
    "cr_fpg": 1.03,
-   "cr_season": 0.83,
+   "cr_season": 0.84,
    "cr_games": 0.9,
    "cr_dress": 0.9,
    "sat_last": false,
@@ -25195,7 +25196,7 @@
    "dfo_out": false,
    "cr": 0.92,
    "cr_fpg": 0.99,
-   "cr_season": 0.79,
+   "cr_season": 0.8,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -25216,7 +25217,7 @@
     }
    },
    "cr_pct": 31,
-   "cr_season_pct": 30
+   "cr_season_pct": 29
   },
   {
    "id": 2610321,
@@ -25340,7 +25341,7 @@
    "dfo_out": false,
    "cr": 0.91,
    "cr_fpg": 1.08,
-   "cr_season": 0.76,
+   "cr_season": 0.77,
    "cr_games": 0.84,
    "cr_dress": 0.84,
    "sat_last": false,
@@ -25361,7 +25362,7 @@
     }
    },
    "cr_pct": 30,
-   "cr_season_pct": 28
+   "cr_season_pct": 27
   },
   {
    "id": 5262,
@@ -25449,7 +25450,7 @@
    "dfo_out": false,
    "cr": 0.91,
    "cr_fpg": 0.97,
-   "cr_season": 0.84,
+   "cr_season": 0.85,
    "cr_games": 0.94,
    "cr_dress": 0.94,
    "sat_last": false,
@@ -25470,7 +25471,7 @@
     }
    },
    "cr_pct": 27,
-   "cr_season_pct": 30
+   "cr_season_pct": 31
   },
   {
    "id": 2562596,
@@ -25523,7 +25524,7 @@
     }
    },
    "cr_pct": 26,
-   "cr_season_pct": 29
+   "cr_season_pct": 28
   },
   {
    "id": 5206840,
@@ -25555,7 +25556,7 @@
    "dfo_out": false,
    "cr": 0.9,
    "cr_fpg": 0.97,
-   "cr_season": 0.65,
+   "cr_season": 0.66,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -25576,7 +25577,7 @@
     }
    },
    "cr_pct": 26,
-   "cr_season_pct": 19
+   "cr_season_pct": 18
   },
   {
    "id": 5080227,
@@ -25631,7 +25632,7 @@
     }
    },
    "cr_pct": 26,
-   "cr_season_pct": 30
+   "cr_season_pct": 29
   },
   {
    "id": 5272307,
@@ -25685,7 +25686,7 @@
     }
    },
    "cr_pct": 26,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 3943996,
@@ -25773,7 +25774,7 @@
    "dfo_out": false,
    "cr": 0.89,
    "cr_fpg": 0.99,
-   "cr_season": 0.83,
+   "cr_season": 0.84,
    "cr_games": 0.9,
    "cr_dress": 0.9,
    "sat_last": false,
@@ -25847,7 +25848,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 25
+   "cr_season_pct": 24
   },
   {
    "id": 5052,
@@ -25879,7 +25880,7 @@
    "dfo_out": false,
    "cr": 0.89,
    "cr_fpg": 0.96,
-   "cr_season": 0.76,
+   "cr_season": 0.77,
    "cr_games": 0.93,
    "cr_dress": 0.93,
    "sat_last": false,
@@ -25900,7 +25901,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 28
+   "cr_season_pct": 27
   },
   {
    "id": 5136706,
@@ -25956,7 +25957,7 @@
     }
    },
    "cr_pct": 25,
-   "cr_season_pct": 21
+   "cr_season_pct": 20
   },
   {
    "id": 3096102,
@@ -26114,7 +26115,7 @@
     }
    },
    "cr_pct": 25,
-   "cr_season_pct": 26
+   "cr_season_pct": 24
   },
   {
    "id": 2562602,
@@ -26168,7 +26169,7 @@
     }
    },
    "cr_pct": 25,
-   "cr_season_pct": 27
+   "cr_season_pct": 26
   },
   {
    "id": 2976843,
@@ -26220,7 +26221,7 @@
     }
    },
    "cr_pct": 29,
-   "cr_season_pct": 32
+   "cr_season_pct": 30
   },
   {
    "id": 4874929,
@@ -26252,7 +26253,7 @@
    "dfo_out": false,
    "cr": 0.87,
    "cr_fpg": 1.0,
-   "cr_season": 0.8,
+   "cr_season": 0.81,
    "cr_games": 0.87,
    "cr_dress": 0.87,
    "sat_last": false,
@@ -26420,7 +26421,7 @@
     }
    },
    "cr_pct": 28,
-   "cr_season_pct": 25
+   "cr_season_pct": 23
   },
   {
    "id": 5571,
@@ -26521,7 +26522,7 @@
     }
    },
    "cr_pct": 25,
-   "cr_season_pct": 26
+   "cr_season_pct": 24
   },
   {
    "id": 5073306,
@@ -26574,7 +26575,7 @@
     }
    },
    "cr_pct": 24,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 5080176,
@@ -26628,7 +26629,7 @@
     }
    },
    "cr_pct": 24,
-   "cr_season_pct": 21
+   "cr_season_pct": 20
   },
   {
    "id": 3946,
@@ -26660,7 +26661,7 @@
    "dfo_out": false,
    "cr": 0.85,
    "cr_fpg": 0.93,
-   "cr_season": 0.77,
+   "cr_season": 0.78,
    "cr_games": 0.92,
    "cr_dress": 0.92,
    "sat_last": false,
@@ -26715,7 +26716,7 @@
    "dfo_out": false,
    "cr": 0.84,
    "cr_fpg": 0.94,
-   "cr_season": 0.66,
+   "cr_season": 0.67,
    "cr_games": 0.89,
    "cr_dress": 0.89,
    "sat_last": false,
@@ -26736,7 +26737,7 @@
     }
    },
    "cr_pct": 23,
-   "cr_season_pct": 20
+   "cr_season_pct": 19
   },
   {
    "id": 5188356,
@@ -26770,7 +26771,7 @@
    "dfo_out": true,
    "cr": 0.84,
    "cr_fpg": 1.03,
-   "cr_season": 0.5,
+   "cr_season": 0.51,
    "cr_games": 0.81,
    "cr_dress": 0.41,
    "sat_last": true,
@@ -26791,7 +26792,7 @@
     }
    },
    "cr_pct": 23,
-   "cr_season_pct": 14
+   "cr_season_pct": 11
   },
   {
    "id": 5216880,
@@ -26844,7 +26845,7 @@
     }
    },
    "cr_pct": 27,
-   "cr_season_pct": 28
+   "cr_season_pct": 26
   },
   {
    "id": 4233880,
@@ -26899,7 +26900,7 @@
     }
    },
    "cr_pct": 23,
-   "cr_season_pct": 22
+   "cr_season_pct": 21
   },
   {
    "id": 4874736,
@@ -26953,7 +26954,7 @@
     }
    },
    "cr_pct": 23,
-   "cr_season_pct": 26
+   "cr_season_pct": 24
   },
   {
    "id": 5104602,
@@ -27062,7 +27063,7 @@
     }
    },
    "cr_pct": 23,
-   "cr_season_pct": 20
+   "cr_season_pct": 19
   },
   {
    "id": 4197009,
@@ -27116,7 +27117,7 @@
     }
    },
    "cr_pct": 22,
-   "cr_season_pct": 22
+   "cr_season_pct": 21
   },
   {
    "id": 4024997,
@@ -27169,7 +27170,7 @@
     }
    },
    "cr_pct": 22,
-   "cr_season_pct": 21
+   "cr_season_pct": 19
   },
   {
    "id": 5173765,
@@ -27223,7 +27224,7 @@
     }
    },
    "cr_pct": 21,
-   "cr_season_pct": 18
+   "cr_season_pct": 17
   },
   {
    "id": 5149194,
@@ -27278,7 +27279,7 @@
     }
    },
    "cr_pct": 21,
-   "cr_season_pct": 20
+   "cr_season_pct": 18
   },
   {
    "id": 5149183,
@@ -27332,7 +27333,7 @@
     }
    },
    "cr_pct": 21,
-   "cr_season_pct": 19
+   "cr_season_pct": 17
   },
   {
    "id": 4697683,
@@ -27478,7 +27479,7 @@
     }
    },
    "cr_pct": 21,
-   "cr_season_pct": 20
+   "cr_season_pct": 18
   },
   {
    "id": 4697705,
@@ -27583,7 +27584,7 @@
     }
    },
    "cr_pct": 21,
-   "cr_season_pct": 17
+   "cr_season_pct": 16
   },
   {
    "id": 2273,
@@ -27615,7 +27616,7 @@
    "dfo_out": false,
    "cr": 0.73,
    "cr_fpg": 0.86,
-   "cr_season": 0.64,
+   "cr_season": 0.65,
    "cr_games": 0.84,
    "cr_dress": 0.84,
    "sat_last": false,
@@ -27636,7 +27637,7 @@
     }
    },
    "cr_pct": 21,
-   "cr_season_pct": 19
+   "cr_season_pct": 18
   },
   {
    "id": 5092,
@@ -27668,7 +27669,7 @@
    "dfo_out": true,
    "cr": 0.72,
    "cr_fpg": 0.9,
-   "cr_season": 0.47,
+   "cr_season": 0.48,
    "cr_games": 0.8,
    "cr_dress": 0.4,
    "sat_last": true,
@@ -27689,7 +27690,7 @@
     }
    },
    "cr_pct": 26,
-   "cr_season_pct": 20
+   "cr_season_pct": 17
   },
   {
    "id": 5738,
@@ -27741,7 +27742,7 @@
     }
    },
    "cr_pct": 26,
-   "cr_season_pct": 22
+   "cr_season_pct": 20
   },
   {
    "id": 3114994,
@@ -27820,7 +27821,7 @@
    "dfo_out": true,
    "cr": 0.71,
    "cr_fpg": 1.31,
-   "cr_season": 0.88,
+   "cr_season": 0.89,
    "cr_games": 0.55,
    "cr_dress": 0.27,
    "sat_last": true,
@@ -27899,7 +27900,7 @@
     }
    },
    "cr_pct": 20,
-   "cr_season_pct": 17
+   "cr_season_pct": 16
   },
   {
    "id": 4392765,
@@ -27998,7 +27999,7 @@
     }
    },
    "cr_pct": 25,
-   "cr_season_pct": 22
+   "cr_season_pct": 19
   },
   {
    "id": 4565224,
@@ -28053,7 +28054,7 @@
     }
    },
    "cr_pct": 20,
-   "cr_season_pct": 16
+   "cr_season_pct": 14
   },
   {
    "id": 3041999,
@@ -28086,7 +28087,7 @@
    "dfo_out": true,
    "cr": 0.67,
    "cr_fpg": 1.25,
-   "cr_season": 0.72,
+   "cr_season": 0.73,
    "cr_games": 0.53,
    "cr_dress": 0.27,
    "sat_last": true,
@@ -28110,7 +28111,7 @@
     }
    },
    "cr_pct": 25,
-   "cr_season_pct": 25
+   "cr_season_pct": 24
   },
   {
    "id": 2563027,
@@ -28166,7 +28167,7 @@
     }
    },
    "cr_pct": 20,
-   "cr_season_pct": 17
+   "cr_season_pct": 15
   },
   {
    "id": 4893969,
@@ -28219,7 +28220,7 @@
     }
    },
    "cr_pct": 24,
-   "cr_season_pct": 21
+   "cr_season_pct": 18
   },
   {
    "id": 3759,
@@ -28322,7 +28323,7 @@
     }
    },
    "cr_pct": 19,
-   "cr_season_pct": 16
+   "cr_season_pct": 13
   },
   {
    "id": 5174160,
@@ -28401,7 +28402,7 @@
    "dfo_out": false,
    "cr": 0.63,
    "cr_fpg": 0.72,
-   "cr_season": 0.5,
+   "cr_season": 0.51,
    "cr_games": 0.88,
    "cr_dress": 0.88,
    "sat_last": false,
@@ -28422,7 +28423,7 @@
     }
    },
    "cr_pct": 19,
-   "cr_season_pct": 14
+   "cr_season_pct": 11
   },
   {
    "id": 3149633,
@@ -28475,7 +28476,7 @@
     }
    },
    "cr_pct": 19,
-   "cr_season_pct": 15
+   "cr_season_pct": 11
   },
   {
    "id": 3042016,
@@ -28643,7 +28644,7 @@
     }
    },
    "cr_pct": 19,
-   "cr_season_pct": 13
+   "cr_season_pct": 10
   },
   {
    "id": 3904190,
@@ -28674,7 +28675,7 @@
    "dfo_out": false,
    "cr": 0.58,
    "cr_fpg": 1.17,
-   "cr_season": 0.98,
+   "cr_season": 0.99,
    "cr_games": 0.5,
    "cr_dress": 0.5,
    "sat_last": false,
@@ -28698,7 +28699,7 @@
     }
    },
    "cr_pct": 23,
-   "cr_season_pct": 44
+   "cr_season_pct": 45
   },
   {
    "id": 3068087,
@@ -28746,7 +28747,7 @@
     "xfp": null
    },
    "cr_pct": 23,
-   "cr_season_pct": 18
+   "cr_season_pct": 15
   },
   {
    "id": 5560,
@@ -28803,7 +28804,7 @@
     }
    },
    "cr_pct": 18,
-   "cr_season_pct": 72
+   "cr_season_pct": 71
   },
   {
    "id": 5509,
@@ -28835,7 +28836,7 @@
    "dfo_out": true,
    "cr": 0.54,
    "cr_fpg": 2.15,
-   "cr_season": 1.36,
+   "cr_season": 1.37,
    "cr_games": 0.25,
    "cr_dress": 0.25,
    "sat_last": true,
@@ -28890,7 +28891,7 @@
    "dfo_out": true,
    "cr": 0.51,
    "cr_fpg": 1.71,
-   "cr_season": 0.32,
+   "cr_season": 0.77,
    "cr_games": 0.3,
    "cr_dress": 0.15,
    "sat_last": true,
@@ -28910,7 +28911,7 @@
     }
    },
    "cr_pct": 22,
-   "cr_season_pct": 19
+   "cr_season_pct": 27
   },
   {
    "id": 5488,
@@ -28998,7 +28999,7 @@
    "dfo_out": true,
    "cr": 0.5,
    "cr_fpg": 1.33,
-   "cr_season": 0.91,
+   "cr_season": 0.92,
    "cr_games": 0.38,
    "cr_dress": 0.38,
    "sat_last": true,
@@ -29148,7 +29149,7 @@
    "dfo_out": true,
    "cr": 0.48,
    "cr_fpg": 1.2,
-   "cr_season": 0.78,
+   "cr_season": 0.79,
    "cr_games": 0.4,
    "cr_dress": 0.4,
    "sat_last": true,
@@ -29260,7 +29261,7 @@
    "dfo_out": false,
    "cr": 0.41,
    "cr_fpg": 0.64,
-   "cr_season": 0.29,
+   "cr_season": 0.3,
    "cr_games": 0.63,
    "cr_dress": 0.63,
    "sat_last": false,
@@ -29281,7 +29282,7 @@
     }
    },
    "cr_pct": 17,
-   "cr_season_pct": 12
+   "cr_season_pct": 8
   },
   {
    "id": 5524,
@@ -29360,7 +29361,7 @@
    "dfo_out": false,
    "cr": 0.41,
    "cr_fpg": 0.53,
-   "cr_season": 0.27,
+   "cr_season": 0.28,
    "cr_games": 0.77,
    "cr_dress": 0.77,
    "sat_last": false,
@@ -29381,7 +29382,7 @@
     }
    },
    "cr_pct": 17,
-   "cr_season_pct": 11
+   "cr_season_pct": 7
   },
   {
    "id": 4587854,
@@ -29413,7 +29414,7 @@
    "dfo_out": true,
    "cr": 0.4,
    "cr_fpg": 1.29,
-   "cr_season": 0.69,
+   "cr_season": 0.7,
    "cr_games": 0.31,
    "cr_dress": 0.31,
    "sat_last": true,
@@ -29437,7 +29438,7 @@
     }
    },
    "cr_pct": 20,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 3852,
@@ -29470,7 +29471,7 @@
    "dfo_out": true,
    "cr": 0.4,
    "cr_fpg": 1.14,
-   "cr_season": 0.73,
+   "cr_season": 0.74,
    "cr_games": 0.35,
    "cr_dress": 0.35,
    "sat_last": false,
@@ -29494,7 +29495,7 @@
     }
    },
    "cr_pct": 17,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 4894729,
@@ -29598,7 +29599,7 @@
     }
    },
    "cr_pct": 17,
-   "cr_season_pct": 26
+   "cr_season_pct": 24
   },
   {
    "id": 3114717,
@@ -29629,7 +29630,7 @@
    "dfo_out": false,
    "cr": 0.35,
    "cr_fpg": 1.41,
-   "cr_season": 0.82,
+   "cr_season": 0.83,
    "cr_games": 0.25,
    "cr_dress": 0.25,
    "sat_last": true,
@@ -29685,7 +29686,7 @@
    "dfo_out": true,
    "cr": 0.35,
    "cr_fpg": 1.16,
-   "cr_season": 0.65,
+   "cr_season": 0.66,
    "cr_games": 0.3,
    "cr_dress": 0.3,
    "sat_last": true,
@@ -29706,7 +29707,7 @@
     }
    },
    "cr_pct": 19,
-   "cr_season_pct": 22
+   "cr_season_pct": 21
   },
   {
    "id": 5212753,
@@ -29738,7 +29739,7 @@
    "dfo_out": true,
    "cr": 0.35,
    "cr_fpg": 0.81,
-   "cr_season": 0.5,
+   "cr_season": 0.51,
    "cr_games": 0.43,
    "cr_dress": 0.43,
    "sat_last": true,
@@ -29759,7 +29760,7 @@
     }
    },
    "cr_pct": 16,
-   "cr_season_pct": 14
+   "cr_season_pct": 11
   },
   {
    "id": 4874720,
@@ -29791,7 +29792,7 @@
    "dfo_out": true,
    "cr": 0.34,
    "cr_fpg": 1.69,
-   "cr_season": 0.17,
+   "cr_season": 0.76,
    "cr_games": 0.2,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -29811,7 +29812,7 @@
     }
    },
    "cr_pct": 19,
-   "cr_season_pct": 16
+   "cr_season_pct": 27
   },
   {
    "id": 5075840,
@@ -29845,7 +29846,7 @@
    "dfo_out": true,
    "cr": 0.34,
    "cr_fpg": 0.89,
-   "cr_season": 0.46,
+   "cr_season": 0.47,
    "cr_games": 0.38,
    "cr_dress": 0.19,
    "sat_last": true,
@@ -29866,7 +29867,7 @@
     }
    },
    "cr_pct": 16,
-   "cr_season_pct": 14
+   "cr_season_pct": 11
   },
   {
    "id": 4352803,
@@ -29898,7 +29899,7 @@
    "dfo_out": true,
    "cr": 0.3,
    "cr_fpg": 1.52,
-   "cr_season": 0.15,
+   "cr_season": 0.68,
    "cr_games": 0.2,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -29918,7 +29919,7 @@
     }
    },
    "cr_pct": 18,
-   "cr_season_pct": 14
+   "cr_season_pct": 22
   },
   {
    "id": 5193,
@@ -29974,7 +29975,7 @@
     }
    },
    "cr_pct": 16,
-   "cr_season_pct": 11
+   "cr_season_pct": 7
   },
   {
    "id": 5188393,
@@ -30024,7 +30025,7 @@
     "xfp": null
    },
    "cr_pct": 18,
-   "cr_season_pct": 14
+   "cr_season_pct": 13
   },
   {
    "id": 2592095,
@@ -30081,7 +30082,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 15
+   "cr_season_pct": 13
   },
   {
    "id": 5077308,
@@ -30139,7 +30140,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 15
+   "cr_season_pct": 13
   },
   {
    "id": 4697820,
@@ -30172,7 +30173,7 @@
    "dfo_out": true,
    "cr": 0.27,
    "cr_fpg": 0.89,
-   "cr_season": 0.31,
+   "cr_season": 0.32,
    "cr_games": 0.3,
    "cr_dress": 0.15,
    "sat_last": true,
@@ -30193,7 +30194,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 12
+   "cr_season_pct": 8
   },
   {
    "id": 4063605,
@@ -30227,7 +30228,7 @@
    "dfo_out": true,
    "cr": 0.25,
    "cr_fpg": 1.25,
-   "cr_season": 0.12,
+   "cr_season": 0.56,
    "cr_games": 0.2,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -30247,7 +30248,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 7
+   "cr_season_pct": 14
   },
   {
    "id": 5149199,
@@ -30478,7 +30479,7 @@
    "dfo_out": true,
    "cr": 0.23,
    "cr_fpg": 0.82,
-   "cr_season": 0.44,
+   "cr_season": 0.45,
    "cr_games": 0.28,
    "cr_dress": 0.28,
    "sat_last": true,
@@ -30499,7 +30500,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 13
+   "cr_season_pct": 10
   },
   {
    "id": 5364138,
@@ -30839,7 +30840,7 @@
    "dfo_out": true,
    "cr": 0.21,
    "cr_fpg": 2.11,
-   "cr_season": 0.21,
+   "cr_season": 0.95,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -30859,7 +30860,7 @@
     }
    },
    "cr_pct": 13,
-   "cr_season_pct": 11
+   "cr_season_pct": 40
   },
   {
    "id": 4233566,
@@ -30941,7 +30942,7 @@
    "dfo_out": true,
    "cr": 0.2,
    "cr_fpg": 2.0,
-   "cr_season": 0.2,
+   "cr_season": 0.9,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -30961,7 +30962,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 17
+   "cr_season_pct": 37
   },
   {
    "id": 5080158,
@@ -31046,7 +31047,7 @@
    "dfo_out": true,
    "cr": 0.19,
    "cr_fpg": 1.88,
-   "cr_season": 0.19,
+   "cr_season": 0.85,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31066,7 +31067,7 @@
     }
    },
    "cr_pct": 12,
-   "cr_season_pct": 10
+   "cr_season_pct": 31
   },
   {
    "id": 3114743,
@@ -31098,7 +31099,7 @@
    "dfo_out": true,
    "cr": 0.18,
    "cr_fpg": 1.76,
-   "cr_season": 0.18,
+   "cr_season": 0.79,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31118,7 +31119,7 @@
     }
    },
    "cr_pct": 12,
-   "cr_season_pct": 10
+   "cr_season_pct": 26
   },
   {
    "id": 2562624,
@@ -31151,7 +31152,7 @@
    "dfo_out": true,
    "cr": 0.17,
    "cr_fpg": 1.73,
-   "cr_season": 0.17,
+   "cr_season": 0.78,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31171,7 +31172,7 @@
     }
    },
    "cr_pct": 11,
-   "cr_season_pct": 10
+   "cr_season_pct": 24
   },
   {
    "id": 4874940,
@@ -31229,7 +31230,7 @@
     }
    },
    "cr_pct": 11,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 2593315,
@@ -31262,7 +31263,7 @@
    "dfo_out": true,
    "cr": 0.16,
    "cr_fpg": 1.58,
-   "cr_season": 0.16,
+   "cr_season": 0.71,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31282,7 +31283,7 @@
     }
    },
    "cr_pct": 11,
-   "cr_season_pct": 9
+   "cr_season_pct": 21
   },
   {
    "id": 3183,
@@ -31331,7 +31332,7 @@
     "xfp": null
    },
    "cr_pct": 11,
-   "cr_season_pct": 9
+   "cr_season_pct": 7
   },
   {
    "id": 5188493,
@@ -31363,7 +31364,7 @@
    "dfo_out": true,
    "cr": 0.16,
    "cr_fpg": 1.15,
-   "cr_season": 0.38,
+   "cr_season": 0.39,
    "cr_games": 0.14,
    "cr_dress": 0.14,
    "sat_last": true,
@@ -31384,7 +31385,7 @@
     }
    },
    "cr_pct": 15,
-   "cr_season_pct": 20
+   "cr_season_pct": 16
   },
   {
    "id": 4588331,
@@ -31438,7 +31439,7 @@
     }
    },
    "cr_pct": 11,
-   "cr_season_pct": 11
+   "cr_season_pct": 7
   },
   {
    "id": 4697399,
@@ -31470,7 +31471,7 @@
    "dfo_out": true,
    "cr": 0.15,
    "cr_fpg": 1.45,
-   "cr_season": 0.15,
+   "cr_season": 0.65,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31490,7 +31491,7 @@
     }
    },
    "cr_pct": 14,
-   "cr_season_pct": 14
+   "cr_season_pct": 20
   },
   {
    "id": 4565269,
@@ -31522,7 +31523,7 @@
    "dfo_out": true,
    "cr": 0.15,
    "cr_fpg": 0.67,
-   "cr_season": 0.31,
+   "cr_season": 0.32,
    "cr_games": 0.22,
    "cr_dress": 0.22,
    "sat_last": true,
@@ -31543,7 +31544,7 @@
     }
    },
    "cr_pct": 14,
-   "cr_season_pct": 19
+   "cr_season_pct": 16
   },
   {
    "id": 5275403,
@@ -31592,7 +31593,7 @@
     "xfp": null
    },
    "cr_pct": 14,
-   "cr_season_pct": 14
+   "cr_season_pct": 13
   },
   {
    "id": 4712021,
@@ -31625,7 +31626,7 @@
    "dfo_out": true,
    "cr": 0.14,
    "cr_fpg": 1.4,
-   "cr_season": 0.14,
+   "cr_season": 0.63,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31645,7 +31646,7 @@
     }
    },
    "cr_pct": 13,
-   "cr_season_pct": 14
+   "cr_season_pct": 19
   },
   {
    "id": 3067951,
@@ -31677,7 +31678,7 @@
    "dfo_out": true,
    "cr": 0.14,
    "cr_fpg": 1.36,
-   "cr_season": 0.14,
+   "cr_season": 0.61,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31697,7 +31698,7 @@
     }
    },
    "cr_pct": 10,
-   "cr_season_pct": 8
+   "cr_season_pct": 16
   },
   {
    "id": 4874943,
@@ -31730,7 +31731,7 @@
    "dfo_out": true,
    "cr": 0.12,
    "cr_fpg": 1.25,
-   "cr_season": 0.12,
+   "cr_season": 0.56,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -31750,7 +31751,7 @@
     }
    },
    "cr_pct": 10,
-   "cr_season_pct": 7
+   "cr_season_pct": 14
   },
   {
    "id": 2265,
@@ -31996,7 +31997,7 @@
     "xfp": null
    },
    "cr_pct": 10,
-   "cr_season_pct": 7
+   "cr_season_pct": 6
   },
   {
    "id": 5361655,
@@ -32669,7 +32670,7 @@
    "dfo_out": true,
    "cr": 0.11,
    "cr_fpg": 1.1,
-   "cr_season": 0.11,
+   "cr_season": 0.49,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -32689,7 +32690,7 @@
     }
    },
    "cr_pct": 9,
-   "cr_season_pct": 6
+   "cr_season_pct": 11
   },
   {
    "id": 4874748,
@@ -32721,7 +32722,7 @@
    "dfo_out": true,
    "cr": 0.11,
    "cr_fpg": 1.09,
-   "cr_season": 0.11,
+   "cr_season": 0.49,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -32741,7 +32742,7 @@
     }
    },
    "cr_pct": 4,
-   "cr_season_pct": 2
+   "cr_season_pct": 17
   },
   {
    "id": 4697403,
@@ -32772,7 +32773,7 @@
    "dfo_out": true,
    "cr": 0.11,
    "cr_fpg": 0.68,
-   "cr_season": 0.26,
+   "cr_season": 0.27,
    "cr_games": 0.15,
    "cr_dress": 0.15,
    "sat_last": true,
@@ -32793,7 +32794,7 @@
     }
    },
    "cr_pct": 4,
-   "cr_season_pct": 18
+   "cr_season_pct": 15
   },
   {
    "id": 3669,
@@ -32951,7 +32952,7 @@
     }
    },
    "cr_pct": 6,
-   "cr_season_pct": 12
+   "cr_season_pct": 9
   },
   {
    "id": 5229186,
@@ -33104,7 +33105,7 @@
     }
    },
    "cr_pct": 3,
-   "cr_season_pct": 16
+   "cr_season_pct": 14
   },
   {
    "id": 5216889,
@@ -33587,7 +33588,7 @@
    "dfo_out": true,
    "cr": 0.09,
    "cr_fpg": 0.85,
-   "cr_season": 0.09,
+   "cr_season": 0.38,
    "cr_games": 0.1,
    "cr_dress": 0.1,
    "sat_last": true,
@@ -33607,7 +33608,7 @@
     }
    },
    "cr_pct": 6,
-   "cr_season_pct": 1
+   "cr_season_pct": 9
   },
   {
    "id": 4233648,
@@ -33738,7 +33739,7 @@
    "dfo_out": false,
    "cr": 0.07,
    "cr_fpg": 0.52,
-   "cr_season": 0.07,
+   "cr_season": 0.08,
    "cr_games": 0.13,
    "cr_dress": 0.13,
    "sat_last": true,
@@ -33949,7 +33950,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.72,
-   "cr_season": 0.17,
+   "cr_season": 0.51,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -33969,7 +33970,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 10
+   "cr_season_pct": 11
   },
   {
    "id": 4894487,
@@ -34137,7 +34138,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.48,
-   "cr_season": 0.15,
+   "cr_season": 0.45,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -34157,7 +34158,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 8
+   "cr_season_pct": 10
   },
   {
    "id": 5080153,
@@ -34189,7 +34190,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.16,
-   "cr_season": 0.12,
+   "cr_season": 0.35,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -34209,7 +34210,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 7
+   "cr_season_pct": 8
   },
   {
    "id": 3096217,
@@ -34284,7 +34285,7 @@
    "dfo_out": null,
    "cr": 0.0,
    "cr_fpg": 0.89,
-   "cr_season": 0.59,
+   "cr_season": 0.6,
    "cr_games": 0.0,
    "cr_dress": 0.71,
    "sat_last": false,
@@ -34305,7 +34306,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 17
+   "cr_season_pct": 15
   },
   {
    "id": 3069266,
@@ -34572,7 +34573,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.14,
-   "cr_season": 0.11,
+   "cr_season": 0.34,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -34592,7 +34593,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 6
+   "cr_season_pct": 8
   },
   {
    "id": 3151038,
@@ -34695,7 +34696,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 15
+   "cr_season_pct": 11
   },
   {
    "id": 5074,
@@ -34925,7 +34926,7 @@
     "xfp": null
    },
    "cr_pct": 0,
-   "cr_season_pct": 33
+   "cr_season_pct": 32
   },
   {
    "id": 3822,
@@ -35201,7 +35202,7 @@
     "xfp": null
    },
    "cr_pct": 0,
-   "cr_season_pct": 16
+   "cr_season_pct": 14
   },
   {
    "id": 4697407,
@@ -35230,7 +35231,7 @@
    "dfo_out": null,
    "cr": 0.0,
    "cr_fpg": 0.91,
-   "cr_season": 0.54,
+   "cr_season": 0.55,
    "cr_games": 0.0,
    "cr_dress": 0.31,
    "sat_last": true,
@@ -35251,7 +35252,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 16
+   "cr_season_pct": 13
   },
   {
    "id": 3389,
@@ -35377,7 +35378,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.36,
-   "cr_season": 0.88,
+   "cr_season": 0.89,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -35435,7 +35436,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 2.02,
-   "cr_season": 0.2,
+   "cr_season": 0.61,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -35455,7 +35456,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 11
+   "cr_season_pct": 16
   },
   {
    "id": 4272674,
@@ -35642,7 +35643,7 @@
     "xfp": null
    },
    "cr_pct": 0,
-   "cr_season_pct": 17
+   "cr_season_pct": 14
   },
   {
    "id": 3020225,
@@ -35724,7 +35725,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.34,
-   "cr_season": 0.43,
+   "cr_season": 0.44,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -35748,7 +35749,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 13
+   "cr_season_pct": 10
   },
   {
    "id": 5161,
@@ -35782,7 +35783,7 @@
    "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.48,
-   "cr_season": 0.15,
+   "cr_season": 0.45,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "sat_last": true,
@@ -35802,7 +35803,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 8
+   "cr_season_pct": 10
   }
  ]
 }
