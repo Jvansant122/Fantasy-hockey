@@ -326,7 +326,16 @@ A goalie's points depend heavily on whether his team wins (a win and a loss are 
 | An "upside" option for weeks you need a big score | High-ceiling players are just the high-projection players. When behind, pick the same players. |
 | Two-week matchups | Same per-game projection × two weeks of games. |
 | Age | Young players do improve and older ones decline, but recent ice time already shows it. |
-| PDO and finishing luck | A player whose team shoots and saves unusually well with him on the ice (PDO), or who scores well above his expected goals, is mostly running lucky. The rating already expects him to cool off because it projects goals from shots and chances. The row details now say "running hot" when that's why his rating sits below his season pace. |
+| PDO and finishing luck | A player whose team shoots and saves unusually well with him on the ice (PDO), or who scores well above his expected goals, is mostly running lucky. The rating already expects him to cool off because it projects goals from shots and chances (see section 26). |
+
+## 26. Expected vs. actual points
+
+A second research thread built an expected-points number. It's what a player's season would be worth if his goals and assists matched the quality of chances he and his linemates created, keeping his shots, hits and blocks as they are.
+
+- **Expected beats actual as a predictor.** Season expected points per game predicts the next month better than season points per game, in all three test seasons, especially for defensemen.
+- **Most of a gap is luck.** About three quarters of the difference between a player's actual and expected points fades within 4 weeks. The luckiest tenth of wire players drop about 0.2 points a game, and the unluckiest rise about as much.
+- **Not all of it, though.** Elite finishers like Kucherov, Draisaitl and Nylander beat their chances every year.
+- **The rating already does most of this**, since it projects goals from shots and chances. So expected points don't change the rating. When you tap a skater's row, it shows his season points per game next to his expected points. Once he has 15+ games and the gap is 0.15 or more, it also says "running hot" or "running cold".
 
 ## What the independent review changed
 
