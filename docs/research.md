@@ -429,6 +429,18 @@ The new model predicts the share of the team's remaining games he plays. It uses
 
 With injured players included the gain is bigger (+0.030 / +0.038). An independent rebuild found +0.021 / +0.024. Players out for a while now keep a realistic Season rating: those idle two weeks or more dress for about 27% of the remaining games, not the 7% the old cap implied. Points per game didn't change; three alternatives tied or lost. The Week rating and ESPN's injury caps are unchanged.
 
+## 35. Pick adds and drops by more than this week
+
+Every move simulation before this one scored a single week, so dropping a good player who only had a light week looked free. With rosters carrying over across 8-week stretches, ranking adds and drops by this week alone churns away good players and costs later weeks. Adding about two more weeks of per-game value (7 games) to this week's projection works best:
+
+| Ranking adds and drops by | 2 Monday moves | 6 Monday moves |
+| --- | --- | --- |
+| This week only (the old site) | baseline | baseline |
+| Per-game value only | +0.7 | |
+| **This week + 7 games of per-game value** | **+1.75** | **+2.3** |
+
+**On the site:** the upgrade cards and the drop list now rank skaters by this "keep value" (shown next to the Week number). The per-game part uses the Season rating, so an injured star with a long future isn't put on the drop list. The Week column itself is unchanged, and goalies are still ranked on this week, since streams are decided night by night.
+
 ## What the independent review changed
 
 | Review point | Outcome |
