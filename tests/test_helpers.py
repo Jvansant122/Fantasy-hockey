@@ -80,3 +80,38 @@ def test_displaced_skater_is_least_used_at_the_returning_regulars_position():
     }
     assert rating.displaced_skaters(by_player, tg, healthy={1}) == {3: (0.08, "P1")}
     assert rating.displaced_skaters(by_player, tg, healthy=set()) == {}  # still listed as out
+
+
+def test_two_week_playoff_round_counts_14_days_and_14_moves():
+    """Playoff rounds span two Monday-Sunday weeks (findings 109): in week 2 of a round a manager who used 7 still has 7."""
+    periods = {str(k): [k] for k in range(1, 24)} | {"24": [24, 25], "25": [26, 27]}
+    assert fetch.matchup_days(periods, 2, 11, 4) == list(range(7, 14))  # Friday of the regular week 2
+    round1 = fetch.matchup_days(periods, 24, 170, 2)  # Wednesday of the round's second week
+    assert round1 == list(range(161, 175))
+    acq = {"matchupAcquisitionLimit": 1.0, "matchupLimitPerScoringPeriod": True}
+    limit = fetch.matchup_move_limit(acq, len(round1), [7, 3])
+    assert limit == 14 and limit - 7 == 7
+    assert fetch.is_final_matchup(periods, 25) and not fetch.is_final_matchup(periods, 24)
+
+
+def test_matchup_days_falls_back_to_this_week():
+    assert fetch.matchup_days(None, 2, 11, 4) == list(range(7, 14))
+    assert fetch.matchup_days({"2": [5]}, 2, 11, 4) == list(range(7, 14))  # map doesn't contain today
+    assert fetch.matchup_days({"2": [2]}, 2, 12, 4) == list(range(8, 15))  # a stretched week: days don't line up with Monday
+    assert not fetch.is_final_matchup(None, 3)
+
+
+def test_week_schedule_reads_every_week_of_the_matchup(monkeypatch):
+    seen = []
+
+    class Resp:
+        def __init__(self, day):
+            self.day = day
+
+        def json(self):
+            return {"gameWeek": [{"date": self.day, "games": [{"gameType": 2, "awayTeam": {"abbrev": "BOS"}, "homeTeam": {"abbrev": "TOR"}}]}]}
+
+    monkeypatch.setattr(rating, "nhl_get", lambda s, url: seen.append(url) or Resp(url.rsplit("/", 1)[1]))
+    games = {}
+    out = rating.week_schedule(None, date(2027, 3, 8), games, weeks=2)
+    assert out["TOR"] == ["2027-03-08", "2027-03-15"] and len(games["BOS"]) == 2 and len(seen) == 2
