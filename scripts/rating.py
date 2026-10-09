@@ -39,6 +39,7 @@ LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by 
 # expected fantasy points (xG research, sections 3-5): assist-share priors (all situations, power play) and the hot/cold note
 XFP_SHARE_F, XFP_SHARE_D, XFP_PRIOR_GOALS = (0.51, 0.46), (0.32, 0.57), 15
 LUCK_MIN_GP, LUCK_GAP = 15, 0.15
+EARLY_SHARE_K, EARLY_SHARE_GAMES = 6, 10  # goalie start shares shrink toward last season's split (findings section 41)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -307,9 +308,16 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     cands = set(goalies) | {g for g in seq[-20:]} | set(confirmed.values())
     if not cands:
         return {}
+    # early season: pull each share toward his share of the team's starts last season, fading out by the team's
+    # 10th game, so one opening-night start doesn't read as a 100/0 split (findings section 41)
+    k = EARLY_SHARE_K * max(0.0, 1 - len(seq) / EARLY_SHARE_GAMES)
+    last_total = sum(prev_starts.get(gid, 0) for gid in cands)
+    prior = {gid: prev_starts.get(gid, 0) / last_total if last_total else 1 / len(cands) for gid in cands}
     shares = {}
     for gid in cands:
-        sh = lambda n: (sum(x == gid for x in seq[-n:]) / len(seq[-n:])) if seq else 0.0
+        def sh(n, gid=gid):
+            window = seq[-n:]
+            return (sum(x == gid for x in window) + k * prior[gid]) / (len(window) + k) if window or k else 0.0
         shares[gid] = dict(share5=sh(5), share10=sh(10), share20=sh(20), starts_std_share=sh(len(seq) or 1),
                            prev_season_share=min(prev_starts.get(gid, 0) / 82, 1.0))
     prev_p = {gid: float(bool(seq) and seq[-1] == gid) for gid in cands}

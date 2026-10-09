@@ -218,3 +218,16 @@ def test_expected_fp_and_luck_note():
 
 
 LUCK_TOL = 0.15
+
+
+def test_early_season_backup_not_written_off():
+    """One opening-night start shouldn't read as a 100/0 split (findings section 41)."""
+    model = rating.Model()
+    dates = ["2026-10-09", "2026-10-11", "2026-10-13", "2026-10-15"]
+    prev = {1: 50, 2: 32}
+    early = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": [("2026-10-07", 1)]}, prev, dates, TODAY)
+    assert early[2] > 0.8  # the backup still gets about a third of the next 4
+    # from the 10th game on, the shrink is gone and recent starts decide
+    hist = [(f"2026-09-{d:02d}", 1) for d in range(10, 20)]
+    late = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, prev, dates, TODAY)
+    assert late[2] < early[2]
