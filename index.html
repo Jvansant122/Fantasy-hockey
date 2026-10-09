@@ -135,7 +135,7 @@
     </div>
     <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
-  <p class="sub"><b>Claude Rating</b> = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at 9 AM, 12:30 PM and 5 PM ET) × his points per start this season, pulled toward the league average of 2.9 (his own number gets half the weight at 15 starts). Tonight's game uses the betting line instead: about 2.9 + 4.1 × (win chance − 50%) points per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
+  <p class="sub"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (injuries aside, so an injured star still rates high). Goalies: his share of his team's starts × his points per start. Use it for keepers and trades; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at 9 AM, 12:30 PM and 5 PM ET) × his points per start this season, pulled toward the league average of 2.9 (his own number gets half the weight at 15 starts). Tonight's game uses the betting line instead: about 2.9 + 4.1 × (win chance − 50%) points per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
   <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 6 D counting UTL as a D, 2 G). Most of the value of empty slots is on light nights. Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
 </main>
 <script>
@@ -147,7 +147,7 @@ const CHECKS = ["left", "healthy", "addfa"];
 const state = { team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
 // [key, label, align, shown on phones]
 const COLS = [
-  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Rating", "r", true],
+  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
   ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["opengm", "Open", "r", true], ["light", "Light", "r", false],
   ["ppg", "Proj/G", "r", false], ["week", "Week proj", "r", false], ["cur_ppg", "This yr/G", "r", false],
   ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
@@ -205,9 +205,10 @@ function computeOpenSlots(d) {
   }
 }
 
-function pctBadge(p) {
-  if (p.cr_pct == null) return "";
-  return `<span class="pct ${p.cr_pct >= 90 ? "hi" : p.cr_pct >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} in the league and on the wire">${p.cr_pct}</span>`;
+function pctBadge(p, key = "cr_pct") {
+  const v = p[key];
+  if (v == null) return "";
+  return `<span class="pct ${v >= 90 ? "hi" : v >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} in the league and on the wire">${v}</span>`;
 }
 function dots(p) {
   return `<span class="dots">${state.data.nights.map(n => {
@@ -227,6 +228,7 @@ function why(p) {
     parts.push(`× ${(+p.cr_fpg || 0).toFixed(2)} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward the 2.9 average)` : ""));
   } else {
     parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
+    if (p.cr_season != null) parts.push(`Season: ${n(p.cr_season)} pts per team game (no injury discount)`);
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");
     if (w.last_fpg != null) parts.push(`last season ${n(w.last_fpg)} pts/game`);
@@ -256,7 +258,8 @@ function cells(p) {
   const og = openGames(p);
   return {
     name: `${esc(p.name)}${tags}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
-    cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "", nights: dots(p), games: games(p),
+    cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "",
+    cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: games(p),
     opengm: og == null ? "–" : og, light: light(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
     cur_ppg: fmt(p.cur_ppg), last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
   };
@@ -405,7 +408,7 @@ fetch("data/players.json", { cache: "no-store" })
     state.data = d;
     if (!d.rated) {
       state.sort = "week";
-      COLS.splice(COLS.findIndex(c => c[0] === "cr"), 1);
+      COLS.splice(COLS.findIndex(c => c[0] === "cr"), 2);
       $("minr").parentElement.remove();
     }
     teamOptions(d);
