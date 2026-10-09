@@ -28,7 +28,10 @@ MONEYPUCK = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/reg
 UA = {"User-Agent": "Mozilla/5.0 (fantasy-hockey-lookup)"}
 WEIGHTS = {"goals": 2, "assists": 1, "ppPoints": 0.5, "shPoints": 0.5, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints", "points"]
-INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.7}
+# ESPN status caps the chance to dress (research findings section 15); recheck day-to-day after ~3 weeks of logs
+INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}
+INJURY_LOG = ROOT / "data" / "injury_log.jsonl"
+INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # no NHL game in 14+ days while the team kept playing (outside what the research measured)
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -276,6 +279,21 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     return exp
 
 
+def write_injury_log(entries, today):
+    """Keep the last INJURY_LOG_DAYS days of ESPN injury overrides, one line per player per day, to check them later."""
+    cutoff = (today - timedelta(days=INJURY_LOG_DAYS)).isoformat()
+    kept = []
+    if INJURY_LOG.exists():
+        for line in INJURY_LOG.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if cutoff <= row.get("date", "") < today.isoformat():
+                kept.append(row)
+    INJURY_LOG.write_text("".join(json.dumps(r) + "\n" for r in kept + entries))
+
+
 def load_news():
     path = ROOT / "data" / "news.json"
     if not path.exists():
@@ -344,6 +362,7 @@ def add_ratings(players, espn_season, today, monday):
         goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today))
 
     unmatched = 0
+    injury_log = []
     for p in players:
         pid = match(p)
         if pid is None:
@@ -383,7 +402,10 @@ def add_ratings(players, espn_season, today, monday):
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
                 if n.get("fpg_mult") is not None:
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
-            p_dress *= inj
+            if p.get("injury") in INJURY_DRESS:
+                injury_log.append({"date": today.isoformat(), "espn_id": p["id"], "nhl_id": pid, "name": p["name"],
+                                   "status": p["injury"], "p_dress_table": round(p_dress, 3), "p_dress": round(min(p_dress, inj), 3)})
+            p_dress = min(p_dress, inj)
             exp_games = p["games_left"] * p_dress
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
@@ -407,5 +429,6 @@ def add_ratings(players, espn_season, today, monday):
         for p in grp:
             below = sum(v < p["cr"] for v in vals)
             p["cr_pct"] = round(100 * below / max(len(vals) - 1, 1))
+    write_injury_log(injury_log, today)
     print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")
     return unmatched
