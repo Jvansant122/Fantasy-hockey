@@ -1,5 +1,5 @@
 {
- "updated": "Fri Oct 9, 4:49 AM ET",
+ "updated": "Fri Oct 9, 5:45 AM ET",
  "team": "New York Mess",
  "matchup_period": 2,
  "nights": [
@@ -54,66 +54,80 @@
   }
  ],
  "rated": true,
+ "move_limit": 1.0,
+ "goalie_cap": null,
  "teams": [
   {
    "id": 1,
    "name": "Your Mom's Aho",
-   "mine": false
+   "mine": false,
+   "moves_used": null
   },
   {
    "id": 3,
    "name": "6 Foot Kings Only",
-   "mine": false
+   "mine": false,
+   "moves_used": null
   },
   {
    "id": 4,
    "name": "Nico de gallo",
-   "mine": false
+   "mine": false,
+   "moves_used": 3
   },
   {
    "id": 5,
    "name": "The First place team",
-   "mine": false
+   "mine": false,
+   "moves_used": 6
   },
   {
    "id": 6,
    "name": "Justin TimberSkate",
-   "mine": false
+   "mine": false,
+   "moves_used": null
   },
   {
    "id": 7,
    "name": "Jarvis, Give Ricky a Smooch \ud83d\udc8b",
-   "mine": false
+   "mine": false,
+   "moves_used": 1
   },
   {
    "id": 8,
    "name": "Jerry Slafkovsky",
-   "mine": false
+   "mine": false,
+   "moves_used": null
   },
   {
    "id": 9,
    "name": "I'm In Agony.. Robert.",
-   "mine": false
+   "mine": false,
+   "moves_used": 3
   },
   {
    "id": 10,
    "name": "The Grabbers",
-   "mine": false
+   "mine": false,
+   "moves_used": 1
   },
   {
    "id": 11,
    "name": "Pleasant Tuatara",
-   "mine": false
+   "mine": false,
+   "moves_used": 1
   },
   {
    "id": 12,
    "name": "New York Mess",
-   "mine": true
+   "mine": true,
+   "moves_used": 6
   },
   {
    "id": 13,
    "name": "What the P.uck",
-   "mine": false
+   "mine": false,
+   "moves_used": 6
   }
  ],
  "players": [
@@ -211,7 +225,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 4
+    "gs": 4,
+    "p_today": 0.75
    },
    "cr_pct": 100,
    "cr_season_pct": 84
@@ -469,7 +484,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.65
    },
    "cr_pct": 99,
    "cr_season_pct": 90
@@ -676,7 +692,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.62
    },
    "cr_pct": 97,
    "cr_season_pct": 79
@@ -990,7 +1007,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.73
    },
    "cr_pct": 96,
    "cr_season_pct": 94
@@ -1092,7 +1110,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.81
    },
    "cr_pct": 95,
    "cr_season_pct": 87
@@ -1165,7 +1184,7 @@
    "team_id": 4,
    "ir": false,
    "injury": null,
-   "owned": 14.5,
+   "owned": 14.6,
    "gp": 3,
    "ppg": 1.77,
    "cur_ppg": 2.8,
@@ -1247,7 +1266,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.68
    },
    "cr_pct": 94,
    "cr_season_pct": 82
@@ -1320,7 +1340,7 @@
    "team_id": 1,
    "ir": false,
    "injury": null,
-   "owned": 61.5,
+   "owned": 61.6,
    "gp": 3,
    "ppg": 1.88,
    "cur_ppg": 2.13,
@@ -1741,7 +1761,7 @@
    "team_id": 5,
    "ir": false,
    "injury": null,
-   "owned": 47.4,
+   "owned": 47.5,
    "gp": 5,
    "ppg": 1.52,
    "cur_ppg": 1.98,
@@ -2272,7 +2292,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 18.5,
+   "owned": 18.6,
    "gp": 3,
    "ppg": 1.48,
    "cur_ppg": 2.73,
@@ -2461,7 +2481,8 @@
     "exp_starts": 1.01,
     "team_games": 2,
     "share10": 0.6,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 92,
    "cr_season_pct": 66
@@ -2831,7 +2852,8 @@
     "exp_starts": 1.17,
     "team_games": 2,
     "share10": 0.6,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 91,
    "cr_season_pct": 78
@@ -3218,7 +3240,7 @@
    "team_id": 3,
    "ir": false,
    "injury": null,
-   "owned": 5.4,
+   "owned": 5.5,
    "gp": 3,
    "ppg": 1.78,
    "cur_ppg": 1.67,
@@ -3460,7 +3482,8 @@
      "starting": false,
      "status": "Confirmed"
     },
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 90,
    "cr_season_pct": 36
@@ -3530,7 +3553,7 @@
    "team_id": 7,
    "ir": false,
    "injury": null,
-   "owned": 29.7,
+   "owned": 29.8,
    "gp": 5,
    "ppg": 1.45,
    "cur_ppg": 2.44,
@@ -3662,7 +3685,8 @@
     "exp_starts": 0.89,
     "team_games": 1,
     "share10": 1.0,
-    "gs": 4
+    "gs": 4,
+    "p_today": 0.0
    },
    "cr_pct": 88,
    "cr_season_pct": 96
@@ -3838,7 +3862,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 6.5,
+   "owned": 6.6,
    "gp": 5,
    "ppg": 1.52,
    "cur_ppg": 1.62,
@@ -3944,7 +3968,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 14.3,
+   "owned": 14.4,
    "gp": 3,
    "ppg": 1.63,
    "cur_ppg": 2.1,
@@ -3997,7 +4021,7 @@
    "team_id": 9,
    "ir": false,
    "injury": null,
-   "owned": 38.6,
+   "owned": 38.7,
    "gp": 4,
    "ppg": 1.74,
    "cur_ppg": 2.62,
@@ -4080,7 +4104,8 @@
      "starting": true,
      "status": "Confirmed"
     },
-    "gs": 3
+    "gs": 3,
+    "p_today": 1.0
    },
    "cr_pct": 87,
    "cr_season_pct": 81
@@ -4124,7 +4149,8 @@
     "exp_starts": 0.79,
     "team_games": 1,
     "share10": 0.8,
-    "gs": 4
+    "gs": 4,
+    "p_today": 0.0
    },
    "cr_pct": 86,
    "cr_season_pct": 99
@@ -4141,7 +4167,7 @@
    "team_id": 7,
    "ir": false,
    "injury": null,
-   "owned": 48.3,
+   "owned": 48.4,
    "gp": 3,
    "ppg": 1.69,
    "cur_ppg": 2.27,
@@ -4274,7 +4300,8 @@
     "exp_starts": 0.77,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 84,
    "cr_season_pct": 100
@@ -4291,7 +4318,7 @@
    "team_id": 5,
    "ir": false,
    "injury": null,
-   "owned": 63.3,
+   "owned": 63.4,
    "gp": 4,
    "ppg": 1.53,
    "cur_ppg": 1.55,
@@ -4344,7 +4371,7 @@
    "team_id": 8,
    "ir": false,
    "injury": null,
-   "owned": 8.9,
+   "owned": 8.8,
    "gp": 4,
    "ppg": 2.18,
    "cur_ppg": -1.65,
@@ -4371,7 +4398,8 @@
     "exp_starts": 1.36,
     "team_games": 2,
     "share10": 0.8,
-    "gs": 4
+    "gs": 4,
+    "p_today": 0.0
    },
    "cr_pct": 83,
    "cr_season_pct": 58
@@ -4467,7 +4495,8 @@
     "exp_starts": 1.0,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 81,
    "cr_season_pct": 48
@@ -4511,7 +4540,8 @@
     "exp_starts": 0.83,
     "team_games": 1,
     "share10": 1.0,
-    "gs": 4
+    "gs": 4,
+    "p_today": 0.0
    },
    "cr_pct": 81,
    "cr_season_pct": 95
@@ -4714,7 +4744,8 @@
     "exp_starts": 0.99,
     "team_games": 2,
     "share10": 0.4,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 79,
    "cr_season_pct": 60
@@ -4733,7 +4764,7 @@
    "team_id": 8,
    "ir": false,
    "injury": null,
-   "owned": 47.5,
+   "owned": 47.6,
    "gp": 5,
    "ppg": 1.75,
    "cur_ppg": 2.32,
@@ -4812,7 +4843,8 @@
     "exp_starts": 0.82,
     "team_games": 1,
     "share10": 0.6,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 78,
    "cr_season_pct": 97
@@ -4939,7 +4971,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 22.7,
+   "owned": 22.8,
    "gp": 4,
    "ppg": 1.37,
    "cur_ppg": 2.98,
@@ -5099,7 +5131,7 @@
    "team_id": 11,
    "ir": false,
    "injury": null,
-   "owned": 16.3,
+   "owned": 16.2,
    "gp": 5,
    "ppg": 0.99,
    "cur_ppg": 0.92,
@@ -5547,7 +5579,8 @@
     "exp_starts": 0.83,
     "team_games": 2,
     "share10": 0.4,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 77,
    "cr_season_pct": 34
@@ -5932,7 +5965,7 @@
    "team_id": 12,
    "ir": false,
    "injury": null,
-   "owned": 26.8,
+   "owned": 26.9,
    "gp": 3,
    "ppg": 3.58,
    "cur_ppg": 5.13,
@@ -5963,7 +5996,8 @@
      "starting": true,
      "status": "Unconfirmed"
     },
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.73
    },
    "cr_pct": 75,
    "cr_season_pct": 73
@@ -6325,7 +6359,8 @@
     "exp_starts": 0.83,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 74,
    "cr_season_pct": 88
@@ -6448,7 +6483,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 25.5,
+   "owned": 25.6,
    "gp": 4,
    "ppg": 1.0,
    "cur_ppg": 2.85,
@@ -6977,7 +7012,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 3.3,
+   "owned": 3.2,
    "gp": 5,
    "ppg": 1.0,
    "cur_ppg": 1.5,
@@ -7641,7 +7676,8 @@
     "exp_starts": 0.65,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 73,
    "cr_season_pct": 91
@@ -8425,7 +8461,8 @@
     "exp_starts": 0.65,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 71,
    "cr_season_pct": 86
@@ -8893,7 +8930,8 @@
     "exp_starts": 0.76,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 70,
    "cr_season_pct": 71
@@ -9043,7 +9081,8 @@
     "exp_starts": 0.65,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 69,
    "cr_season_pct": 83
@@ -9139,7 +9178,8 @@
     "exp_starts": 0.72,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 68,
    "cr_season_pct": 69
@@ -9288,7 +9328,8 @@
     "exp_starts": 0.74,
     "team_games": 1,
     "share10": 0.6,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 66,
    "cr_season_pct": 74
@@ -9836,7 +9877,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 40.7,
+   "owned": 40.6,
    "gp": 5,
    "ppg": 2.07,
    "cur_ppg": 0.1,
@@ -10127,7 +10168,8 @@
     "exp_starts": 0.64,
     "team_games": 2,
     "share10": 0.2,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 65,
    "cr_season_pct": 32
@@ -10462,7 +10504,7 @@
    "team_id": 4,
    "ir": false,
    "injury": null,
-   "owned": 85.5,
+   "owned": 85.4,
    "gp": 3,
    "ppg": 1.82,
    "cur_ppg": 1.47,
@@ -10915,7 +10957,8 @@
     "exp_starts": 0.71,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 64,
    "cr_season_pct": 68
@@ -10962,7 +11005,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.32
    },
    "cr_pct": 62,
    "cr_season_pct": 35
@@ -11271,7 +11315,8 @@
     "exp_starts": 0.58,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 61,
    "cr_season_pct": 77
@@ -11687,7 +11732,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.27
    },
    "cr_pct": 58,
    "cr_season_pct": 19
@@ -11785,7 +11831,8 @@
     "exp_starts": 0.63,
     "team_games": 1,
     "share10": 0.67,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 58,
    "cr_season_pct": 92
@@ -11833,7 +11880,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.38
    },
    "cr_pct": 57,
    "cr_season_pct": 45
@@ -12091,7 +12139,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.35
    },
    "cr_pct": 56,
    "cr_season_pct": 36
@@ -12348,7 +12397,8 @@
     "exp_starts": 0.59,
     "team_games": 1,
     "share10": 0.6,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 55,
    "cr_season_pct": 60
@@ -12662,7 +12712,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.19
    },
    "cr_pct": 53,
    "cr_season_pct": 22
@@ -13313,7 +13364,7 @@
    "team_id": 12,
    "ir": false,
    "injury": null,
-   "owned": 62.9,
+   "owned": 63.0,
    "gp": 4,
    "ppg": 1.58,
    "cur_ppg": 3.5,
@@ -13522,7 +13573,7 @@
    "team_id": 13,
    "ir": false,
    "injury": null,
-   "owned": 15.1,
+   "owned": 15.2,
    "gp": 4,
    "ppg": 1.64,
    "cur_ppg": 2.83,
@@ -13627,7 +13678,7 @@
    "team_id": 6,
    "ir": false,
    "injury": null,
-   "owned": 51.4,
+   "owned": 51.3,
    "gp": 5,
    "ppg": 1.58,
    "cur_ppg": 1.04,
@@ -13944,7 +13995,7 @@
    "team_id": 13,
    "ir": false,
    "injury": null,
-   "owned": 27.4,
+   "owned": 27.3,
    "gp": 4,
    "ppg": 1.64,
    "cur_ppg": 1.3,
@@ -14285,7 +14336,8 @@
     "exp_starts": 0.56,
     "team_games": 1,
     "share10": 0.6,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 52,
    "cr_season_pct": 74
@@ -14408,7 +14460,7 @@
    "team_id": 5,
    "ir": false,
    "injury": null,
-   "owned": 80.8,
+   "owned": 80.7,
    "gp": 4,
    "ppg": 1.65,
    "cur_ppg": 1.6,
@@ -14619,7 +14671,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 15.6,
+   "owned": 15.5,
    "gp": 5,
    "ppg": 1.54,
    "cur_ppg": 1.52,
@@ -14884,7 +14936,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 0.5,
+   "owned": 0.4,
    "gp": 2,
    "ppg": 0.94,
    "cur_ppg": 0.25,
@@ -15174,7 +15226,8 @@
     "exp_starts": 0.64,
     "team_games": 1,
     "share10": 0.5,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 51,
    "cr_season_pct": 64
@@ -15740,7 +15793,8 @@
     "exp_starts": 0.64,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 49,
    "cr_season_pct": 56
@@ -15757,7 +15811,7 @@
    "team_id": 11,
    "ir": false,
    "injury": null,
-   "owned": 92.8,
+   "owned": 92.7,
    "gp": 5,
    "ppg": 1.86,
    "cur_ppg": 0.68,
@@ -16627,7 +16681,8 @@
     "exp_starts": 0.44,
     "team_games": 1,
     "share10": 0.4,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 48,
    "cr_season_pct": 52
@@ -16645,7 +16700,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 6.9,
+   "owned": 6.8,
    "gp": 5,
    "ppg": 0.32,
    "cur_ppg": 0.32,
@@ -16697,7 +16752,7 @@
    "team_id": 5,
    "ir": false,
    "injury": null,
-   "owned": 72.7,
+   "owned": 72.6,
    "gp": 5,
    "ppg": 1.58,
    "cur_ppg": 1.34,
@@ -17038,7 +17093,8 @@
     "exp_starts": 0.54,
     "team_games": 1,
     "share10": 0.67,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 47,
    "cr_season_pct": 65
@@ -17616,7 +17672,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.25
    },
    "cr_pct": 45,
    "cr_season_pct": 14
@@ -17791,7 +17848,7 @@
    "team_id": 7,
    "ir": false,
    "injury": null,
-   "owned": 25.1,
+   "owned": 25.0,
    "gp": 4,
    "ppg": 1.45,
    "cur_ppg": 1.38,
@@ -17844,7 +17901,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 22.4,
+   "owned": 22.3,
    "gp": 3,
    "ppg": 1.63,
    "cur_ppg": 0.13,
@@ -17948,7 +18005,7 @@
    "team_id": 1,
    "ir": false,
    "injury": null,
-   "owned": 10.5,
+   "owned": 10.4,
    "gp": 4,
    "ppg": 1.27,
    "cur_ppg": 0.88,
@@ -18370,7 +18427,7 @@
    "team_id": 11,
    "ir": false,
    "injury": null,
-   "owned": 21.2,
+   "owned": 21.1,
    "gp": 5,
    "ppg": 1.52,
    "cur_ppg": 1.38,
@@ -18475,7 +18532,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 12.3,
+   "owned": 12.2,
    "gp": 4,
    "ppg": 1.04,
    "cur_ppg": 1.27,
@@ -18605,7 +18662,8 @@
     "exp_starts": 0.46,
     "team_games": 1,
     "share10": 0.33,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 44,
    "cr_season_pct": 47
@@ -19379,7 +19437,8 @@
     "exp_starts": 0.41,
     "team_games": 1,
     "share10": 0.4,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 43,
    "cr_season_pct": 70
@@ -19924,7 +19983,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 3.0,
+   "owned": 3.1,
    "gp": 4,
    "ppg": 1.59,
    "cur_ppg": 2.83,
@@ -20637,7 +20696,8 @@
     "exp_starts": 0.42,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 42,
    "cr_season_pct": 53
@@ -20814,7 +20874,7 @@
    "team_id": 10,
    "ir": false,
    "injury": null,
-   "owned": 38.5,
+   "owned": 38.4,
    "gp": 4,
    "ppg": 1.37,
    "cur_ppg": 0.82,
@@ -21838,7 +21898,8 @@
     "exp_starts": 0.36,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 40,
    "cr_season_pct": 22
@@ -21961,7 +22022,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 2.2,
+   "owned": 2.3,
    "gp": 4,
    "ppg": 1.12,
    "cur_ppg": 1.7,
@@ -23037,7 +23098,8 @@
     "exp_starts": 0.35,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 39,
    "cr_season_pct": 48
@@ -23346,7 +23408,8 @@
     "exp_starts": 0.35,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 38,
    "cr_season_pct": 43
@@ -23548,7 +23611,8 @@
     "exp_starts": 0.35,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 36,
    "cr_season_pct": 44
@@ -25204,7 +25268,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 6.6,
+   "owned": 6.5,
    "gp": 4,
    "ppg": 1.07,
    "cur_ppg": 2.0,
@@ -25965,7 +26029,8 @@
     "exp_starts": 0.36,
     "team_games": 1,
     "share10": 0.5,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 34,
    "cr_season_pct": 42
@@ -26061,7 +26126,8 @@
     "exp_starts": 0.28,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 34,
    "cr_season_pct": 62
@@ -26321,7 +26387,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.27
    },
    "cr_pct": 32,
    "cr_season_pct": 14
@@ -26790,7 +26857,8 @@
     "exp_starts": 0.24,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 31,
    "cr_season_pct": 55
@@ -27252,7 +27320,8 @@
     "exp_starts": 0.26,
     "team_games": 1,
     "share10": 0.33,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 30,
    "cr_season_pct": 17
@@ -27377,7 +27446,7 @@
    "team_id": 11,
    "ir": false,
    "injury": "DAY_TO_DAY",
-   "owned": 53.7,
+   "owned": 53.6,
    "gp": 4,
    "ppg": 1.56,
    "cur_ppg": 1.25,
@@ -27512,7 +27581,8 @@
     "exp_starts": 0.23,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 29,
    "cr_season_pct": 12
@@ -27608,7 +27678,8 @@
     "exp_starts": 0.26,
     "team_games": 1,
     "share10": 0.4,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 27,
    "cr_season_pct": 39
@@ -27758,7 +27829,8 @@
     "exp_starts": 0.21,
     "team_games": 1,
     "share10": 0.2,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 26,
    "cr_season_pct": 12
@@ -27959,7 +28031,8 @@
     "exp_starts": 0.17,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 25,
    "cr_season_pct": 30
@@ -27976,7 +28049,7 @@
    "team_id": 8,
    "ir": false,
    "injury": "DAY_TO_DAY",
-   "owned": 10.0,
+   "owned": 9.9,
    "gp": 5,
    "ppg": 1.12,
    "cur_ppg": 0.46,
@@ -28055,7 +28128,8 @@
     "exp_starts": 0.17,
     "team_games": 1,
     "share10": 0.0,
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 23,
    "cr_season_pct": 25
@@ -28072,7 +28146,7 @@
    "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 19.9,
+   "owned": 19.8,
    "gp": 3,
    "ppg": 1.34,
    "cur_ppg": 0.8,
@@ -28151,7 +28225,8 @@
     "exp_starts": 0.18,
     "team_games": 1,
     "share10": 0.4,
-    "gs": 2
+    "gs": 2,
+    "p_today": 0.0
    },
    "cr_pct": 22,
    "cr_season_pct": 17
@@ -28195,7 +28270,8 @@
     "exp_starts": 0.16,
     "team_games": 1,
     "share10": 0.25,
-    "gs": 1
+    "gs": 1,
+    "p_today": 0.0
    },
    "cr_pct": 21,
    "cr_season_pct": 25
@@ -31505,7 +31581,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": 0.75,
-    "gs": 3
+    "gs": 3,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 29
@@ -31743,7 +31820,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": 0.0,
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 56
@@ -32129,7 +32207,8 @@
     "exp_starts": 0.0,
     "team_games": 2,
     "share10": 0.0,
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 21
@@ -32226,7 +32305,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 30
@@ -32270,7 +32350,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -32462,7 +32543,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -32507,7 +32589,8 @@
     "exp_starts": 0.0,
     "team_games": 2,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -32695,7 +32778,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -33184,7 +33268,8 @@
     "exp_starts": 0.0,
     "team_games": 2,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -33422,7 +33507,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": 0.0,
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 25
@@ -33466,7 +33552,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -33555,7 +33642,8 @@
     "exp_starts": 0.0,
     "team_games": 2,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -33743,7 +33831,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -34007,7 +34096,7 @@
    "team_id": 7,
    "ir": false,
    "injury": "INJURY_RESERVE",
-   "owned": 61.3,
+   "owned": 61.2,
    "gp": 2,
    "ppg": 1.46,
    "cur_ppg": 1.85,
@@ -34331,7 +34420,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": null,
-    "gs": null
+    "gs": null,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 0
@@ -34375,7 +34465,8 @@
     "exp_starts": 0.0,
     "team_games": 1,
     "share10": 0.0,
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 40
@@ -34516,7 +34607,8 @@
      "starting": false,
      "status": "Unconfirmed"
     },
-    "gs": 0
+    "gs": 0,
+    "p_today": 0.0
    },
    "cr_pct": 0,
    "cr_season_pct": 51
