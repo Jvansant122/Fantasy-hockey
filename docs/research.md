@@ -489,6 +489,13 @@ When an injured regular returns, someone loses his spot. Over 351 returns in 202
 
 **On the site:** when a regular (who dressed 80%+ of games before he got hurt) has missed 3+ straight games and ESPN now lists him healthy or day-to-day, the least-used skater at his position on that team gets his chance of dressing lowered by 8 points (forward) or 12 (defense). Tap the player to see "… is back from injury, so he may sit."
 
+## 40. Tonight's lineup and the best two moves
+
+Two small decision helpers, each worth about a point a week in the backtests (findings 65 and 68):
+
+- **Tonight.** On a night when more of your skaters play than your 9 F / 5 D / 1 UTL slots hold, start by the Claude Rating's points per game and bench the rest. The bigger part of the gain (+0.9 a week) is benching a skater who isn't in Daily Faceoff's lineup for his team, or who sat his team's last game, since he'll likely score nothing. The Upgrades section now shows a "Tonight" card on crowded nights listing who to bench, with those players flagged.
+- **Best 2 moves.** For the Monday pickups, taking the two swaps with the biggest keep-value gain over your weakest player *at the same position* beat taking the best free agent overall by +0.9 points a week. The Upgrades section now leads with those two moves, and each drop-list entry shows the best free agent at his position and how much he'd add.
+
 ## What the independent review changed
 
 | Review point | Outcome |
