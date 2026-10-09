@@ -11,6 +11,7 @@ A one-page site (GitHub Pages) that ranks free agents in Jack's ESPN fantasy hoc
 - `model/train.py` - refits `model/rating_model.json` from the research data in `/mnt/project-files/research/claude-rating` (needs pandas, scikit-learn, pyarrow).
 - `data/` - written by the "Update data" workflow three times a day (9 AM, 12:30 PM, 5 PM ET). Don't hand-edit; merge `main` into your branch before pushing because the bot commits here often.
 - `docs/research.md` - plain-language research write-up for league members (charts in `docs/img/`).
+- `docs/ideas-ledger.md` - every research idea tried or queued, with its result and verdict. Mirror of `/mnt/project-files/research/claude-rating/ideas-ledger.md`.
 - `tests/` - pytest suite, run by the "Tests" workflow on every PR.
 - `scripts/check_data.py` - the update workflow runs it before committing data (a broken `players.json` is never published) and after (fails the run, so GitHub emails Jack, when the Claude Rating is missing). Add a field to its lists when the page starts depending on one.
 - `.claude/hooks/session-start.sh` - cloud sessions install the test and research libraries on start.
@@ -43,6 +44,14 @@ No network or secrets needed: every ESPN, NHL, MoneyPuck and Daily Faceoff call 
 - Work on a branch, open a PR, and merge once the Tests check is green. Jack's standing policy (Oct 9, 2026): auto-merge site changes when tests pass and tell him after.
 - The thread "Build the Claude Rating into the site" owns site code (`index.html`, `scripts/`, `model/`) and keeps `docs/research.md` in step with `findings.md`. Other threads change those files only through that thread or with its agreement.
 - Research lives outside the repo in `/mnt/project-files/research/claude-rating/` (`findings.md`, `ideas.md`, scripts, `production/`). Shared research helpers with on-disk caching are in `/mnt/project-files/research/hockeylib/`.
+
+## Ideas ledger
+
+`/mnt/project-files/research/claude-rating/ideas-ledger.md` lists every research idea tried or queued: ID, date, who ran it, what was tested, the measured result, the verdict (shipped with PR number, no change, pending, waiting until a date) and the source section.
+
+- **Before testing an idea, check the ledger.** If a row covers it, only re-run it with a stated reason (new data, a new season, a different population or horizon, a bug in the old test).
+- **Every research run appends its row(s) before finishing**, including "no change" and abandoned runs. Re-tests get a new row naming the old one.
+- When the build thread ships or declines a handoff item, it updates that row's Verdict, and it copies the working ledger into `docs/ideas-ledger.md` in its PRs.
 
 ## handoff.md protocol
 
