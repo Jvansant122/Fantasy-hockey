@@ -107,7 +107,7 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Make 2 skater moves on Monday and keep 4 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open.</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Make 2 skater moves on Monday and keep the rest (your league allows one per day of the matchup) for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open.</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -326,7 +326,7 @@ function renderUpgrades() {
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
-  // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep 4) cover these and goalie streams.
+  // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the rest) cover these and goalie streams.
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];
   const outs = mine.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.games_left > 0)));
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves</span>

@@ -66,6 +66,17 @@ def per_game(st, is_goalie):
     return round(total / games, 2), int(games)
 
 
+def matchup_move_limit(acq, periods, used):
+    """Adds allowed this matchup. With matchupLimitPerScoringPeriod ESPN's limit is per day, pooled over the matchup:
+    1 x 6 days = 6 in the first matchup, 1 x 7 = 7 now, and the transaction log shows 3 adds in one morning, so it
+    is not a daily cap. -1, 0 or missing means none, and a limit some team has already passed is wrong."""
+    limit = acq.get("matchupAcquisitionLimit")
+    if not isinstance(limit, (int, float)) or limit <= 0:
+        return None
+    limit = round(limit * periods) if acq.get("matchupLimitPerScoringPeriod") else round(limit)
+    return None if limit < max([u or 0 for u in used] or [0]) else limit
+
+
 def pro_schedule(s, base, league_url, matchup_sps, today_sp):
     """Return ({proTeamId: {abbrev, periods}}, {sp: game count}, {sp: date}).
 
@@ -293,10 +304,7 @@ def main():
     moves_used = {t["id"]: (t["transactionCounter"].get("matchupAcquisitionTotals") or {}).get(str(period), 0)
                   if t.get("transactionCounter") else None for t in league["teams"]}
     acq = settings.get("acquisitionSettings") or {}
-    # ESPN's matchup acquisition limit; -1, 0 or missing means none, and a limit some team has already passed is wrong
-    move_limit = acq.get("matchupAcquisitionLimit")
-    if not isinstance(move_limit, int) or move_limit <= 0 or move_limit < max([v or 0 for v in moves_used.values()] or [0]):
-        move_limit = None
+    move_limit = matchup_move_limit(acq, len(matchup_sps), moves_used.values())
     print("ESPN acquisitionSettings:", json.dumps(acq))
     print("ESPN lineupSlotCounts:", json.dumps((settings.get("rosterSettings") or {}).get("lineupSlotCounts")))
     print("ESPN lineupSlotStatLimits:", json.dumps(stat_limits))
