@@ -556,7 +556,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     prior = {gid: prev_starts.get(gid, 0) / last_total if last_total else 1 / len(cands) for gid in cands}
     if season_share is not None:
         for gid in cands:
-            season_share[gid] = (sum(x == gid for x in seq) + SEASON_SHARE_K * prior[gid]) / (len(seq) + SEASON_SHARE_K)
+            # a quarter recent form (half-life 5 team games) so a new no. 1 shows sooner (findings section 76)
+            w = [0.5 ** ((len(seq) - 1 - i) / 5) for i in range(len(seq))]
+            k0 = 10 * 0.5 ** (len(seq) / 5)
+            ewm = (sum(wi for wi, x in zip(w, seq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
+            season_share[gid] = 0.75 * (sum(x == gid for x in seq) + SEASON_SHARE_K * prior[gid]) / (len(seq) + SEASON_SHARE_K) + 0.25 * ewm
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):
