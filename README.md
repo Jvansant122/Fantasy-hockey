@@ -2,7 +2,7 @@
 
 A one-page site that compares your ESPN fantasy hockey roster against free agents, using your league's scoring and each player's games in the current matchup.
 
-Live site: https://jvansant122.github.io/Fantasy-hockey/. The research behind the Claude Rating, in plain language: [docs/research.md](docs/research.md).
+Live site: https://jvansant122.github.io/Fantasy-hockey/. The research behind the Claude Rating, in plain language: [docs/research.md](docs/research.md). What each part of the rating does and how much it matters: [docs/rating-components.md](docs/rating-components.md).
 
 ## How it works
 
