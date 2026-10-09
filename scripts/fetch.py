@@ -25,6 +25,8 @@ POSITIONS = {1: "C", 2: "LW", 3: "RW", 4: "D", 5: "G"}
 SLOT_NAMES = {0: "C", 1: "LW", 2: "RW", 3: "F", 4: "D", 5: "G"}
 LIGHT_NIGHT_MAX_GAMES = 5  # nights with this many NHL games or fewer count as light
 FREE_AGENT_LIMIT = 400
+TX_TYPES = ["FREEAGENT", "WAIVER", "WAIVER_ERROR", "ROSTER", "TRADE_ACCEPT", "TRADE_DECLINE", "TRADE_PROPOSAL",
+            "TRADE_UPHOLD", "TRADE_VETO", "FUTURE_ROSTER", "RETRO_ROSTER"]
 
 
 def session():
@@ -248,6 +250,16 @@ def main():
                 starters.append(leads.fetch_starters(web, day))
             except Exception as e:  # noqa: BLE001 - starters are a bonus, never block the update
                 lead_errors[f"starters {day}"] = repr(e)
+    league_moves = None
+    try:  # the league's adds, drops, waivers, trades and lineup moves for today and yesterday (research idea 71)
+        tx = []
+        for sp in sorted({max(1, today_sp - 1), today_sp}):
+            tx += get(s, league_url, ["mTransactions2"], {"transactions": {"filterType": {"value": TX_TYPES}}},
+                      scoringPeriodId=sp).get("transactions") or []
+        league_moves = leads.league_log(tx, league["teams"], today_sp)
+        print(f"Logged {len(league_moves['transactions'])} league transactions")
+    except Exception as e:  # noqa: BLE001 - the log is best-effort
+        lead_errors["league"] = repr(e)
     injuries = None
     try:  # ESPN injury notes: long absences go to 0 in the weekly rating (findings section 58)
         injuries = leads.fetch_injuries(web)
@@ -298,7 +310,7 @@ def main():
     path.write_text(json.dumps(out, indent=1))
     print(f"Wrote {len(players)} players ({len(my_ids)} mine) for matchup {period} to {path}")
     try:
-        leads.write_log(datetime.now(ET), players, starters, lead_errors, web, odds, injuries)
+        leads.write_log(datetime.now(ET), players, starters, lead_errors, web, odds, injuries, league_moves)
     except Exception as e:  # noqa: BLE001
         print(f"Lead log failed: {e!r}", file=sys.stderr)
     if not my_team:
