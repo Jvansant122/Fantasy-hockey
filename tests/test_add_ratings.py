@@ -68,6 +68,12 @@ class FakeSession:
         if url.endswith(f"/schedule/{MONDAY.isoformat()}"):
             return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": "BOS"}, "homeTeam": {"abbrev": "TOR"}}]}
                                       for d in WEEK]})
+        if url.endswith("/standings-season"):
+            return Resp({"seasons": [{"id": 20252026, "standingsEnd": "2026-04-17"}]})
+        if "/standings/" in url:  # last season's final table, then this season's
+            gp = 82 if url.endswith("2026-04-17") else 5
+            return Resp({"standings": [{"teamAbbrev": {"default": "TOR"}, "goalFor": 3 * gp, "goalAgainst": 2 * gp, "gamesPlayed": gp},
+                                       {"teamAbbrev": {"default": "BOS"}, "goalFor": 2 * gp, "goalAgainst": 3 * gp, "gamesPlayed": gp}]})
         m = re.search(r"/roster/(\w+)/current$", url)
         if m:
             team = m.group(1)
@@ -191,6 +197,7 @@ def test_tonights_line_prices_the_goalie_start(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "team_strength", lambda s, season: {})  # isolate the line from schedule pricing
     starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
     out = {}
     for name, odds in (("none", None), ("fav", {"games": [odds_game("TOR", "BOS", -250, 210)]})):
@@ -309,3 +316,9 @@ def test_injury_caps_and_notes():
 
 def test_idle_cap_grades_by_days_since_last_game():
     assert [rating.idle_cap(d) for d in (15, 21, 22, 35, 36, 80)] == [0.5, 0.5, 0.2, 0.2, 0.1, 0.1]
+
+
+def test_rest_of_week_goalie_starts_priced_by_schedule(run):
+    """TOR is stronger and at home in every game, so its starts are worth more than BOS's (findings section 70)."""
+    by_name, _, _ = run
+    assert by_name["Joseph Woll"]["cr_why"]["sched"] > 0 > by_name["Jeremy Swayman"]["cr_why"]["sched"]

@@ -62,6 +62,7 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
+SCHED_SHRINK, SCHED_WIN, SCHED_SLOPE = 15, (-0.175, 0.594, 0.349), 3.4  # starts without a line priced by team strength (findings 70)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -268,15 +269,36 @@ def expected_fp(now, prev, is_d):
     return out
 
 
-def week_schedule(s, monday):
-    """NHL abbrev -> sorted list of game dates (ISO) in the Monday-Sunday week."""
+def week_schedule(s, monday, games=None):
+    """NHL abbrev -> sorted list of game dates (ISO) in the Monday-Sunday week. games, if given, is filled with
+    NHL abbrev -> [(date, opponent, home)]."""
     out = {}
     for day in nhl_get(s, f"{NHL_WEB}/schedule/{monday.isoformat()}").json().get("gameWeek", []):
         for g in day.get("games", []):
             if g.get("gameType") == 2:
-                for side in ("awayTeam", "homeTeam"):
+                for side, other in (("awayTeam", "homeTeam"), ("homeTeam", "awayTeam")):
                     out.setdefault(g[side]["abbrev"], []).append(day["date"])
+                    if games is not None:
+                        games.setdefault(g[side]["abbrev"], []).append((day["date"], g[other]["abbrev"], side == "homeTeam"))
     return out
+
+
+def team_strength(s, prev_season):
+    """Goal differential per game this season, shrunk over 15 games toward half of last season's (findings section 70).
+    Empty if the standings can't be read, and then no start is priced by schedule."""
+    try:
+        end = next(x["standingsEnd"] for x in nhl_get(s, f"{NHL_WEB}/standings-season").json()["seasons"] if x["id"] == prev_season)
+        rows = lambda when: {r["teamAbbrev"]["default"]: r for r in nhl_get(s, f"{NHL_WEB}/standings/{when}").json().get("standings", [])}
+        last = {t: (r["goalFor"] - r["goalAgainst"]) / max(r["gamesPlayed"], 1) for t, r in rows(end).items()}
+        return {t: (r["goalFor"] - r["goalAgainst"] + SCHED_SHRINK * 0.5 * last.get(t, 0.0)) / (r["gamesPlayed"] + SCHED_SHRINK)
+                for t, r in rows("now").items()}
+    except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
+        print(f"Standings unavailable, goalie starts not priced by schedule: {e!r}", file=sys.stderr)
+        return {}
+
+
+def model_win_prob(gd_team, gd_opp, home):
+    return 1 / (1 + math.exp(-(SCHED_WIN[0] + SCHED_WIN[1] * (gd_team - gd_opp) + SCHED_WIN[2] * home)))
 
 
 def roster(s, team):
@@ -645,7 +667,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     prev_goalies = load_prev_goalie_season(s, prev_season)
     prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
-    sched = week_schedule(s, monday)
+    week_games = {}
+    sched = week_schedule(s, monday, week_games)
+    strength = team_strength(s, prev_season)
     news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
@@ -752,6 +776,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 line_pps = base + LINE_PPS_SLOPE * (lines[team] - 0.5)
                 why["line"] = {"win_prob": round(lines[team], 2), "pps": round(line_pps, 2)}
                 fpg = ((starts - p_today) * fpg + p_today * line_pps) / starts
+            # the rest of the week's starts, with no line yet, priced by team strength and home ice (findings section 70)
+            lined = team in lines and p_today > 0
+            rest = [(d, opp, home) for d, opp, home in week_games.get(team, [])
+                    if d > today.isoformat() or (d == today.isoformat() and not lined)]
+            if strength and team in strength and rest and starts > 0:
+                bonus = sum(SCHED_SLOPE * (model_win_prob(strength[team], strength.get(opp, 0.0), home) - 0.5) for _, opp, home in rest) / len(rest)
+                fpg += (starts - (p_today if lined else 0.0)) * bonus / starts
+                why["sched"] = round(bonus, 2)
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
             why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid else 0.0  # chance he starts tonight (stream card)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner

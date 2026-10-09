@@ -113,7 +113,7 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 54 | Oct 9 | Ideas | Bank leftover moves on Sunday (simple) | Not run | Pending | ideas-batch3.md |
 | 54 | Oct 9 18:10 | Thread "five ideas" | Bank leftover moves on Sunday night (pooled 7 per matchup): leftover frequency under the plan; one-off extra Monday move in the 8-week sim | Moves left in 6% of weeks (0.12/week); an extra Monday move +2.8 FP over 8 weeks, about one goalie stream; ~+0.3 FP/week. ESPN period of a Sunday-night add unconfirmed until the Oct 12 log | Pending: handoff 26, build after the log confirms | findings 69 |
 | 55 | Oct 9 | Ideas | Start/sit on crowded nights (simple) | Not run | Pending | ideas-batch3.md |
-| 55 | Oct 9 18:10 | Thread "five ideas" | Start/sit order on crowded nights with 12 F + 7 D rosters: rating vs rating × P(dress), season FP/G, last season, last-5, random, hindsight | ~1 crowded night per roster-week; rating beats season FP/G +0.24, last-5 +0.40, random +0.92 FP/week; knowing scratches +0.9 more; ceiling +1.5-2.4 | Handoff 24 (small "Tonight" note) | findings 65 |
+| 55 | Oct 9 18:10 | Thread "five ideas" | Start/sit order on crowded nights with 12 F + 7 D rosters: rating vs rating × P(dress), season FP/G, last season, last-5, random, hindsight | ~1 crowded night per roster-week; rating beats season FP/G +0.24, last-5 +0.40, random +0.92 FP/week; knowing scratches +0.9 more; ceiling +1.5-2.4 | Shipped (PR #34, handoff 24) | findings 65 |
 | 56 | Oct 9 | Ideas | When to make Monday moves: 9 AM, 12:30 or 5 PM (simple) | Not run | Pending | ideas-batch3.md |
 | 57 | Oct 9 | Ideas | Underdog defensemen block more shots (simple) | Not run | Pending | ideas-batch3.md |
 | 57 | Oct 9 18:10 | Thread "five ideas" | Moneyline vs blocks, shots, FP beyond own average (2021-23 lines, 56k skater-games) | Underdog D +0.09 blocks (+0.04 FP) but fewer shots and assists: total FP +0.02 for favourite D (ns) | No change | findings 66 |
@@ -123,10 +123,10 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 60 | Oct 9 16:40 | routine | Call-ups on a fresh stint: dress logistic calibration by games into the stint | Overrated by 2-3 points from game 3 on (−0.034 at games 6-10) | No change | findings 63 |
 | 61 | Oct 9 | Ideas | Fantasy playoff schedule (simple) | Not run | Pending | ideas-batch3.md |
 | 62 | Oct 9 | Ideas | Value over replacement by position (simple) | Not run | Pending | ideas-batch3.md |
-| 62 | Oct 9 18:10 | Thread "five ideas" | Monday moves by gain at position (VOR) vs best FA overall vs drop list alone, 8-week sim, one active manager, 12F/7D | VOR +0.88 FP/week (+0.10, +1.95) vs best FA; drop list alone +0.34 (ns) | Handoff 25 | findings 68 |
+| 62 | Oct 9 18:10 | Thread "five ideas" | Monday moves by gain at position (VOR) vs best FA overall vs drop list alone, 8-week sim, one active manager, 12F/7D | VOR +0.88 FP/week (+0.10, +1.95) vs best FA; drop list alone +0.34 (ns) | Shipped (PR #34, handoff 25) | findings 68 |
 | 63 | Oct 9 | Ideas | Line-blending coaches and the last-5 TOI window (simple) | Not run | Pending | ideas-batch3.md |
 | 64 | Oct 9 | Ideas | Goalie Season rating (job security) (moderate) | Not run | Pending | ideas-batch3.md |
-| 65 | Oct 9 | Ideas | Goalie odds for the rest of the week (moderate) | Not run | Pending | ideas-batch3.md |
+| 65 | Oct 9 18:40 | routine | Goalie odds for the rest of the week: goal-diff win model prices Tue-Sun starts | Model corr 0.87 with market, 2/3 of its goalie-FP R²; weekly goalie rank corr 0.273 → 0.297, all 5 seasons up | Pending (handoff 27) | findings 70 |
 | 66 | Oct 9 16:40 | routine | Lowest-TOI healthy player when a regular returns (hindsight), vs dress logistic | Dresses 8 (F) / 12 (D) points below prediction; 351 events | Shipped (PR #33, handoff 23) | findings 63 |
 | 67 | Oct 9 | Ideas | IR stash pickups (moderate) | Not run | Pending | ideas-batch3.md |
 | 68 | Oct 9 | Ideas | Healthy-scratch history as a P(dresses) input (moderate) | Not run | Pending | ideas-batch3.md |
