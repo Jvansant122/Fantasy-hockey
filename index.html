@@ -7,12 +7,12 @@
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #16191d; --muted: #5d6673; --line: #e2e5ea;
-    --accent: #0a6cff; --mine: #eaf2ff; --good: #0f8a4a; --warn: #b25e00; --chip: #eef0f3;
+    --accent: #0a6cff; --mine: #eaf2ff; --good: #0f8a4a; --warn: #b25e00; --chip: #eef0f3; --dot: #c9ced6;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #101215; --card: #191c20; --text: #e8eaed; --muted: #9aa3ae; --line: #2a2f35;
-      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c;
+      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c; --dot: #3a4048;
     }
   }
   * { box-sizing: border-box; }
@@ -22,41 +22,74 @@
   h2 { font-size: 15px; margin: 0 0 8px; }
   .sub { color: var(--muted); font-size: 12px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 12px; }
-  .nights { display: flex; gap: 6px; overflow-x: auto; }
-  .night { flex: 1 0 64px; text-align: center; padding: 6px 4px; border-radius: 8px; background: var(--chip); font-size: 12px; }
+  .nights { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .night { text-align: center; padding: 6px 2px; border-radius: 8px; background: var(--chip); font-size: 11px; min-width: 0; }
   .night b { display: block; font-size: 15px; }
-  .night.light { outline: 2px solid var(--good); }
+  .night.light { outline: 2px solid var(--good); outline-offset: -2px; }
   .night.past { opacity: .45; }
+  .night .open { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; }
+  .night .open em { font-style: normal; color: var(--good); font-weight: 600; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .controls label { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
-  select, input[type=search], input[type=number] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .controls label { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; min-height: 36px; }
+  input[type=checkbox] { width: 18px; height: 18px; }
+  select, input[type=search], input[type=number] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); min-height: 36px; }
   input[type=search] { flex: 1 1 160px; }
   input[type=number] { width: 64px; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .seg button { font: inherit; border: 0; padding: 6px 10px; background: var(--card); color: var(--text); cursor: pointer; }
+  .seg button { font: inherit; border: 0; padding: 6px 10px; min-height: 36px; background: var(--card); color: var(--text); cursor: pointer; }
   .seg button.on { background: var(--accent); color: #fff; }
-  .tablewrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-  th:nth-child(-n+3), td:nth-child(-n+3) { text-align: left; }
-  th { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card); }
-  th.sorted::after { content: " ▾"; }
+  .count { margin-top: 8px; }
+  /* the table scrolls inside its box so the header and name column can stay pinned */
+  .tablewrap { overflow: auto; max-height: 78vh; margin-top: 6px; border-top: 1px solid var(--line); }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; background: var(--card); }
+  th.l, td.l { text-align: left; }
+  th { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2; }
+  th:first-child, td:first-child { position: sticky; left: 0; z-index: 1; }
+  th:first-child { z-index: 3; }
+  td:first-child { box-shadow: 1px 0 0 var(--line); }
+  th.sorted { color: var(--text); }
+  th.sorted.desc::after { content: " ▾"; }
+  th.sorted.asc::after { content: " ▴"; }
   tr.mine td { background: var(--mine); }
+  tbody tr[data-id] { cursor: pointer; }
+  tr.why td { position: static; text-align: left; white-space: normal; color: var(--muted); font-size: 12px; background: var(--chip); box-shadow: none; }
+  .meta { display: none; color: var(--muted); font-size: 11px; }
   .tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--chip); color: var(--muted); margin-left: 4px; }
   .tag.inj { color: var(--warn); }
   .tag.wv { color: var(--accent); }
+  .tag.news { color: var(--accent); }
+  .cr { font-weight: 700; }
+  .pct { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 10px; margin-left: 4px; background: var(--chip); color: var(--muted); }
+  .pct.hi { background: var(--good); color: #fff; }
+  .pct.mid { color: var(--good); }
+  .dots { display: inline-flex; gap: 3px; vertical-align: middle; }
+  .dots i { width: 9px; height: 9px; border-radius: 2px; background: transparent; border: 1px solid var(--dot); }
+  .dots i.play { background: var(--muted); border-color: var(--muted); }
+  .dots i.play.open { background: var(--good); border-color: var(--good); }
+  .dots i.past { opacity: .35; }
   .up { color: var(--good); font-weight: 600; }
   .upgrades { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
   .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
   .upg .drop { color: var(--muted); }
   .empty { color: var(--muted); padding: 12px 0; }
-  .cr { font-weight: 700; }
-  .pct { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 10px; margin-left: 4px; background: var(--chip); color: var(--muted); }
-  .pct.hi { background: var(--good); color: #fff; }
-  .pct.mid { color: var(--good); }
-  tbody tr { cursor: pointer; }
-  tr.why td { text-align: left; white-space: normal; color: var(--muted); font-size: 12px; background: var(--chip); }
-  .tag.news { color: var(--accent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+  @media (max-width: 640px) {
+    main { padding: 10px; }
+    .card { padding: 10px; }
+    .wide { display: none; }
+    .meta { display: block; }
+    th, td { padding: 6px 5px; }
+    td:first-child { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+    .tag { margin-left: 2px; padding: 1px 4px; }
+    .seg button, select, input[type=search], input[type=number] { min-height: 44px; }
+    .controls label { min-height: 44px; }
+    .night { font-size: 10px; padding: 4px 1px; }
+    .night b { font-size: 13px; }
+    .tag.own { display: none; }
+    .dots { gap: 2px; }
+    .dots i { width: 7px; height: 7px; }
+  }
 </style>
 </head>
 <body>
@@ -65,12 +98,13 @@
   <div class="sub" id="updated">Loading…</div>
 
   <div class="card">
-    <h2>This matchup's nights <span class="sub">(green outline = light night)</span></h2>
+    <h2>This matchup's nights</h2>
     <div class="nights" id="nights"></div>
+    <div class="sub legend"><span>Green outline = light night</span><span id="openkey"></span></div>
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your weakest player at that position</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your weakest healthy player in that group</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -88,26 +122,41 @@
       <label><input type="checkbox" id="left" checked> Remaining games only</label>
       <label><input type="checkbox" id="healthy"> Hide injured</label>
     </div>
-    <div class="tablewrap" style="margin-top:10px">
+    <div class="sub count" id="count"></div>
+    <div class="tablewrap">
       <table>
         <thead><tr id="head"></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
+    <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
   <p class="sub"><b>Claude Rating</b> = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs) × 2.9 points per start. The badge is the percentile among forwards, defensemen or goalies on this page. Tap a row to see why.</p>
-  <p class="sub">Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use your league's scoring.</p>
+  <p class="sub"><b>Open</b> = his games on nights when your active, healthy players leave a slot he could fill (9 F, 5 D, 1 UTL, 2 G). Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use your league's scoring.</p>
 </main>
 <script>
-const state = { who: "all", sort: "cr", data: null, open: null };
+const SLOTS = { F: 9, D: 5, UTL: 1, G: 2 };
+const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
+const SAVED = ["who", "sort", "dir", "pos", "left", "healthy"];
+const state = { who: "all", sort: "cr", dir: -1, data: null, open: null, openSlots: {} };
+// [key, label, align, shown on phones]
 const COLS = [
-  ["name", "Player"], ["team", "Team"], ["pos", "Pos"], ["cr", "Claude Rating"], ["games", "Games"], ["light", "Light"],
-  ["ppg", "Proj/G"], ["week", "Week proj"], ["cur_ppg", "This yr/G"], ["last_ppg", "Last yr/G"], ["owned", "% Own"],
+  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Rating", "r", true],
+  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["opengm", "Open", "r", true], ["light", "Light", "r", false],
+  ["ppg", "Proj/G", "r", false], ["week", "Week proj", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
 ];
 const $ = id => document.getElementById(id);
 const fmt = v => v == null ? "–" : (Math.round(v * 10) / 10).toFixed(1);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("faf") || "{}"); } catch { return {}; } },
+  set(v) { try { localStorage.setItem("faf", JSON.stringify(v)); } catch { /* private mode */ } },
+};
 
+const group = p => p.pos === "G" ? "G" : p.pos === "D" ? "D" : "F";
+const injLabel = p => p.injury ? p.injury.replaceAll("_", " ").toLowerCase() : "";
+const activeNight = n => !$("left").checked || !n.past;
 function games(p) { return $("left").checked ? p.games_left : p.games; }
 function light(p) { return $("left").checked ? p.light_left : p.light; }
 function week(p) { return (p.ppg || 0) * games(p); }
@@ -116,12 +165,43 @@ function fits(p, pos) {
   if (pos === "F") return ["C", "LW", "RW"].some(s => p.slots.includes(s));
   return p.slots.includes(pos);
 }
-function val(p, key) { return key === "week" ? week(p) : key === "games" ? games(p) : key === "light" ? light(p) : p[key]; }
+// Nights this player plays on which one of my slots for his group would otherwise sit empty
+function openGames(p) {
+  if (p.owner === "mine") return null;
+  return state.data.nights.filter(n => activeNight(n) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
+}
+function hasRoom(sp, g) {
+  const o = state.openSlots[sp];
+  return g === "G" ? o.G > 0 : o[g] + o.UTL > 0;
+}
+function val(p, key) {
+  return { week: week(p), games: games(p), light: light(p), opengm: openGames(p), nights: games(p), pos: p.slots.join("/") || p.pos }[key] ?? p[key];
+}
 // Value used to compare players: the Claude Rating when the data has it, else the old weekly projection
 function score(p) { return state.data.rated ? p.cr : week(p); }
+
+// Open lineup slots per night from my active, healthy players
+function computeOpenSlots(d) {
+  const mine = d.players.filter(p => p.owner === "mine" && !p.ir && !OUT.has(p.injury));
+  for (const n of d.nights) {
+    const playing = mine.filter(p => p.nights.includes(n.sp));
+    const count = g => playing.filter(p => group(p) === g).length;
+    const f = count("F"), dd = count("D"), g = count("G");
+    const extra = Math.max(0, f - SLOTS.F) + Math.max(0, dd - SLOTS.D);
+    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - dd), UTL: Math.max(0, SLOTS.UTL - extra), G: Math.max(0, SLOTS.G - g) };
+  }
+}
+
 function pctBadge(p) {
   if (p.cr_pct == null) return "";
   return `<span class="pct ${p.cr_pct >= 90 ? "hi" : p.cr_pct >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} on this page">${p.cr_pct}</span>`;
+}
+function dots(p) {
+  return `<span class="dots">${state.data.nights.map(n => {
+    const plays = p.nights.includes(n.sp);
+    const open = plays && p.owner !== "mine" && hasRoom(n.sp, group(p));
+    return `<i class="${plays ? "play" : ""} ${open ? "open" : ""} ${n.past ? "past" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
+  }).join("")}</span>`;
 }
 function why(p) {
   const w = p.cr_why || {}, parts = [];
@@ -136,10 +216,30 @@ function why(p) {
     else parts.push("No NHL games yet this season");
     if (w.last_fpg != null) parts.push(`last season ${n(w.last_fpg)} pts/game`);
   }
-  if (p.injury) parts.push(`ESPN: ${p.injury.replace("_", " ").toLowerCase()}`);
+  if (p.injury) parts.push(`ESPN: ${injLabel(p)}`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);
   return parts.join(" · ");
+}
+function details(p) {
+  const og = openGames(p);
+  const extra = [`${p.team} · ${p.slots.filter(s => s !== "F").join("/") || p.pos}`, `owned ${fmt(p.owned)}%`];
+  if (og != null) extra.push(`${og} of ${games(p)} games on nights you have an open slot`);
+  return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join(" · ");
+}
+
+function cells(p) {
+  const d = state.data;
+  const pos = p.slots.filter(s => s !== "F").join("/") || p.pos;
+  const tags = (p.owner === "mine" ? '<span class="tag own">mine</span>' : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
+    (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "");
+  const og = openGames(p);
+  return {
+    name: `${esc(p.name)}${tags}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
+    cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "", nights: dots(p), games: games(p),
+    opengm: og == null ? "–" : og, light: light(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
+    cur_ppg: fmt(p.cur_ppg), last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
+  };
 }
 
 function render() {
@@ -147,43 +247,66 @@ function render() {
   const q = $("q").value.trim().toLowerCase(), pos = $("pos").value, ming = +$("ming").value || 0;
   const list = d.players.filter(p =>
     (state.who === "all" || (state.who === "mine") === (p.owner === "mine")) &&
+    // unsigned players (team FA) only show up when searched for
+    (p.team !== "FA" || q) &&
     fits(p, pos) && games(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
     (!$("healthy").checked || !p.injury) &&
     (!q || p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q))
   );
-  const k = state.sort;
+  const k = state.sort, dir = state.dir;
   list.sort((a, b) => {
     const x = val(a, k), y = val(b, k);
-    if (typeof x === "string") return x.localeCompare(y);
-    return (y ?? -1e9) - (x ?? -1e9);
+    if (typeof x === "string" || typeof y === "string") return dir * String(x ?? "").localeCompare(String(y ?? ""));
+    return dir * ((x ?? -1e9) - (y ?? -1e9));
   });
-  $("head").innerHTML = COLS.map(([key, label]) => `<th data-k="${key}" class="${key === k ? "sorted" : ""}">${label}</th>`).join("");
-  $("rows").innerHTML = list.slice(0, 300).map(p => `
-    <tr class="${p.owner === "mine" ? "mine" : ""}" data-id="${p.id}" title="${esc(d.rated ? why(p) : "")}">
-      <td>${esc(p.name)}${p.owner === "mine" ? '<span class="tag">mine</span>' : ""}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}${p.injury ? `<span class="tag inj">${esc(p.injury.replace("_", " ").toLowerCase())}</span>` : ""}${p.ir ? '<span class="tag">IR</span>' : ""}${p.cr_news ? '<span class="tag news">news</span>' : ""}</td>
-      <td>${esc(p.team)}</td><td>${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</td>
-      ${d.rated ? `<td><span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}</td>` : ""}
-      <td>${games(p)}</td><td>${light(p)}</td><td>${fmt(p.ppg)}</td><td><b>${fmt(week(p))}</b></td>
-      <td>${fmt(p.cur_ppg)}</td><td>${fmt(p.last_ppg)}</td><td>${fmt(p.owned)}</td>
-    </tr>${state.open === p.id && d.rated ? `<tr class="why"><td colspan="${COLS.length}">${esc(why(p))}</td></tr>` : ""}`).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
+  const shown = list.slice(0, 300);
+  $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
+  $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
+    `<th data-k="${key}" tabindex="0" class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
+  $("rows").innerHTML = shown.map(p => {
+    const c = cells(p);
+    return `<tr class="${p.owner === "mine" ? "mine" : ""}" data-id="${p.id}">` +
+      COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
+      (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
+  }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   renderUpgrades();
+  store.set(Object.fromEntries(SAVED.map(key => [key, key === "left" || key === "healthy" ? $(key).checked : key === "pos" ? $("pos").value : state[key]])));
 }
 
 function renderUpgrades() {
   const d = state.data;
-  const mine = d.players.filter(p => p.owner === "mine" && !p.ir);
+  // weakest healthy player in each group; injured players aren't drop candidates
+  const mine = d.players.filter(p => p.owner === "mine" && !p.ir && !OUT.has(p.injury));
   const fas = d.players.filter(p => p.owner !== "mine" && !p.injury);
+  const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
-  for (const pos of ["C", "LW", "RW", "D", "G"]) {
-    const myAtPos = mine.filter(p => p.pos === pos);
-    if (!myAtPos.length) continue;
-    const worst = myAtPos.reduce((a, b) => score(a) <= score(b) ? a : b);
-    const better = fas.filter(p => p.pos === pos && score(p) > score(worst) + 0.5).sort((a, b) => score(b) - score(a)).slice(0, 3);
+  for (const g of ["F", "D", "G"]) {
+    const mineG = mine.filter(p => group(p) === g);
+    if (!mineG.length) continue;
+    const worst = mineG.reduce((a, b) => score(a) <= score(b) ? a : b);
+    const better = fas.filter(p => group(p) === g && score(p) > score(worst) + 0.5).sort((a, b) => score(b) - score(a)).slice(0, 3);
     if (!better.length) continue;
-    cards.push(`<div class="upg"><b>${pos}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))}</span>
-      ${better.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <span class="up">${fmt(score(p))} (+${fmt(score(p) - score(worst))})</span></div>`).join("")}</div>`);
+    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))}</span>
+      ${better.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))} (+${fmt(score(p) - score(worst))})</span></div>`).join("")}</div>`);
   }
-  $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your weakest player at any position right now.</div>';
+  $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your weakest healthy player in any group right now.</div>';
+}
+
+function renderNights() {
+  const d = state.data;
+  $("openkey").textContent = d.team ? "Open = your empty F / D / G slots that night (UTL counts toward F and D)" : "";
+  $("nights").innerHTML = d.nights.map(n => {
+    const o = state.openSlots[n.sp];
+    const num = (v, label) => v > 0 ? `<em>${label}${v}</em>` : `${label}0`;
+    const open = d.team ? `<span class="open">${num(o.F + o.UTL, "F")} ${num(o.D + o.UTL, "D")} ${num(o.G, "G")}</span>` : "";
+    return `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
+  }).join("");
+}
+
+function sortBy(key) {
+  if (state.sort === key) state.dir = -state.dir;
+  else { state.sort = key; state.dir = ["name", "team", "pos"].includes(key) ? 1 : -1; }
+  render();
 }
 
 function wire() {
@@ -193,7 +316,8 @@ function wire() {
     [...$("who").children].forEach(x => x.classList.toggle("on", x === b));
     render();
   });
-  $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) { state.sort = th.dataset.k; render(); } });
+  $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) sortBy(th.dataset.k); });
+  $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sortBy(th.dataset.k); } });
   $("rows").addEventListener("click", e => {
     const tr = e.target.closest("tr[data-id]"); if (!tr) return;
     state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
@@ -202,17 +326,35 @@ function wire() {
   ["q", "pos", "ming", "minr", "left", "healthy"].forEach(id => $(id).addEventListener("input", render));
 }
 
+function restore() {
+  const s = store.get();
+  if (["all", "mine", "fa"].includes(s.who)) {
+    state.who = s.who;
+    [...$("who").children].forEach(x => x.classList.toggle("on", x.dataset.v === s.who));
+  }
+  if (COLS.some(c => c[0] === s.sort)) { state.sort = s.sort; state.dir = s.dir === 1 ? 1 : -1; }
+  if (typeof s.pos === "string" && [...$("pos").options].some(o => o.value === s.pos)) $("pos").value = s.pos;
+  if (typeof s.left === "boolean") $("left").checked = s.left;
+  if (typeof s.healthy === "boolean") $("healthy").checked = s.healthy;
+}
+
 fetch("data/players.json", { cache: "no-store" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => {
     state.data = d;
-    if (!d.rated) { state.sort = "week"; COLS.splice(COLS.findIndex(c => c[0] === "cr"), 1); $("minr").parentElement.remove(); }
+    if (!d.rated) {
+      state.sort = "week";
+      COLS.splice(COLS.findIndex(c => c[0] === "cr"), 1);
+      $("minr").parentElement.remove();
+    }
+    restore();
     if (d.team) $("title").textContent = `${d.team} · Free Agent Finder`;
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
-    $("nights").innerHTML = d.nights.map(n => `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>games</div>`).join("");
+    computeOpenSlots(d);
+    renderNights();
     wire(); render();
   })
-  .catch(() => { $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
+  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
 </script>
 </body>
 </html>
