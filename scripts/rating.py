@@ -41,6 +41,9 @@ XFP_SHARE_F, XFP_SHARE_D, XFP_PRIOR_GOALS = (0.51, 0.46), (0.32, 0.57), 15
 LUCK_MIN_GP, LUCK_GAP = 15, 0.15
 EARLY_SHARE_K, EARLY_SHARE_GAMES = 6, 10  # goalie start shares shrink toward last season's split (findings section 41)
 SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blended into this season's
+# usage x efficiency skater inputs (correlation research section 4): shrinkage minutes and last season's weight
+UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
+UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -243,6 +246,7 @@ class Model:
     def __init__(self):
         m = json.loads((ROOT / "model" / "rating_model.json").read_text())
         self.sk, self.dress_table, self.g = m["skater"], m["dress"], m["goalie"]
+        self.dress_lr = m.get("dress_logit")
 
     def fpg(self, feats):
         total = self.sk["intercept"]
@@ -258,6 +262,12 @@ class Model:
             return self.dress_table[key]
         same = [v for k, v in self.dress_table.items() if k.startswith(f"{round(d3 * 3)}_")]
         return sum(same) / len(same) if same else 0.5
+
+    def dress_logit(self, f):
+        """P(dresses) per team game from lineup history (correlation research section 6, handoff row 11)."""
+        m = self.dress_lr
+        z = m["intercept"] + sum(c * f[k] for k, c in m["coef"].items())
+        return 1 / (1 + math.exp(-z))
 
     def p_start(self, feats):
         z = self.g["intercept"] + sum(c * feats[n] for n, c in zip(self.g["features"], self.g["coef"]))
@@ -296,6 +306,57 @@ def skater_features(games, prev, xg_now, xg_prev, team_games):
     return f
 
 
+def dress_features(games, team, team_games, f, today):
+    """Lineup-history inputs for the P(dresses) logistic, from this season's games on his current team since he joined.
+    None when he hasn't played for the team yet (the old table and fallbacks apply)."""
+    mine = [g for g in games if g["team"] == team]
+    if not mine or mine[0]["game"] not in team_games:
+        return None
+    since = team_games[team_games.index(mine[0]["game"]):]
+    played = {g["game"] for g in mine}
+    spells, cur = [], 0
+    for gid in since:
+        if gid in played:
+            if cur:
+                spells.append(cur)
+            cur = 0
+        else:
+            cur += 1
+    os_ = min(cur, 5)
+    last_toi = min(max(mine[-1]["toi"], 0), 30)
+    out = {f"os{k}": float(os_ == k) for k in range(1, 6)}
+    out.update(dressed3=f["dressed3"] or 0, dressed10=f["dressed10"] or 0, miss_rate=1 - len(played) / len(since),
+               last_toi=last_toi, toi_drop=min(max(last_toi - (f.get("std_toi") or last_toi), -15), 10), low_toi=float(last_toi < 10),
+               os0_x_d10=float(os_ == 0) * (f["dressed10"] or 0), os_pos_x_lasttoi=float(os_ > 0) * last_toi,
+               days_since=min((today - date.fromisoformat(mine[-1]["date"])).days, 14), is_D=f["is_D"],
+               long_spells=min(sum(x >= 3 for x in spells), 4), short_spells=min(sum(x <= 2 for x in spells), 6),
+               new_team=float(len(since) < 5))
+    return out
+
+
+def ux_features(f, pos, mu):
+    """Usage x efficiency inputs (research/correlation/findings.md section 4): per-minute scoring rates from this season
+    plus half of last season, shrunk to the position mean over 300 minutes (60 PP minutes), times last-5 ice time.
+    Same arithmetic as model/train.py ux_features."""
+    names = ["sx_ux", "sx_ev", "sx_pp", "sx_fp", "sx_shots", "sx_hits", "sx_blockedShots", "sx_ixg"]
+    if mu is None or f.get("std_toi") is None or f.get("l5_toi") is None:
+        return dict.fromkeys(names)
+    m = mu[pos]
+    gp_s, gp_p = f["std_gp"], (f.get("prev_gp") or 0) * UX_PREV_W
+    def tot(c):
+        return (f.get(f"std_{c}") or 0) * gp_s + (f.get(f"prev_{c}") or 0) * gp_p
+    toi, pp = tot("toi"), tot("pptoi")
+    r = {c: (tot(c) + UX_PRIOR_MIN * m[c]) / (toi + UX_PRIOR_MIN) for c in list(UX_STATS) + ["ixg", "fp"]}
+    r_ev = (tot("points") - tot("ppPoints") + UX_PRIOR_MIN * m["evpts"]) / (toi - pp + UX_PRIOR_MIN)
+    r_pp = (tot("ppPoints") + UX_PRIOR_PP_MIN * m["pp"]) / (pp + UX_PRIOR_PP_MIN)
+    t5, p5 = f["l5_toi"], f.get("l5_pptoi") or 0
+    out = {"sx_ux": sum(w * r[c] for c, w in UX_STATS.items()) * t5 + 0.5 * r_pp * p5,
+           "sx_ev": r_ev * max(t5 - p5, 0), "sx_pp": r_pp * p5, "sx_fp": r["fp"] * t5}
+    for c in ("shots", "hits", "blockedShots", "ixg"):
+        out[f"sx_{c}"] = r[c] * t5
+    return out
+
+
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
@@ -327,12 +388,28 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         shares[gid] = dict(share5=sh(5), share10=sh(10), share20=sh(20), starts_std_share=sh(len(seq) or 1),
                            prev_season_share=min(prev_starts.get(gid, 0) / 82, 1.0))
     prev_p = {gid: float(bool(seq) and seq[-1] == gid) for gid in cands}
+    # rest and workload (findings section 11); games still to come add their likeliest starter as we go
+    log = [(date.fromisoformat(d), gid) for d, gid in hist]
     exp = {gid: 0.0 for gid in cands}
-    prev_day = last_date
     for d in sorted(game_dates):
-        b2b = float(prev_day is not None and (date.fromisoformat(d) - date.fromisoformat(prev_day)).days == 1)
-        raw = {gid: model.p_start({**shares[gid], "started_prev": prev_p[gid], "b2b": b2b, "started_prev_and_b2b": prev_p[gid] * b2b})
-               for gid in cands}
+        if last_date is not None and d <= last_date:  # already played: its real starter is in the history
+            continue
+        day = date.fromisoformat(d)
+        b2b = float(bool(log) and (day - log[-1][0]).days == 1)
+        week = [gid for gd, gid in log if (day - gd).days <= 7]
+        raw = {}
+        for gid in cands:
+            streak = 0
+            for _, x in reversed(log):
+                if x != gid:
+                    break
+                streak += 1
+            streak = min(streak, 10)
+            # no start yet in a team's first 10 games is a small sample, not a benching: count from opening night
+            last = max((gd for gd, x in log if x == gid), default=log[0][0] if log and len(seq) < EARLY_SHARE_GAMES else None)
+            raw[gid] = model.p_start({**shares[gid], "started_prev": prev_p[gid], "b2b": b2b, "started_prev_and_b2b": prev_p[gid] * b2b,
+                                      "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
+                                      "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         if d in confirmed:
@@ -342,7 +419,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 exp[gid] += p[gid]
                 if d == today.isoformat() and today_p is not None:
                     today_p[gid] = p[gid]
-        prev_p, prev_day = p, d
+        likely = max(p, key=p.get)
+        log.append((day, likely if p[likely] > 0.5 else None))
+        prev_p = p
     return exp
 
 
@@ -515,6 +594,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             team = gl[-1]["team"] if gl else ESPN_TO_NHL.get(p["team"], p["team"])
             f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), team_games.get(team, []))
             f["is_D"] = 1.0 if p["pos"] == "D" else 0.0
+            f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             tg = team_games.get(team, [])
             if pid is None:  # not on an NHL roster or in NHL stats this season or last
@@ -522,7 +602,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             elif f["dressed3"] is None:  # team hasn't played yet
                 p_dress = 0.9 if prev.get(pid) else 0.5
             else:
-                p_dress = model.dress(f["dressed3"], f["dressed10"])
+                df_ = dress_features(gl, team, tg, f, today) if model.dress_lr else None
+                p_dress = model.dress_logit(df_) if df_ else model.dress(f["dressed3"], f["dressed10"])
                 last = gl[-1]["date"] if gl else None
                 if len(tg) >= 3 and (last is None or (today - date.fromisoformat(last)).days > 14):
                     p_dress = min(p_dress, NOT_PLAYING_DRESS)

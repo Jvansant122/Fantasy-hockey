@@ -231,3 +231,28 @@ def test_early_season_backup_not_written_off():
     hist = [(f"2026-09-{d:02d}", 1) for d in range(10, 20)]
     late = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, prev, dates, TODAY)
     assert late[2] < early[2]
+
+
+def test_sat_last_game_drops_dress_chance():
+    """A regular who sat the team's last game plays far fewer games next week (correlation research section 6)."""
+    model = rating.Model()
+    team = list(range(1, 13))
+    def chance(played):
+        gl = [{"game": g, "team": "TOR", "toi": 16.0, "date": f"2026-10-{g:02d}"} for g in played]
+        f = {"dressed3": sum(g in played for g in team[-3:]) / 3, "dressed10": sum(g in played for g in team[-10:]) / 10,
+             "std_toi": 16.0, "is_D": 0.0}
+        return model.dress_logit(rating.dress_features(gl, "TOR", team, f, date(2026, 10, 13)))
+    regular, sat_last = chance(team), chance(team[:-1])
+    assert regular > 0.85 and sat_last < regular - 0.25
+    assert chance(team[:-4]) < sat_last  # out longer, less likely still
+
+
+def test_usage_times_efficiency_rewards_more_ice_time():
+    mu = rating.Model().sk["ux_means"]
+    f = {"std_gp": 10, "prev_gp": 82, "std_toi": 18, "prev_toi": 18, "std_pptoi": 2, "prev_pptoi": 2, "l5_pptoi": 2,
+         "std_goals": 0.4, "prev_goals": 0.4, "std_assists": 0.5, "prev_assists": 0.5, "std_points": 0.9, "prev_points": 0.9,
+         "std_ppPoints": 0.3, "prev_ppPoints": 0.3, "std_shots": 3, "prev_shots": 3, "std_hits": 1, "prev_hits": 1,
+         "std_blockedShots": 0.5, "prev_blockedShots": 0.5, "std_ixg": 0.35, "prev_ixg": 0.35, "std_fp": 2.0, "prev_fp": 2.0}
+    more, less = rating.ux_features({**f, "l5_toi": 21}, "F", mu), rating.ux_features({**f, "l5_toi": 15}, "F", mu)
+    assert all(more[k] >= less[k] > 0 for k in more) and more["sx_ux"] > less["sx_ux"]
+    assert rating.ux_features({"std_gp": 0}, "F", mu)["sx_ux"] is None
