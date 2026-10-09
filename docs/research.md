@@ -514,7 +514,9 @@ A goalie's share of his team's remaining starts used to come from his whole seas
 
 ## 44. Keep value counts the real schedule
 
-Keep value (section 35) added this week's projection to about 7 games' worth of the Season rating, the same for everyone. Some teams play 8 games over the next two weeks and others 5, a gap of about 4 points for a typical skater, which is the size of a swap decision. Multiplying the Season rating by each team's actual games in the two matchups after this one ranked players better on those weeks (+0.020 rank correlation, +0.023 among free agents). **Keep value now uses the real number of games**, so the upgrade cards, Best 2 moves and the drop list all account for upcoming schedules.
+Keep value (section 35) added this week's projection to about 7 games' worth of the Season rating, the same for everyone. Some teams play 8 games over the next two weeks and others 5, a gap of about 4 points for a typical skater, which is the size of a swap decision. Multiplying the Season rating by each team's actual games in the two matchups after this one ranked players better on those weeks (+0.020 rank correlation, +0.023 among free agents). Keep value briefly used the real number of games, so the upgrade cards, Best 2 moves and the drop list all account for upcoming schedules.
+
+**Reverted.** A season-long hold/drop replay scored actual decisions instead of rankings: the schedule-aware keep value lost about 0.9 points a week against the flat 7 games (95% range: -2.2 to +0.3). The ranking gain on weeks 2-3 doesn't turn into better moves, because next Monday's weekly projection already counts those games when the time comes. **Keep value is back to a flat 7 games.**
 
 ## What the independent review changed
 
