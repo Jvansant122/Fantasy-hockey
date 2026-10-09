@@ -21,6 +21,8 @@
   h1 { font-size: 20px; margin: 0; }
   h2 { font-size: 15px; margin: 0 0 8px; }
   .sub { color: var(--muted); font-size: 12px; }
+  .myteam { font-size: 14px !important; color: var(--text) !important; font-weight: 600; }
+  .prompt { color: var(--muted); padding: 4px 0; }
   a { color: var(--accent); }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 12px; }
   .nights { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -94,6 +96,9 @@
 <main>
   <h1 id="title">Free Agent Finder</h1>
   <div class="sub" id="updated">Loading…</div>
+  <div class="controls" style="margin-top:8px">
+    <label class="myteam">Your team <select id="team"><option value="">Pick your team…</option></select></label>
+  </div>
 
   <div class="card">
     <h2>This matchup's nights</h2>
@@ -102,7 +107,7 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your weakest healthy player in that group</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player in that group</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -130,15 +135,15 @@
     </div>
     <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
-  <p class="sub"><b>Claude Rating</b> = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs) × 2.9 points per start. The badge is the percentile among all forwards, defensemen or goalies in your league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
-  <p class="sub"><b>Open</b> = his games on nights when your active, healthy players leave a slot he could fill (9 F, 5 D, 1 UTL, 2 G). Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use your league's scoring.</p>
+  <p class="sub"><b>Claude Rating</b> = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs) × 2.9 points per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
+  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D, 1 UTL, 2 G). Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
 </main>
 <script>
 const SLOTS = { F: 9, D: 5, UTL: 1, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
-const SAVED = ["who", "sort", "dir", "pos", "left", "healthy", "addfa"];
+const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa"];
 const CHECKS = ["left", "healthy", "addfa"];
-const state = { who: "mine", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
+const state = { team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
 // [key, label, align, shown on phones]
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Rating", "r", true],
@@ -166,9 +171,14 @@ function fits(p, pos) {
   if (pos === "F") return ["C", "LW", "RW"].some(s => p.slots.includes(s));
   return p.slots.includes(pos);
 }
+// The picked team's active, healthy players
+function myPlayers() {
+  return state.data.players.filter(p => String(p.team_id) === state.team && !p.ir && !OUT.has(p.injury));
+}
+const onMyTeam = p => state.team !== "" && String(p.team_id) === state.team;
 // Nights this player plays on which one of my slots for his group would otherwise sit empty
 function openGames(p) {
-  if (!isFA(p)) return null;
+  if (!isFA(p) || !state.team) return null;
   return state.data.nights.filter(n => activeNight(n) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
 }
 function hasRoom(sp, g) {
@@ -183,7 +193,9 @@ function score(p) { return state.data.rated ? p.cr : week(p); }
 
 // Open lineup slots per night from my active, healthy players
 function computeOpenSlots(d) {
-  const mine = d.players.filter(p => p.owner === "mine" && !p.ir && !OUT.has(p.injury));
+  state.openSlots = {};
+  if (!state.team) return;
+  const mine = myPlayers();
   for (const n of d.nights) {
     const playing = mine.filter(p => p.nights.includes(n.sp));
     const count = g => playing.filter(p => group(p) === g).length;
@@ -200,7 +212,7 @@ function pctBadge(p) {
 function dots(p) {
   return `<span class="dots">${state.data.nights.map(n => {
     const plays = p.nights.includes(n.sp);
-    const open = plays && isFA(p) && hasRoom(n.sp, group(p));
+    const open = plays && isFA(p) && state.team && hasRoom(n.sp, group(p));
     return `<i class="${plays ? "play" : ""} ${open ? "open" : ""} ${n.past ? "past" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
   }).join("")}</span>`;
 }
@@ -232,8 +244,8 @@ function details(p) {
 function cells(p) {
   const d = state.data;
   const pos = p.slots.filter(s => s !== "F").join("/") || p.pos;
-  const teamName = p.owner === "other" && state.who === "every" ? (state.teamNames[p.team_id] || "") : "";
-  const tags = (p.owner === "mine" ? '<span class="tag own">mine</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
+  const teamName = p.team_id != null && state.who === "every" && !onMyTeam(p) ? (state.teamNames[p.team_id] || "") : "";
+  const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "");
   const og = openGames(p);
   return {
@@ -253,7 +265,7 @@ function inView(p) {
 // A player on the roster picked in the "which players" menu
 function inRoster(p) {
   const w = state.who;
-  return w === "mine" ? p.owner === "mine" : w.startsWith("t:") && String(p.team_id) === w.slice(2);
+  return w.startsWith("t:") && String(p.team_id) === w.slice(2);
 }
 
 function render() {
@@ -279,18 +291,19 @@ function render() {
     `<th data-k="${key}" tabindex="0" class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
     const c = cells(p);
-    return `<tr class="${p.owner === "mine" || inRoster(p) ? "mine" : ""}" data-id="${p.id}">` +
+    return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}">` +
       COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
       (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   renderUpgrades();
-  store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "pos" ? $("pos").value : state[key]])));
+  store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "team" ? state.team : key === "pos" ? $("pos").value : state[key]])));
 }
 
 function renderUpgrades() {
   const d = state.data;
   // weakest healthy player in each group; injured players aren't drop candidates
-  const mine = d.players.filter(p => p.owner === "mine" && !p.ir && !OUT.has(p.injury));
+  if (!state.team) { $("upgrades").innerHTML = '<div class="prompt">Pick your team at the top to see free agents who beat your weakest players.</div>'; return; }
+  const mine = myPlayers();
   const fas = d.players.filter(p => isFA(p) && !p.injury);
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
@@ -303,16 +316,16 @@ function renderUpgrades() {
     cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))}</span>
       ${better.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))} (+${fmt(score(p) - score(worst))})</span></div>`).join("")}</div>`);
   }
-  $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your weakest healthy player in any group right now.</div>';
+  $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>';
 }
 
 function renderNights() {
   const d = state.data;
-  $("openkey").textContent = d.team ? "Open = your empty F / D / G slots that night (UTL counts toward F and D)" : "";
+  $("openkey").textContent = state.team ? "Under each night: your team's empty F / D / G slots (UTL counts toward F and D)" : "Pick your team to see its open slots each night";
   $("nights").innerHTML = d.nights.map(n => {
     const o = state.openSlots[n.sp];
     const num = (v, label) => v > 0 ? `<em>${label}${v}</em>` : `${label}0`;
-    const open = d.team ? `<span class="open">${num(o.F + o.UTL, "F")} ${num(o.D + o.UTL, "D")} ${num(o.G, "G")}</span>` : "";
+    const open = state.team ? `<span class="open">${num(o.F + o.UTL, "F")} ${num(o.D + o.UTL, "D")} ${num(o.G, "G")}</span>` : "";
     return `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
   }).join("");
 }
@@ -320,17 +333,20 @@ function renderNights() {
 // The "+ free agents" box only means something when a roster is picked
 function showAddFA() { $("addfa-wrap").style.display = state.who === "fa" || state.who === "every" ? "none" : ""; }
 
-// Team rosters go in the "which players" picker, mine first
+// League teams go in both pickers, alphabetically
 function teamOptions(d) {
   state.teamNames = {};
-  const teams = d.teams || [];
-  if (!teams.length) { $("who").insertAdjacentHTML("beforeend", '<option value="mine">My roster</option>'); return; }
-  const sorted = [...teams].sort((a, b) => (b.mine - a.mine) || a.name.localeCompare(b.name));
-  for (const t of teams) state.teamNames[t.id] = t.name;
-  $("who").insertAdjacentHTML("beforeend", `<optgroup label="Team rosters">${sorted.map(t =>
-    `<option value="t:${t.id}">${esc(t.name)}${t.mine ? " (mine)" : ""}</option>`).join("")}</optgroup>`);
-  const mine = teams.find(t => t.mine);
-  state.who = mine ? `t:${mine.id}` : "fa";
+  const sorted = [...(d.teams || [])].sort((a, b) => a.name.localeCompare(b.name));
+  for (const t of sorted) state.teamNames[t.id] = t.name;
+  const opts = sorted.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("");
+  $("team").insertAdjacentHTML("beforeend", opts);
+  if (sorted.length) $("who").insertAdjacentHTML("beforeend", `<optgroup label="Team rosters">${opts.replaceAll('value="', 'value="t:')}</optgroup>`);
+}
+
+function setTeam(id) {
+  state.team = id;
+  computeOpenSlots(state.data);
+  renderNights();
 }
 
 function sortBy(key) {
@@ -341,6 +357,12 @@ function sortBy(key) {
 
 function wire() {
   $("who").addEventListener("input", () => { state.who = $("who").value; showAddFA(); render(); });
+  $("team").addEventListener("input", () => {
+    setTeam($("team").value);
+    // show the newly picked team's roster with free agents
+    if (state.team) { state.who = `t:${state.team}`; $("who").value = state.who; $("addfa").checked = true; showAddFA(); }
+    render();
+  });
   $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) sortBy(th.dataset.k); });
   $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sortBy(th.dataset.k); } });
   $("rows").addEventListener("click", e => {
@@ -353,6 +375,9 @@ function wire() {
 
 function restore() {
   const s = store.get();
+  if (typeof s.team === "string" && [...$("team").options].some(o => o.value === s.team)) state.team = s.team;
+  $("team").value = state.team;
+  if (state.team) state.who = `t:${state.team}`;
   if (typeof s.who === "string" && [...$("who").options].some(o => o.value === s.who)) state.who = s.who;
   $("who").value = state.who;
   if (typeof s.addfa === "boolean") $("addfa").checked = s.addfa;
@@ -374,10 +399,8 @@ fetch("data/players.json", { cache: "no-store" })
     }
     teamOptions(d);
     restore();
-    if (d.team) $("title").textContent = `${d.team} · Free Agent Finder`;
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
-    computeOpenSlots(d);
-    renderNights();
+    setTeam(state.team);
     wire(); render();
   })
   .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
