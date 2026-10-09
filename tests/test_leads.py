@@ -96,3 +96,16 @@ def test_latest_committed_log_has_the_scored_fields():
     rec = read_log(logs[-1])
     assert LOG_KEYS <= set(rec), LOG_KEYS - set(rec)
     assert rec["players"] and LOG_PLAYER_KEYS <= set(rec["players"][0])
+
+
+def test_league_log_keeps_only_league_fields():
+    """Transactions and rosters for the manager simulation, without owner or account details."""
+    tx = [{"id": "a1", "type": "FREEAGENT", "status": "EXECUTED", "teamId": 3, "scoringPeriodId": 4, "memberId": "{SECRET}",
+           "items": [{"type": "ADD", "playerId": 10, "toTeamId": 3, "fromTeamId": 0, "extra": 1}]}]
+    teams = [{"id": 3, "owners": ["{SECRET}"], "primaryOwner": "{SECRET}", "transactionCounter": {"matchupAcquisitionTotals": {"1": 2}},
+              "roster": {"entries": [{"playerId": 10, "lineupSlotId": 3, "acquisitionType": "ADD", "playerPoolEntry": {"x": 1}}]}}]
+    log = leads.league_log(tx, teams, 4)
+    assert "SECRET" not in json.dumps(log)
+    assert log["transactions"][0]["items"][0] == {"type": "ADD", "playerId": 10, "fromTeamId": 0, "toTeamId": 3,
+                                                   "fromLineupSlotId": None, "toLineupSlotId": None, "isKeeper": None}
+    assert log["rosters"]["3"][0]["lineupSlotId"] == 3 and log["moves_used"]["3"] == {"1": 2}

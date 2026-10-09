@@ -99,13 +99,36 @@ def fetch_odds(s):
         for g in d.get("games", [])]}
 
 
-def write_log(now, players, starters, errors, s, odds=None, injuries=None):
+# League moves for the manager simulation (research ideas-batch3 item 71): league data only, never owner or account fields
+TX_KEYS = ("id", "type", "status", "teamId", "scoringPeriodId", "proposedDate", "processDate", "bidAmount", "executionType",
+           "isPending", "relatedTransactionId", "tradeId")
+TX_ITEM_KEYS = ("type", "playerId", "fromTeamId", "toTeamId", "fromLineupSlotId", "toLineupSlotId", "isKeeper")
+ROSTER_KEYS = ("playerId", "lineupSlotId", "acquisitionType", "acquisitionDate", "injuryStatus")
+
+
+def league_log(transactions, teams, scoring_period):
+    """Adds, drops, waiver claims, trades and lineup moves, plus every team's roster and slot right now, so each
+    manager's roster can be rebuilt over time. Transactions overlap between runs; dedupe by id."""
+    return {
+        "scoring_period": scoring_period,
+        "transactions": [{**{k: t.get(k) for k in TX_KEYS},
+                          "items": [{k: i.get(k) for k in TX_ITEM_KEYS} for i in t.get("items") or []]}
+                         for t in transactions],
+        "rosters": {str(t["id"]): [{k: e.get(k) for k in ROSTER_KEYS} for e in (t.get("roster") or {}).get("entries", [])]
+                    for t in teams},
+        "moves_used": {str(t["id"]): (t.get("transactionCounter") or {}).get("matchupAcquisitionTotals") for t in teams},
+    }
+
+
+def write_log(now, players, starters, errors, s, odds=None, injuries=None, league=None):
     """One gzipped JSON per run in data/log, named by ET date and time."""
     rec = {"run_at": now.isoformat(timespec="minutes"), "starters": starters, "errors": dict(errors)}
     if odds is not None:
         rec["odds"] = odds
     if injuries is not None:
         rec["injuries"] = injuries
+    if league is not None:
+        rec["league"] = league
     for key, fn in (("lineups", fetch_lineups), ("injuries", fetch_injuries), ("odds", fetch_odds)):
         if key in rec:
             continue
