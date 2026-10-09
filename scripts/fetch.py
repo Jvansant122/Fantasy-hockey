@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+import leads
 from rating import add_ratings
 
 BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl/seasons/{season}"
@@ -238,8 +239,17 @@ def main():
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
     now = datetime.now(ET).date()
+    web = requests.Session()
+    web.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+    starters, lead_errors = [], {}
+    for day in (now, now + timedelta(days=1)):
+        if day.weekday() >= now.weekday():  # stay inside this Monday-Sunday matchup
+            try:
+                starters.append(leads.fetch_starters(web, day))
+            except Exception as e:  # noqa: BLE001 - starters are a bonus, never block the update
+                lead_errors[f"starters {day}"] = repr(e)
     try:
-        add_ratings(players, season, now, now - timedelta(days=now.weekday()))
+        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters)
         rated = True
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
@@ -265,6 +275,10 @@ def main():
     path = Path(__file__).resolve().parent.parent / "data" / "players.json"
     path.write_text(json.dumps(out, indent=1))
     print(f"Wrote {len(players)} players ({len(my_ids)} mine) for matchup {period} to {path}")
+    try:
+        leads.write_log(datetime.now(ET), players, starters, lead_errors, web)
+    except Exception as e:  # noqa: BLE001
+        print(f"Lead log failed: {e!r}", file=sys.stderr)
     if not my_team:
         print("Warning: could not find your team. Set SWID or TEAM_ID.", file=sys.stderr)
 

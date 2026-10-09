@@ -222,6 +222,7 @@ function why(p) {
   if (p.pos === "G") {
     parts.push(`Expected starts ${n(w.exp_starts)} of ${w.team_games} team games left`);
     if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last 10`);
+    if (w.tonight) parts.push(`Daily Faceoff: ${w.tonight.starting ? "starting" : "not starting"} tonight (${w.tonight.status === "Confirmed" ? "confirmed, counted as certain" : w.tonight.status.toLowerCase() + ", not yet counted"})`);
     parts.push(`× ${(+p.cr_fpg || 0).toFixed(2)} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward the 2.9 average)` : ""));
   } else {
     parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
@@ -246,7 +247,8 @@ function cells(p) {
   const pos = p.slots.filter(s => s !== "F").join("/") || p.pos;
   const teamName = p.team_id != null && state.who === "every" && !onMyTeam(p) ? (state.teamNames[p.team_id] || "") : "";
   const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
-    (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "");
+    (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
+    (p.cr_why?.tonight?.status === "Confirmed" ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
   const og = openGames(p);
   return {
     name: `${esc(p.name)}${tags}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
