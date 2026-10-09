@@ -1,7 +1,9 @@
 {
- "updated": "Fri Oct 9, 6:41 PM ET",
+ "updated": "Fri Oct 9, 7:07 PM ET",
  "team": "New York Mess",
  "matchup_period": 2,
+ "matchup_weeks": 1,
+ "final_matchup": false,
  "nights": [
   {
    "sp": 7,
@@ -162,8 +164,8 @@
    ],
    "games_next2": 6,
    "dfo_out": null,
-   "cr": 5.94,
-   "cr_fpg": 3.27,
+   "cr": 6.68,
+   "cr_fpg": 3.68,
    "cr_season": 2.35,
    "cr_games": 1.82,
    "cr_dress": null,
@@ -178,11 +180,7 @@
      "starting": true,
      "status": "Confirmed"
     },
-    "line": {
-     "win_prob": 0.44,
-     "pps": 2.63
-    },
-    "sched": 0.62,
+    "sched": 0.26,
     "gs": 4,
     "p_today": 1.0
    },
@@ -219,8 +217,8 @@
    ],
    "games_next2": 5,
    "dfo_out": null,
-   "cr": 5.84,
-   "cr_fpg": 3.47,
+   "cr": 6.49,
+   "cr_fpg": 3.85,
    "cr_season": 2.66,
    "cr_games": 1.68,
    "cr_dress": null,
@@ -235,11 +233,7 @@
      "starting": true,
      "status": "Confirmed"
     },
-    "line": {
-     "win_prob": 0.56,
-     "pps": 3.15
-    },
-    "sched": 0.26,
+    "sched": 0.18,
     "gs": 2,
     "p_today": 1.0
    },
@@ -1473,24 +1467,24 @@
    "cr_season_pct": 93
   },
   {
-   "id": 3942073,
-   "name": "Joey Daccord",
+   "id": 5657,
+   "name": "Philipp Grubauer",
    "team": "SEA",
    "pos": "G",
    "slots": [
     "G"
    ],
-   "owner": "other",
-   "team_id": 1,
+   "owner": "freeagent",
+   "team_id": null,
    "ir": false,
    "injury": null,
-   "owned": 48.5,
-   "gp": 3,
-   "ppg": 3.06,
-   "cur_ppg": 3.47,
-   "last_ppg": 2.84,
-   "last_gp": 46,
-   "proj_ppg": 3.02,
+   "owned": 3.7,
+   "gp": 1,
+   "ppg": 3.41,
+   "cur_ppg": 1.8,
+   "last_ppg": 3.44,
+   "last_gp": 28,
+   "proj_ppg": 3.46,
    "games": 3,
    "games_left": 2,
    "light": 2,
@@ -1502,32 +1496,28 @@
    ],
    "games_next2": 6,
    "dfo_out": null,
-   "cr": 3.67,
-   "cr_fpg": 2.66,
-   "cr_season": 1.96,
-   "cr_games": 1.38,
+   "cr": 3.66,
+   "cr_fpg": 2.98,
+   "cr_season": 1.06,
+   "cr_games": 1.23,
    "cr_dress": null,
    "sat_last": false,
    "cr_matched": true,
-   "nhl_id": 8478916,
+   "nhl_id": 8475831,
    "cr_why": {
-    "exp_starts": 1.38,
+    "exp_starts": 1.23,
     "team_games": 2,
-    "share10": 0.75,
+    "share10": 0.25,
     "tonight": {
-     "starting": false,
-     "status": "Unconfirmed"
+     "starting": true,
+     "status": "Confirmed"
     },
-    "line": {
-     "win_prob": 0.44,
-     "pps": 2.63
-    },
-    "sched": -0.26,
-    "gs": 3,
-    "p_today": 0.62
+    "sched": -0.16,
+    "gs": 1,
+    "p_today": 1.0
    },
    "cr_pct": 95,
-   "cr_season_pct": 78
+   "cr_season_pct": 52
   },
   {
    "id": 3114766,
@@ -2753,61 +2743,58 @@
    "cr_season_pct": 74
   },
   {
-   "id": 2590824,
-   "name": "John Gibson",
-   "team": "DET",
+   "id": 5188366,
+   "name": "Sergei Murashov",
+   "team": "PIT",
    "pos": "G",
    "slots": [
     "G"
    ],
    "owner": "other",
-   "team_id": 9,
+   "team_id": 6,
    "ir": false,
    "injury": null,
-   "owned": 69.8,
-   "gp": 3,
-   "ppg": 2.93,
-   "cur_ppg": 2.0,
-   "last_ppg": 3.01,
-   "last_gp": 57,
-   "proj_ppg": 3.02,
-   "games": 3,
+   "owned": 63.8,
+   "gp": 1,
+   "ppg": 3.32,
+   "cur_ppg": 2.4,
+   "last_ppg": 3.7,
+   "last_gp": 4,
+   "proj_ppg": 3.35,
+   "games": 4,
    "games_left": 2,
-   "light": 1,
+   "light": 3,
    "light_left": 1,
    "nights": [
-    8,
+    7,
+    9,
     11,
     12
    ],
    "games_next2": 6,
    "dfo_out": null,
-   "cr": 3.15,
-   "cr_fpg": 3.15,
-   "cr_season": 2.07,
-   "cr_games": 1.0,
+   "cr": 3.14,
+   "cr_fpg": 3.09,
+   "cr_season": 0.43,
+   "cr_games": 1.02,
    "cr_dress": null,
    "sat_last": false,
    "cr_matched": true,
-   "nhl_id": 8476434,
+   "nhl_id": 8483703,
    "cr_why": {
-    "exp_starts": 1.0,
+    "exp_starts": 1.02,
     "team_games": 2,
-    "share10": 1.0,
+    "share10": 0.25,
     "tonight": {
      "starting": true,
      "status": "Confirmed"
     },
-    "line": {
-     "win_prob": 0.56,
-     "pps": 3.15
-    },
-    "sched": -0.15,
-    "gs": 3,
+    "sched": 0.08,
+    "gs": 1,
     "p_today": 1.0
    },
    "cr_pct": 91,
-   "cr_season_pct": 79
+   "cr_season_pct": 21
   },
   {
    "id": 5048894,
@@ -3251,62 +3238,6 @@
    "cr_season_pct": 79
   },
   {
-   "id": 5734,
-   "name": "Cam Talbot",
-   "team": "CBJ",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "injury": null,
-   "owned": 1.8,
-   "gp": 0,
-   "ppg": 2.68,
-   "cur_ppg": null,
-   "last_ppg": 2.75,
-   "last_gp": 25,
-   "proj_ppg": 2.68,
-   "games": 2,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    11,
-    12
-   ],
-   "games_next2": 5,
-   "dfo_out": null,
-   "cr": 3.03,
-   "cr_fpg": 2.96,
-   "cr_season": 0.74,
-   "cr_games": 1.02,
-   "cr_dress": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475660,
-   "cr_why": {
-    "exp_starts": 1.02,
-    "team_games": 2,
-    "share10": 0.0,
-    "tonight": {
-     "starting": true,
-     "status": "Confirmed"
-    },
-    "line": {
-     "win_prob": 0.52,
-     "pps": 2.96
-    },
-    "sched": 0.02,
-    "gs": 0,
-    "p_today": 1.0
-   },
-   "cr_pct": 87,
-   "cr_season_pct": 39
-  },
-  {
    "id": 5104602,
    "name": "Clay Stevenson",
    "team": "WPG",
@@ -3359,7 +3290,7 @@
     "gs": 1,
     "p_today": 1.0
    },
-   "cr_pct": 86,
+   "cr_pct": 87,
    "cr_season_pct": 14
   },
   {
@@ -3632,7 +3563,7 @@
     "gs": 2,
     "p_today": 0.0
    },
-   "cr_pct": 84,
+   "cr_pct": 86,
    "cr_season_pct": 40
   },
   {
@@ -3962,7 +3893,7 @@
     "gs": 3,
     "p_today": 0.0
    },
-   "cr_pct": 83,
+   "cr_pct": 84,
    "cr_season_pct": 70
   },
   {
@@ -4123,66 +4054,8 @@
     "gs": 3,
     "p_today": 0.0
    },
-   "cr_pct": 81,
+   "cr_pct": 83,
    "cr_season_pct": 71
-  },
-  {
-   "id": 5188366,
-   "name": "Sergei Murashov",
-   "team": "PIT",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 6,
-   "ir": false,
-   "injury": null,
-   "owned": 63.8,
-   "gp": 1,
-   "ppg": 3.32,
-   "cur_ppg": 2.4,
-   "last_ppg": 3.7,
-   "last_gp": 4,
-   "proj_ppg": 3.35,
-   "games": 4,
-   "games_left": 2,
-   "light": 3,
-   "light_left": 1,
-   "nights": [
-    7,
-    9,
-    11,
-    12
-   ],
-   "games_next2": 6,
-   "dfo_out": null,
-   "cr": 2.87,
-   "cr_fpg": 2.82,
-   "cr_season": 0.43,
-   "cr_games": 1.02,
-   "cr_dress": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8483703,
-   "cr_why": {
-    "exp_starts": 1.02,
-    "team_games": 2,
-    "share10": 0.25,
-    "tonight": {
-     "starting": true,
-     "status": "Confirmed"
-    },
-    "line": {
-     "win_prob": 0.48,
-     "pps": 2.82
-    },
-    "sched": 0.11,
-    "gs": 1,
-    "p_today": 1.0
-   },
-   "cr_pct": 81,
-   "cr_season_pct": 21
   },
   {
    "id": 4874919,
@@ -4238,6 +4111,58 @@
    },
    "cr_pct": 90,
    "cr_season_pct": 70
+  },
+  {
+   "id": 5734,
+   "name": "Cam Talbot",
+   "team": "CBJ",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "injury": null,
+   "owned": 1.8,
+   "gp": 0,
+   "ppg": 2.68,
+   "cur_ppg": null,
+   "last_ppg": 2.75,
+   "last_gp": 25,
+   "proj_ppg": 2.68,
+   "games": 2,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    11,
+    12
+   ],
+   "games_next2": 5,
+   "dfo_out": null,
+   "cr": 2.86,
+   "cr_fpg": 2.79,
+   "cr_season": 0.74,
+   "cr_games": 1.02,
+   "cr_dress": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8475660,
+   "cr_why": {
+    "exp_starts": 1.02,
+    "team_games": 2,
+    "share10": 0.0,
+    "tonight": {
+     "starting": true,
+     "status": "Confirmed"
+    },
+    "sched": -0.01,
+    "gs": 0,
+    "p_today": 1.0
+   },
+   "cr_pct": 82,
+   "cr_season_pct": 39
   },
   {
    "id": 3900240,
@@ -4346,7 +4271,7 @@
     "gs": 3,
     "p_today": 0.0
    },
-   "cr_pct": 79,
+   "cr_pct": 81,
    "cr_season_pct": 90
   },
   {
@@ -4394,7 +4319,7 @@
     "gs": 1,
     "p_today": 0.0
    },
-   "cr_pct": 78,
+   "cr_pct": 79,
    "cr_season_pct": 49
   },
   {
@@ -4619,6 +4544,59 @@
    },
    "cr_pct": 89,
    "cr_season_pct": 70
+  },
+  {
+   "id": 2590824,
+   "name": "John Gibson",
+   "team": "DET",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 9,
+   "ir": false,
+   "injury": null,
+   "owned": 69.8,
+   "gp": 3,
+   "ppg": 2.93,
+   "cur_ppg": 2.0,
+   "last_ppg": 3.01,
+   "last_gp": 57,
+   "proj_ppg": 3.02,
+   "games": 3,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    8,
+    11,
+    12
+   ],
+   "games_next2": 6,
+   "dfo_out": null,
+   "cr": 2.77,
+   "cr_fpg": 2.77,
+   "cr_season": 2.07,
+   "cr_games": 1.0,
+   "cr_dress": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476434,
+   "cr_why": {
+    "exp_starts": 1.0,
+    "team_games": 2,
+    "share10": 1.0,
+    "tonight": {
+     "starting": true,
+     "status": "Confirmed"
+    },
+    "sched": -0.05,
+    "gs": 3,
+    "p_today": 1.0
+   },
+   "cr_pct": 78,
+   "cr_season_pct": 79
   },
   {
    "id": 4024833,
@@ -8983,6 +8961,59 @@
    "cr_season_pct": 46
   },
   {
+   "id": 3942073,
+   "name": "Joey Daccord",
+   "team": "SEA",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 1,
+   "ir": false,
+   "injury": null,
+   "owned": 48.5,
+   "gp": 3,
+   "ppg": 3.06,
+   "cur_ppg": 3.47,
+   "last_ppg": 2.84,
+   "last_gp": 46,
+   "proj_ppg": 3.02,
+   "games": 3,
+   "games_left": 2,
+   "light": 2,
+   "light_left": 2,
+   "nights": [
+    8,
+    11,
+    13
+   ],
+   "games_next2": 6,
+   "dfo_out": null,
+   "cr": 2.16,
+   "cr_fpg": 2.79,
+   "cr_season": 1.96,
+   "cr_games": 0.77,
+   "cr_dress": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478916,
+   "cr_why": {
+    "exp_starts": 0.77,
+    "team_games": 2,
+    "share10": 0.75,
+    "tonight": {
+     "starting": false,
+     "status": "Confirmed"
+    },
+    "sched": -0.16,
+    "gs": 3,
+    "p_today": 0.0
+   },
+   "cr_pct": 65,
+   "cr_season_pct": 78
+  },
+  {
    "id": 3942335,
    "name": "Kirill Kaprizov",
    "team": "MIN",
@@ -10089,7 +10120,7 @@
     "gs": 3,
     "p_today": 0.0
    },
-   "cr_pct": 65,
+   "cr_pct": 64,
    "cr_season_pct": 60
   },
   {
@@ -10867,7 +10898,7 @@
     "gs": 2,
     "p_today": 0.0
    },
-   "cr_pct": 64,
+   "cr_pct": 62,
    "cr_season_pct": 91
   },
   {
@@ -12147,7 +12178,7 @@
     "gs": 3,
     "p_today": 0.0
    },
-   "cr_pct": 62,
+   "cr_pct": 61,
    "cr_season_pct": 74
   },
   {
@@ -12698,7 +12729,7 @@
     "gs": 3,
     "p_today": 0.0
    },
-   "cr_pct": 61,
+   "cr_pct": 60,
    "cr_season_pct": 75
   },
   {
@@ -12813,63 +12844,6 @@
    },
    "cr_pct": 64,
    "cr_season_pct": 83
-  },
-  {
-   "id": 5657,
-   "name": "Philipp Grubauer",
-   "team": "SEA",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "injury": null,
-   "owned": 3.7,
-   "gp": 1,
-   "ppg": 3.41,
-   "cur_ppg": 1.8,
-   "last_ppg": 3.44,
-   "last_gp": 28,
-   "proj_ppg": 3.46,
-   "games": 3,
-   "games_left": 2,
-   "light": 2,
-   "light_left": 2,
-   "nights": [
-    8,
-    11,
-    13
-   ],
-   "games_next2": 6,
-   "dfo_out": null,
-   "cr": 1.7,
-   "cr_fpg": 2.73,
-   "cr_season": 1.06,
-   "cr_games": 0.62,
-   "cr_dress": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475831,
-   "cr_why": {
-    "exp_starts": 0.62,
-    "team_games": 2,
-    "share10": 0.25,
-    "tonight": {
-     "starting": true,
-     "status": "Unconfirmed"
-    },
-    "line": {
-     "win_prob": 0.44,
-     "pps": 2.63
-    },
-    "sched": -0.26,
-    "gs": 1,
-    "p_today": 0.38
-   },
-   "cr_pct": 60,
-   "cr_season_pct": 52
   },
   {
    "id": 3042269,
