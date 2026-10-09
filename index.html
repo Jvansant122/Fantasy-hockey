@@ -230,6 +230,9 @@ function why(p) {
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");
     if (w.last_fpg != null) parts.push(`last season ${n(w.last_fpg)} pts/game`);
+    if (w.hot) parts.push("Running hot: " + [w.hot.pdo && `his team shoots and saves unusually well with him on the ice (PDO ${w.hot.pdo.toFixed(3)})`,
+      w.hot.finishing && `he's scoring ${w.hot.finishing.toFixed(2)} goals a game more than his chances would predict`].filter(Boolean).join(" and ") +
+      ". That's mostly luck, so the rating expects him to cool off");
   }
   if (p.injury) parts.push(`ESPN: ${injLabel(p)}`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
