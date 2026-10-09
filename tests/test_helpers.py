@@ -58,3 +58,12 @@ def test_stat_split_and_per_game():
     assert fetch.per_game(None, False) == (None, 0)
     goalie = {"appliedTotal": 9, "stats": {"0": 3, "34": 4}}  # goalies divide by games started
     assert fetch.per_game(goalie, True) == (3.0, 3)
+
+
+def test_matchup_move_limit_pools_the_daily_limit_over_the_matchup():
+    acq = {"matchupAcquisitionLimit": 1.0, "matchupLimitPerScoringPeriod": True}
+    assert fetch.matchup_move_limit(acq, 7, [7, 3, None]) == 7
+    assert fetch.matchup_move_limit(acq, 6, [6]) == 6
+    assert fetch.matchup_move_limit(acq, 6, [7]) is None  # contradicted by the counter
+    assert fetch.matchup_move_limit({"matchupAcquisitionLimit": 6}, 7, [2]) == 6
+    assert fetch.matchup_move_limit({"matchupAcquisitionLimit": -1}, 7, [2]) is None

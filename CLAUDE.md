@@ -32,7 +32,7 @@ No network or secrets needed: every ESPN, NHL, MoneyPuck and Daily Faceoff call 
 ## Conventions
 
 - The daily scripts use only the standard library plus `requests` (the workflow installs nothing else). Heavy libraries belong in `model/train.py` or research code.
-- League: 12-team H2H points, daily lineups, 6 acquisitions per matchup. Scoring: G 2, A 1, PPP 0.5, SHP 0.5, SOG 0.1, HIT 0.1, BLK 0.5; goalie W 2, L -1, OTL +1, GA -1, SV 0.2, SO 3. Lineup 9F/5D/1UTL/2G; UTL counts as a sixth D slot.
+- League: 12-team H2H points, daily lineups, one acquisition per day of the matchup, pooled (ESPN `matchupAcquisitionLimit` 1 with `matchupLimitPerScoringPeriod`: 7 a normal week, 6 in the 6-day first matchup; several can be used the same day). Scoring: G 2, A 1, PPP 0.5, SHP 0.5, SOG 0.1, HIT 0.1, BLK 0.5; goalie W 2, L -1, OTL +1, GA -1, SV 0.2, SO 3. Lineup 9F/5D/1UTL/2G; UTL counts as a sixth D slot.
 - One ESPN scoring period is one day. ESPN's 2027 season is the NHL's 20262027.
 - `api.nhle.com` returns 403 without a browser-like User-Agent.
 - ESPN and Daily Faceoff team abbreviations differ from the NHL's: see `ESPN_TO_NHL` in `rating.py` and `DF_TO_NHL` in `leads.py`.
