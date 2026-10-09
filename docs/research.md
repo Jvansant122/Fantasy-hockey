@@ -337,6 +337,12 @@ A second research thread built an expected-points number. It's what a player's s
 - **Not all of it, though.** Elite finishers like Kucherov, Draisaitl and Nylander beat their chances every year.
 - **The rating already does most of this**, since it projects goals from shots and chances. So expected points don't change the rating. When you tap a skater's row, it shows his season points per game next to his expected points. Once he has 15+ games and the gap is 0.15 or more, it also says "running hot" or "running cold".
 
+## 27. Goalie starts in the first two weeks
+
+The start model was built on games from later in the season. On opening week it read one start as a 100/0 split, so after opening night it projected the backup for about 0.8 fewer starts over the next 4 games than backups actually got.
+
+The site now blends in last season's split between a team's goalies until the team's 10th game, fading it out as games are played. Over four seasons this cuts the error in projected starts during a team's first 4 games from 0.84 to 0.67 per goalie. From game 10 on, nothing changes. Daily Faceoff confirmations still override on game days.
+
 ## What the independent review changed
 
 | Review point | Outcome |
