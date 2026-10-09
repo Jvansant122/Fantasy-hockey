@@ -13,7 +13,7 @@ TOP_FIELDS = {"updated", "nights", "rated", "teams", "players"}
 NIGHT_FIELDS = {"sp", "date", "games", "light", "past"}
 PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
                  "games", "games_left", "light", "light_left", "nights"}
-RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_matched", "cr_why", "cr_pct", "cr_season", "cr_season_pct"}
+RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_matched", "cr_why", "cr_pct", "cr_season", "cr_season_pct", "sat_last"}
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
 
 

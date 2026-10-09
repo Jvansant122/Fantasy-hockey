@@ -134,6 +134,7 @@ def test_every_player_gets_rating_fields(run):
         for k in FIELDS:
             assert k in p, (p["name"], k)
         assert p["cr"] >= 0 and 0 <= p["cr_pct"] <= 100
+        assert isinstance(p["sat_last"], bool)
         json.dumps(p)  # players.json must stay serialisable
 
 
