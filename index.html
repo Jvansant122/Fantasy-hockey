@@ -416,7 +416,7 @@ function renderUpgrades() {
     ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}${dropGain(p)}</span></div>`).join("")}</div>`);
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only
   const irOpen = (d.ir_slots || 0) - d.players.filter(p => String(p.team_id) === state.team && p.ir).length;
-  const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
+  const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && p.pos !== "G" && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.</span>
     ${stash.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
