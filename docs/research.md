@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 9, 2026. The research is ongoing; new findings are added here as they land.
+Last updated Oct 9, 2026 (findings through the drop list, light nights and the UTL slot). The research is ongoing; new findings are added here as they land.
 
 **League scoring:** goals 2, assists 1, power-play points 0.5, shorthanded points 0.5, shots 0.1, hits 0.1, blocks 0.5. Goalies: win 2, loss -1, overtime loss +1, goal against -1, save 0.2, shutout 3.
 
@@ -13,12 +13,14 @@ Last updated Oct 9, 2026. The research is ongoing; new findings are added here a
 3. **Goalies are all about starts.** Ranking goalies by points per game × team games is no better than picking at random. Ranking by expected starts is about 60% better.
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
 5. **Use all 6 moves each week**, and re-pick for the schedule rather than holding a pickup.
+6. **Drop the player with the lowest projected week**, not the lowest season total. That doubles what each move gains.
+7. **Empty lineup slots on light nights are the biggest pool of points left.** A free agent is worth most when he plays on nights your lineup has a hole at his position.
 
 ## How the rating is calculated
 
 - **Skaters:** projected points per game × games left this matchup × the chance he dresses.
   - *Points per game* comes from a model that weighs ice time and power-play time over the last 5, 10 and 20 games, plus shots, blocks, hits, points and expected goals from this season and last season.
-  - *The chance he dresses* comes from how many of his team's last 3 and 10 games he played, then ESPN's injury status on top (out, IR or suspended counts as 0, day-to-day as 70%).
+  - *The chance he dresses* comes from how many of his team's last 3 and 10 games he played, then ESPN's injury status on top (out, IR or suspended counts as 0; day-to-day is capped at 50%). These overrides are logged daily so the day-to-day number can be checked after a few weeks.
 - **Goalies:** expected starts in the team's remaining games × about 2.9 points per start. Expected starts come from his share of recent starts and back-to-backs.
 - The badge next to the rating is the player's percentile among forwards, defensemen or goalies across the league.
 
@@ -175,6 +177,57 @@ Compared with dropping a typical bottom-of-roster skater (about 4.5 points a wee
 - **Power-play time is different.** A power-play time *increase* keeps only 17 to 28%, because short-term PP time mostly reflects how many penalties opponents took. A *decrease* keeps 58 to 66%. So "moved up to PP1" needs a confirmed unit change; "moved off PP1" can be trusted.
 - The rating's model already accounts for this, so its error doesn't grow for players with big recent jumps.
 
+## 11. Rookies and call-ups
+
+![Rookies](img/rookies.png)
+
+For players with fewer than 10 NHL games, their first few NHL games already predict better than their AHL scoring, draft slot or age. AHL points per game don't separate call-ups at all. What matters is the role he's given: his NHL ice time and power-play time. **No change to the rating**: a player with no NHL games gets the league average, and his minutes take over after one game.
+
+## 12. Power-play unit and mid-season retraining
+
+- **"On PP1"** looks important, but it adds nothing once the model knows his power-play minutes. It's a useful label, not an input.
+- **Retraining during the season** doesn't help: a model trained on past seasons is as good in March as one retrained monthly. Accuracy rises through the season only because the season-to-date stats get longer. The model is trained once a year.
+
+## 13. ESPN injury status
+
+On Oct 8, six players ESPN listed as OUT were still rated 87 to 95% likely to dress, because they had played the games before getting hurt. ESPN's flag removes that lag. Among players who had dressed in all of their team's last 3 games, about 1% then scored a zero week, worth about 0.9 points per roster each week. The site now sets OUT, IR and suspended players to 0 and caps day-to-day at 50%.
+
+## 14. Who to drop
+
+![Drop rules](img/drop_rules.png)
+
+Four ways of picking the 12 rostered skaters to drop each week, against the 12 best free agent pickups (6.1 points that week):
+
+| Drop the player with the lowest… | His points that week | Net gain from the move | Drops that outscore the pickup |
+| --- | --- | --- | --- |
+| **Projected points this matchup (Claude Rating)** | **2.6** | **+3.6** | 11% |
+| Season points total | 4.4 | +1.7 | 24% |
+| ESPN-style rank | 4.5 | +1.6 | 26% |
+| Last 10 games points per game | 4.6 | +1.6 | 27% |
+
+Dropping by projected points doubles what each move gains, partly because that player has fewer games or is less likely to dress that week. It doesn't cost you a better player later: the dropped players score about the same over the next month under every rule. The site's **Drop list** shows your team's five lowest projected skaters.
+
+## 15. Light nights and open slots
+
+![Light nights](img/light_nights.png)
+
+Simulating 12 rosters in this league's format:
+
+| NHL games that night | Open lineup slots per roster | Points available from open slots |
+| --- | --- | --- |
+| 1-3 | 12.4 | 16.3 |
+| 4-6 | 10.4 | 14.9 |
+| 7-9 | 7.2 | 11.1 |
+| 10-12 | 4.7 | 7.8 |
+| 13+ | 1.9 | 3.2 |
+
+- A typical roster has about 28 empty starting slots a week, worth about 72 points if every one were filled. About two thirds of that is on nights with 6 or fewer games. The 6-move limit means only part of it is reachable, but it's the largest pool of points in this study.
+- A streamer scores about the same on any night, so what matters is simply whether he plays on a night your slot is open. The site's **Open** column counts exactly that for each free agent, for the team you pick.
+
+## 16. The UTL slot
+
+No skater in this league is eligible at both forward and defense, and the lineup uses general F slots, so forward eligibility never matters. UTL only comes into play on nights with 13+ games, and there the 6th defenseman outscored the 10th forward (1.40 vs 1.30 points). **The site counts UTL as a sixth D slot** when working out open slots.
+
 ## What the independent review changed
 
 | Review point | Outcome |
@@ -188,4 +241,4 @@ Compared with dropping a typical bottom-of-roster skater (about 4.5 points a wee
 
 ## Still being researched
 
-Rookies and call-ups with no NHL history, power-play unit data, checking the dress odds against ESPN injury flags, a weekly drop-candidate list, the value of an open slot on a light night, and multi-position eligibility. Results will be added here.
+Injury returns, team shot environment, per-team goalie tandem patterns, a weekly move optimizer and a confidence badge for the rating. Results will be added here.

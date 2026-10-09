@@ -107,7 +107,7 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player in that group</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -136,10 +136,11 @@
     <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
   <p class="sub"><b>Claude Rating</b> = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs) × 2.9 points per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
-  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D, 1 UTL, 2 G). Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
+  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 6 D counting UTL as a D, 2 G). Most of the value of empty slots is on light nights. Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
 </main>
 <script>
-const SLOTS = { F: 9, D: 5, UTL: 1, G: 2 };
+// UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
+const SLOTS = { F: 9, D: 6, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
 const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa"];
 const CHECKS = ["left", "healthy", "addfa"];
@@ -183,7 +184,7 @@ function openGames(p) {
 }
 function hasRoom(sp, g) {
   const o = state.openSlots[sp];
-  return g === "G" ? o.G > 0 : o[g] + o.UTL > 0;
+  return o[g] > 0;
 }
 function val(p, key) {
   return { week: week(p), games: games(p), light: light(p), opengm: openGames(p), nights: games(p), pos: p.slots.join("/") || p.pos }[key] ?? p[key];
@@ -200,8 +201,7 @@ function computeOpenSlots(d) {
     const playing = mine.filter(p => p.nights.includes(n.sp));
     const count = g => playing.filter(p => group(p) === g).length;
     const f = count("F"), dd = count("D"), g = count("G");
-    const extra = Math.max(0, f - SLOTS.F) + Math.max(0, dd - SLOTS.D);
-    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - dd), UTL: Math.max(0, SLOTS.UTL - extra), G: Math.max(0, SLOTS.G - g) };
+    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - dd), G: Math.max(0, SLOTS.G - g) };
   }
 }
 
@@ -316,16 +316,21 @@ function renderUpgrades() {
     cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))}</span>
       ${better.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))} (+${fmt(score(p) - score(worst))})</span></div>`).join("")}</div>`);
   }
-  $("upgrades").innerHTML = cards.join("") || '<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>';
+  if (!cards.length) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
+  // Drop list: lowest projected points for the rest of the matchup (research section 17), IR slot excluded
+  const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => score(a) - score(b)).slice(0, 5);
+  if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest projected skaters this matchup</span>
+    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b></div>`).join("")}</div>`);
+  $("upgrades").innerHTML = cards.join("");
 }
 
 function renderNights() {
   const d = state.data;
-  $("openkey").textContent = state.team ? "Under each night: your team's empty F / D / G slots (UTL counts toward F and D)" : "Pick your team to see its open slots each night";
+  $("openkey").textContent = state.team ? "Under each night: your team's empty F / D / G slots (UTL counted as a D slot)" : "Pick your team to see its open slots each night";
   $("nights").innerHTML = d.nights.map(n => {
     const o = state.openSlots[n.sp];
     const num = (v, label) => v > 0 ? `<em>${label}${v}</em>` : `${label}0`;
-    const open = state.team ? `<span class="open">${num(o.F + o.UTL, "F")} ${num(o.D + o.UTL, "D")} ${num(o.G, "G")}</span>` : "";
+    const open = state.team ? `<span class="open">${num(o.F, "F")} ${num(o.D, "D")} ${num(o.G, "G")}</span>` : "";
     return `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
   }).join("");
 }
