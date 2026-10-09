@@ -443,6 +443,23 @@ Every move simulation before this one scored a single week, so dropping a good p
 
 **On the site:** the upgrade cards and the drop list now rank skaters by this "keep value" (shown next to the Week number). The per-game part uses the Season rating, so an injured star with a long future isn't put on the drop list. The Week column itself is unchanged, and goalies are still ranked on this week, since streams are decided night by night.
 
+## 36. Injured players: how long they're out
+
+ESPN's injury statuses aren't archived anywhere, so the research rebuilt them from 41,905 ESPN/Rotowire news notes. From a Monday, the typical number of further games missed:
+
+| What is known | Median further games missed | Back within 4 games |
+| --- | --- | --- |
+| Day-to-day, hasn't missed a game yet | 0 | 78% |
+| Day-to-day, missed 1-8 | 2-4 | 45-67% |
+| Out | 3-5 | 35-51% |
+| Injured reserve | 9-14 | 15-26% |
+| Surgery or long-term IR | 16 | 12% |
+| "Out for the season" | rest of season | 0% |
+
+So the site's old rule (out and IR at 0) was too harsh: those players actually dress for about 25% and 11% of the week's games. **The Week rating now caps an injured skater's chance of dressing at 35% when out, 15% on IR and 50% day-to-day**, and goes to 0 only when ESPN's note says surgery, long-term IR, season-ending, week-to-week, month-to-month, indefinitely, or a return 2+ weeks away. Weekly rank correlation +0.007 overall and +0.009 on the waiver pool, and an independent rebuild found +0.011 to +0.013. It doesn't change which free agent tops the list, but it projects your own injured players more fairly (the drop list, mid-week swaps, who to bench). Tap an injured player to see how many more games players with his status usually miss, or what ESPN's note says.
+
+The Season rating already handled injured players well (section 34), and note-based tweaks didn't improve it. Returning players come back at their old ice time, so nothing changes there either. Goalies keep the old rule.
+
 ## What the independent review changed
 
 | Review point | Outcome |

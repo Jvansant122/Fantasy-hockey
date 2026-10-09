@@ -77,7 +77,11 @@ def fetch_lineups(s):
 def fetch_injuries(s):
     r = s.get("https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/injuries", timeout=30)
     r.raise_for_status()
+    def athlete_id(i):  # ESPN's athlete id (the fantasy player id) is only in the player card link
+        m = re.search(r"/id/(\d+)", " ".join(l.get("href", "") for l in (i.get("athlete") or {}).get("links", [])))
+        return int(m.group(1)) if m else None
     return [{"team": t.get("displayName"), "name": (i.get("athlete") or {}).get("displayName"), "espn_id": i.get("id"),
+             "athlete_id": athlete_id(i),
              "status": i.get("status"), "date": i.get("date"), "short": i.get("shortComment"), "long": i.get("longComment")}
             for t in r.json().get("injuries", []) for i in t.get("injuries", [])]
 
@@ -95,11 +99,13 @@ def fetch_odds(s):
         for g in d.get("games", [])]}
 
 
-def write_log(now, players, starters, errors, s, odds=None):
+def write_log(now, players, starters, errors, s, odds=None, injuries=None):
     """One gzipped JSON per run in data/log, named by ET date and time."""
     rec = {"run_at": now.isoformat(timespec="minutes"), "starters": starters, "errors": dict(errors)}
     if odds is not None:
         rec["odds"] = odds
+    if injuries is not None:
+        rec["injuries"] = injuries
     for key, fn in (("lineups", fetch_lineups), ("injuries", fetch_injuries), ("odds", fetch_odds)):
         if key in rec:
             continue
