@@ -12,7 +12,7 @@ Last updated Oct 9, 2026 (findings through betting lines for goalies, availabili
 2. **Whether a player dresses matters more than anything else.** Scratches, injuries and trips to the AHL mean zero points. Accounting for that is worth more than any modeling trick.
 3. **Goalies are all about starts.** Ranking goalies by points per game × team games is no better than picking at random. Ranking by expected starts is about 60% better.
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
-5. **Use all 6 moves each week: 2 skater pickups on Monday, and keep 4 for injury swaps and streaming goalies with a confirmed start** on nights your goalies leave a slot open (sections 31-33). Re-pick for the schedule rather than holding a pickup.
+5. **Use all 7 moves each week: 2 skater pickups on Monday, and keep the other 5 for injury swaps and streaming goalies with a confirmed start** on nights your goalies leave a slot open (sections 31-33, redone with the league's real settings in section 37). Carry 2 goalies, not 3. Re-pick for the schedule rather than holding a pickup.
 6. **Drop the player with the lowest projected week**, not the lowest season total. That doubles what each move gains.
 7. **Empty lineup slots on light nights are the biggest pool of points left**, and the simple Monday plan captures them: add the 6 best projected weeks and drop your 6 lowest. Chasing single nights one at a time loses points.
 
@@ -459,6 +459,25 @@ ESPN's injury statuses aren't archived anywhere, so the research rebuilt them fr
 So the site's old rule (out and IR at 0) was too harsh: those players actually dress for about 25% and 11% of the week's games. **The Week rating now caps an injured skater's chance of dressing at 35% when out, 15% on IR and 50% day-to-day**, and goes to 0 only when ESPN's note says surgery, long-term IR, season-ending, week-to-week, month-to-month, indefinitely, or a return 2+ weeks away. Weekly rank correlation +0.007 overall and +0.009 on the waiver pool, and an independent rebuild found +0.011 to +0.013. It doesn't change which free agent tops the list, but it projects your own injured players more fairly (the drop list, mid-week swaps, who to bench). Tap an injured player to see how many more games players with his status usually miss, or what ESPN's note says.
 
 The Season rating already handled injured players well (section 34), and note-based tweaks didn't improve it. Returning players come back at their old ice time, so nothing changes there either. Goalies keep the old rule.
+
+## 37. The league's real move limit, and how many goalies to carry
+
+The league's ESPN settings say "1 acquisition per scoring period", and the transaction log shows what that means: one move per day of the matchup, pooled and usable any time. That is **7 moves in a normal week** (6 in the 6-day first matchup), not 6, and several can go on the same day (one team made 3 adds in 7 minutes). Teams also carry more than the earlier simulations assumed: about 19 skaters and 3.3 goalies each.
+
+The move plan was re-run with these settings over 67 weeks (2023-24 to 2025-26), with one active manager against 11 teams that never move:
+
+| Plan | Points a week vs all 7 moves Monday |
+| --- | --- |
+| 6 moves, all Monday | −1.3 |
+| 5 Monday + injury swaps, no goalie streams | +0.3 |
+| 3 Monday + injury swaps + goalie streams | +4.7 |
+| **2 Monday + injury swaps + goalie streams** | **+5.6** |
+| 0 Monday + injury swaps + goalie streams | +2.6 |
+| **2 goalies + an extra skater, 2 Monday + swaps + streams** | **+7.6** |
+
+So the plan holds: **2 skater moves on Monday, the other 5 for injury swaps and confirmed goalie streams.** And **carrying 2 goalies plus an extra skater beats carrying 3 goalies by about 2 points a week**, because the third goalie's starts are easier to get off the wire one confirmed night at a time. With only one manager streaming these gains are on the high side; the earlier runs with all 12 teams streaming ranked the plans the same way.
+
+**On the site:** the Upgrades header states 7 moves and "keep the other 5", the "Stream a goalie tonight" card shows moves left out of 7, and a Goalies card appears when you carry more than 2, naming your weakest goalie this week.
 
 ## What the independent review changed
 

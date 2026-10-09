@@ -107,7 +107,7 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Make 2 skater moves on Monday and keep the rest (your league allows one per day of the matchup) for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open.</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Your league allows 7 moves a matchup (6 in a 6-day one), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use a third goalie's roster spot on a skater.</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -326,7 +326,7 @@ function renderUpgrades() {
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
-  // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the rest) cover these and goalie streams.
+  // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];
   const outs = mine.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.games_left > 0)));
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves</span>
@@ -372,6 +372,10 @@ function renderUpgrades() {
   const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => keep(a) - keep(b)).slice(0, 5);
   if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus about two more weeks of points per game</span>
     ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}</span></div>`).join("")}</div>`);
+  // Carry 2 goalies and stream the third spot: +2 points a week over carrying 3 (research section 37)
+  const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos === "G").sort((a, b) => keep(a) - keep(b));
+  if (myGoalies.length > 2) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length}. Two plus streams beats three by about 2 points a week, so use the extra spot on a skater.</span>
+    ${myGoalies.slice(0, myGoalies.length - 2).map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub"> · weakest goalie this week</span></div>`).join("")}</div>`);
   $("upgrades").innerHTML = cards.join("");
 }
 

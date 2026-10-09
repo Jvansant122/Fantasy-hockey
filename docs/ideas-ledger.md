@@ -76,11 +76,11 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 42 | Oct 9 07:40 | Hourly | Next man up when top PP player is out | Forwards nothing; 2nd PP defenseman +0.25 FP/G (± 0.18) | No change; recheck 2nd-PP D live | findings 49 |
 | 43 | Oct 9 07:40 | Hourly | Ridge bias for players who just changed teams | Week 1 +0.10, weeks 2-5 −0.08 FP/G | No change | findings 50 |
 | 44 | Oct 9 08:40 | Hourly | Hold some of the 6 moves for mid-week injuries | Hold 1-2: +1.1 to +1.4 FP/roster/week | Shipped (PR #18, handoff 13) | findings 51 |
-| 45 | Oct 9 09:40 | Hourly | Split moves between skater pickups and goalie streams | 2-3 skater + 3-4 streams: +4.3 to +4.6 FP/week vs all skaters | Shipped (PR #19, handoff 14) | findings 52 |
-| 46 | Oct 9 10:40 | Hourly | Goalie streams and injury swaps from one budget; 7-start cap | 2 skater moves Monday + 4 spare: +5.8 FP/week (+4.1 with cap) | Shipped (PR #20, handoff 15) | findings 53 |
+| 45 | Oct 9 09:40 | Hourly | Split moves between skater pickups and goalie streams | 2-3 skater + 3-4 streams: +4.3 to +4.6 FP/week vs all skaters | Shipped (PR #19, handoff 14) | findings 52 Audit Oct 9: all 12 managers followed the plan and shared one pool; with one active manager extra Monday skater moves help slightly (+0.4), plan still wins. Re-run under real settings (7 pooled, one manager, real rosters): shape confirmed, numbers superseded by findings 59. |
+| 46 | Oct 9 10:40 | Hourly | Goalie streams and injury swaps from one budget; 7-start cap | 2 skater moves Monday + 4 spare: +5.8 FP/week (+4.1 with cap) | Shipped (PR #20, handoff 15) | findings 53 Audit Oct 9: same 12-identical-managers caveat; plan still wins with one active manager. Re-run under real settings (7 pooled, one manager, real rosters): shape confirmed, numbers superseded by findings 59. |
 | 47 | Oct 9 10:40 | Hourly | Which wire goalie to stream (own pts/start, team, opponent, home) | All within noise; best +0.4 FP/stream | No change | findings 54 |
-| 48 | Oct 9 11:40 | Hourly | Spend leftover moves Fri/Sat on skaters | Best +0.1, noise | No change | findings 55 |
-| 49 | Oct 9 11:40 | Hourly | Roster a third goalie | −2.7 FP/week vs 2 goalies + streaming | No change | findings 55 |
+| 48 | Oct 9 11:40 | Hourly | Spend leftover moves Fri/Sat on skaters | Best +0.1, noise | No change | findings 55 Audit Oct 9: 12 identical managers; re-check with one active manager. Re-run under real settings (7 pooled, one manager, real rosters): shape confirmed, numbers superseded by findings 59. |
+| 49 | Oct 9 11:40 | Hourly | Roster a third goalie | −2.7 FP/week vs 2 goalies + streaming | No change | findings 55 Audit Oct 9: UNPROVEN, assumed 2 goalies/16 skaters per team; league averages 3.3 G / ~19 skaters. Re-test (idea 98). Re-run under real settings (7 pooled, one manager, real rosters): shape confirmed, numbers superseded by findings 59. |
 | 50 | Oct 9 12:40 | Hourly | Rank adds/drops by this week + future weeks (8-week carry-over sim) | Horizon 2: +1.75 FP/roster/week (2 moves), +2.3 (6 moves) | Shipped (PR #22, handoff 17) | findings 57 |
 | 51 | queued | Lit | Blend Claude Rating with ESPN's projection | Needs weeks of logged ESPN projections | Waiting until late Oct (live-1) | ideas.md, literature-review.md §21 |
 | 52 | queued | Lit | Linemate pairing for managers behind in a matchup (same-line points correlate) | Not run | Pending | ideas.md, literature-review.md |
@@ -110,10 +110,63 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | inj-5 | Oct 9 | Injury | Games still to miss by status and body part (medians) | DTD 0, OUT 3-5, IR 9-14, surgery/LTIR 16 | Display only: "usually back in about N games" (PR #24) | findings 58, injury/games_missed_table.txt |
 | live-1 | Oct 30 | Coordinator (scheduled) | 3-week log review: Daily Faceoff "likely" starter reliability, injury caps vs real ESPN flags, who sits all week from lineups, rating vs ESPN projection (16, 30, 51) | Not run | Waiting until Oct 30 | data/log/, trigger trig_014aqpuBGneWvQ3cesyakTyE |
 | lit-1 | Oct 9 | Lit | Literature review gaps where site logs are new evidence: DFO starter accuracy, DTD outcomes, ESPN projection accuracy | Covered by live-1 | Waiting until Oct 30 | literature-review.md |
-| batch3 | Oct 9 | "Twenty new research ideas" | 20 new ideas (10 simple, 5 moderate, 5 extreme) | Being written | Pending: copy into `ideas.md` with numbers 54+ and add rows here | research/claude-rating/ideas-batch3.md |
+| 54 | Oct 9 | Ideas | Bank leftover moves on Sunday (simple) | Not run | Pending | ideas-batch3.md |
+| 55 | Oct 9 | Ideas | Start/sit on crowded nights (simple) | Not run | Pending | ideas-batch3.md |
+| 56 | Oct 9 | Ideas | When to make Monday moves: 9 AM, 12:30 or 5 PM (simple) | Not run | Pending | ideas-batch3.md |
+| 57 | Oct 9 | Ideas | Underdog defensemen block more shots (simple) | Not run | Pending | ideas-batch3.md |
+| 58 | Oct 9 | Ideas | Healthy scratches on the second night of a back-to-back (simple) | Not run | Pending | ideas-batch3.md |
+| 59 | Oct 9 | Ideas | Do coaches save the starter for strong opponents? (simple) | Not run | Pending | ideas-batch3.md |
+| 60 | Oct 9 | Ideas | Call-ups: do they stay in the lineup? (simple) | Not run | Pending | ideas-batch3.md |
+| 61 | Oct 9 | Ideas | Fantasy playoff schedule (simple) | Not run | Pending | ideas-batch3.md |
+| 62 | Oct 9 | Ideas | Value over replacement by position (simple) | Not run | Pending | ideas-batch3.md |
+| 63 | Oct 9 | Ideas | Line-blending coaches and the last-5 TOI window (simple) | Not run | Pending | ideas-batch3.md |
+| 64 | Oct 9 | Ideas | Goalie Season rating (job security) (moderate) | Not run | Pending | ideas-batch3.md |
+| 65 | Oct 9 | Ideas | Goalie odds for the rest of the week (moderate) | Not run | Pending | ideas-batch3.md |
+| 66 | Oct 9 | Ideas | Who sits when a regular comes back (moderate) | Not run | Pending | ideas-batch3.md |
+| 67 | Oct 9 | Ideas | IR stash pickups (moderate) | Not run | Pending | ideas-batch3.md |
+| 68 | Oct 9 | Ideas | Healthy-scratch history as a P(dresses) input (moderate) | Not run | Pending | ideas-batch3.md |
+| 69 | Oct 9 | Ideas | Rolling-horizon move planner (extreme) | Not run | Pending | ideas-batch3.md |
+| 70 | Oct 9 | Ideas | Team lineup solver (extreme) | Not run | Pending | ideas-batch3.md |
+| 71 | Oct 9 | Ideas | Twelve-manager league simulator (wins, not points) (extreme) | Not run | Pending | ideas-batch3.md |
+| 72 | Oct 9 | Ideas | Late-season rest and tanking (extreme) | Not run | Pending | ideas-batch3.md |
+| 73 | Oct 9 | Ideas | Joint weekly points simulator (extreme) | Not run | Pending | ideas-batch3.md |
+| 74 | Oct 9 | Ideas | At what horizon does the Season rating beat the weekly one? (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 75 | Oct 9 | Ideas | Error map: where the 0.797 loses (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 76 | Oct 9 | Ideas | Level calibration by tier (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 77 | Oct 9 | Ideas | Day-to-day jumpiness (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 78 | Oct 9 | Ideas | Remaining schedule: per team game vs total (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 79 | Oct 9 | Ideas | Do shot-blockers and hitters get hurt more? (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 80 | Oct 9 | Ideas | Waiver-exempt players get sent down (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 81 | Oct 9 | Ideas | Do heavy-workload goalies fade late? (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 82 | Oct 9 | Ideas | This season's weight by age at the season horizon (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 83 | Oct 9 | Ideas | Idle players: sent down, scratched or injured (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 84 | Oct 9 | Ideas | Filling in for an injured teammate (moderate) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 85 | Oct 9 | Ideas | Patience rule for slumping stars (moderate) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 86 | Oct 9 | Ideas | Option value of uncertain players (moderate) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 87 | Oct 9 | Ideas | Score the Season rating by decisions, not Spearman (moderate) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 88 | Oct 9 | Ideas | Playoff-weighted Season rating (moderate) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 89 | Oct 9 | Ideas | Rest-of-season games-played simulator (extreme) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 90 | Oct 9 | Ideas | League-wide goalie depth-chart simulator (extreme) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 91 | Oct 9 | Ideas | AHL call-up pipeline (extreme) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 92 | Oct 9 | Ideas | Trade deadline model (extreme) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 93 | Oct 9 | Ideas | Joint talent-and-availability model with intervals (extreme) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 94 | queued | Lit 23.6 | Empty-net points: top-line forwards on betting favourites vs the rating | Not run | Pending | ideas.md |
+| 95 | queued | Lit 23.6 | Marcel-style goalie projection vs rest-of-season goalie rating | Not run | Pending | ideas.md |
+| 96 | queued | Lit 23.6 | Ice time only from games under a new coach after a coaching change | Not run | Pending | ideas.md |
+| 97 | queued | Lit 23.6 | NHL final-week resting vs ESPN fantasy playoff weeks | Not run | Pending | ideas.md |
+| 98 | Oct 9 13:40 | routine | Third goalie with real roster sizes and one active manager (in idea 101 sim) | 2G + streaming beats 3G by +2.0 FP/week | No change (finding 55 confirmed) | findings 59 |
+| 99 | queued | Lit 24 | Backtest goalie Season rating vs rest-of-season results; last-season weight, start split, team strength | Not run | Pending | ideas.md |
+| 100 | queued | Lit 24 | Injury rates C vs W; multi-season injury history; age in skater games-played model | Not run | Pending | ideas.md |
+| 101 | Oct 9 13:40 | routine | Move sim: pooled 7 moves/matchup, one active manager, 12F/7D/3G rosters | 2 Mon + injuries + goalie streams +5.6 FP/week vs all Monday; 7th move +1.3-2.9; 2G + extra skater +2.0 over 3G | Pending (handoff 21) | findings 59 |
 | lit-2A | queued | Lit (2nd pass) | Empty-net points for top-6 F / PP1 D by team implied win probability; favourite × top-of-lineup term, or confirm implied-total tiebreak covers it | Not run; expected 0.1-0.3 FP/G for a few dozen players | Pending | literature-review.md §23.6 A |
 | lit-2B | queued | Lit (2nd pass) | Hockey Marcels goalie Season rating (weights 1/.6/.5/.3, +1,525 shots at league avg, decline from 30) vs shrink to 2.9 over 15 starts | Not run; goalie Season rating never tested | Pending | literature-review.md §23.6 B |
 | lit-2C | queued | Lit (2nd pass) | After mid-season coaching changes, TOI windows from post-change games only vs last-5/10 | Not run; few team-weeks a season | Pending | literature-review.md §23.6 C |
 | lit-2D | queued | Lit (2nd pass) | Late-season resting: dress rates and goalie splits for clinched/eliminated teams if NHL's final week overlaps fantasy playoffs | Not run | Pending (matters only in March-April) | literature-review.md §23.6 D |
 | lit-2E | Oct 9 | Lit (2nd pass) | Goalie back-to-back, blowout carry-over, contract year, blocks rink bias | Literature agrees with existing calls (goalie B2B penalty ~0.004 on 40k games; contract year no average effect) | No change | literature-review.md §23.6 E |
 | audit | Oct 9 | "Audit the repo's assumptions" | Skeptic re-test of settled conclusions and constants | Running | Pending: add one row per re-test (name the original row) | thread, handoff.md if any |
+| lit-3S1 | queued | Lit (Season pass) | Backtest goalie Season rating on ROS goalie FP per team game; tune pts/start prior (15 → 30-60 starts, prior = last season or Marcel blend), start-share prior (10 → 20-40 games of last season's split), add team-strength term | Not run; goalie Season never tested; literature says goalie numbers need far more prior than skaters | Pending (highest Season priority; supersedes lit-2B) | literature-review.md §24.7 S1 |
+| lit-3S2 | queued | Lit (Season pass) | Lineup chain: separate center and winger drop rates | Not run; centers' injury risk 1.4-1.7× (Martin et al. 2024) | Pending (small) | literature-review.md §24.7 S2 |
+| lit-3S3 | queued | Lit (Season pass) | Season dress model: games missed to injury over 2-3 seasons (injury notes) instead of last season GP/82, kept separate from scratches | Not run; prior injury is the strongest general predictor | Pending | literature-review.md §24.7 S3 |
+| lit-3S4 | queued | Lit (Season pass) | Age as an input to the season dress logistic | Not run | Pending (small) | literature-review.md §24.7 S4 |
+| lit-3S5 | queued | Lit (Season pass) | Season P(dresses) inside keep value (findings 57) instead of weekly P(dresses) | Not run; findings 57 flags it | Pending (small) | literature-review.md §24.7 S5 |
+| lit-3x | Oct 9 | Lit (Season pass) | Literature check of row 53 (Season FP/G with 3 seasons, age, team PP regression) | Szymborski 2026: prior-heavy projections barely move with in-season data (62/38 after 5 months); with season-1..3 flat, nothing expected | Recommend closing row 53 | literature-review.md §24.2 |
