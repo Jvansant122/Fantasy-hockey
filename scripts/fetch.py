@@ -285,14 +285,22 @@ def main():
         "past": sp < today_sp,
     } for sp in matchup_sps]
 
-    # moves used this matchup (the league allows 6) and any per-slot start cap, for the goalie-stream advice (findings section 52)
+    # moves used this matchup and the league's limit, and any per-slot start cap, for the goalie-stream advice (findings section 52)
     settings = league.get("settings") or {}
     stat_limits = (settings.get("rosterSettings") or {}).get("lineupSlotStatLimits") or {}
     goalie_cap = next((v.get("limitValue") for v in stat_limits.values() if isinstance(v, dict) and v.get("limitValue")), None)
     # a team with no moves yet has no entry for this matchup; None only when ESPN sends no counter at all
     moves_used = {t["id"]: (t["transactionCounter"].get("matchupAcquisitionTotals") or {}).get(str(period), 0)
                   if t.get("transactionCounter") else None for t in league["teams"]}
-    print(f"Start cap: {goalie_cap}, moves used known for "
+    acq = settings.get("acquisitionSettings") or {}
+    # ESPN's matchup acquisition limit; -1, 0 or missing means none, and a limit some team has already passed is wrong
+    move_limit = acq.get("matchupAcquisitionLimit")
+    if not isinstance(move_limit, int) or move_limit <= 0 or move_limit < max([v or 0 for v in moves_used.values()] or [0]):
+        move_limit = None
+    print("ESPN acquisitionSettings:", json.dumps(acq))
+    print("ESPN lineupSlotCounts:", json.dumps((settings.get("rosterSettings") or {}).get("lineupSlotCounts")))
+    print("ESPN lineupSlotStatLimits:", json.dumps(stat_limits))
+    print(f"Move limit: {move_limit}, start cap: {goalie_cap}, moves used known for "
           f"{sum(v is not None for v in moves_used.values())} teams")
 
     out = {
@@ -302,6 +310,7 @@ def main():
         "nights": nights,
         "rated": rated,
         "goalie_cap": goalie_cap,
+        "move_limit": move_limit,
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
                    "moves_used": moves_used[t["id"]]} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),

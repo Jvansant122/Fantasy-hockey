@@ -44,7 +44,13 @@ _NUM = r"(\d+|one|two|three|four|five|six|seven|eight|ten|twelve|a couple of|a f
 TIMELINE = re.compile(_NUM + r"(?:\s*(?:-|to)\s*" + _NUM + r")?\s*(?:more\s+|additional\s+|to\s+\w+\s+)?(day|week|month|game)s?", re.I)
 INJURY_LOG = ROOT / "data" / "injury_log.jsonl"
 INJURY_LOG_DAYS = 28
-NOT_PLAYING_DRESS = 0.1  # no NHL game in 14+ days while the team kept playing (outside what the research measured)
+NOT_PLAYING_DRESS = 0.1  # not matched to NHL data at all
+# no NHL game in 14+ days while the team kept playing: cap by days since his last game (handoff 19-20 audit, re-test 3)
+IDLE_DRESS = ((21, 0.5), (35, 0.2))  # 15-21 days 0.5, 22-35 days 0.2, longer 0.1
+
+
+def idle_cap(days):
+    return next((cap for top, cap in IDLE_DRESS if days <= top), NOT_PLAYING_DRESS)
 ET = ZoneInfo("America/New_York")
 LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by the moneyline (findings section 30)
 # expected fantasy points (xG research, sections 3-5): assist-share priors (all situations, power play) and the hot/cold note
@@ -734,8 +740,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 df_ = dress_features(gl, team, tg, f, today) if model.dress_lr else None
                 p_dress = model.dress_logit(df_) if df_ else model.dress(f["dressed3"], f["dressed10"])
                 last = gl[-1]["date"] if gl else None
-                if len(tg) >= 3 and (last is None or (today - date.fromisoformat(last)).days > 14):
-                    p_dress = min(p_dress, NOT_PLAYING_DRESS)
+                idle = None if last is None else (today - date.fromisoformat(last)).days
+                if len(tg) >= 3 and (idle is None or idle > 14):
+                    p_dress = min(p_dress, NOT_PLAYING_DRESS if idle is None else idle_cap(idle))
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
