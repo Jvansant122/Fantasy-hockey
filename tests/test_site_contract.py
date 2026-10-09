@@ -34,7 +34,7 @@ def test_check_catches_broken_data(data):
 def test_page_only_reads_fields_the_data_has(data):
     """Every p.<field> in index.html exists on some player (cr_news is optional and only present with news)."""
     html = (ROOT / "index.html").read_text()
-    used = set(re.findall(r"\bp\.([a-z_]+)", html))
+    used = set(re.findall(r"\bp\.([a-z_][a-z0-9_]*)", html))
     have = set().union(*(p.keys() for p in data["players"])) | {"cr_news"}
     assert not used - have, used - have
 

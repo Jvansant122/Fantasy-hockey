@@ -164,7 +164,9 @@ def main():
     team_names = {t["id"]: (t.get("name") or f"{t.get('location', '')} {t.get('nickname', '')}").strip() for t in league["teams"]}
 
     # Pro team schedule: games per scoring period (one period = one day)
-    teams, night_counts, night_dates = pro_schedule(s, base, league_url, matchup_sps, today_sp)
+    # the two matchups after this one too, for keep value's games in weeks 2-3 (findings section 79)
+    next_sps = list(range(matchup_sps[-1] + 1, matchup_sps[-1] + 15))
+    teams, night_counts, night_dates = pro_schedule(s, base, league_url, matchup_sps + next_sps, today_sp)
     light = {sp for sp in matchup_sps if night_counts.get(sp, 0) <= LIGHT_NIGHT_MAX_GAMES}
     remaining = [sp for sp in matchup_sps if sp >= today_sp]
 
@@ -248,6 +250,7 @@ def main():
             "light": len([sp for sp in week_games if sp in light]),
             "light_left": len([sp for sp in rem_games if sp in light]),
             "nights": week_games,
+            "games_next2": len([sp for sp in next_sps if sp in team["periods"]]),
         })
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
