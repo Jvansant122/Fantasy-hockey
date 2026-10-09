@@ -195,7 +195,8 @@ function score(p) { return state.data.rated ? p.cr : week(p); }
 // so a good player with a light week isn't dropped. Per-game value is the Season rating (rest-of-season share of games
 // played, no ESPN injury cap), so an injured star isn't dropped either. Goalies stay on this week alone (streams are night by night).
 const KEEP_GAMES = 7;  // flat on purpose: real games in weeks 2-3 scored worse in a season-long decision replay (findings 91)
-function keep(p) { return state.data.rated && p.pos !== "G" ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
+// In the final there are no later weeks to keep a player for, so keep value is this matchup alone (findings 109).
+function keep(p) { return state.data.rated && p.pos !== "G" && !state.data.final_matchup ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
 
 // Open lineup slots per night from my active, healthy players
 function computeOpenSlots(d) {
@@ -327,6 +328,8 @@ function renderUpgrades() {
   const fas = d.players.filter(p => isFA(p) && !p.injury);
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
+  // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
+  if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
   // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];

@@ -77,6 +77,26 @@ def matchup_move_limit(acq, periods, used):
     return None if limit < max([u or 0 for u in used] or [0]) else limit
 
 
+def matchup_days(matchup_periods, period, today_sp, weekday):
+    """Scoring periods (days) of the current matchup. scheduleSettings.matchupPeriods maps each matchup id to the
+    Monday-Sunday weeks it spans; week 1 is the 6-day opener (days 1-6) and week k >= 2 is days 7k-7 to 7k-1.
+    Falls back to this Monday-Sunday week when ESPN's map is missing or doesn't contain today."""
+    week = [sp for sp in range(today_sp - weekday, today_sp - weekday + 7) if sp >= 1]
+    weeks = (matchup_periods or {}).get(str(period))
+    if not weeks or not all(isinstance(w, int) and w >= 1 for w in weeks):
+        return week
+    days = sorted({sp for w in weeks for sp in (range(1, 7) if w == 1 else range(7 * w - 7, 7 * w))})
+    # a stretched week (an NHL break) would break the 7-day arithmetic: then trust this week only
+    monday_ok = days[0] == 1 or (today_sp - days[0]) % 7 == weekday
+    return days if today_sp in days and monday_ok else week
+
+
+def is_final_matchup(matchup_periods, period):
+    """True in the league's last matchup (the final), when nothing after it counts."""
+    ids = [int(k) for k in (matchup_periods or {}) if str(k).isdigit()]
+    return bool(ids) and period >= max(ids)
+
+
 def pro_schedule(s, base, league_url, matchup_sps, today_sp):
     """Return ({proTeamId: {abbrev, periods}}, {sp: game count}, {sp: date}).
 
@@ -148,10 +168,11 @@ def main():
     status = league["status"]
     period = status.get("currentMatchupPeriod") or 1
     today_sp = league.get("scoringPeriodId") or status.get("latestScoringPeriod") or 1
-    # scheduleSettings.matchupPeriods lists matchup ids, not days, so take this Monday-Sunday week.
-    # One scoring period is one day, anchored on today's period.
+    # One scoring period is one day. A matchup is one or more Monday-Sunday weeks (playoff rounds are 2, findings 109).
     weekday = datetime.now(ET).weekday()
-    matchup_sps = [sp for sp in range(today_sp - weekday, today_sp - weekday + 7) if sp >= 1]
+    sched_settings = (league.get("settings") or {}).get("scheduleSettings") or {}
+    matchup_sps = matchup_days(sched_settings.get("matchupPeriods"), period, today_sp, weekday)
+    final_matchup = is_final_matchup(sched_settings.get("matchupPeriods"), period)
 
     # Which team is mine
     team_id = os.environ.get("TEAM_ID")
@@ -292,7 +313,9 @@ def main():
     except Exception as e:  # noqa: BLE001
         lead_errors["odds"] = repr(e)
     try:
-        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries)
+        # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
+        weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
+        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left))
         rated = True
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
@@ -327,6 +350,8 @@ def main():
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,
+        "matchup_weeks": -(-len(matchup_sps) // 7),
+        "final_matchup": final_matchup,
         "nights": nights,
         "rated": rated,
         "goalie_cap": goalie_cap,

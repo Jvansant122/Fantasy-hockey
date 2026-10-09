@@ -271,11 +271,12 @@ def expected_fp(now, prev, is_d):
     return out
 
 
-def week_schedule(s, monday, games=None):
-    """NHL abbrev -> sorted list of game dates (ISO) in the Monday-Sunday week. games, if given, is filled with
-    NHL abbrev -> [(date, opponent, home)]."""
+def week_schedule(s, monday, games=None, weeks=1):
+    """NHL abbrev -> sorted list of game dates (ISO) in the Monday-Sunday week(s) from monday (2 in a playoff round).
+    games, if given, is filled with NHL abbrev -> [(date, opponent, home)]."""
     out = {}
-    for day in nhl_get(s, f"{NHL_WEB}/schedule/{monday.isoformat()}").json().get("gameWeek", []):
+    days = [d for k in range(weeks) for d in nhl_get(s, f"{NHL_WEB}/schedule/{(monday + timedelta(days=7 * k)).isoformat()}").json().get("gameWeek", [])]
+    for day in days:
         for g in day.get("games", []):
             if g.get("gameType") == 2:
                 for side, other in (("awayTeam", "homeTeam"), ("homeTeam", "awayTeam")):
@@ -657,7 +658,7 @@ def line_win_probs(odds, today, now=None):
     return out
 
 
-def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None):
+def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
 
     starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
@@ -674,7 +675,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
     week_games = {}
-    sched = week_schedule(s, monday, week_games)
+    sched = week_schedule(s, monday, week_games, weeks)
     strength = team_strength(s, prev_season)
     news = load_news()
 
