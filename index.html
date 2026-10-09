@@ -191,12 +191,11 @@ function val(p, key) {
 }
 // Value used to compare players: the Claude Rating when the data has it, else the old weekly projection
 function score(p) { return state.data.rated ? p.cr : week(p); }
-// Keep value for adds and drops (research section 57): this week plus the next two weeks of per-game value,
+// Keep value for adds and drops (research section 57): this week plus about two more weeks (7 games) of per-game value,
 // so a good player with a light week isn't dropped. Per-game value is the Season rating (rest-of-season share of games
 // played, no ESPN injury cap), so an injured star isn't dropped either. Goalies stay on this week alone (streams are night by night).
-const KEEP_GAMES = 7;  // fallback when the next two weeks' schedule is missing
-// the Season rating times his team's real games in the two matchups after this one (findings section 79)
-function keep(p) { return state.data.rated && p.pos !== "G" ? p.cr + (p.games_next2 ?? KEEP_GAMES) * (p.cr_season ?? 0) : score(p); }
+const KEEP_GAMES = 7;  // flat on purpose: real games in weeks 2-3 scored worse in a season-long decision replay (findings 91)
+function keep(p) { return state.data.rated && p.pos !== "G" ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
 
 // Open lineup slots per night from my active, healthy players
 function computeOpenSlots(d) {
@@ -413,7 +412,7 @@ function renderUpgrades() {
   };
   // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded
   const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => keep(a) - keep(b)).slice(0, 5);
-  if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus the next two weeks of games</span>
+  if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus about two more weeks of points per game</span>
     ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}${dropGain(p)}</span></div>`).join("")}</div>`);
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only
   const irOpen = (d.ir_slots || 0) - d.players.filter(p => String(p.team_id) === state.team && p.ir).length;
