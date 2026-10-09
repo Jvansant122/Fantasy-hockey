@@ -304,3 +304,7 @@ def test_injury_caps_and_notes():
     assert rating.usually_back("OUT", True, None) == {"games": "4"}
     assert rating.usually_back("DAY_TO_DAY", False, None) == {"games": "0-1"}
     assert rating.usually_back("OUT", True, note("Smith is expected to miss 4-6 weeks."))["days"] == 34
+
+
+def test_idle_cap_grades_by_days_since_last_game():
+    assert [rating.idle_cap(d) for d in (15, 21, 22, 35, 36, 80)] == [0.5, 0.5, 0.2, 0.2, 0.1, 0.1]
