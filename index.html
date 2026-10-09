@@ -420,6 +420,17 @@ function renderUpgrades() {
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.</span>
     ${stash.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
+  // Trade ideas (research findings 103): another team's skater whom ESPN projects the same as mine but the Season rating has 0.3+
+  // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.
+  const tradeable = p => p.pos !== "G" && !p.ir && !p.injury && !p.sat_last && (p.last_gp ?? 0) >= 40 && p.proj_ppg != null && p.cr_season != null;
+  const teamName = id => (d.teams.find(t => String(t.id) === String(id)) || {}).name || "another team";
+  const trades = !d.rated ? [] : mine.filter(tradeable).flatMap(m => d.players
+    .filter(o => !isFA(o) && String(o.team_id) !== state.team && group(o) === group(m) && tradeable(o)
+      && Math.abs(o.proj_ppg - m.proj_ppg) <= 0.05 && o.cr_season - m.cr_season >= 0.3)
+    .sort((a, b) => b.cr_season - a.cr_season).slice(0, 2).map(o => ({ m, o, gap: o.cr_season - m.cr_season })))
+    .sort((a, b) => b.gap - a.gap).slice(0, 5);
+  if (trades.length) cards.push(`<div class="upg"><b>Trade ideas</b> <span class="drop">· ESPN projects each pair about the same, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
+    ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)} for ${esc(o.name)} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies and stream the third spot: +2 points a week over carrying 3 (research section 37)
   const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   if (myGoalies.length > 2) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length}. Two plus streams beats three by about 2 points a week, so use the extra spot on a skater.</span>

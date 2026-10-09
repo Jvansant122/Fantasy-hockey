@@ -244,6 +244,7 @@ def main():
             "ppg": round(ppg, 2) if ppg is not None else None,
             "cur_ppg": cur,
             "last_ppg": last,
+            "last_gp": last_gp,  # trade ideas need a full NHL season last year (findings 103)
             "proj_ppg": proj,
             "games": len(week_games),
             "games_left": len(rem_games),
