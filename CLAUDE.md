@@ -44,10 +44,9 @@ No network or secrets needed: every ESPN, NHL, MoneyPuck and Daily Faceoff call 
 
 ## handoff.md protocol
 
-`/mnt/project-files/research/claude-rating/handoff.md` is how research asks for site changes. It has three sections:
+`/mnt/project-files/research/claude-rating/handoff.md` is how research asks for site changes. It is one table: `# | Recommendation | Backing | Status`.
 
-- **Open** - newest at the bottom. Each entry is one `### YYYY-MM-DD: short title` heading followed by: the finding (with its `findings.md` section number), the change proposed for the site, the expected gain measured in the backtest, and the files it would touch. The research side only appends here.
-- **Done** - the build thread moves an entry here when it ships, adding the PR link.
-- **Declined** - the build thread moves an entry here with a one-line reason.
-
-Rules: never delete entries; edit only your own; re-read the file just before writing and keep edits small, since several sessions share it. An entry that needs Jack's decision (new secret, paid API, anything outside the site) says so in its title, and the build thread asks him before building it.
+- **Research** adds a row at the bottom with the next number: the change in plain words with any formula, the `findings.md` section(s) backing it, and Status `New`. Research doesn't edit Status after that, except to withdraw its own row.
+- **The build thread** (owner of the repo) sets Status as it works: `Building`, `Built (PR #n)`, or `Declined: <one-line reason>`. Rows that need nothing built say `Nothing to do`.
+- Anything needing Jack (a new secret, a paid API, anything outside the site) says `(needs Jack)` in the Recommendation, and the build thread asks him before building it.
+- Never delete rows; re-read the file just before writing and keep edits small, since several sessions share it.
