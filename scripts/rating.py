@@ -176,8 +176,12 @@ def load_prev_season(s, season):
     return rates
 
 
-def load_prev_goalie_starts(s, season):
-    return {r["playerId"]: (r.get("gamesStarted") or 0) for r in stats_report(s, "goalie/summary", season)}
+def load_prev_goalie_season(s, season):
+    """Last season per goalie: (games started, fantasy points). The points include relief appearances."""
+    return {r["playerId"]: (r.get("gamesStarted") or 0,
+                            2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
+                            + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0))
+            for r in stats_report(s, "goalie/summary", season)}
 
 
 def load_xg(s, year):
@@ -612,7 +616,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     games = load_skater_games(s, season, today)
     goalie_games = load_goalie_games(s, season, today)
     prev = load_prev_season(s, prev_season)
-    prev_gs = load_prev_goalie_starts(s, prev_season)
+    prev_goalies = load_prev_goalie_season(s, prev_season)
+    prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
     sched = week_schedule(s, monday)
     news = load_news()
@@ -624,14 +629,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             team_games[g["team"]].append(g["game"])
         if g["started"]:
             starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
-    # each goalie's points per start this season, shrunk toward the league mean (findings section 27)
+    # each goalie's points per start this season, shrunk over 15 starts (findings sections 27 and 60)
     base = model.g["points_per_start"]
     own = {}
     for g in goalie_games:
         if g["started"]:
             t = own.setdefault(g["id"], [0.0, 0])
             t[0] += g["fp"]; t[1] += 1
-    pps = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
+    # the prior is his own last-season pts/start, itself shrunk to the league mean over 15 starts (findings section 60)
+    prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp) in prev_goalies.items() if n}
+    pps = {gid: (fp + prior.get(gid, base) * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
     by_player = {}
     for g in sorted(games, key=lambda g: g["date"]):
         by_player.setdefault(g["id"], []).append(g)
@@ -711,7 +718,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
-            fpg = pps.get(pid, base) if pid else base
+            fpg = pps.get(pid, prior.get(pid, base)) if pid else base
             season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
             # tonight's game priced by the betting line: 2.9 + 4.1 x (win probability - 0.5) per start
             p_today = min(goalie_today.get(pid, 0.0), starts) if pid else 0.0

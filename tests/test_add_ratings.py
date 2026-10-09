@@ -86,7 +86,8 @@ class FakeSession:
             if season != 20252026:
                 return Resp({"data": []})
             if report.startswith("goalie"):
-                return Resp({"data": [{"playerId": pid, "gamesStarted": 40} for pid, *_ in GOALIES]})
+                return Resp({"data": [{"playerId": pid, "gamesStarted": 40, "wins": 22, "losses": 12, "otLosses": 6, "goalsAgainst": 110,
+                                  "saves": 1000, "shutouts": 3} for pid, *_ in GOALIES]})
             return Resp({"data": [{**skater_row(pid, name, team, pos, 0), "gamesPlayed": 80, "goals": 20, "assists": 30,
                                    "ppPoints": 15, "shots": 200, "hits": 60, "blockedShots": 50, "ppTimeOnIce": 12000}
                                   for pid, name, team, pos, _ in SKATERS]})
