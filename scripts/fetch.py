@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import leads
-from rating import add_ratings
+from rating import ESPN_TO_NHL, add_ratings
 
 BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl/seasons/{season}"
 ET = ZoneInfo("America/New_York")
@@ -271,6 +271,12 @@ def main():
         print(f"Logged {len(league_moves['transactions'])} league transactions")
     except Exception as e:  # noqa: BLE001 - the log is best-effort
         lead_errors["league"] = repr(e)
+    lineups = None
+    try:  # Daily Faceoff lineups: the page's "Tonight" note benches skaters left out (findings section 65)
+        lineups = leads.fetch_lineups(web)
+    except Exception as e:  # noqa: BLE001
+        lead_errors["lineups"] = repr(e)
+    leads.mark_lineups(players, lineups, ESPN_TO_NHL)
     injuries = None
     try:  # ESPN injury notes: long absences go to 0 in the weekly rating (findings section 58)
         injuries = leads.fetch_injuries(web)
@@ -327,7 +333,7 @@ def main():
     path.write_text(json.dumps(out, indent=1))
     print(f"Wrote {len(players)} players ({len(my_ids)} mine) for matchup {period} to {path}")
     try:
-        leads.write_log(datetime.now(ET), players, starters, lead_errors, web, odds, injuries, league_moves)
+        leads.write_log(datetime.now(ET), players, starters, lead_errors, web, odds, injuries, league_moves, lineups)
     except Exception as e:  # noqa: BLE001
         print(f"Lead log failed: {e!r}", file=sys.stderr)
     if not my_team:

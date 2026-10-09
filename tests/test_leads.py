@@ -109,3 +109,11 @@ def test_league_log_keeps_only_league_fields():
     assert log["transactions"][0]["items"][0] == {"type": "ADD", "playerId": 10, "fromTeamId": 0, "toTeamId": 3,
                                                    "fromLineupSlotId": None, "toLineupSlotId": None, "isKeeper": None}
     assert log["rosters"]["3"][0]["lineupSlotId"] == 3 and log["moves_used"]["3"] == {"1": 2}
+
+
+def test_mark_lineups_flags_skaters_left_out_of_daily_faceoffs_lines():
+    players = [{"name": "Tim Stützle", "team": "OTT", "pos": "C"}, {"name": "Scratch Guy", "team": "OTT", "pos": "D"},
+               {"name": "Hurt Guy", "team": "OTT", "pos": "LW"}, {"name": "Other", "team": "SJ", "pos": "C"}]
+    lineups = {"OTT": {"players": [["Tim Stutzle", "f1", None, False], ["Hurt Guy", "ir", "ir", False]]}, "SJS": {"error": "x"}}
+    leads.mark_lineups(players, lineups, {"SJ": "SJS"})
+    assert [p["dfo_out"] for p in players] == [False, True, True, None]

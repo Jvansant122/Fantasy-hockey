@@ -357,6 +357,42 @@ function renderUpgrades() {
           : '<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon, and the site rechecks at 12:30 and 5 PM ET.</div>'}</div>`);
     }
   }
+  // Tonight on a crowded night (research findings 65): start by per-game rating, bench anyone Daily Faceoff leaves out
+  if (d.rated && tonight) {
+    const playing = mine.filter(p => p.pos !== "G" && p.nights.includes(tonight.sp));
+    const flagged = p => p.dfo_out === true || (p.dfo_out == null && p.sat_last);
+    const val = p => flagged(p) ? -1 : p.cr_fpg * (p.dfo_out === false ? 1 : (p.cr_dress ?? 1));
+    const order = [...playing].sort((a, b) => val(b) - val(a));
+    const room = { F: 9, D: 5, U: 1 };
+    const bench = order.filter(p => {
+      const g = group(p) === "D" ? "D" : "F";
+      if (room[g] > 0 && !flagged(p)) { room[g]--; return false; }
+      if (room.U > 0 && !flagged(p)) { room.U--; return false; }
+      return true;
+    });
+    const nF = playing.filter(p => group(p) !== "D").length, nD = playing.length - nF;
+    const crowded = Math.max(0, nF - 9) + Math.max(0, nD - 5) > 1;  // more playing than 9 F + 5 D + 1 UTL can hold
+    if (crowded && bench.length) cards.push(`<div class="upg"><b>Tonight</b> <span class="drop">· ${playing.length} of your skaters play ${esc(tonight.date)} for 15 spots: start the best per-game ratings, bench these</span>
+      ${bench.map(p => `<div>${esc(p.name)}${flagged(p) ? `<span class="tag inj">${p.dfo_out ? "not in Daily Faceoff's lineup" : "sat last game"}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game</span></div>`).join("")}</div>`);
+  }
+  // Best 2 moves (research findings 68): the biggest keep-value gains over your weakest player at the same position
+  if (d.rated) {
+    const added = new Set(), dropped = new Set(), best = [];
+    for (let i = 0; i < 2; i++) {
+      let top = null;
+      for (const g of ["F", "D"]) {
+        const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
+        const fa = fas.filter(p => group(p) === g && !added.has(p.id)).sort((a, b) => keep(b) - keep(a))[0];
+        if (!left.length || !fa) continue;
+        const worst = left.reduce((a, b) => keep(a) <= keep(b) ? a : b);
+        if (!top || keep(fa) - keep(worst) > top.gain) top = { fa, worst, gain: keep(fa) - keep(worst) };
+      }
+      if (!top || top.gain <= 0.5) break;
+      added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
+    }
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 2 ? "2 moves" : "move"}</b> <span class="drop">· largest keep-value gains over your weakest player at the same position</span>
+      ${best.map(m => `<div>${esc(m.fa.name)}${m.fa.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">+${fmt(m.gain)}</span></div>`).join("")}</div>`);
+  }
   const nSwap = cards.length;
   for (const g of ["F", "D", "G"]) {
     const mineG = mine.filter(p => group(p) === g);
@@ -369,10 +405,14 @@ function renderUpgrades() {
       ${better.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))}${kv(p)} (+${fmt(keep(p) - keep(worst))})</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
+  const dropGain = p => {  // the best free agent at his position, and how much he'd add (findings 68)
+    const fa = d.rated && fas.filter(f => group(f) === group(p)).sort((a, b) => keep(b) - keep(a))[0];
+    return fa && keep(fa) > keep(p) ? ` · ${esc(fa.name)} +${fmt(keep(fa) - keep(p))}` : "";
+  };
   // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded
   const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => keep(a) - keep(b)).slice(0, 5);
   if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus about two more weeks of points per game</span>
-    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}</span></div>`).join("")}</div>`);
+    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}${dropGain(p)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies and stream the third spot: +2 points a week over carrying 3 (research section 37)
   const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   if (myGoalies.length > 2) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length}. Two plus streams beats three by about 2 points a week, so use the extra spot on a skater.</span>

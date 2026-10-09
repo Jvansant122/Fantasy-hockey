@@ -11,6 +11,7 @@ import gzip
 import json
 import re
 import time
+import unicodedata
 from pathlib import Path
 
 LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "log"
@@ -74,6 +75,23 @@ def fetch_lineups(s):
     return out
 
 
+DRESSED = {"f1", "f2", "f3", "f4", "d1", "d2", "d3", "d4"}
+
+
+def plain(name):
+    return re.sub(r"[^a-z]", "", unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode().lower())
+
+
+def mark_lineups(players, lineups, to_nhl):
+    """p["dfo_out"]: True when Daily Faceoff has his team's lineup and he isn't in a forward or defense line (scratched,
+    injured or not listed), False when he is, None when the lineup is missing. Skaters only (findings section 65)."""
+    dressed = {team: {plain(n) for n, group, *_ in t.get("players", []) if group in DRESSED}
+               for team, t in (lineups or {}).items() if t.get("players")}
+    for p in players:
+        lineup = dressed.get(to_nhl.get(p["team"], p["team"])) if p["pos"] != "G" else None
+        p["dfo_out"] = None if lineup is None else plain(p["name"]) not in lineup
+
+
 def fetch_injuries(s):
     r = s.get("https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/injuries", timeout=30)
     r.raise_for_status()
@@ -120,7 +138,7 @@ def league_log(transactions, teams, scoring_period):
     }
 
 
-def write_log(now, players, starters, errors, s, odds=None, injuries=None, league=None):
+def write_log(now, players, starters, errors, s, odds=None, injuries=None, league=None, lineups=None):
     """One gzipped JSON per run in data/log, named by ET date and time."""
     rec = {"run_at": now.isoformat(timespec="minutes"), "starters": starters, "errors": dict(errors)}
     if odds is not None:
@@ -129,6 +147,8 @@ def write_log(now, players, starters, errors, s, odds=None, injuries=None, leagu
         rec["injuries"] = injuries
     if league is not None:
         rec["league"] = league
+    if lineups is not None:
+        rec["lineups"] = lineups
     for key, fn in (("lineups", fetch_lineups), ("injuries", fetch_injuries), ("odds", fetch_odds)):
         if key in rec:
             continue
