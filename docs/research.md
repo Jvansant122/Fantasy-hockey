@@ -18,6 +18,8 @@ Last updated Oct 9, 2026 (findings through betting lines for goalies, availabili
 
 ## How the rating is calculated
 
+For a part-by-part breakdown (what each piece uses, what it changes, how much it was measured to matter and what it leaves alone), see [The Claude Rating, piece by piece](rating-components.md).
+
 - **Skaters:** projected points per game × games left this matchup × the chance he dresses.
   - *Points per game* comes from a model that weighs ice time and power-play time over the last 5, 10 and 20 games, plus shots, blocks, hits, points and expected goals from this season and last season.
   - *The chance he dresses* comes from how many of his team's last 3 and 10 games he played, then ESPN's injury status on top (out, IR or suspended counts as 0; day-to-day is capped at 50%). These overrides are logged daily so the day-to-day number can be checked after a few weeks.
