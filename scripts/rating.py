@@ -40,6 +40,7 @@ LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by 
 XFP_SHARE_F, XFP_SHARE_D, XFP_PRIOR_GOALS = (0.51, 0.46), (0.32, 0.57), 15
 LUCK_MIN_GP, LUCK_GAP = 15, 0.15
 EARLY_SHARE_K, EARLY_SHARE_GAMES = 6, 10  # goalie start shares shrink toward last season's split (findings section 41)
+SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blended into this season's
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -295,12 +296,14 @@ def skater_features(games, prev, xg_now, xg_prev, team_games):
     return f
 
 
-def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None):
+def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
     confirmed: {date: goalie id} of Daily Faceoff confirmed starters; those games count as 1 for him, 0 for the others.
-    today_p: if given, filled with each goalie's chance of starting today's game."""
+    today_p: if given, filled with each goalie's chance of starting today's game.
+    season_share: if given, filled with each goalie's long-run share of team starts (this season's starts
+    blended with last season's split over SEASON_SHARE_K games), for the Season rating."""
     confirmed = confirmed or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -313,6 +316,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     k = EARLY_SHARE_K * max(0.0, 1 - len(seq) / EARLY_SHARE_GAMES)
     last_total = sum(prev_starts.get(gid, 0) for gid in cands)
     prior = {gid: prev_starts.get(gid, 0) / last_total if last_total else 1 / len(cands) for gid in cands}
+    if season_share is not None:
+        for gid in cands:
+            season_share[gid] = (sum(x == gid for x in seq) + SEASON_SHARE_K * prior[gid]) / (len(seq) + SEASON_SHARE_K)
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):
@@ -467,11 +473,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                 tonight[g["team"]] = (cands[0], g.get("status"))
             if g.get("status") == "Confirmed":
                 confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
-    goalie_exp, goalie_today = {}, {}
+    goalie_exp, goalie_today, goalie_season = {}, {}, {}
     lines = line_win_probs(odds, today)
     for team, dates in sched.items():
         goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today,
-                                        confirmed.get(team), goalie_today))
+                                        confirmed.get(team), goalie_today, goalie_season))
 
     unmatched = 0
     injury_log = []
@@ -494,6 +500,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, base) if pid else base
+            season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
             # tonight's game priced by the betting line: 2.9 + 4.1 x (win probability - 0.5) per start
             p_today = min(goalie_today.get(pid, 0.0), starts) if pid else 0.0
             if team in lines and p_today > 0 and starts > 0:
@@ -519,6 +526,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                 last = gl[-1]["date"] if gl else None
                 if len(tg) >= 3 and (last is None or (today - date.fromisoformat(last)).days > 14):
                     p_dress = min(p_dress, NOT_PLAYING_DRESS)
+            season = fpg * p_dress  # before ESPN's injury cap and news: how good he is when in the lineup
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -535,6 +543,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             why = {k: (round(v, 2) if isinstance(v, float) else v) for k, v in why.items()}
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
+        p["cr_season"] = round(season, 2)
         p["cr_games"] = round(exp_games, 2)
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
         p["cr_matched"] = pid is not None
@@ -548,10 +557,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
     for p in players:
         groups.setdefault("G" if p["pos"] == "G" else "D" if p["pos"] == "D" else "F", []).append(p)
     for grp in groups.values():
-        vals = sorted(p["cr"] for p in grp)
-        for p in grp:
-            below = sum(v < p["cr"] for v in vals)
-            p["cr_pct"] = round(100 * below / max(len(vals) - 1, 1))
+        for key in ("cr", "cr_season"):
+            vals = sorted(p[key] for p in grp)
+            for p in grp:
+                below = sum(v < p[key] for v in vals)
+                p[key + "_pct" if key != "cr" else "cr_pct"] = round(100 * below / max(len(vals) - 1, 1))
     write_injury_log(injury_log, today)
     print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")
     return unmatched
