@@ -483,6 +483,12 @@ So the plan holds: **2 skater moves on Monday, the other 5 for injury swaps and 
 
 A goalie's points per start blend his starts this season with 15 starts' worth of a starting point. That starting point used to be the league average (2.9). Scoring the goalie Season rating over 73 Mondays (2023-24 to 2025-26) found that starting from **his own last-season points per start** (itself pulled toward 2.9 over 15 starts) ranks starters better: rank correlation +0.022 (95% +0.013 to +0.031), almost all of it in a team's first 20 games. Pulling harder toward the average (the "Marcel" weighting some projection systems use, about 60 starts) was clearly worse (−0.03). **The site now does this for both the Week and Season goalie ratings.** A goalie with no starts last season still starts from 2.9.
 
+## 39. When a regular comes back, the fill-in sits
+
+When an injured regular returns, someone loses his spot. Over 351 returns in 2023-24 to 2025-26, the healthy skater with the **least ice time at that position (forward or defense) in the team's last game** dressed noticeably less the next week than the dress model predicted: about 8 points of dress share less for forwards and 12 for defensemen. These are almost all waiver-wire players, exactly the fill-ins you might pick up. Fresh call-ups, by contrast, were priced about right already.
+
+**On the site:** when a regular (who dressed 80%+ of games before he got hurt) has missed 3+ straight games and ESPN now lists him healthy or day-to-day, the least-used skater at his position on that team gets his chance of dressing lowered by 8 points (forward) or 12 (defense). Tap the player to see "… is back from injury, so he may sit."
+
 ## What the independent review changed
 
 | Review point | Outcome |
