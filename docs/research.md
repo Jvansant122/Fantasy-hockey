@@ -502,6 +502,12 @@ Only tonight's goalie starts have a betting line, so the rest of the week's star
 
 **On the site:** the Week rating for goalies now prices every remaining start without a line this way. Tonight's lined starts still use the betting line, and the Season rating is unchanged. Tap a goalie to see "soft schedule" or "tough schedule" and how many points per start it adds or takes away.
 
+## 42. Players hurt before the season started, IR stashes, and an 84-game season
+
+- **Hurt before opening night.** A skater with no games yet this season used to get the same 10% rest-of-season chance of playing as someone who has disappeared from the lineup. But 66 regulars injured before opening night in 2024-26 dressed for 41% of their team's remaining games (45% after a short injury note, 31% after a long one). **The Season rating now uses 45%, 30% for a long injury note, and 0 when ESPN says he's out for the season.** Nugent-Hopkins, back in about a week, was showing a Season rating of 0.17. Keep value and the drop list now treat these players fairly. The Week rating is unchanged.
+- **IR stash.** A free agent who is OUT or on injured reserve can go straight into an open IR slot. Over the rest of the season, a 1.5-1.8 pts/game stash beats your weakest skater by about 15-18 points, and a 1.8+ one by about 33, for the cost of one move (about 2 points). Below 1.2 pts/game it never pays. **When you have an open IR slot, an "IR stash" card lists up to 3 such players at 1.5+ pts/game.**
+- **84 games.** The 2026-27 regular season is 84 games per team, so the Season rating now counts games left out of 84.
+
 ## What the independent review changed
 
 | Review point | Outcome |

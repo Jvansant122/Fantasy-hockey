@@ -414,6 +414,12 @@ function renderUpgrades() {
   const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => keep(a) - keep(b)).slice(0, 5);
   if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus about two more weeks of points per game</span>
     ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}${dropGain(p)}</span></div>`).join("")}</div>`);
+  // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only
+  const irOpen = (d.ir_slots || 0) - d.players.filter(p => String(p.team_id) === state.team && p.ir).length;
+  const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
+    .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
+  if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.</span>
+    ${stash.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies and stream the third spot: +2 points a week over carrying 3 (research section 37)
   const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   if (myGoalies.length > 2) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length}. Two plus streams beats three by about 2 points a week, so use the extra spot on a skater.</span>
