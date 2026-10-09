@@ -247,6 +247,14 @@ class Model:
         m = json.loads((ROOT / "model" / "rating_model.json").read_text())
         self.sk, self.dress_table, self.g = m["skater"], m["dress"], m["goalie"]
         self.dress_lr = m.get("dress_logit")
+        sd = ROOT / "model" / "season_dress.json"
+        self.season_lr = json.loads(sd.read_text()) if sd.exists() else None
+
+    def season_dress(self, x):
+        """Share of the team's remaining games he dresses (rest-of-season logistic, findings section 56)."""
+        m = self.season_lr
+        z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items())
+        return 1 / (1 + math.exp(-z))
 
     def fpg(self, feats):
         total = self.sk["intercept"]
@@ -332,6 +340,51 @@ def dress_features(games, team, team_games, f, today):
                long_spells=min(sum(x >= 3 for x in spells), 4), short_spells=min(sum(x <= 2 for x in spells), 6),
                new_team=float(len(since) < 5))
     return out
+
+
+def lineup_chain_share(k, p_out, h, n):
+    """Expected share of the next n team games in the lineup, from out-streak k (0 = played the last one): from in,
+    drops out with p_out; out k games, returns with the league curve h[k-1] (k capped at len(h))."""
+    kmax = len(h)
+    dist = [0.0] * (kmax + 1)
+    dist[min(k, kmax)] = 1.0
+    tot = 0.0
+    for _ in range(n):
+        new = [0.0] * (kmax + 1)
+        new[0] = dist[0] * (1 - p_out) + sum(dist[j] * h[j - 1] for j in range(1, kmax + 1))
+        new[1] = dist[0] * p_out
+        for j in range(1, kmax):
+            new[j + 1] += dist[j] * (1 - h[j - 1])
+        new[kmax] += dist[kmax] * (1 - h[kmax - 1])
+        dist = new
+        tot += dist[0]
+    return tot / max(n, 1)
+
+
+def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov):
+    """Inputs for the rest-of-season P(dresses) logistic: next week's lineup features plus last season's games, ice time,
+    games left, and a lineup chain (drop-out rate since joining the team, league return curve by games missed)."""
+    mine = {g["game"] for g in games if g["team"] == team}
+    since = team_games[team_games.index(next(g["game"] for g in games if g["team"] == team)):]
+    seq = [gid in mine for gid in since]
+    n_in = sum(1 for a in seq[:-1] if a)
+    n_drop = sum(1 for a, b in zip(seq, seq[1:]) if a and not b)
+    k = 0
+    for x in reversed(seq):
+        if x:
+            break
+        k += 1
+    pos = "D" if f["is_D"] else "F"
+    prior = markov["prior_games"]
+    p_out = (n_drop + prior * markov["p_out_mean"][pos]) / (n_in + prior)
+    left = max(82 - len(team_games), 0)
+    share = lineup_chain_share(k, p_out, markov["return_curve"][pos], max(left, 1))
+    share = min(max(share, 0.01), 0.99)
+    x = dict(dress_f)
+    x.update(prev_dress_rate=min((prev or {}).get("gp", 0) / 82, 1.0), no_prev=0.0 if prev else 1.0,
+             std_toi=f.get("std_toi") or 0, l5_toi=f.get("l5_toi") or 0, std_pptoi=f.get("std_pptoi") or 0, fpg=fpg,
+             games_left=left, os_long=float(k >= 6), os_raw=min(k, 40), mk_logit=math.log(share / (1 - share)), mk_p_out=p_out)
+    return x
 
 
 def ux_features(f, pos, mu):
@@ -609,6 +662,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             tg = team_games.get(team, [])
+            df_ = None
             if pid is None:  # not on an NHL roster or in NHL stats this season or last
                 p_dress = NOT_PLAYING_DRESS
             elif f["dressed3"] is None:  # team hasn't played yet
@@ -621,7 +675,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                     p_dress = min(p_dress, NOT_PLAYING_DRESS)
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
-            season = fpg * p_dress  # before ESPN's injury cap and news: how good he is when in the lineup
+            # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
+            if df_ and model.season_lr:
+                season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]))
+            else:
+                season = fpg * p_dress
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
