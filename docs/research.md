@@ -326,6 +326,7 @@ A goalie's points depend heavily on whether his team wins (a win and a loss are 
 | An "upside" option for weeks you need a big score | High-ceiling players are just the high-projection players. When behind, pick the same players. |
 | Two-week matchups | Same per-game projection × two weeks of games. |
 | Age | Young players do improve and older ones decline, but recent ice time already shows it. |
+| PDO and finishing luck | A player whose team shoots and saves unusually well with him on the ice (PDO), or who scores well above his expected goals, is mostly running lucky. The rating already expects him to cool off because it projects goals from shots and chances. The row details now say "running hot" when that's why his rating sits below his season pace. |
 
 ## What the independent review changed
 

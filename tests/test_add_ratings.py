@@ -198,3 +198,10 @@ def test_tonights_line_prices_the_goalie_start(monkeypatch, tmp_path):
     assert out["fav"]["Jeremy Swayman"]["cr"] < out["none"]["Jeremy Swayman"]["cr"]
     # games left are unchanged; only points per start moves
     assert out["fav"]["Jeremy Swayman"]["cr_games"] == out["none"]["Jeremy Swayman"]["cr_games"]
+
+
+def test_running_hot_note():
+    assert rating.running_hot({"gp": 12, "pdo": 1.06, "finishing": 0.15}) == {"pdo": 1.06, "finishing": 0.15}
+    assert rating.running_hot({"gp": 12, "pdo": 1.0, "finishing": 0.02}) is None
+    assert rating.running_hot({"gp": 4, "pdo": 1.10, "finishing": 0.3}) is None  # too few games to say
+    assert rating.running_hot(None) is None

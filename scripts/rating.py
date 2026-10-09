@@ -36,6 +36,7 @@ INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # no NHL game in 14+ days while the team kept playing (outside what the research measured)
 ET = ZoneInfo("America/New_York")
 LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by the moneyline (findings section 30)
+HOT_MIN_GP, HOT_PDO, HOT_FINISHING = 8, 1.04, 0.1  # "running hot" note thresholds (findings section 38)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -156,7 +157,8 @@ def load_prev_goalie_starts(s, season):
 
 
 def load_xg(s, year):
-    """MoneyPuck season xG per game (all situations). Empty if the file isn't there yet."""
+    """MoneyPuck season xG per game (all situations), plus finishing (goals minus xG per game) and 5-on-5 PDO
+    for the "running hot" note. Empty if the file isn't there yet."""
     try:
         text = nhl_get(s, MONEYPUCK.format(year=year)).text
     except requests.RequestException as e:
@@ -164,16 +166,43 @@ def load_xg(s, year):
         return {}
     lines = text.splitlines()
     head = lines[0].split(",")
-    ix = {c: head.index(c) for c in ("playerId", "situation", "games_played", "I_F_xGoals", "OnIce_F_xGoals")}
-    out = {}
+    cols = ("playerId", "situation", "games_played", "I_F_xGoals", "OnIce_F_xGoals", "I_F_goals",
+            "OnIce_F_goals", "OnIce_F_shotsOnGoal", "OnIce_A_goals", "OnIce_A_shotsOnGoal")
+    ix = {c: head.index(c) for c in cols if c in head}
+    num = lambda f, c: float(f[ix[c]] or 0) if c in ix else 0.0
+    out, pdo = {}, {}
     for line in lines[1:]:
         f = line.split(",")
-        if len(f) < len(head) or f[ix["situation"]] != "all":
+        if len(f) < len(head):
             continue
-        gp = float(f[ix["games_played"]] or 0)
+        pid = int(f[ix["playerId"]])
+        if f[ix["situation"]] == "5on5":
+            sf, sa = num(f, "OnIce_F_shotsOnGoal"), num(f, "OnIce_A_shotsOnGoal")
+            if sf and sa:
+                pdo[pid] = num(f, "OnIce_F_goals") / sf + 1 - num(f, "OnIce_A_goals") / sa
+            continue
+        if f[ix["situation"]] != "all":
+            continue
+        gp = num(f, "games_played")
         if gp:
-            out[int(f[ix["playerId"]])] = {"ixg": float(f[ix["I_F_xGoals"]]) / gp, "onice_xgf": float(f[ix["OnIce_F_xGoals"]]) / gp}
+            out[pid] = {"ixg": num(f, "I_F_xGoals") / gp, "onice_xgf": num(f, "OnIce_F_xGoals") / gp, "gp": gp,
+                        "finishing": (num(f, "I_F_goals") - num(f, "I_F_xGoals")) / gp}
+    for pid, d in out.items():
+        d["pdo"] = pdo.get(pid)
     return out
+
+
+def running_hot(xg):
+    """Why a player's season line may overstate him (findings section 38): PDO and finishing are mostly luck.
+    The rating already discounts them; this only explains it."""
+    if not xg or xg.get("gp", 0) < HOT_MIN_GP:
+        return None
+    hot = {}
+    if xg.get("pdo") and xg["pdo"] > HOT_PDO:
+        hot["pdo"] = round(xg["pdo"], 3)
+    if xg.get("finishing", 0) >= HOT_FINISHING:
+        hot["finishing"] = round(xg["finishing"], 2)
+    return hot or None
 
 
 def week_schedule(s, monday):
@@ -483,7 +512,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             exp_games = p["games_left"] * p_dress
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
-                   "last_fpg": prev[pid]["fp"] if pid in prev else None}
+                   "last_fpg": prev[pid]["fp"] if pid in prev else None, "hot": running_hot(xg_now.get(pid)) if pid else None}
             why = {k: (round(v, 2) if isinstance(v, float) else v) for k, v in why.items()}
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
