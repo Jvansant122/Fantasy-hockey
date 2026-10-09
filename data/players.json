@@ -1,5 +1,5 @@
 {
- "updated": "Fri Oct 9, 9:05 AM ET",
+ "updated": "Fri Oct 9, 9:25 AM ET",
  "team": "New York Mess",
  "matchup_period": 2,
  "nights": [
@@ -66,7 +66,7 @@
    "id": 3,
    "name": "6 Foot Kings Only",
    "mine": false,
-   "moves_used": 0
+   "moves_used": 1
   },
   {
    "id": 4,
@@ -3963,8 +3963,8 @@
     "C",
     "F"
    ],
-   "owner": "freeagent",
-   "team_id": null,
+   "owner": "other",
+   "team_id": 3,
    "ir": false,
    "injury": null,
    "owned": 14.7,
@@ -17011,8 +17011,8 @@
    "slots": [
     "D"
    ],
-   "owner": "other",
-   "team_id": 3,
+   "owner": "waivers",
+   "team_id": null,
    "ir": false,
    "injury": null,
    "owned": 6.2,
@@ -23315,6 +23315,62 @@
    "cr_season_pct": 38
   },
   {
+   "id": 5206628,
+   "name": "Macklin Celebrini",
+   "team": "SJ",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "other",
+   "team_id": 5,
+   "ir": true,
+   "injury": "DAY_TO_DAY",
+   "owned": 99.9,
+   "gp": 2,
+   "ppg": 2.82,
+   "cur_ppg": 4.45,
+   "last_ppg": 2.89,
+   "proj_ppg": 2.72,
+   "games": 3,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 0,
+   "nights": [
+    7,
+    10,
+    12
+   ],
+   "cr": 1.0,
+   "cr_fpg": 2.63,
+   "cr_season": 2.01,
+   "cr_games": 0.38,
+   "cr_dress": 0.38,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8484801,
+   "cr_why": {
+    "toi5": 22.32,
+    "toi": 22.32,
+    "pp5": 4.21,
+    "sog": 4.5,
+    "blk": 1.5,
+    "gp": 2,
+    "last_fpg": 2.89,
+    "xfp": {
+     "gp": 2,
+     "fpg": 4.45,
+     "xfpg": 3.1
+    },
+    "back": {
+     "games": "3"
+    }
+   },
+   "cr_pct": 32,
+   "cr_season_pct": 95
+  },
+  {
    "id": 3042063,
    "name": "Ryan Hartman",
    "team": "MIN",
@@ -24138,7 +24194,7 @@
      "xfpg": 1.48
     }
    },
-   "cr_pct": 31,
+   "cr_pct": 30,
    "cr_season_pct": 35
   },
   {
@@ -24243,7 +24299,7 @@
      "xfpg": 1.13
     }
    },
-   "cr_pct": 31,
+   "cr_pct": 30,
    "cr_season_pct": 34
   },
   {
@@ -24938,62 +24994,6 @@
    },
    "cr_pct": 31,
    "cr_season_pct": 30
-  },
-  {
-   "id": 5206628,
-   "name": "Macklin Celebrini",
-   "team": "SJ",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "other",
-   "team_id": 5,
-   "ir": true,
-   "injury": "OUT",
-   "owned": 99.9,
-   "gp": 2,
-   "ppg": 2.82,
-   "cur_ppg": 4.45,
-   "last_ppg": 2.89,
-   "proj_ppg": 2.72,
-   "games": 3,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 0,
-   "nights": [
-    7,
-    10,
-    12
-   ],
-   "cr": 0.92,
-   "cr_fpg": 2.63,
-   "cr_season": 2.01,
-   "cr_games": 0.35,
-   "cr_dress": 0.35,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8484801,
-   "cr_why": {
-    "toi5": 22.32,
-    "toi": 22.32,
-    "pp5": 4.21,
-    "sog": 4.5,
-    "blk": 1.5,
-    "gp": 2,
-    "last_fpg": 2.89,
-    "xfp": {
-     "gp": 2,
-     "fpg": 4.45,
-     "xfpg": 3.1
-    },
-    "back": {
-     "games": "4"
-    }
-   },
-   "cr_pct": 27,
-   "cr_season_pct": 95
   },
   {
    "id": 5502,
@@ -27409,7 +27409,7 @@
    "owner": "freeagent",
    "team_id": null,
    "ir": false,
-   "injury": "OUT",
+   "injury": "DAY_TO_DAY",
    "owned": 1.2,
    "gp": 3,
    "ppg": 1.4,
@@ -27448,7 +27448,7 @@
      "xfpg": 1.78
     },
     "back": {
-     "games": "4"
+     "games": "3"
     }
    },
    "cr_pct": 24,
@@ -28382,6 +28382,61 @@
    "cr_season_pct": 34
   },
   {
+   "id": 2976850,
+   "name": "Olli Maatta",
+   "team": "MIN",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "injury": "DAY_TO_DAY",
+   "owned": 0.2,
+   "gp": 3,
+   "ppg": 1.17,
+   "cur_ppg": 0.87,
+   "last_ppg": 1.2,
+   "proj_ppg": null,
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    8,
+    10,
+    12
+   ],
+   "cr": 0.5,
+   "cr_fpg": 1.33,
+   "cr_season": 0.91,
+   "cr_games": 0.38,
+   "cr_dress": 0.38,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8476874,
+   "cr_why": {
+    "toi5": 21.36,
+    "toi": 21.36,
+    "pp5": 0.05,
+    "sog": 0.33,
+    "blk": 1.0,
+    "gp": 3,
+    "last_fpg": 1.2,
+    "xfp": {
+     "gp": 3,
+     "fpg": 0.87,
+     "xfpg": 0.83
+    },
+    "back": {
+     "games": "3"
+    }
+   },
+   "cr_pct": 22,
+   "cr_season_pct": 39
+  },
+  {
    "id": 5524,
    "name": "Calvin Pickard",
    "team": "MIN",
@@ -28475,7 +28530,7 @@
      "xfpg": 1.34
     }
    },
-   "cr_pct": 22,
+   "cr_pct": 21,
    "cr_season_pct": 29
   },
   {
@@ -28522,61 +28577,6 @@
    },
    "cr_pct": 22,
    "cr_season_pct": 17
-  },
-  {
-   "id": 2976850,
-   "name": "Olli Maatta",
-   "team": "MIN",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "injury": "OUT",
-   "owned": 0.2,
-   "gp": 3,
-   "ppg": 1.17,
-   "cur_ppg": 0.87,
-   "last_ppg": 1.2,
-   "proj_ppg": null,
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    8,
-    10,
-    12
-   ],
-   "cr": 0.47,
-   "cr_fpg": 1.33,
-   "cr_season": 0.91,
-   "cr_games": 0.35,
-   "cr_dress": 0.35,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8476874,
-   "cr_why": {
-    "toi5": 21.36,
-    "toi": 21.36,
-    "pp5": 0.05,
-    "sog": 0.33,
-    "blk": 1.0,
-    "gp": 3,
-    "last_fpg": 1.2,
-    "xfp": {
-     "gp": 3,
-     "fpg": 0.87,
-     "xfpg": 0.83
-    },
-    "back": {
-     "games": "4"
-    }
-   },
-   "cr_pct": 21,
-   "cr_season_pct": 39
   },
   {
    "id": 3068087,
@@ -29319,7 +29319,7 @@
    "owner": "freeagent",
    "team_id": null,
    "ir": false,
-   "injury": "OUT",
+   "injury": "DAY_TO_DAY",
    "owned": 3.3,
    "gp": 3,
    "ppg": 1.27,
@@ -29357,7 +29357,7 @@
      "xfpg": 0.66
     },
     "back": {
-     "games": "4"
+     "games": "3"
     }
    },
    "cr_pct": 15,
@@ -31017,7 +31017,7 @@
    "owner": "freeagent",
    "team_id": null,
    "ir": false,
-   "injury": "OUT",
+   "injury": "DAY_TO_DAY",
    "owned": 2.4,
    "gp": 0,
    "ppg": 1.29,
@@ -31051,7 +31051,7 @@
     "last_fpg": 1.36,
     "xfp": null,
     "back": {
-     "games": "4"
+     "games": "3"
     }
    },
    "cr_pct": 10,
@@ -33077,7 +33077,7 @@
    "owner": "other",
    "team_id": 13,
    "ir": false,
-   "injury": "OUT",
+   "injury": "DAY_TO_DAY",
    "owned": 92.4,
    "gp": 1,
    "ppg": 2.29,
@@ -33116,7 +33116,7 @@
      "xfpg": 0.6
     },
     "back": {
-     "games": "4"
+     "games": "3"
     }
    },
    "cr_pct": 1,
@@ -33564,7 +33564,7 @@
    "owner": "freeagent",
    "team_id": null,
    "ir": false,
-   "injury": "OUT",
+   "injury": "DAY_TO_DAY",
    "owned": 1.4,
    "gp": 0,
    "ppg": 1.99,
