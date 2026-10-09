@@ -518,6 +518,10 @@ Keep value (section 35) added this week's projection to about 7 games' worth of 
 
 **Reverted.** A season-long hold/drop replay scored actual decisions instead of rankings: the schedule-aware keep value lost about 0.9 points a week against the flat 7 games (95% range: -2.2 to +0.3). The ranking gain on weeks 2-3 doesn't turn into better moves, because next Monday's weekly projection already counts those games when the time comes. **Keep value is back to a flat 7 games.**
 
+## 45. Trade ideas: players ESPN rates the same but Claude doesn't
+
+Other managers judge players by what ESPN shows them. When ESPN projects two skaters at the same position about the same (within 0.05 points a game) but Claude's Season rating has one at least 0.3 points per team game higher, offering the lower-rated one for the higher-rated one won about 1 point a week for the rest of the season in 2023-26 replays. That held in all three seasons and at every stage of the season, and the better-rated player came out ahead about 70% of the time. Trades use none of the 7 weekly moves. The test only counted healthy players with 40+ NHL games the season before, because ESPN may know more than the rating about rookies and new arrivals. **The Upgrades panel now has a Trade ideas card** listing up to 5 such offers (2 per player at most), biggest rating gap first. The other manager still has to accept.
+
 ## What the independent review changed
 
 | Review point | Outcome |
