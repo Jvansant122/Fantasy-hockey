@@ -314,6 +314,8 @@ def main():
     print("ESPN acquisitionSettings:", json.dumps(acq))
     print("ESPN lineupSlotCounts:", json.dumps((settings.get("rosterSettings") or {}).get("lineupSlotCounts")))
     print("ESPN lineupSlotStatLimits:", json.dumps(stat_limits))
+    print("ESPN scheduleSettings:", json.dumps(settings.get("scheduleSettings")))
+    ir_slots = ((settings.get("rosterSettings") or {}).get("lineupSlotCounts") or {}).get("8", 0)
     print(f"Move limit: {move_limit}, start cap: {goalie_cap}, moves used known for "
           f"{sum(v is not None for v in moves_used.values())} teams")
 
@@ -325,6 +327,7 @@ def main():
         "rated": rated,
         "goalie_cap": goalie_cap,
         "move_limit": move_limit,
+        "ir_slots": ir_slots,
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
                    "moves_used": moves_used[t["id"]]} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),

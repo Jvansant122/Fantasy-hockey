@@ -63,6 +63,8 @@ UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
 SCHED_SHRINK, SCHED_WIN, SCHED_SLOPE = 15, (-0.175, 0.594, 0.349), 3.4  # starts without a line priced by team strength (findings 70)
+SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
+PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -496,7 +498,7 @@ def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov
     pos = "D" if f["is_D"] else "F"
     prior = markov["prior_games"]
     p_out = (n_drop + prior * markov["p_out_mean"][pos]) / (n_in + prior)
-    left = max(82 - len(team_games), 0)
+    left = max(SEASON_GAMES - len(team_games), 0)
     share = lineup_chain_share(k, p_out, markov["return_curve"][pos], max(left, 1))
     share = min(max(share, 0.01), 0.99)
     x = dict(dress_f)
@@ -813,6 +815,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             if df_ and model.season_lr:
                 season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]))
+            elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE"):
+                # hurt before playing this season: such regulars dress for ~41% of the rest, not the idle cap's 10% (findings 74)
+                pre = injury_note(notes[p["id"]], today) if p["id"] in notes else None
+                season = fpg * PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"]
             else:
                 season = fpg * p_dress
             if n.get("apply"):

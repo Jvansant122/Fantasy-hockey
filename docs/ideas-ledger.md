@@ -122,13 +122,15 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 59 | Oct 9 15:40 | routine | Opponent points% and home in the goalie start logistic (on top of site p) | Starter +7 pts vs strong opp, +5 home; Brier −0.0007 to −0.0011, right % flat | Optional, not built | findings 62 |
 | 60 | Oct 9 16:40 | routine | Call-ups on a fresh stint: dress logistic calibration by games into the stint | Overrated by 2-3 points from game 3 on (−0.034 at games 6-10) | No change | findings 63 |
 | 61 | Oct 9 | Ideas | Fantasy playoff schedule (simple) | Not run | Pending | ideas-batch3.md |
+| 61 | Oct 9 19:20 | Thread "five more ideas" | 2026-27 schedule in likely fantasy playoff weeks (Mar 15-Apr 4 or Mar 22-Apr 11): games and light-night games per team | 8-11 games per team over 3 weeks (sd 0.9, same as any 3-week block), ~4.5 FP spread for a 1.5 FP/G skater; found the NHL season is 84 games and rating.py assumes 82 | No change for playoffs (revisit Feb with ESPN dates, idea 88); 84-game fix = handoff 30 | findings 75 |
 | 62 | Oct 9 | Ideas | Value over replacement by position (simple) | Not run | Pending | ideas-batch3.md |
 | 62 | Oct 9 18:10 | Thread "five ideas" | Monday moves by gain at position (VOR) vs best FA overall vs drop list alone, 8-week sim, one active manager, 12F/7D | VOR +0.88 FP/week (+0.10, +1.95) vs best FA; drop list alone +0.34 (ns) | Shipped (PR #34, handoff 25) | findings 68 |
 | 63 | Oct 9 | Ideas | Line-blending coaches and the last-5 TOI window (simple) | Not run | Pending | ideas-batch3.md |
 | 64 | Oct 9 | Ideas | Goalie Season rating (job security) (moderate) | Not run | Pending | ideas-batch3.md |
-| 65 | Oct 9 18:40 | routine | Goalie odds for the rest of the week: goal-diff win model prices Tue-Sun starts | Model corr 0.87 with market, 2/3 of its goalie-FP R²; weekly goalie rank corr 0.273 → 0.297, all 5 seasons up | Pending (handoff 27) | findings 70 |
+| 65 | Oct 9 18:40 | routine | Goalie odds for the rest of the week: goal-diff win model prices Tue-Sun starts | Model corr 0.87 with market, 2/3 of its goalie-FP R²; weekly goalie rank corr 0.273 → 0.297, all 5 seasons up | Shipped (PR #35, handoff 27) | findings 70 |
 | 66 | Oct 9 16:40 | routine | Lowest-TOI healthy player when a regular returns (hindsight), vs dress logistic | Dresses 8 (F) / 12 (D) points below prediction; 351 events | Shipped (PR #33, handoff 23) | findings 63 |
 | 67 | Oct 9 | Ideas | IR stash pickups (moderate) | Not run | Pending | ideas-batch3.md |
+| 67 | Oct 9 19:20 | Thread "five more ideas" | IR stash: gain over weakest rostered skater by FP/G tier (66 opening-night injured 2024-26, 2,295 mid-season absentee-Mondays 2023-26); Season rating for no-games-yet injured players | Opening-night injured dress 41% of remaining games (site says 10%); stash of a 1.5+ FP/G player +15-33 FP rest of season vs ~2 FP for the move; under 1.2 FP/G never pays | Pending: handoff 28 (Season P 0.45/0.3/0) and 29 (stash card) | findings 74 |
 | 68 | Oct 9 | Ideas | Healthy-scratch history as a P(dresses) input (moderate) | Not run | Pending | ideas-batch3.md |
 | 68 | Oct 9 15:30 | Thread "one idea" run | Healthy-scratch history (NHL right-rail lists, all 6,560 games 2021-26) in the weekly dress logistic | +0.0017 all / +0.0024 waiver ρ (0.594 base), all of it from telling injured absentees from scratched ones, which ESPN status already gives live; wire top-6 FP unchanged | No change (data saved: data/scratches.parquet) | findings 61 |
 | 69 | Oct 9 | Ideas | Rolling-horizon move planner (extreme) | Not run | Pending | ideas-batch3.md |
@@ -137,11 +139,14 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 72 | Oct 9 | Ideas | Late-season rest and tanking (extreme) | Not run | Pending | ideas-batch3.md |
 | 73 | Oct 9 | Ideas | Joint weekly points simulator (extreme) | Not run | Pending | ideas-batch3.md |
 | 74 | Oct 9 | Ideas | At what horizon does the Season rating beat the weekly one? (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 74 | Oct 9 19:20 | Thread "five more ideas" | Weekly vs Season per-game number vs actual FP per team game over 1, 2, 4, 8, 16 weeks and ROS (43k skater-Mondays 2023-26) | Weekly wins week 1 (+0.029), Season wins weeks 2-4 (+0.008) and grows to +0.024 ROS; blends ≤ +0.002 | No change (keep value already splits this way) | findings 71 |
 | 75 | Oct 9 | Ideas | Error map: where the 0.797 loses (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
 | 76 | Oct 9 | Ideas | Level calibration by tier (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 76 | Oct 9 19:20 | Thread "five more ideas" | Season rating calibration (predicted vs actual ROS FP per team game) by decile, position, wire | Top decile +0.10 high, D slope 0.89; at the wire F +0.009 / D +0.024 (0.1 FP of keep value) | No change | findings 72 |
 | 77 | Oct 9 | Ideas | Day-to-day jumpiness (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
 | 78 | Oct 9 | Ideas | Remaining schedule: per team game vs total (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
 | 79 | Oct 9 | Ideas | Do shot-blockers and hitters get hurt more? (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
+| 79 | Oct 9 19:20 | Thread "five more ideas" | ROS dress-share residual vs blocks/60, hits/60, blocks/game (10+ GP, 2023-26) | Flat across quintiles (−0.004 to −0.027); per player-season Spearman within ±0.04, inside noise | No change | findings 73 |
 | 80 | Oct 9 | Ideas | Waiver-exempt players get sent down (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
 | 81 | Oct 9 17:40 | routine | Heavy-workload main goalies after Feb 15: share and pts/start by workload tercile | Heavy − light: share +0.002 (±0.066), pts/start −0.15 (±0.41) | No change | findings 64 |
 | 82 | Oct 9 | Ideas | This season's weight by age at the season horizon (simple) | Not run | Pending | ideas-batch4.md (Season rating only) |
