@@ -268,13 +268,26 @@ def main():
         "past": sp < today_sp,
     } for sp in matchup_sps]
 
+    # moves this matchup and any per-slot start cap, for the goalie-stream advice (research findings section 52)
+    settings = league.get("settings") or {}
+    acq = settings.get("acquisitionSettings") or {}
+    move_limit = acq.get("matchupAcquisitionLimit")
+    stat_limits = (settings.get("rosterSettings") or {}).get("lineupSlotStatLimits") or {}
+    goalie_cap = next((v.get("limitValue") for v in stat_limits.values() if isinstance(v, dict) and v.get("limitValue")), None)
+    moves_used = {t["id"]: (t.get("transactionCounter") or {}).get("matchupAcquisitionTotals", {}).get(str(period)) for t in league["teams"]}
+    print(f"Move limit per matchup: {move_limit}, start cap: {goalie_cap}, moves used known for "
+          f"{sum(v is not None for v in moves_used.values())} teams")
+
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,
         "nights": nights,
         "rated": rated,
-        "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"])} for t in league["teams"]],
+        "move_limit": move_limit,
+        "goalie_cap": goalie_cap,
+        "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
+                   "moves_used": moves_used[t["id"]]} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
     }
     path = Path(__file__).resolve().parent.parent / "data" / "players.json"

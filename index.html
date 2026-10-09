@@ -107,7 +107,7 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Make 4-5 of your 6 moves on Monday and keep 1-2 for mid-week injuries.</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Make 2-3 skater moves on Monday and keep the rest to stream a goalie with a confirmed start on nights your goalies leave a slot open; injury swaps come out of the same moves.</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -327,6 +327,25 @@ function renderUpgrades() {
       const ir = ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
       return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${sub.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
     }).join("")}</div>`);
+  // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
+  const tonight = d.nights.find(n => !n.past);
+  const startsTonight = p => p.cr_why?.tonight?.status === "Confirmed" ? p.cr_why.tonight.starting : (p.cr_why?.p_today ?? 0) > 0.5;
+  if (d.rated && tonight) {
+    const myG = mine.filter(p => p.pos === "G");
+    const open = 2 - myG.filter(startsTonight).length;
+    if (open > 0) {
+      const team = d.teams.find(t => String(t.id) === state.team);
+      const limit = d.move_limit ?? 6, used = team?.moves_used;
+      const left = used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`;
+      const pps = p => p.cr_why?.line?.pps ?? p.cr_fpg;
+      const streams = fas.filter(p => p.pos === "G" && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
+        .sort((a, b) => pps(b) - pps(a)).slice(0, 3);
+      const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
+      cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(cap)}</span>
+        ${streams.length ? streams.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
+          : '<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon, and the site rechecks at 12:30 and 5 PM ET.</div>'}</div>`);
+    }
+  }
   const nSwap = cards.length;
   for (const g of ["F", "D", "G"]) {
     const mineG = mine.filter(p => group(p) === g);
