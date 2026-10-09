@@ -2,10 +2,9 @@
 
 A one-page site that compares your ESPN fantasy hockey roster against free agents, using your league's scoring and each player's games in the current matchup.
 
+Live site: https://jvansant122.github.io/Fantasy-hockey/. The research behind the Claude Rating, in plain language: [docs/research.md](docs/research.md).
+
 ## How it works
-
-The research behind the Claude Rating, in plain language: [docs/research.md](docs/research.md).
-
 
 - `scripts/fetch.py` pulls your roster, free agents, waivers and the NHL schedule from ESPN and writes `data/players.json`.
 - `.github/workflows/update.yml` runs it every morning (or on demand from the Actions tab) and commits the new data.
@@ -25,5 +24,14 @@ Fantasy points use ESPN's own calculation with your league's scoring settings. W
    - `TEAM_ID` (optional): your team's number, if the script can't find your team.
 2. **Pages** (Settings → Pages): deploy from branch `main`, folder `/ (root)`.
 3. Run **Update data** once from the Actions tab.
+
+## Tests
+
+```
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+The **Tests** workflow runs these on every pull request. They need no network or secrets: ESPN, NHL, MoneyPuck and Daily Faceoff are faked. They run the rating end to end on a small made-up league and check that `data/players.json` still has every field the page reads. Contributor notes (layout, conventions, how research hands changes to the site) are in [CLAUDE.md](CLAUDE.md).
 
 Note: on a free GitHub plan the Pages site is public even though the repo is private. The cookies stay in encrypted secrets and never appear on the site; the site shows player names, stats and your roster.
