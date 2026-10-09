@@ -268,3 +268,19 @@ def test_injured_starter_hands_starts_to_backup():
     hurt = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), injury={1: 0.0})
     assert healthy[1] > healthy[2]
     assert hurt[1] == 0 and hurt[2] == pytest.approx(4.0)
+
+
+def test_rest_of_season_dress_share():
+    """Season rating availability: a regular plays most of the rest of the season, a player out 10 games much less,
+    but more than zero (findings section 56)."""
+    model = rating.Model()
+    team = list(range(1, 21))
+    def share(played):
+        gl = [{"game": g, "team": "TOR", "toi": 17.0, "date": f"2026-11-{g:02d}"} for g in played]
+        f = {"dressed3": sum(g in played for g in team[-3:]) / 3, "dressed10": sum(g in played for g in team[-10:]) / 10,
+             "std_toi": 17.0, "l5_toi": 17.0, "std_pptoi": 2.0, "is_D": 0.0}
+        df = rating.dress_features(gl, "TOR", team, f, date(2026, 11, 21))
+        x = rating.season_dress_features(gl, "TOR", team, f, df, {"gp": 80}, 2.0, model.season_lr["markov"])
+        return model.season_dress(x)
+    regular, hurt = share(team), share(team[:10])
+    assert regular > 0.85 and 0.05 < hurt < regular - 0.2

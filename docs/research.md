@@ -348,7 +348,7 @@ The site now blends in last season's split between a team's goalies until the te
 The site shows two numbers for every player:
 
 - **Week** (the Claude Rating): projected points for the rest of this matchup. It counts games left, the chance he dresses, injuries and tonight's goalie news. Use it for this week's pickups and drops.
-- **Season**: projected points per team game for the rest of the season. It's the same per-game projection without this week's schedule, and without ESPN's injury discount, so an injured star still rates as a star. For skaters it's projected points per game × how often he's been in the lineup. For goalies it's his share of his team's starts (this season, blended with last season's split over 10 games) × his points per start. Use it for keepers, trades and "is this a real player or a one-week stream".
+- **Season**: projected points per team game for the rest of the season. It's the same per-game projection without this week's schedule, and without ESPN's injury discount, so an injured star still rates as a star. For skaters it's projected points per game × the share of his team's remaining games he's expected to play (section 34). For goalies it's his share of his team's starts (this season, blended with last season's split over 10 games) × his points per start. Use it for keepers, trades and "is this a real player or a one-week stream".
 
 Why one per-game projection works for the whole season: the research found a model trained for the next week and one trained for the next two weeks agree almost perfectly (0.999), and both predict longer stretches better than shorter ones. Each rating has its own percentile badge within forwards, defensemen or goalies.
 
@@ -415,6 +415,19 @@ Sections 31 and 32 tested injury swaps and goalie streams separately. Run togeth
 Four spare moves leave room for an injury swap plus the 2-3 goalie streams a roster can use in a week. A cap on goalie starts cuts the gain by about a third but doesn't change the best split. The site's advice now says "2 on Monday, keep 4".
 
 Which free-agent goalie to stream matters much less than streaming one at all: across 627 nights, the best way of picking among confirmed wire starters (weak opponent, or his own points per start) beat a random one by about 0.4 points, against about 3 points for the stream itself. The site keeps ranking them by tonight's betting line, which already combines team and opponent strength.
+
+## 34. A better Season rating: who plays the rest of the season
+
+The Season rating had reused next week's chance of dressing. Tested on its own horizon (every Monday of 2023-24 to 2025-26, points from that Monday to season's end per team game left), it ranked skaters at 0.773 (waiver pool 0.671). Knowing each player's real share of games played would lift that to 0.91, while knowing his real points per game would only reach 0.89, so availability is where the error was.
+
+The new model predicts the share of the team's remaining games he plays. It uses the same lineup history as the weekly model, plus last season's games played, ice time, games left and a simple "in the lineup or out k games" chain: how often he drops out after a game he plays, and how likely players are to come back after k games out (31% after one game, 17% after three, 7% after seven for forwards).
+
+| | All skaters | Waiver pool |
+| --- | --- | --- |
+| Old Season rating | 0.773 | 0.671 |
+| **New Season rating** | **0.797** | **0.701** |
+
+With injured players included the gain is bigger (+0.030 / +0.038). An independent rebuild found +0.021 / +0.024. Players out for a while now keep a realistic Season rating: those idle two weeks or more dress for about 27% of the remaining games, not the 7% the old cap implied. Points per game didn't change; three alternatives tied or lost. The Week rating and ESPN's injury caps are unchanged.
 
 ## What the independent review changed
 
