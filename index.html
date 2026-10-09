@@ -136,7 +136,7 @@
     <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
   <p class="sub"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (injuries aside, so an injured star still rates high). Goalies: his share of his team's starts × his points per start. Use it for keepers and trades; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from how many recent team games he played and ESPN's injury status. Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at 9 AM, 12:30 PM and 5 PM ET) × his points per start this season, pulled toward the league average of 2.9 (his own number gets half the weight at 15 starts). Tonight's game uses the betting line instead: about 2.9 + 4.1 × (win chance − 50%) points per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
-  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 6 D counting UTL as a D, 2 G). Most of the value of empty slots is on light nights. Week proj = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
+  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 6 D counting UTL as a D, 2 G). Most of the value of empty slots is on light nights. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
 </main>
 <script>
 // UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
@@ -149,7 +149,7 @@ const state = { team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
   ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["opengm", "Open", "r", true], ["light", "Light", "r", false],
-  ["ppg", "Proj/G", "r", false], ["week", "Week proj", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  ["ppg", "Proj/G", "r", false], ["week", "ESPN week", "r", false], ["cur_ppg", "This yr/G", "r", false],
   ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
 ];
 const $ = id => document.getElementById(id);
