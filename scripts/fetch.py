@@ -169,15 +169,19 @@ def main():
         "filterStatsForTopScoringPeriodIds": stat_filter,
     }}
     pool = get(s, league_url, ["kona_player_info"], fa_filter, scoringPeriodId=today_sp)["players"]
-    if my_ids:
-        mine_filter = {"players": {"filterIds": {"value": my_ids}, "filterStatsForTopScoringPeriodIds": stat_filter}}
+    # Every team's roster, so the page can show any team. Player cards come in chunks to keep requests small.
+    roster_players = {e["playerId"]: e["playerPoolEntry"]["player"] for t in league["teams"]
+                      for e in (t.get("roster") or {}).get("entries", []) if (e.get("playerPoolEntry") or {}).get("player")}
+    ids = list(rostered)
+    for i in range(0, len(ids), 50):
+        chunk = ids[i:i + 50]
+        card_filter = {"players": {"filterIds": {"value": chunk}, "filterStatsForTopScoringPeriodIds": stat_filter}}
         try:
-            pool += get(s, league_url, ["kona_playercard"], mine_filter, scoringPeriodId=today_sp)["players"]
+            pool += get(s, league_url, ["kona_playercard"], card_filter, scoringPeriodId=today_sp)["players"]
         except requests.HTTPError as e:
             # Fall back to the player data that comes with the roster (fewer stat lines)
-            print(f"Player card lookup for my roster failed ({e}); using roster data", file=sys.stderr)
-            pool += [{"player": e2["playerPoolEntry"]["player"]} for e2 in my_team["roster"]["entries"]
-                     if (e2.get("playerPoolEntry") or {}).get("player")]
+            print(f"Player card lookup failed ({e}); using roster data for {len(chunk)} players", file=sys.stderr)
+            pool += [{"player": roster_players[pid]} for pid in chunk if pid in roster_players]
 
     players = []
     seen = set()
@@ -209,8 +213,6 @@ def main():
             owner = "other"
         else:
             owner = (entry.get("status") or "FREEAGENT").lower()
-        if owner == "other":
-            continue
         players.append({
             "id": pid,
             "name": p.get("fullName"),
@@ -218,6 +220,7 @@ def main():
             "pos": pos,
             "slots": sorted({SLOT_NAMES[x] for x in p.get("eligibleSlots", []) if x in SLOT_NAMES}),
             "owner": owner,
+            "team_id": owner_id,
             "ir": slot == 8,
             "injury": p.get("injuryStatus") if p.get("injured") or p.get("injuryStatus") not in (None, "ACTIVE") else None,
             "owned": round((p.get("ownership") or {}).get("percentOwned", 0), 1),
@@ -256,6 +259,7 @@ def main():
         "matchup_period": period,
         "nights": nights,
         "rated": rated,
+        "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"])} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
     }
     path = Path(__file__).resolve().parent.parent / "data" / "players.json"
