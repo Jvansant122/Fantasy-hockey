@@ -251,14 +251,16 @@ def skater_features(games, prev, xg_now, xg_prev, team_games):
     return f
 
 
-def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today):
+def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
-    starts_by_team: this season's starter per team game, oldest first, as (date, goalie id)."""
+    starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
+    confirmed: {date: goalie id} of Daily Faceoff confirmed starters; those games count as 1 for him, 0 for the others."""
+    confirmed = confirmed or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
     last_date = hist[-1][0] if hist else None
-    cands = set(goalies) | {g for g in seq[-20:]}
+    cands = set(goalies) | {g for g in seq[-20:]} | set(confirmed.values())
     if not cands:
         return {}
     shares = {}
@@ -275,6 +277,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                for gid in cands}
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
+        if d in confirmed:
+            p = {gid: float(gid == confirmed[d]) for gid in cands}
         if d >= today.isoformat():
             for gid in cands:
                 exp[gid] += p[gid]
@@ -305,8 +309,10 @@ def load_news():
     return dict(list(items.items())[:NEWS_CAP])
 
 
-def add_ratings(players, espn_season, today, monday):
-    """Add Claude Rating fields to each player dict from fetch.py (in place)."""
+def add_ratings(players, espn_season, today, monday, starters=()):
+    """Add Claude Rating fields to each player dict from fetch.py (in place).
+
+    starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week."""
     s = requests.Session()
     season, prev_season = season_ids(espn_season)
     model = Model()
@@ -368,9 +374,21 @@ def add_ratings(players, espn_season, today, monday):
         pos_ok = [pid for pid, (_, pos) in cands.items() if (pos == "G") == want_g]
         return pos_ok[0] if len(pos_ok) == 1 else None
 
+    # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
+    confirmed, tonight = {}, {}
+    for page in starters:
+        for g in page.get("games", []):
+            cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")]
+            if len(cands) != 1 or not page.get("date") or page["date"] < today.isoformat():
+                continue
+            if page["date"] == today.isoformat():
+                tonight[g["team"]] = (cands[0], g.get("status"))
+            if g.get("status") == "Confirmed":
+                confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
     goalie_exp = {}
     for team, dates in sched.items():
-        goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today))
+        goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today,
+                                        confirmed.get(team)))
 
     unmatched = 0
     injury_log = []
@@ -387,6 +405,9 @@ def add_ratings(players, espn_season, today, monday):
             seq = [gid for _, gid in starts_by_team.get(team, [])][-10:]
             why = {"exp_starts": round(starts, 2), "team_games": p["games_left"],
                    "share10": round(sum(x == pid for x in seq) / len(seq), 2) if seq and pid else None}
+            if team in tonight and pid:
+                who, status = tonight[team]
+                why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, base) if pid else base
@@ -428,6 +449,7 @@ def add_ratings(players, espn_season, today, monday):
         p["cr_games"] = round(exp_games, 2)
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
         p["cr_matched"] = pid is not None
+        p["nhl_id"] = pid
         p["cr_why"] = why
         if n:
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
