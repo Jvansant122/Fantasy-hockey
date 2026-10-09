@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "move_limit", "goalie_cap"}
+TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "goalie_cap"}
 NIGHT_FIELDS = {"sp", "date", "games", "light", "past"}
 PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
                  "games", "games_left", "light", "light_left", "nights"}

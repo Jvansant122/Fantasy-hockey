@@ -333,9 +333,9 @@ function renderUpgrades() {
   if (d.rated && tonight) {
     const myG = mine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
-    if (open > 0) {
-      const team = d.teams.find(t => String(t.id) === state.team);
-      const limit = d.move_limit ?? 6, used = team?.moves_used;
+    const team = d.teams.find(t => String(t.id) === state.team);
+    const limit = 6, used = team?.moves_used;
+    if (open > 0 && !(used >= limit)) {
       const left = used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`;
       const pps = p => p.cr_why?.line?.pps ?? p.cr_fpg;
       const streams = fas.filter(p => p.pos === "G" && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
