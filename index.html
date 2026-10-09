@@ -35,9 +35,6 @@
   select, input[type=search], input[type=number] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); min-height: 36px; }
   input[type=search] { flex: 1 1 160px; }
   input[type=number] { width: 64px; }
-  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .seg button { font: inherit; border: 0; padding: 6px 10px; min-height: 36px; background: var(--card); color: var(--text); cursor: pointer; }
-  .seg button.on { background: var(--accent); color: #fff; }
   .count { margin-top: 8px; }
   /* the table scrolls inside its box so the header and name column can stay pinned */
   .tablewrap { overflow: auto; max-height: 78vh; margin-top: 6px; border-top: 1px solid var(--line); }
@@ -82,7 +79,7 @@
     th, td { padding: 6px 5px; }
     td:first-child { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
     .tag { margin-left: 2px; padding: 1px 4px; }
-    .seg button, select, input[type=search], input[type=number] { min-height: 44px; }
+    select, input[type=search], input[type=number] { min-height: 44px; }
     .controls label { min-height: 44px; }
     .night { font-size: 10px; padding: 4px 1px; }
     .night b { font-size: 13px; }
@@ -111,9 +108,9 @@
   <div class="card">
     <div class="controls">
       <input type="search" id="q" placeholder="Search player or team">
-      <div class="seg" id="who">
-        <button data-v="all" class="on">All</button><button data-v="mine">My roster</button><button data-v="fa">Free agents</button>
-      </div>
+      <select id="who" aria-label="Which players">
+        <option value="all">Free agents + my roster</option><option value="fa">Free agents</option><option value="every">Every player</option>
+      </select>
       <select id="pos">
         <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
       </select>
@@ -138,7 +135,7 @@
 const SLOTS = { F: 9, D: 5, UTL: 1, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
 const SAVED = ["who", "sort", "dir", "pos", "left", "healthy"];
-const state = { who: "all", sort: "cr", dir: -1, data: null, open: null, openSlots: {} };
+const state = { who: "all", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
 // [key, label, align, shown on phones]
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Rating", "r", true],
@@ -154,6 +151,7 @@ const store = {
   set(v) { try { localStorage.setItem("faf", JSON.stringify(v)); } catch { /* private mode */ } },
 };
 
+const isFA = p => p.owner === "freeagent" || p.owner === "waivers";
 const group = p => p.pos === "G" ? "G" : p.pos === "D" ? "D" : "F";
 const injLabel = p => p.injury ? p.injury.replaceAll("_", " ").toLowerCase() : "";
 const activeNight = n => !$("left").checked || !n.past;
@@ -167,7 +165,7 @@ function fits(p, pos) {
 }
 // Nights this player plays on which one of my slots for his group would otherwise sit empty
 function openGames(p) {
-  if (p.owner === "mine") return null;
+  if (!isFA(p)) return null;
   return state.data.nights.filter(n => activeNight(n) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
 }
 function hasRoom(sp, g) {
@@ -199,7 +197,7 @@ function pctBadge(p) {
 function dots(p) {
   return `<span class="dots">${state.data.nights.map(n => {
     const plays = p.nights.includes(n.sp);
-    const open = plays && p.owner !== "mine" && hasRoom(n.sp, group(p));
+    const open = plays && isFA(p) && hasRoom(n.sp, group(p));
     return `<i class="${plays ? "play" : ""} ${open ? "open" : ""} ${n.past ? "past" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
   }).join("")}</span>`;
 }
@@ -231,7 +229,8 @@ function details(p) {
 function cells(p) {
   const d = state.data;
   const pos = p.slots.filter(s => s !== "F").join("/") || p.pos;
-  const tags = (p.owner === "mine" ? '<span class="tag own">mine</span>' : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
+  const teamName = p.owner === "other" && state.who === "every" ? (state.teamNames[p.team_id] || "") : "";
+  const tags = (p.owner === "mine" ? '<span class="tag own">mine</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "");
   const og = openGames(p);
   return {
@@ -242,11 +241,20 @@ function cells(p) {
   };
 }
 
+function inView(p) {
+  const w = state.who;
+  if (w === "every") return true;
+  if (w === "fa") return isFA(p);
+  if (w === "all") return isFA(p) || p.owner === "mine";
+  if (w === "mine") return p.owner === "mine";
+  return w.startsWith("t:") && String(p.team_id) === w.slice(2);
+}
+
 function render() {
   const d = state.data;
   const q = $("q").value.trim().toLowerCase(), pos = $("pos").value, ming = +$("ming").value || 0;
   const list = d.players.filter(p =>
-    (state.who === "all" || (state.who === "mine") === (p.owner === "mine")) &&
+    inView(p) &&
     // unsigned players (team FA) only show up when searched for
     (p.team !== "FA" || q) &&
     fits(p, pos) && games(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
@@ -277,7 +285,7 @@ function renderUpgrades() {
   const d = state.data;
   // weakest healthy player in each group; injured players aren't drop candidates
   const mine = d.players.filter(p => p.owner === "mine" && !p.ir && !OUT.has(p.injury));
-  const fas = d.players.filter(p => p.owner !== "mine" && !p.injury);
+  const fas = d.players.filter(p => isFA(p) && !p.injury);
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
   for (const g of ["F", "D", "G"]) {
@@ -303,6 +311,17 @@ function renderNights() {
   }).join("");
 }
 
+// Team rosters go in the "which players" picker, mine first
+function teamOptions(d) {
+  state.teamNames = {};
+  const teams = d.teams || [];
+  if (!teams.length) { $("who").insertAdjacentHTML("beforeend", '<option value="mine">My roster</option>'); return; }
+  const sorted = [...teams].sort((a, b) => (b.mine - a.mine) || a.name.localeCompare(b.name));
+  for (const t of teams) state.teamNames[t.id] = t.name;
+  $("who").insertAdjacentHTML("beforeend", `<optgroup label="Team rosters">${sorted.map(t =>
+    `<option value="t:${t.id}">${esc(t.name)}${t.mine ? " (mine)" : ""}</option>`).join("")}</optgroup>`);
+}
+
 function sortBy(key) {
   if (state.sort === key) state.dir = -state.dir;
   else { state.sort = key; state.dir = ["name", "team", "pos"].includes(key) ? 1 : -1; }
@@ -310,12 +329,7 @@ function sortBy(key) {
 }
 
 function wire() {
-  $("who").addEventListener("click", e => {
-    const b = e.target.closest("button"); if (!b) return;
-    state.who = b.dataset.v;
-    [...$("who").children].forEach(x => x.classList.toggle("on", x === b));
-    render();
-  });
+  $("who").addEventListener("input", () => { state.who = $("who").value; render(); });
   $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) sortBy(th.dataset.k); });
   $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sortBy(th.dataset.k); } });
   $("rows").addEventListener("click", e => {
@@ -328,10 +342,8 @@ function wire() {
 
 function restore() {
   const s = store.get();
-  if (["all", "mine", "fa"].includes(s.who)) {
-    state.who = s.who;
-    [...$("who").children].forEach(x => x.classList.toggle("on", x.dataset.v === s.who));
-  }
+  if (typeof s.who === "string" && [...$("who").options].some(o => o.value === s.who)) state.who = s.who;
+  $("who").value = state.who;
   if (COLS.some(c => c[0] === s.sort)) { state.sort = s.sort; state.dir = s.dir === 1 ? 1 : -1; }
   if (typeof s.pos === "string" && [...$("pos").options].some(o => o.value === s.pos)) $("pos").value = s.pos;
   if (typeof s.left === "boolean") $("left").checked = s.left;
@@ -347,6 +359,7 @@ fetch("data/players.json", { cache: "no-store" })
       COLS.splice(COLS.findIndex(c => c[0] === "cr"), 1);
       $("minr").parentElement.remove();
     }
+    teamOptions(d);
     restore();
     if (d.team) $("title").textContent = `${d.team} · Free Agent Finder`;
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
