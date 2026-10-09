@@ -19,6 +19,9 @@ SKATERS = [  # id, name, team, pos, games missed (by index into PAST)
     (2, "Morgan Rielly", "TOR", "D", {1, 2, 3}),
     (3, "David Pastrnak", "BOS", "R", set()),
     (4, "Charlie McAvoy", "BOS", "D", {3}),
+    (5, "Elias Pettersson", "TOR", "C", set()),  # two teammates with one name (findings 112)
+    (6, "Elias Pettersson", "TOR", "D", set()),
+    (7, "Zachary Bolduc", "BOS", "R", set()),  # ESPN calls him Zack
 ]
 GOALIES = [(11, "Joseph Woll", "TOR"), (12, "Anthony Stolarz", "TOR"), (13, "Jeremy Swayman", "BOS")]
 
@@ -121,6 +124,9 @@ def run(monkeypatch, tmp_path):
         espn(103, "David Pastrnak", "BOS", "RW", injury="OUT"),
         espn(104, "Charlie McAvoy", "BOS", "D"),
         espn(105, "Not A Real Player", "BOS", "C"),
+        espn(106, "Elias Pettersson", "TOR", "C"),
+        espn(107, "Elias N. Pettersson", "TOR", "D"),
+        espn(108, "Zack Bolduc", "BOS", "LW"),
         espn(111, "Joseph Woll", "TOR", "G"),
         espn(112, "Anthony Stolarz", "TOR", "G"),
         espn(113, "Jeremy Swayman", "BOS", "G"),
@@ -322,3 +328,18 @@ def test_rest_of_week_goalie_starts_priced_by_schedule(run):
     """TOR is stronger and at home in every game, so its starts are worth more than BOS's (findings section 70)."""
     by_name, _, _ = run
     assert by_name["Joseph Woll"]["cr_why"]["sched"] > 0 > by_name["Jeremy Swayman"]["cr_why"]["sched"]
+
+
+def test_same_name_teammates_and_nicknames_match(run):
+    """Vancouver's two Elias Petterssons split by position, and ESPN's "Zack" finds the NHL's "Zachary" (findings 112)."""
+    by_name, _, _ = run
+    assert by_name["Elias Pettersson"]["nhl_id"] == 5 and by_name["Elias N. Pettersson"]["nhl_id"] == 6
+    assert by_name["Zack Bolduc"]["nhl_id"] == 7
+    assert not by_name["Not A Real Player"]["cr_matched"]
+
+
+def test_nickname_needs_same_team_and_last_name():
+    index = {"zachary bolduc": {7: ("BOS", "R")}, "zach smith": {8: ("BOS", "C")}}
+    assert rating.nickname_cands(index, "Zack Bolduc", "BOS") == {7: ("BOS", "R")}
+    assert rating.nickname_cands(index, "Zack Bolduc", "TOR") == {}
+    assert rating.nickname_cands(index, "Mike Bolduc", "BOS") == {}
