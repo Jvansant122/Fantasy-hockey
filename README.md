@@ -9,7 +9,7 @@ The research behind the Claude Rating, in plain language: [docs/research.md](doc
 
 - `scripts/fetch.py` pulls your roster, free agents, waivers and the NHL schedule from ESPN and writes `data/players.json`.
 - `.github/workflows/update.yml` runs it every morning (or on demand from the Actions tab) and commits the new data.
-- `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: projected points per game × games left × chance to dress (recent games played plus ESPN injury status). Goalies: expected starts × 2.9 points per start. If the NHL or MoneyPuck calls fail, the update still publishes without the rating.
+- `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: projected points per game × games left × chance to dress (recent games played plus ESPN injury status). Goalies: expected starts × his own points per start this season, shrunk toward the league average (2.9) over 15 starts. If the NHL or MoneyPuck calls fail, the update still publishes without the rating.
 - `model/rating_model.json` holds the model weights; `model/train.py` refits them from the research data (2021-26 seasons).
 - `data/news.json` (optional, not used yet) is where up to 25 news flags can go later. A flag shows in the row's details, and only changes the numbers (games, starts, or a capped points-per-game multiplier) when its `apply` is true.
 - `index.html` reads that file. GitHub Pages serves it.

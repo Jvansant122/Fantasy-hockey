@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 9, 2026 (findings through the drop list, light nights and the UTL slot). The research is ongoing; new findings are added here as they land.
+Last updated Oct 9, 2026 (findings through the weekly move optimizer, goalie streaming and the confidence-badge test). The research is ongoing; new findings are added here as they land.
 
 **League scoring:** goals 2, assists 1, power-play points 0.5, shorthanded points 0.5, shots 0.1, hits 0.1, blocks 0.5. Goalies: win 2, loss -1, overtime loss +1, goal against -1, save 0.2, shutout 3.
 
@@ -14,14 +14,14 @@ Last updated Oct 9, 2026 (findings through the drop list, light nights and the U
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
 5. **Use all 6 moves each week**, and re-pick for the schedule rather than holding a pickup.
 6. **Drop the player with the lowest projected week**, not the lowest season total. That doubles what each move gains.
-7. **Empty lineup slots on light nights are the biggest pool of points left.** A free agent is worth most when he plays on nights your lineup has a hole at his position.
+7. **Empty lineup slots on light nights are the biggest pool of points left**, and the simple Monday plan captures them: add the 6 best projected weeks and drop your 6 lowest. Chasing single nights one at a time loses points.
 
 ## How the rating is calculated
 
 - **Skaters:** projected points per game × games left this matchup × the chance he dresses.
   - *Points per game* comes from a model that weighs ice time and power-play time over the last 5, 10 and 20 games, plus shots, blocks, hits, points and expected goals from this season and last season.
   - *The chance he dresses* comes from how many of his team's last 3 and 10 games he played, then ESPN's injury status on top (out, IR or suspended counts as 0; day-to-day is capped at 50%). These overrides are logged daily so the day-to-day number can be checked after a few weeks.
-- **Goalies:** expected starts in the team's remaining games × about 2.9 points per start. Expected starts come from his share of recent starts and back-to-backs.
+- **Goalies:** expected starts in the team's remaining games × his points per start. Expected starts come from his share of recent starts and back-to-backs. Points per start is his own average this season blended with the league average of about 2.9, so his own number gets half the weight after 15 starts.
 - The badge next to the rating is the player's percentile among forwards, defensemen or goalies across the league.
 
 ## How it was tested
@@ -115,7 +115,7 @@ That's about 1 extra point per forward pickup per week over the old ranking.
 ![Goalies](img/goalies.png)
 
 - **Starts:** the start model misses by 0.58 starts a week, versus 1.78 for assuming every team game. Starting the first night of a back-to-back nearly rules out the second night.
-- **Points per start can't be predicted:** nothing tested ranks next week's points per start better than chance (all under 0.1). Team win % is the best at 0.09. So the site uses the league average, about 2.9 points per start.
+- **Points per start can't be predicted:** nothing tested ranks next week's points per start better than chance (all under 0.1). Team win % is the best at 0.09. So the site starts from the league average, about 2.9 points per start, and only slowly moves toward a goalie's own number (section 22).
 - **Ranking wire goalies:** points per game × team games gives 3.0 points a week (random is 2.9). Expected starts gives 4.9.
 
 ### Rest and workload
@@ -228,6 +228,59 @@ Simulating 12 rosters in this league's format:
 
 No skater in this league is eligible at both forward and defense, and the lineup uses general F slots, so forward eligibility never matters. UTL only comes into play on nights with 13+ games, and there the 6th defenseman outscored the 10th forward (1.40 vs 1.30 points). **The site counts UTL as a sixth D slot** when working out open slots.
 
+## 17. Coming back from injury
+
+Across 2,012 returns from absences of 2+ weeks, players scored at their old rate right away, even after 8+ weeks out. Ice time in the first 5 games back is only 0.1 to 0.35 minutes lower. **No change to the rating**: a returning player is rated on his pre-injury numbers.
+
+## 18. Things that turned out not to matter
+
+Each of these was added to the model and tested over three seasons. None changed its accuracy by more than a rounding error.
+
+| Idea | Result |
+| --- | --- |
+| How much his team shoots and scores | Nothing. His own ice time, shots and expected goals already carry his team's pace. |
+| Each team's goalie rotation habits | Teams differ, but the habit doesn't carry from one season to the next (it follows the goalies, not the coach). A per-team model was worse. |
+| Hits for forwards | Worth exactly their 0.1 points each, no more and no less. Forwards who hit a lot score less only because they're fourth-liners. |
+| Shot quality and finishing skill | Finishing is a real but small skill, and last season's goals and expected goals already capture it. |
+| Stats from two seasons ago | Last season is enough. Two seasons back helps a tiny bit in October only. |
+
+## 19. Moves: the Monday plan beats daily streaming
+
+Simulating 12 rosters over 72 weeks, each with at most 6 moves a week:
+
+| Strategy | Points per roster per week | vs. no moves |
+| --- | --- | --- |
+| No moves | 85.8 | |
+| **Monday: add the 6 best projected weeks, drop the 6 lowest projected** | **91.2** | **+5.4** |
+| Monday, matching pickups to your open-slot nights | 90.8 | +5.0 |
+| Daily streaming: fill tonight's open slots until moves run out | 89.1 | +3.3 |
+
+- **The simple Monday plan wins.** That's exactly the site's table (sorted by rating) plus the drop list.
+- Matching pickups to open nights doesn't beat it, because the best projected week is usually a 4-game week anyway.
+- Daily streaming spends moves on 1-point nights and loses about 2 points a week. Light nights are worth using, but through the weekly ranking, not one night at a time.
+
+## 20. Streaming goalies by opponent
+
+Over 101 weeks of picking the 3 best wire goalies:
+
+| Ranked by | Points from top 3 picks per week |
+| --- | --- |
+| Expected starts | 5.19 |
+| + home ice and opponent strength | 5.07 |
+| **+ the goalie's own points per start, pulled toward the league average** | **5.33** |
+
+Opponent strength is noise for goalies (it explains under 1% of points per start). A goalie's own points per start, blended with the league average so that one hot week doesn't swing it, adds a little. **The site now uses it** (section 22).
+
+## 21. Should the rating show a confidence level?
+
+No. Players with few games this season are not projected any worse: the model leans on last season for them, and they're mostly lower-usage players with less to swing. Weekly hockey scoring is noisy for everyone (the typical miss is about 0.55 points a game against an average of 1.3). A "low confidence" badge would tell you to distrust numbers that are as good as any other. Tap a row to see what drives a rating instead.
+
+## 22. What changed on the site from this round
+
+- **Goalies:** expected starts × his own points per start this season, blended with the league average of 2.9 (his own number gets half the weight after 15 starts). Worth about +0.14 points a week on the best streaming picks.
+- Nothing else. Injury returns, team shooting, rotation habits, hits, shot quality, older seasons, opponent-based goalie streaming, night-by-night streaming and a confidence badge were all tested and left out.
+- **Next to test:** comparing the rating with ESPN's projections over a few weeks of live data, and whether confirmed starting goalies from Daily Faceoff are worth adding.
+
 ## What the independent review changed
 
 | Review point | Outcome |
@@ -238,7 +291,3 @@ No skater in this league is eligible at both forward and defense, and the lineup
 | Blocks look more stable when forwards and defensemen are pooled | Agreed. All numbers are within position. |
 | Rank by projected points, not percentile | Agreed. The site sorts by points and shows percentile as a badge. |
 | News should change games or ice time, not points directly | Agreed. That's how the news step is designed. |
-
-## Still being researched
-
-Injury returns, team shot environment, per-team goalie tandem patterns, a weekly move optimizer and a confidence badge for the rating. Results will be added here.
