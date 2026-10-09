@@ -33,6 +33,7 @@ INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DA
 INJURY_LOG = ROOT / "data" / "injury_log.jsonl"
 INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # no NHL game in 14+ days while the team kept playing (outside what the research measured)
+PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
 ESPN_TO_NHL = {"TB": "TBL", "NJ": "NJD", "SJ": "SJS", "LA": "LAK", "UTAH": "UTA", "WAS": "WSH", "MON": "MTL", "CLB": "CBJ"}
@@ -115,7 +116,9 @@ def load_goalie_games(s, season, today):
     out = []
     for a, b in weekly(first, today - timedelta(days=1)):
         out += [{"id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
-                 "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0}
+                 "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0,
+                 "fp": 2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
+                       + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0)}
                 for r in stats_report(s, "goalie/summary", season, a, b)]
     return out
 
@@ -322,6 +325,14 @@ def add_ratings(players, espn_season, today, monday):
             team_games[g["team"]].append(g["game"])
         if g["started"]:
             starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
+    # each goalie's points per start this season, shrunk toward the league mean (findings section 27)
+    base = model.g["points_per_start"]
+    own = {}
+    for g in goalie_games:
+        if g["started"]:
+            t = own.setdefault(g["id"], [0.0, 0])
+            t[0] += g["fp"]; t[1] += 1
+    pps = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
     by_player = {}
     for g in sorted(games, key=lambda g: g["date"]):
         by_player.setdefault(g["id"], []).append(g)
@@ -378,7 +389,8 @@ def add_ratings(players, espn_season, today, monday):
                    "share10": round(sum(x == pid for x in seq) / len(seq), 2) if seq and pid else None}
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
-            fpg = model.g["points_per_start"]
+            fpg = pps.get(pid, base) if pid else base
+            why["gs"] = own.get(pid, [0, 0])[1] if pid else None
             exp_games = starts * inj
             p_dress = None
         else:
