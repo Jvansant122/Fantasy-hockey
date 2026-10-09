@@ -425,7 +425,8 @@ function wire() {
     state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
     render();
   });
-  ["q", "pos", "ming", "minr", "left", "healthy", "addfa"].forEach(id => $(id).addEventListener("input", render));
+  // minr is removed when the data has no ratings
+  ["q", "pos", "ming", "minr", "left", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", render));
 }
 
 function restore() {
