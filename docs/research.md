@@ -508,6 +508,10 @@ Only tonight's goalie starts have a betting line, so the rest of the week's star
 - **IR stash.** A free agent who is OUT or on injured reserve can go straight into an open IR slot. Over the rest of the season, a 1.5-1.8 pts/game stash beats your weakest skater by about 15-18 points, and a 1.8+ one by about 33, for the cost of one move (about 2 points). Below 1.2 pts/game it never pays. **When you have an open IR slot, an "IR stash" card lists up to 3 such players at 1.5+ pts/game.**
 - **84 games.** The 2026-27 regular season is 84 games per team, so the Season rating now counts games left out of 84.
 
+## 43. Goalie Season rating: a little recent form
+
+A goalie's share of his team's remaining starts used to come from his whole season (pulled toward last season early on). Blending in a quarter of a recent-form share, with each game counting half as much every 5 team games back, catches a new no. 1 sooner: rest-of-season errors are 11% smaller right after a starter change, and rank correlation is +0.013 overall. Using recent form alone overreacts, so it stays at a quarter. **The goalie Season rating now uses this blend**; the Week rating's start model is unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |
