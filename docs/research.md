@@ -21,7 +21,7 @@ Last updated Oct 9, 2026 (findings through the weekly move optimizer, goalie str
 - **Skaters:** projected points per game × games left this matchup × the chance he dresses.
   - *Points per game* comes from a model that weighs ice time and power-play time over the last 5, 10 and 20 games, plus shots, blocks, hits, points and expected goals from this season and last season.
   - *The chance he dresses* comes from how many of his team's last 3 and 10 games he played, then ESPN's injury status on top (out, IR or suspended counts as 0; day-to-day is capped at 50%). These overrides are logged daily so the day-to-day number can be checked after a few weeks.
-- **Goalies:** expected starts in the team's remaining games × his points per start. Expected starts come from his share of recent starts and back-to-backs. Points per start is his own average this season blended with the league average of about 2.9, so his own number gets half the weight after 15 starts.
+- **Goalies:** expected starts in the team's remaining games × his points per start. Expected starts come from his share of recent starts and back-to-backs. Points per start is his own average this season blended with the league average of about 2.9, so his own number gets half the weight after 15 starts. When Daily Faceoff lists a goalie as the **confirmed** starter for tonight or tomorrow, that game counts as a certain start for him and zero for his partner (section 23).
 - The badge next to the rating is the player's percentile among forwards, defensemen or goalies across the league.
 
 ## How it was tested
@@ -141,7 +141,7 @@ This measures the most news could ever add, by giving the model perfect knowledg
 | Defensemen: next week's ice time and power-play role | +0.35 per weekly pickup |
 | **Goalies: confirmed starters, streaming each game day** | **+0.76 per day** |
 
-For skaters, even perfect news adds only 3 to 10%. For goalies it adds about a third, because the start model's top wire goalie actually started only 71% of the time. Starters are usually confirmed after the morning skate, so a goalie news check needs to run around midday ET on game days. A news step is designed but not switched on yet.
+For skaters, even perfect news adds only 3 to 10%. For goalies it adds about a third, because the start model's top wire goalie actually started only 71% of the time. Starters are usually confirmed after the morning skate, so a goalie news check needs to run around midday ET on game days. The site now gets confirmed starters for free from Daily Faceoff (section 23).
 
 ## 8. Opponents, home ice and back-to-backs
 
@@ -279,7 +279,25 @@ No. Players with few games this season are not projected any worse: the model le
 
 - **Goalies:** expected starts × his own points per start this season, blended with the league average of 2.9 (his own number gets half the weight after 15 starts). Worth about +0.14 points a week on the best streaming picks.
 - Nothing else. Injury returns, team shooting, rotation habits, hits, shot quality, older seasons, opponent-based goalie streaming, night-by-night streaming and a confidence badge were all tested and left out.
-- **Next to test:** comparing the rating with ESPN's projections over a few weeks of live data, and whether confirmed starting goalies from Daily Faceoff are worth adding.
+- **Next to test:** comparing the rating with ESPN's projections over a few weeks of live data, using the log described in section 23.
+
+## 23. Confirmed starting goalies, and what's being logged
+
+The biggest gain left in the research was knowing tonight's starting goalie (section 7: about a third more points per streamed goalie). Daily Faceoff publishes it for every game, so the site now reads it directly, with no AI step needed.
+
+- The site updates at **9 AM, 12:30 PM and 5 PM ET**. Starters are usually confirmed after the morning skate, so the midday run is the one that matters.
+- A goalie Daily Faceoff marks **Confirmed** for tonight or tomorrow gets that game as a certain start, and his partner gets zero. A confirmed start on the first night of a back-to-back also lowers his chance of starting the second night. The row shows a "starts tonight" or "sits tonight" tag.
+- "Likely" and unconfirmed goalies are shown when you tap the row but don't change the rating yet, until the log shows how often they're right.
+
+Every update also saves a log (in `data/log`) of things that might help but need live data to test:
+
+| Logged | Question it answers after three weeks |
+| --- | --- |
+| Daily Faceoff starters, every label, three times a day | How often "Confirmed" and "Likely" are right, and when they firm up |
+| Daily Faceoff projected lineups, power-play units and scratches | Does "not in the projected lineup" predict a scratch better than the current dress estimate? |
+| ESPN injury notes (expected return timing) | Do the notes predict games missed better than the flat 50% for day-to-day? |
+| DraftKings moneylines and totals (from the NHL's site) | Do betting odds predict a goalie's points per start? |
+| Each player's rating and ESPN's projection | Which one picks better free agents (section 25 of the research)? |
 
 ## What the independent review changed
 
