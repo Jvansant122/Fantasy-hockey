@@ -4,6 +4,9 @@ A one-page site that compares your ESPN fantasy hockey roster against free agent
 
 ## How it works
 
+The research behind the Claude Rating, in plain language: [docs/research.md](docs/research.md).
+
+
 - `scripts/fetch.py` pulls your roster, free agents, waivers and the NHL schedule from ESPN and writes `data/players.json`.
 - `.github/workflows/update.yml` runs it every morning (or on demand from the Actions tab) and commits the new data.
 - `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: projected points per game × games left × chance to dress (recent games played plus ESPN injury status). Goalies: expected starts × 2.9 points per start. If the NHL or MoneyPuck calls fail, the update still publishes without the rating.
