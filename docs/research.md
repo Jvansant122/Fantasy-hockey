@@ -479,6 +479,10 @@ So the plan holds: **2 skater moves on Monday, the other 5 for injury swaps and 
 
 **On the site:** the Upgrades header states 7 moves and "keep the other 5", the "Stream a goalie tonight" card shows moves left out of 7, and a Goalies card appears when you carry more than 2, naming your weakest goalie this week.
 
+## 38. Goalies: start from last season's level
+
+A goalie's points per start blend his starts this season with 15 starts' worth of a starting point. That starting point used to be the league average (2.9). Scoring the goalie Season rating over 73 Mondays (2023-24 to 2025-26) found that starting from **his own last-season points per start** (itself pulled toward 2.9 over 15 starts) ranks starters better: rank correlation +0.022 (95% +0.013 to +0.031), almost all of it in a team's first 20 games. Pulling harder toward the average (the "Marcel" weighting some projection systems use, about 60 starts) was clearly worse (−0.03). **The site now does this for both the Week and Season goalie ratings.** A goalie with no starts last season still starts from 2.9.
+
 ## What the independent review changed
 
 | Review point | Outcome |
