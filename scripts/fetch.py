@@ -15,6 +15,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+from rating import add_ratings
+
 BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl/seasons/{season}"
 ET = ZoneInfo("America/New_York")
 POSITIONS = {1: "C", 2: "LW", 3: "RW", 4: "D", 5: "G"}
@@ -231,6 +233,15 @@ def main():
             "nights": week_games,
         })
 
+    # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
+    now = datetime.now(ET).date()
+    try:
+        add_ratings(players, season, now, now - timedelta(days=now.weekday()))
+        rated = True
+    except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
+        print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
+        rated = False
+
     nights = [{
         "sp": sp,
         "date": night_dates[sp].strftime("%a %-d") if sp in night_dates else f"Day {sp}",
@@ -244,7 +255,8 @@ def main():
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,
         "nights": nights,
-        "players": sorted(players, key=lambda x: -(x["ppg"] or 0) * x["games"]),
+        "rated": rated,
+        "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
     }
     path = Path(__file__).resolve().parent.parent / "data" / "players.json"
     path.write_text(json.dumps(out, indent=1))
