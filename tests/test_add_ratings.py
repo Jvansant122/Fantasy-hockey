@@ -120,7 +120,9 @@ def run(monkeypatch, tmp_path):
     ]
     starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"},
                                                   {"team": "BOS", "goalie": "Jeremy Swayman", "status": "Likely"}]}]
-    unmatched = rating.add_ratings(players, 2027, TODAY, MONDAY, starters)
+    # ESPN's injury note: surgery is a long absence, so Pastrnak's week goes to 0 (findings section 58)
+    injuries = [{"athlete_id": 103, "short": "Pastrnak (upper body) will undergo surgery Tuesday.", "long": "", "date": "2026-10-08T12:00Z"}]
+    unmatched = rating.add_ratings(players, 2027, TODAY, MONDAY, starters, injuries=injuries)
     return {p["name"]: p for p in players}, unmatched, tmp_path / "injury_log.jsonl"
 
 
@@ -142,6 +144,7 @@ def test_matching_and_injuries(run):
     players, _, log = run
     assert players["Auston Matthews"]["nhl_id"] == 1 and players["Auston Matthews"]["cr"] > 0
     assert players["David Pastrnak"]["cr"] == 0 and players["David Pastrnak"]["cr_dress"] == 0
+    assert players["David Pastrnak"]["cr_why"]["back"] == {"games": "16"}
     assert players["Morgan Rielly"]["cr_dress"] <= 0.5
     ghost = players["Not A Real Player"]
     assert ghost["cr_matched"] is False and ghost["cr_dress"] == rating.NOT_PLAYING_DRESS
@@ -284,3 +287,20 @@ def test_rest_of_season_dress_share():
         return model.season_dress(x)
     regular, hurt = share(team), share(team[:10])
     assert regular > 0.85 and 0.05 < hurt < regular - 0.2
+
+
+def test_injury_caps_and_notes():
+    """OUT and IR skaters keep a small chance to dress unless the note says it's a long absence (findings section 58)."""
+    assert rating.SKATER_INJURY_CAP["OUT"] == 0.35 and rating.SKATER_INJURY_CAP["INJURY_RESERVE"] == 0.15
+    assert rating.SKATER_INJURY_CAP["DAY_TO_DAY"] == 0.5 and rating.SKATER_INJURY_CAP["SUSPENSION"] == 0
+    day = date(2026, 10, 9)
+    note = lambda short, long_="": rating.injury_note({"short": short, "long": long_, "date": "2026-10-08T12:00Z"}, day)
+    assert not note("Smith (lower body) won't play Thursday.")["long"]
+    assert note("Smith (knee) is expected to miss 4-6 weeks.")["long"]
+    assert not note("Smith (illness) is expected to miss a few days.")["long"]
+    assert note("Smith was placed on long-term injured reserve.")["long"]
+    assert note("Smith will miss the remainder of the season.")["season"]
+    assert not note("Smith returned to practice.", "He had surgery last summer.")["long"]  # recaps don't count
+    assert rating.usually_back("OUT", True, None) == {"games": "4"}
+    assert rating.usually_back("DAY_TO_DAY", False, None) == {"games": "0-1"}
+    assert rating.usually_back("OUT", True, note("Smith is expected to miss 4-6 weeks."))["days"] == 34

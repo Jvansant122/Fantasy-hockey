@@ -26,7 +26,7 @@ No network or secrets needed: every ESPN, NHL, MoneyPuck and Daily Faceoff call 
 
 - `tests/test_add_ratings.py` runs `add_ratings` end to end on a tiny made-up league. `fetch.py` catches rating errors so the site still publishes without ratings, so this test is the only thing that catches a broken rating before merge.
 - `tests/test_site_contract.py` checks `data/players.json` has every field `index.html` reads, and that the page's script parses (`node --check`). If you add a `p.<field>` to the page, add it to the data too; if you rename a field in `fetch.py` or `rating.py`, update the page.
-- Tests check invariants (fields present, probabilities in range, injured players at 0, confirmed starters honoured), not exact rating values, so a deliberate rating change shouldn't need test edits unless it changes those rules.
+- Tests check invariants (fields present, probabilities in range, long-term injured players at 0, confirmed starters honoured), not exact rating values, so a deliberate rating change shouldn't need test edits unless it changes those rules.
 
 ## Conventions
 
