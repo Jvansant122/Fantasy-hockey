@@ -12,6 +12,8 @@ A one-page site (GitHub Pages) that ranks free agents in Jack's ESPN fantasy hoc
 - `data/` - written by the "Update data" workflow three times a day (9 AM, 12:30 PM, 5 PM ET). Don't hand-edit; merge `main` into your branch before pushing because the bot commits here often.
 - `docs/research.md` - plain-language research write-up for league members (charts in `docs/img/`).
 - `tests/` - pytest suite, run by the "Tests" workflow on every PR.
+- `scripts/check_data.py` - the update workflow runs it before committing data (a broken `players.json` is never published) and after (fails the run, so GitHub emails Jack, when the Claude Rating is missing). Add a field to its lists when the page starts depending on one.
+- `.claude/hooks/session-start.sh` - cloud sessions install the test and research libraries on start.
 
 ## Run the tests
 

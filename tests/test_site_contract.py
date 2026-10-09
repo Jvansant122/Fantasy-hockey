@@ -10,9 +10,7 @@ import pytest
 
 from conftest import ROOT
 
-PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
-                 "games", "games_left", "light", "light_left", "nights"}
-RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_matched", "cr_why", "cr_pct"}
+import check_data
 
 
 @pytest.fixture(scope="module")
@@ -20,20 +18,17 @@ def data():
     return json.loads((ROOT / "data" / "players.json").read_text())
 
 
-def test_top_level(data):
-    assert {"updated", "nights", "rated", "teams", "players"} <= set(data)
-    assert len(data["nights"]) == 7
-    for n in data["nights"]:
-        assert {"sp", "date", "games", "light", "past"} <= set(n)
-    assert data["players"]
+def test_committed_data_passes_the_publish_check(data):
+    assert check_data.problems(data) == []
 
 
-def test_player_fields(data):
-    for p in data["players"]:
-        missing = PLAYER_FIELDS - set(p)
-        assert not missing, (p.get("name"), missing)
-        if data["rated"]:
-            assert not RATED_FIELDS - set(p), p.get("name")
+def test_check_catches_broken_data(data):
+    broken = json.loads(json.dumps(data))
+    del broken["players"][0]["games_left"]
+    broken["nights"] = broken["nights"][:6]
+    errs = check_data.problems(broken)
+    assert any("missing fields" in e for e in errs) and any("nights" in e for e in errs)
+    assert check_data.problems({"players": []}) and check_data.problems({**data, "players": data["players"][:5]})
 
 
 def test_page_only_reads_fields_the_data_has(data):
