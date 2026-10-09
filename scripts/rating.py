@@ -36,7 +36,9 @@ INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # no NHL game in 14+ days while the team kept playing (outside what the research measured)
 ET = ZoneInfo("America/New_York")
 LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by the moneyline (findings section 30)
-HOT_MIN_GP, HOT_PDO, HOT_FINISHING = 8, 1.04, 0.1  # "running hot" note thresholds (findings section 38)
+# expected fantasy points (xG research, sections 3-5): assist-share priors (all situations, power play) and the hot/cold note
+XFP_SHARE_F, XFP_SHARE_D, XFP_PRIOR_GOALS = (0.51, 0.46), (0.32, 0.57), 15
+LUCK_MIN_GP, LUCK_GAP = 15, 0.15
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -157,8 +159,8 @@ def load_prev_goalie_starts(s, season):
 
 
 def load_xg(s, year):
-    """MoneyPuck season xG per game (all situations), plus finishing (goals minus xG per game) and 5-on-5 PDO
-    for the "running hot" note. Empty if the file isn't there yet."""
+    """MoneyPuck season file: xG per game (all situations) for the model, plus the season counts behind
+    expected fantasy points (all situations, power play and short-handed). Empty if the file isn't there yet."""
     try:
         text = nhl_get(s, MONEYPUCK.format(year=year)).text
     except requests.RequestException as e:
@@ -166,43 +168,52 @@ def load_xg(s, year):
         return {}
     lines = text.splitlines()
     head = lines[0].split(",")
-    cols = ("playerId", "situation", "games_played", "I_F_xGoals", "OnIce_F_xGoals", "I_F_goals",
-            "OnIce_F_goals", "OnIce_F_shotsOnGoal", "OnIce_A_goals", "OnIce_A_shotsOnGoal")
-    ix = {c: head.index(c) for c in cols if c in head}
+    ix = {c: head.index(c) for c in head}
     num = lambda f, c: float(f[ix[c]] or 0) if c in ix else 0.0
-    out, pdo = {}, {}
+    sits = {"all": "", "5on4": "pp_", "4on5": "sh_"}
+    raw = {}
     for line in lines[1:]:
         f = line.split(",")
-        if len(f) < len(head):
+        if len(f) < len(head) or f[ix["situation"]] not in sits:
             continue
-        pid = int(f[ix["playerId"]])
-        if f[ix["situation"]] == "5on5":
-            sf, sa = num(f, "OnIce_F_shotsOnGoal"), num(f, "OnIce_A_shotsOnGoal")
-            if sf and sa:
-                pdo[pid] = num(f, "OnIce_F_goals") / sf + 1 - num(f, "OnIce_A_goals") / sa
-            continue
-        if f[ix["situation"]] != "all":
-            continue
-        gp = num(f, "games_played")
-        if gp:
-            out[pid] = {"ixg": num(f, "I_F_xGoals") / gp, "onice_xgf": num(f, "OnIce_F_xGoals") / gp, "gp": gp,
-                        "finishing": (num(f, "I_F_goals") - num(f, "I_F_xGoals")) / gp}
-    for pid, d in out.items():
-        d["pdo"] = pdo.get(pid)
+        pre, row = sits[f[ix["situation"]]], raw.setdefault(int(f[ix["playerId"]]), {})
+        row.update({pre + "ixg": num(f, "I_F_xGoals"), pre + "goals": num(f, "I_F_goals"),
+                    pre + "assists": num(f, "I_F_primaryAssists") + num(f, "I_F_secondaryAssists"),
+                    pre + "tm_xg": num(f, "OnIce_F_xGoals") - num(f, "I_F_xGoals"),
+                    pre + "tm_goals": num(f, "OnIce_F_goals") - num(f, "I_F_goals")})
+        if not pre:
+            row.update(gp=num(f, "games_played"), onice_xgf=num(f, "OnIce_F_xGoals"), shots=num(f, "I_F_shotsOnGoal"),
+                       hits=num(f, "I_F_hits"), blocks=num(f, "shotsBlockedByPlayer"), pos=f[ix["position"]] if "position" in ix else "")
+    out = {}
+    for pid, r in raw.items():
+        if r.get("gp"):
+            out[pid] = {**r, "ixg": r["ixg"] / r["gp"], "onice_xgf": r["onice_xgf"] / r["gp"]}
     return out
 
 
-def running_hot(xg):
-    """Why a player's season line may overstate him (findings section 38): PDO and finishing are mostly luck.
-    The rating already discounts them; this only explains it."""
-    if not xg or xg.get("gp", 0) < HOT_MIN_GP:
+def expected_fp(now, prev, is_d):
+    """Season fantasy points per game, actual and expected from chances (xG research, sections 3-5).
+
+    Goals become 2 x his xG; assists become teammates' on-ice xG x his share of the teammate goals he assists on
+    (this season + last, shrunk to the position average over 15 goals); PP and SH points the same way.
+    Shots, hits and blocks count as they are."""
+    if not now or not now.get("gp"):
         return None
-    hot = {}
-    if xg.get("pdo") and xg["pdo"] > HOT_PDO:
-        hot["pdo"] = round(xg["pdo"], 3)
-    if xg.get("finishing", 0) >= HOT_FINISHING:
-        hot["finishing"] = round(xg["finishing"], 2)
-    return hot or None
+    prev = prev or {}
+    p_all, p_pp = (XFP_SHARE_D if is_d else XFP_SHARE_F)
+    share = lambda a, g, p: (now.get(a, 0) + prev.get(a, 0) + XFP_PRIOR_GOALS * p) / (now.get(g, 0) + prev.get(g, 0) + XFP_PRIOR_GOALS)
+    s_all, s_pp = share("assists", "tm_goals", p_all), share("pp_assists", "pp_tm_goals", p_pp)
+    stable = 0.1 * now["shots"] + 0.1 * now["hits"] + 0.5 * now["blocks"]
+    x = (2 * now["ixg"] * now["gp"] + s_all * now["tm_xg"] + 0.5 * (now.get("pp_ixg", 0) + s_pp * now.get("pp_tm_xg", 0))
+         + 0.5 * (now.get("sh_ixg", 0) + s_all * now.get("sh_tm_xg", 0)) + stable)
+    actual = (2 * now["goals"] + now["assists"] + 0.5 * (now.get("pp_goals", 0) + now.get("pp_assists", 0))
+              + 0.5 * (now.get("sh_goals", 0) + now.get("sh_assists", 0)) + stable)
+    gp = now["gp"]
+    out = {"gp": int(gp), "fpg": round(actual / gp, 2), "xfpg": round(x / gp, 2)}
+    gap = out["fpg"] - out["xfpg"]
+    if gp >= LUCK_MIN_GP and abs(gap) >= LUCK_GAP:
+        out["luck"] = "hot" if gap > 0 else "cold"
+    return out
 
 
 def week_schedule(s, monday):
@@ -512,7 +523,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
             exp_games = p["games_left"] * p_dress
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
-                   "last_fpg": prev[pid]["fp"] if pid in prev else None, "hot": running_hot(xg_now.get(pid)) if pid else None}
+                   "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D") if pid else None}
             why = {k: (round(v, 2) if isinstance(v, float) else v) for k, v in why.items()}
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)

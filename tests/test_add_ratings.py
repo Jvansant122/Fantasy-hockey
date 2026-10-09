@@ -200,8 +200,21 @@ def test_tonights_line_prices_the_goalie_start(monkeypatch, tmp_path):
     assert out["fav"]["Jeremy Swayman"]["cr_games"] == out["none"]["Jeremy Swayman"]["cr_games"]
 
 
-def test_running_hot_note():
-    assert rating.running_hot({"gp": 12, "pdo": 1.06, "finishing": 0.15}) == {"pdo": 1.06, "finishing": 0.15}
-    assert rating.running_hot({"gp": 12, "pdo": 1.0, "finishing": 0.02}) is None
-    assert rating.running_hot({"gp": 4, "pdo": 1.10, "finishing": 0.3}) is None  # too few games to say
-    assert rating.running_hot(None) is None
+def mp(gp, goals, ixg, assists, tm_goals, tm_xg, **kw):
+    return {"gp": gp, "goals": goals, "ixg": ixg / gp, "assists": assists, "tm_goals": tm_goals, "tm_xg": tm_xg,
+            "shots": 2.5 * gp, "hits": gp, "blocks": 0.5 * gp, **kw}
+
+
+def test_expected_fp_and_luck_note():
+    # scored on chances worth half as many goals: running hot
+    hot = rating.expected_fp(mp(20, 12, 6, 10, 20, 20), None, False)
+    assert hot["fpg"] > hot["xfpg"] and hot["luck"] == "hot"
+    cold = rating.expected_fp(mp(20, 2, 8, 6, 12, 25), None, False)
+    assert cold["luck"] == "cold"
+    even = rating.expected_fp(mp(20, 6, 6, 10, 20, 20), None, False)
+    assert "luck" not in even and abs(even["fpg"] - even["xfpg"]) < LUCK_TOL
+    assert "luck" not in rating.expected_fp(mp(8, 12, 3, 10, 20, 20), None, False)  # too few games to say
+    assert rating.expected_fp(None, None, False) is None
+
+
+LUCK_TOL = 0.15
