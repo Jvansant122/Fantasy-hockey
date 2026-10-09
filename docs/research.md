@@ -12,7 +12,7 @@ Last updated Oct 9, 2026 (findings through betting lines for goalies, availabili
 2. **Whether a player dresses matters more than anything else.** Scratches, injuries and trips to the AHL mean zero points. Accounting for that is worth more than any modeling trick.
 3. **Goalies are all about starts.** Ranking goalies by points per game × team games is no better than picking at random. Ranking by expected starts is about 60% better.
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
-5. **Use all 6 moves each week**, and re-pick for the schedule rather than holding a pickup.
+5. **Use all 6 moves each week, but make 4-5 on Monday and keep 1-2 for mid-week injuries** (section 31). Re-pick for the schedule rather than holding a pickup.
 6. **Drop the player with the lowest projected week**, not the lowest season total. That doubles what each move gains.
 7. **Empty lineup slots on light nights are the biggest pool of points left**, and the simple Monday plan captures them: add the 6 best projected weeks and drop your 6 lowest. Chasing single nights one at a time loses points.
 
@@ -166,7 +166,7 @@ Compared with dropping a typical bottom-of-roster skater (about 4.5 points a wee
 | 4th to 6th best | about +1.0 |
 | 7th to 12th best | +0.3 to +1.7, noisy |
 
-- **Use all 6 moves.** Even the 6th pickup beats the drop by about a point a week.
+- **Use all 6 moves.** Even the 6th pickup beats the drop by about a point a week. (Section 31 found it's better still to hold 1-2 of them for mid-week injuries.)
 - **Re-pick each week.** A top pick scores 6.1 in his first week, then 4.4, 4.1 and 3.8. He's the same player per game; the first-week edge was his schedule, and some picks lose their spot over time.
 
 ## 10. Do ice-time jumps stick?
@@ -369,6 +369,21 @@ Two ideas were left out: a luck correction for the luckiest tenth of players tes
 ## 30. When a starting goalie is hurt
 
 When ESPN marks a goalie out, the site used to set his starts to 0 but leave his partner's projection alone, so the backup looked like about 1 start in 4 games. Now the injured goalie's chance of starting each game goes to the healthy goalies on his team, so they share every game. When a regular starter (6+ of the team's last 10 starts) is out, his backup goes from 0.98 to 2.38 projected starts per 4 games, close to the 2.24 starts such backups actually got. A day-to-day goalie keeps half his chance, and the other half goes to his partner. Daily Faceoff confirmations still decide individual games.
+
+## 31. Keep 1-2 moves for mid-week injuries
+
+The Monday plan used to spend all 6 moves at once. A simulation of 12 rosters over 67 weeks tried holding some back: whenever a rostered skater misses his team's most recent game, swap him for the best free agent at his position for the rest of the week, and spend any held moves left on Thursday the usual way.
+
+| Strategy | Skater points per roster per week | vs. all 6 on Monday |
+| --- | --- | --- |
+| All 6 on Monday | 93.9 | |
+| **5 on Monday, 1 held for an injury** | **95.0** | **+1.1** |
+| **4 on Monday, 2 held** | **95.3** | **+1.4** |
+| 5 on Monday, 1 spent Thursday with no injury swap | 94.2 | +0.3 |
+
+The 6th Monday move is worth about half a point to a point; replacing a player who has stopped dressing is worth 3-4, and a typical roster needs that about once every three weeks. Almost all of the gain is the injury swap, not the timing. ESPN's injury flags should do even better than "missed his last game" (a perfect flag gets +1.7 / +2.0).
+
+**On the site:** the Upgrades card now has a **Mid-week swaps** list for your team: any skater ESPN lists as out, on IR or suspended, or who sat his team's last game while it still plays this week, next to the best free agent at his position by Week rating. Out and IR players are marked IR-eligible, so you can use the IR slot instead of dropping them. A day-to-day star who sat one game is usually better benched than dropped. Goalies weren't part of this test.
 
 ## What the independent review changed
 

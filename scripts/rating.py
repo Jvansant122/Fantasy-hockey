@@ -577,6 +577,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
         inj = INJURY_DRESS.get(p.get("injury") or "", 1.0)
         n = news.get(str(p["id"])) or {}
         why = {}
+        sat_last = False
         if p["pos"] == "G":
             team = ESPN_TO_NHL.get(p["team"], p["team"])
             starts = goalie_exp.get(pid, 0.0) if pid else 0.0
@@ -617,6 +618,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                 last = gl[-1]["date"] if gl else None
                 if len(tg) >= 3 and (last is None or (today - date.fromisoformat(last)).days > 14):
                     p_dress = min(p_dress, NOT_PLAYING_DRESS)
+            # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
+            sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
             season = fpg * p_dress  # before ESPN's injury cap and news: how good he is when in the lineup
             if n.get("apply"):
                 if n.get("dress") is not None:
@@ -637,6 +640,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
         p["cr_season"] = round(season, 2)
         p["cr_games"] = round(exp_games, 2)
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
+        p["sat_last"] = sat_last
         p["cr_matched"] = pid is not None
         p["nhl_id"] = pid
         p["cr_why"] = why
