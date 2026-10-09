@@ -357,15 +357,18 @@ def ux_features(f, pos, mu):
     return out
 
 
-def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None):
+def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
+                  injury=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
     confirmed: {date: goalie id} of Daily Faceoff confirmed starters; those games count as 1 for him, 0 for the others.
     today_p: if given, filled with each goalie's chance of starting today's game.
     season_share: if given, filled with each goalie's long-run share of team starts (this season's starts
-    blended with last season's split over SEASON_SHARE_K games), for the Season rating."""
-    confirmed = confirmed or {}
+    blended with last season's split over SEASON_SHARE_K games), for the Season rating.
+    injury: {goalie id: ESPN injury factor}; scales his chance before each game is split among the team's goalies,
+    so an injured starter's games go to his partner (findings section 48)."""
+    confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
     last_date = hist[-1][0] if hist else None
@@ -410,6 +413,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             raw[gid] = model.p_start({**shares[gid], "started_prev": prev_p[gid], "b2b": b2b, "started_prev_and_b2b": prev_p[gid] * b2b,
                                       "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
+            raw[gid] *= injury.get(gid, 1.0)
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         if d in confirmed:
@@ -552,11 +556,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                 tonight[g["team"]] = (cands[0], g.get("status"))
             if g.get("status") == "Confirmed":
                 confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
+    goalie_inj = {}
+    for p in players:
+        if p["pos"] == "G" and p.get("injury") in INJURY_DRESS:
+            pid = match(p)
+            if pid:
+                goalie_inj[pid] = INJURY_DRESS[p["injury"]]
     goalie_exp, goalie_today, goalie_season = {}, {}, {}
     lines = line_win_probs(odds, today)
     for team, dates in sched.items():
         goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today,
-                                        confirmed.get(team), goalie_today, goalie_season))
+                                        confirmed.get(team), goalie_today, goalie_season, goalie_inj))
 
     unmatched = 0
     injury_log = []
@@ -587,7 +597,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None):
                 why["line"] = {"win_prob": round(lines[team], 2), "pps": round(line_pps, 2)}
                 fpg = ((starts - p_today) * fpg + p_today * line_pps) / starts
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
-            exp_games = starts * inj
+            exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
             p_dress = None
         else:
             gl = by_player.get(pid, []) if pid else []

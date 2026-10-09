@@ -256,3 +256,14 @@ def test_usage_times_efficiency_rewards_more_ice_time():
     more, less = rating.ux_features({**f, "l5_toi": 21}, "F", mu), rating.ux_features({**f, "l5_toi": 15}, "F", mu)
     assert all(more[k] >= less[k] > 0 for k in more) and more["sx_ux"] > less["sx_ux"]
     assert rating.ux_features({"std_gp": 0}, "F", mu)["sx_ux"] is None
+
+
+def test_injured_starter_hands_starts_to_backup():
+    """An injured no. 1's games go to his partner (findings section 48)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24", "2026-10-26", "2026-10-28"]
+    healthy = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22))
+    hurt = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), injury={1: 0.0})
+    assert healthy[1] > healthy[2]
+    assert hurt[1] == 0 and hurt[2] == pytest.approx(4.0)
