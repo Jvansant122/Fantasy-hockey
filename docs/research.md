@@ -496,6 +496,12 @@ Two small decision helpers, each worth about a point a week in the backtests (fi
 - **Tonight.** On a night when more of your skaters play than your 9 F / 5 D / 1 UTL slots hold, start by the Claude Rating's points per game and bench the rest. The bigger part of the gain (+0.9 a week) is benching a skater who isn't in Daily Faceoff's lineup for his team, or who sat his team's last game, since he'll likely score nothing. The Upgrades section now shows a "Tonight" card on crowded nights listing who to bench, with those players flagged.
 - **Best 2 moves.** For the Monday pickups, taking the two swaps with the biggest keep-value gain over your weakest player *at the same position* beat taking the best free agent overall by +0.9 points a week. The Upgrades section now leads with those two moves, and each drop-list entry shows the best free agent at his position and how much he'd add.
 
+## 41. Goalie starts later in the week: opponent and home ice
+
+Only tonight's goalie starts have a betting line, so the rest of the week's starts used to be worth the goalie's flat points per start. A simple win model, built from each team's goal differential per game (this season, pulled toward half of last season's over 15 games) plus home ice, agrees with the betting market at 0.87 and explains about two thirds of what the line explains about goalie points. Pricing each later start at points per start + 3.4 × (win chance − 0.5) improved the weekly goalie ranking from 0.273 to 0.297 rank correlation, and it was better in all five seasons tested (2021-22 to 2025-26).
+
+**On the site:** the Week rating for goalies now prices every remaining start without a line this way. Tonight's lined starts still use the betting line, and the Season rating is unchanged. Tap a goalie to see "soft schedule" or "tough schedule" and how many points per start it adds or takes away.
+
 ## What the independent review changed
 
 | Review point | Outcome |

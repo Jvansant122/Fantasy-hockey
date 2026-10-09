@@ -229,6 +229,7 @@ function why(p) {
     parts.push(`Expected starts ${n(w.exp_starts)} of ${w.team_games} team games left`);
     if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last 10`);
     if (w.tonight) parts.push(`Daily Faceoff: ${w.tonight.starting ? "starting" : "not starting"} tonight (${w.tonight.status === "Confirmed" ? "confirmed, counted as certain" : w.tonight.status.toLowerCase() + ", not yet counted"})`);
+    if (w.sched != null && Math.abs(w.sched) >= 0.1) parts.push(`${w.sched > 0 ? "soft" : "tough"} schedule the rest of the week: ${w.sched > 0 ? "+" : "−"}${Math.abs(w.sched).toFixed(1)} pts per start from opponents and home ice`);
     if (w.line) parts.push(`tonight's betting line gives his team a ${Math.round(w.line.win_prob * 100)}% chance to win, worth ${w.line.pps.toFixed(1)} pts if he starts`);
     parts.push(`× ${(+p.cr_fpg || 0).toFixed(2)} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward the 2.9 average)` : ""));
   } else {
