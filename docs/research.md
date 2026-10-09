@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 9, 2026 (findings through betting lines for goalies, availability, assists, upside and age). The research is ongoing; new findings are added here as they land.
+Last updated Oct 9, 2026 (findings through betting lines for goalies, availability, assists, upside and age). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **League scoring:** goals 2, assists 1, power-play points 0.5, shorthanded points 0.5, shots 0.1, hits 0.1, blocks 0.5. Goalies: win 2, loss -1, overtime loss +1, goal against -1, save 0.2, shutout 3.
 
