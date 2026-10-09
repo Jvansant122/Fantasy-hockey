@@ -512,6 +512,10 @@ Only tonight's goalie starts have a betting line, so the rest of the week's star
 
 A goalie's share of his team's remaining starts used to come from his whole season (pulled toward last season early on). Blending in a quarter of a recent-form share, with each game counting half as much every 5 team games back, catches a new no. 1 sooner: rest-of-season errors are 11% smaller right after a starter change, and rank correlation is +0.013 overall. Using recent form alone overreacts, so it stays at a quarter. **The goalie Season rating now uses this blend**; the Week rating's start model is unchanged.
 
+## 44. Keep value counts the real schedule
+
+Keep value (section 35) added this week's projection to about 7 games' worth of the Season rating, the same for everyone. Some teams play 8 games over the next two weeks and others 5, a gap of about 4 points for a typical skater, which is the size of a swap decision. Multiplying the Season rating by each team's actual games in the two matchups after this one ranked players better on those weeks (+0.020 rank correlation, +0.023 among free agents). **Keep value now uses the real number of games**, so the upgrade cards, Best 2 moves and the drop list all account for upcoming schedules.
+
 ## What the independent review changed
 
 | Review point | Outcome |
