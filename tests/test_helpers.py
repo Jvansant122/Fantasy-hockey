@@ -1,0 +1,60 @@
+"""Small pure helpers in rating.py and fetch.py."""
+from datetime import date
+
+import fetch
+import rating
+
+
+def test_norm_matches_espn_and_nhl_spellings():
+    assert rating.norm("Tim Stützle") == rating.norm("Tim Stutzle") == "tim stutzle"
+    assert rating.norm("Pierre-Luc Dubois") == "pierre luc dubois"
+    assert rating.norm("J.T. Miller") == rating.norm("JT Miller")
+    assert rating.norm("Mitchell J. Marner") == "mitchell marner"  # middle initial dropped
+    assert rating.norm(None) == ""
+
+
+def test_season_ids():
+    assert rating.season_ids(2027) == (20262027, 20252026)
+
+
+def test_weekly_covers_range_without_gaps():
+    weeks = list(rating.weekly(date(2026, 9, 20), date(2026, 10, 8)))
+    assert weeks[0][0] == "2026-09-20" and weeks[-1][1] == "2026-10-08"
+    for (_, end), (start, _) in zip(weeks, weeks[1:]):
+        assert (date.fromisoformat(start) - date.fromisoformat(end)).days == 1
+    assert list(rating.weekly(date(2026, 10, 9), date(2026, 10, 8))) == []
+
+
+def test_mean_skips_none():
+    assert rating.mean([1, None, 3]) == 2
+    assert rating.mean([None]) is None
+
+
+def test_skater_features_dressed_share():
+    games = [{"game": g, "fp": 2.0, "toi": 15, "pptoi": 2, "shots": 3, "iCF": 5, "hits": 1, "blockedShots": 1,
+              "goals": 1, "assists": 0, "ppPoints": 0, "points": 1} for g in (1, 2, 4)]
+    f = rating.skater_features(games, None, None, None, team_games=[1, 2, 3, 4])
+    assert f["dressed3"] == 2 / 3
+    assert f["dressed10"] == 3 / 4
+    assert f["std_gp"] == 3 and f["no_prev"] == 1.0
+    assert f["l5_fp"] == 2.0
+
+
+def test_skater_features_without_games_leans_on_last_season():
+    prev = {r: 1.0 for r in rating.GAME_RATES} | {"gp": 70}
+    f = rating.skater_features([], prev, None, {"ixg": 0.3, "onice_xgf": 0.9}, team_games=[])
+    assert f["l5_fp"] == 1.0 and f["std_toi"] == 1.0
+    assert f["std_ixg"] == 0.3
+    assert f["dressed3"] is None
+
+
+def test_stat_split_and_per_game():
+    p = {"stats": [{"statSourceId": 0, "statSplitTypeId": 0, "seasonId": 2027, "appliedTotal": 10, "stats": {"34": 4}},
+                   {"statSourceId": 1, "statSplitTypeId": 0, "seasonId": 2027, "appliedTotal": 99, "stats": {"34": 1}}]}
+    st = fetch.stat_split(p, 0, 0, 2027)
+    assert st["appliedTotal"] == 10
+    assert fetch.stat_split(p, 0, 0, 2026) is None
+    assert fetch.per_game(st, False) == (2.5, 4)
+    assert fetch.per_game(None, False) == (None, 0)
+    goalie = {"appliedTotal": 9, "stats": {"0": 3, "34": 4}}  # goalies divide by games started
+    assert fetch.per_game(goalie, True) == (3.0, 3)
