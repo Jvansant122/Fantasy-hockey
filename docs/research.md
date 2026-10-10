@@ -564,6 +564,10 @@ The Trade ideas card used to pair forwards only with forwards and defensemen onl
 
 The plan the simulations score is 2 regular goalies plus one roster spot that holds the current stream. So a manager following it carries 3 goalies, the third being the last streamer. The Goalies card used to say "use the extra spot on a skater" whenever you had 3. Doing that literally burns a move every time and then forces you to drop a skater on the next stream, which cost about a fifth of a matchup win every 8 weeks in the replays. **With 3 healthy goalies the card now says the third spot is your stream slot and names the goalie to drop for tonight's confirmed starter. It suggests using a spot on a skater only when you carry 4 or more.**
 
+## 56. Trade check
+
+To check a trade you're weighing, the page now has a **Trade check** panel. Pick the players you'd give and the ones you'd get, and it adds up their Season ratings. Across 2023-26, the Season gap between two sides predicted how they really did for the rest of the season: each 1 point of gap per team game was worth about 0.87 points per game in results. So the panel shows **about 0.87 × gap × 3.5 points a week** for the rest of the season, plus how often a gap that size picked the side that really did better: 53% under 0.1, 60% from 0.1 to 0.2, 67% from 0.2 to 0.3, 73% from 0.3 to 0.5, and 87% above that. In an uneven trade, a spot you free up counts as the best healthy free agent at those positions, and a spot you'd need counts as dropping your lowest keep value. Jack's Oct 9 trade, Slavin (1.26) for A. Protas (1.06), reads about −0.6 points a week, with that gap picking the right side 2 times in 3. The test used skaters, so the numbers for goalies are rougher.
+
 ## What the independent review changed
 
 | Review point | Outcome |

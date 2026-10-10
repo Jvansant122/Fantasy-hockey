@@ -138,3 +138,22 @@ def test_page_works_without_ratings(browser, server, data):
     page.locator("#rows tr[data-id]").first.click()
     assert errors == [], errors
     ctx.close()
+
+
+def test_trade_check(browser, server, data):
+    """Give one player and get one: the panel prices the trade; an uneven trade names the free agent or drop; × removes."""
+    ctx, page, errors = open_page(browser, server)
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    give = page.locator("#tgive option").nth(1).get_attribute("value")
+    page.select_option("#tgive", give)
+    assert "points a week" not in page.locator("#trade").inner_text()
+    page.select_option("#tget", page.locator("#tget option").nth(1).get_attribute("value"))
+    assert "points a week" in page.locator("#trade").inner_text()
+    page.select_option("#tget", page.locator("#tget option").nth(1).get_attribute("value"))
+    assert "drop" in page.locator("#trade").inner_text()
+    page.locator("#trade button[data-rm]").first.click()
+    assert page.locator("#trade button[data-rm]").count() == 2
+    page.select_option("#team", str(data["teams"][1]["id"]))
+    assert page.locator("#trade button[data-rm]").count() == 0  # a new team starts a new trade
+    assert errors == []
+    ctx.close()
