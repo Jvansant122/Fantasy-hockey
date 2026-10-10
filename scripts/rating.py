@@ -68,6 +68,7 @@ PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-seaso
 BAD_START_LOGIT = -0.7  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131)
 BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
+LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 
 
 def bad_start(g):
@@ -646,13 +647,18 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         ahead += 1
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
+        q = p
+        if ahead > 1:  # games after the next one are softened and split across the team's goalies again; the chain keeps p
+            q = {gid: v if v <= 0 or v >= 1 else 1 / (1 + math.exp(-LATER_GAME_TEMP * math.log(v / (1 - v)))) for gid, v in p.items()}
+            tot = sum(q.values()) or 1
+            q = {gid: v / tot for gid, v in q.items()}
         if d in confirmed:
-            p = {gid: float(gid == confirmed[d]) for gid in cands}
+            p = q = {gid: float(gid == confirmed[d]) for gid in cands}
         if d >= today.isoformat():
             for gid in cands:
-                exp[gid] += p[gid]
+                exp[gid] += q[gid]
                 if d == today.isoformat() and today_p is not None:
-                    today_p[gid] = p[gid]
+                    today_p[gid] = q[gid]
         likely = max(p, key=p.get)
         log.append((day, likely if p[likely] > 0.5 else None))
         prev_p = p

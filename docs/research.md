@@ -552,6 +552,10 @@ After a starter gives up 5+ goals, or is pulled after giving up 3+, coaches ofte
 
 The last game's result matters even when it wasn't a disaster. A goalie who won his last start goes back in a little more often than the start model expects, and one who lost goes back in a little less, in every season from 2021 to 2026. A bad start also keeps a smaller drop into the team's game after next. **The site now nudges the last starter's chance up after a win and down after a loss for the team's next game, and keeps part of the bad-start drop for the game after.** About 0.1 of a start moves between partners after an ordinary win or loss, roughly a quarter of a projected point. Measured on seasons the change wasn't fit to, start predictions got about twice as much better as the bad-start rule alone made them. A Daily Faceoff confirmation still overrides it.
 
+## 53. Goalie starts further into the week
+
+To project a week, the site predicts each goalie start in order and treats the likeliest goalie as having started before it predicts the next one. That chaining made it too sure about games later in the week. When it gave a goalie a 90%+ chance three or four games ahead, he actually started only 77-84% of them, so clear no. 1 goalies were overstated by about 0.2 starts every four games. **The site now softens the start chances for every game after the next one, moving them a little toward an even split, and leaves the next game alone.** That cut the overstatement from 0.21 to 0.08 starts and made the predictions better in all five seasons tested. Roughly 0.15 starts a week, about 0.4 projected points, move from clear no. 1s to their partners. A Daily Faceoff confirmation still overrides it.
+
 ## What the independent review changed
 
 | Review point | Outcome |

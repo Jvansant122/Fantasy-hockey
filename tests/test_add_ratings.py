@@ -391,3 +391,20 @@ def test_last_start_result_shifts_the_next_games():
     assert win2[1] - ok2[1] == pytest.approx(run(win, 1)[1][1] - ok[1], abs=0.05)
     assert rating.bad_start({"ga": 5, "toi": 3600}) and rating.bad_start({"ga": 3, "toi": 2000})
     assert not rating.bad_start({"ga": 3, "toi": 3600}) and not rating.bad_start({"ga": 2, "toi": 1200})
+
+
+def test_later_games_are_softened(monkeypatch):
+    """Start chances two or more games ahead are pulled toward an even split; the next game is not (findings 134)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 6 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24", "2026-10-26", "2026-10-28"]
+
+    def run(n):
+        return rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 60, 2: 22}, dates[:n], date(2026, 10, 22))
+
+    soft1, soft4 = run(1), run(4)
+    monkeypatch.setattr(rating, "LATER_GAME_TEMP", 1.0)
+    hard1, hard4 = run(1), run(4)
+    assert soft1[1] == pytest.approx(hard1[1])  # the next game is unchanged
+    assert hard4[1] > 2.5 and soft4[1] < hard4[1]  # a clear no. 1 gets fewer of the later starts
+    assert soft4[1] + soft4[2] == pytest.approx(4)  # still one starter per game
