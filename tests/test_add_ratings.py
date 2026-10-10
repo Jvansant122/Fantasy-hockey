@@ -373,6 +373,24 @@ def test_unplayed_regulars_keep_a_season_share(run):
         assert p["cr_season"] == pytest.approx(p["cr_fpg"] * share, abs=0.01)
 
 
+def test_goalie_new_team_starts_rise():
+    """A goalie who started for another team this season and has 1-3 starts for this one gets +1.0 on his start
+    logit; with more starts here, or no other team, nothing changes (findings 156)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]  # goalie 2: 3 starts
+
+    def p2(movers):
+        p = {}
+        out = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, ["2026-10-22", "2026-10-24"],
+                                   date(2026, 10, 22), today_p=p, movers=movers)
+        return p[2], out
+    base, out0 = p2(set())
+    moved, out1 = p2({2})
+    assert moved > base + 0.05
+    assert out1[1] + out1[2] == pytest.approx(out0[1] + out0[2])  # still one starter per game
+    assert p2({1})[0] == pytest.approx(base)  # goalie 1 has 7 starts here: past the first few
+
+
 def test_last_start_result_shifts_the_next_games():
     """A bad start (5+ against, or pulled after 3+) lowers the starter's chance in the next game and a little in
     the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""
