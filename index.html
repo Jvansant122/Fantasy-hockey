@@ -74,6 +74,9 @@
   .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
   .upg .drop { color: var(--muted); }
   .empty { color: var(--muted); padding: 12px 0; }
+  .tside { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 13px; }
+  .tside button { font: inherit; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 4px; min-width: 28px; min-height: 28px; }
+  #tpick select { flex: 1 1 200px; min-width: 0; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
   @media (max-width: 640px) {
     main { padding: 10px; }
@@ -114,6 +117,15 @@
   </div>
 
   <div class="card">
+    <h2>Trade check <span class="sub">pick who you'd give and who you'd get to see what Claude's Season rating says about the trade</span></h2>
+    <div class="controls" id="tpick">
+      <select id="tgive" aria-label="Add a player to give"></select>
+      <select id="tget" aria-label="Add a player to get"></select>
+    </div>
+    <div id="trade"></div>
+  </div>
+
+  <div class="card">
     <div class="controls">
       <input type="search" id="q" placeholder="Search player or team">
       <select id="who" aria-label="Which players">
@@ -146,7 +158,7 @@ const SLOTS = { F: 9, D: 6, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
 const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa"];
 const CHECKS = ["left", "healthy", "addfa"];
-const state = { team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
+const state = { tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
 // [key, label, align, shown on phones]
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
@@ -324,6 +336,7 @@ function render() {
       (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   renderUpgrades();
+  renderTrade();
   store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "team" ? state.team : key === "pos" ? $("pos").value : state[key]])));
 }
 
@@ -470,6 +483,53 @@ function renderNights() {
   }).join("");
 }
 
+// Trade check (research findings 145): summed Season ratings; 0.87 x gap x 3.5 team games a week is the expected
+// rest-of-season edge, and the share of past trades with a gap that size where the higher-rated side really did better.
+const TRADE_RIGHT = [[0.1, 53], [0.2, 60], [0.3, 67], [0.5, 73], [Infinity, 87]];
+function renderTrade() {
+  const d = state.data, byId = id => d.players.find(p => p.id === id);
+  if (!state.team || !d.rated) {
+    $("tpick").hidden = true;
+    $("trade").innerHTML = `<div class="prompt">${d.rated ? "Pick your team at the top to check a trade." : "Trade check needs the Claude Rating, which is missing from this update."}</div>`;
+    return;
+  }
+  $("tpick").hidden = false;
+  const opt = p => `<option value="${p.id}">${esc(p.name)} (${esc(p.pos)}, ${esc(p.team)}) ${fmt(p.cr_season)}</option>`;
+  const byName = (a, b) => a.name.localeCompare(b.name);
+  const mineAll = d.players.filter(p => String(p.team_id) === state.team);
+  $("tgive").innerHTML = `<option value="">Add a player to give…</option>` + mineAll.filter(p => !state.tgive.includes(p.id)).sort(byName).map(opt).join("");
+  const others = [...new Set(d.players.filter(p => !isFA(p) && String(p.team_id) !== state.team).map(p => String(p.team_id)))]
+    .sort((a, b) => (state.teamNames[a] || "").localeCompare(state.teamNames[b] || ""));
+  $("tget").innerHTML = `<option value="">Add a player to get…</option>` + others.map(t => `<optgroup label="${esc(state.teamNames[t] || "Team")}">${
+    d.players.filter(p => String(p.team_id) === t && !state.tget.includes(p.id)).sort(byName).map(opt).join("")}</optgroup>`).join("");
+  const give = state.tgive.map(byId).filter(Boolean), get = state.tget.map(byId).filter(Boolean);
+  const list = (ps, side) => ps.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.pos)} ${esc(p.team)} · Season ${p.cr_season != null ? p.cr_season.toFixed(2) : "–"} · ESPN ${p.proj_ppg != null ? p.proj_ppg.toFixed(2) : "–"}</span><button data-rm="${side}:${p.id}" aria-label="Remove ${esc(p.name)}">×</button></div>`).join("") || '<div class="sub">nobody yet</div>';
+  let html = `<div class="tside"><div><b>You give</b>${list(give, "give")}</div><div><b>You get</b>${list(get, "get")}</div></div>`;
+  if (give.length && get.length) {
+    const sum = (ps, k) => ps.reduce((t, p) => t + (p[k] ?? 0), 0);
+    let gap = sum(get, "cr_season") - sum(give, "cr_season"), extra = "";
+    const k = give.length - get.length;
+    if (k > 0) {  // spots freed: fill them with the best healthy free agents at the positions given
+      const groups = new Set(give.map(group));
+      const fill = d.players.filter(p => isFA(p) && !p.injury && !p.ir && groups.has(group(p)) && p.cr_season != null)
+        .sort((a, b) => b.cr_season - a.cr_season).slice(0, k);
+      gap += sum(fill, "cr_season");
+      if (fill.length) extra = ` Counts the open roster spot${k > 1 ? "s" : ""} as ${fill.map(p => `${esc(p.name)} (${fmt(p.cr_season)})`).join(", ")}, the best healthy free agent${k > 1 ? "s" : ""}.`;
+    } else if (k < 0) {  // spots needed: drop your lowest keep values
+      const drop = mineAll.filter(p => !p.ir && !state.tgive.includes(p.id)).sort((a, b) => keep(a) - keep(b)).slice(0, -k);
+      gap -= sum(drop, "cr_season");
+      if (drop.length) extra = ` You'd need to drop ${drop.map(p => `${esc(p.name)} (${fmt(p.cr_season)})`).join(", ")}, your lowest keep value.`;
+    }
+    const fpw = 0.87 * gap * 3.5;
+    const right = TRADE_RIGHT.find(([cap]) => Math.round(Math.abs(gap) * 100) / 100 < cap)[1];
+    const both = [...give, ...get].every(p => p.proj_ppg != null), espn = sum(get, "proj_ppg") - sum(give, "proj_ppg");
+    const goalies = [...give, ...get].some(p => p.pos === "G") ? " Goalies are included, but this check was calibrated on skaters." : "";
+    html += `<div class="upg" style="margin-top:8px"><b class="${fpw > 0 ? "up" : ""}">About ${fpw >= 0 ? "+" : "−"}${Math.abs(fpw).toFixed(1)} points a week</b> for you for the rest of the season
+      <span class="drop">· Season rating ${gap >= 0 ? "+" : "−"}${Math.abs(gap).toFixed(2)} per team game for your side${both ? `; ESPN's projections ${espn >= 0 ? "+" : "−"}${Math.abs(espn).toFixed(2)} a game` : ""}. In past seasons a gap this size picked the side that really did better ${right}% of the time.${extra}${goalies}</span></div>`;
+  }
+  $("trade").innerHTML = html;
+}
+
 // The "+ free agents" box only means something when a roster is picked
 function showAddFA() { $("addfa-wrap").style.display = state.who === "fa" || state.who === "every" ? "none" : ""; }
 
@@ -484,6 +544,7 @@ function teamOptions(d) {
 }
 
 function setTeam(id) {
+  if (id !== state.team) state.tgive = [], state.tget = [];
   state.team = id;
   computeOpenSlots(state.data);
   renderNights();
@@ -509,6 +570,15 @@ function wire() {
     const tr = e.target.closest("tr[data-id]"); if (!tr) return;
     state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
     render();
+  });
+  ["tgive", "tget"].forEach(id => $(id).addEventListener("input", e => {
+    const v = +e.target.value; if (!v) return;
+    state[id].push(v); renderTrade();
+  }));
+  $("trade").addEventListener("click", e => {
+    const b = e.target.closest("button[data-rm]"); if (!b) return;
+    const [side, pid] = b.dataset.rm.split(":"), key = side === "give" ? "tgive" : "tget";
+    state[key] = state[key].filter(x => x !== +pid); renderTrade();
   });
   // minr is removed when the data has no ratings
   ["q", "pos", "ming", "minr", "left", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", render));
