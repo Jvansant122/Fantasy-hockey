@@ -193,10 +193,11 @@ function val(p, key) {
 function score(p) { return state.data.rated ? p.cr : week(p); }
 // Keep value for adds and drops (research section 57): this week plus about two more weeks (7 games) of per-game value,
 // so a good player with a light week isn't dropped. Per-game value is the Season rating (rest-of-season share of games
-// played, no ESPN injury cap), so an injured star isn't dropped either. Goalies stay on this week alone (streams are night by night).
+// played, no ESPN injury cap), so an injured star isn't dropped either. Goalies too: their Season rating is points per team game
+// from their share of starts, so a starter with a light week isn't dropped (findings 116). The Stream card stays night by night.
 const KEEP_GAMES = 7;  // flat on purpose: real games in weeks 2-3 scored worse in a season-long decision replay (findings 91)
 // In the final there are no later weeks to keep a player for, so keep value is this matchup alone (findings 109).
-function keep(p) { return state.data.rated && p.pos !== "G" && !state.data.final_matchup ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
+function keep(p) { return state.data.rated && !state.data.final_matchup ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
 
 // Open lineup slots per night from my active, healthy players
 function computeOpenSlots(d) {
@@ -437,7 +438,7 @@ function renderUpgrades() {
   // Carry 2 goalies and stream the third spot: +2 points a week over carrying 3 (research section 37)
   const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   if (myGoalies.length > 2) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length}. Two plus streams beats three by about 2 points a week, so use the extra spot on a skater.</span>
-    ${myGoalies.slice(0, myGoalies.length - 2).map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub"> · weakest goalie this week</span></div>`).join("")}</div>`);
+    ${myGoalies.slice(0, myGoalies.length - 2).map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}, Season ${fmt(p.cr_season)}` : ""} · lowest keep value</span></div>`).join("")}</div>`);
   $("upgrades").innerHTML = cards.join("");
 }
 
