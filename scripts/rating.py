@@ -739,6 +739,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             known = index.get(norm(name), {})
             if pid not in known or known[pid][0] is None:
                 add(pid, name, team, pos)
+    on_roster = {pid for r in rosters.values() for pid, _, _ in r}
 
     def match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
@@ -849,8 +850,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 # 10% (findings 74; suspensions take the short-injury share, findings 118)
                 pre = injury_note(notes[p["id"]], today) if p["id"] in notes else None
                 season = fpg * PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"]
-            elif not gl and pid and tg and not p.get("injury") and (prev.get(pid) or {}).get("gp", 0) >= UNPLAYED_REGULAR_GP:
-                # a regular (60+ games last season) who hasn't played while his team has: such players dress for 0.38 of the rest (findings 118)
+            elif not gl and pid in on_roster and tg and not p.get("injury") and (prev.get(pid) or {}).get("gp", 0) >= UNPLAYED_REGULAR_GP:
+                # a regular (60+ games last season, on a current NHL roster, so not retired or overseas) who hasn't played
+                # while his team has: such players dress for 0.38 of the rest (findings 118)
                 season = fpg * UNPLAYED_REGULAR
             else:
                 season = fpg * p_dress
