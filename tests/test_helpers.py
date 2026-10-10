@@ -129,3 +129,27 @@ def test_waiver_players_play_from_the_day_after_they_clear():
     assert days[1] == date(2026, 10, 11)  # Fri 8:17 PM drop: 24 h is Sat evening, clears the 3 AM Sunday run
     assert days[2] == date(2026, 10, 10)  # Fri 2:30 AM drop: 24 h is Sat 2:30 AM, before that night's run
     assert 3 not in days and 9 not in days
+
+
+def test_scoreboard_schedule_survives_a_failed_day(monkeypatch):
+    """One ESPN scoreboard call that keeps failing drops that day, not the whole update."""
+    monkeypatch.setattr(fetch.time, "sleep", lambda s: None)
+
+    class Resp:
+        def __init__(self, data):
+            self.data = data
+
+        def json(self):
+            return self.data
+
+    class Session:
+        def get(self, url, params=None, timeout=None):
+            if url.endswith("/teams"):
+                return Resp({"sports": [{"leagues": [{"teams": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
+            if params["dates"].endswith(("1", "3", "5", "7", "9")):
+                raise ConnectionError("boom")
+            return Resp({"events": [{"competitions": [{"competitors": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
+
+    teams, counts, dates = fetch.scoreboard_schedule(Session(), [1, 2], 1)
+    assert len(counts) == 1 and list(counts.values()) == [1]
+    assert teams[10]["periods"] == set(counts)

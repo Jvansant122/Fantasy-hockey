@@ -9,7 +9,7 @@ A one-page site (GitHub Pages) that ranks free agents in Jack's ESPN fantasy hoc
 - `scripts/rating.py` - the Claude Rating (NHL stats API + MoneyPuck). Weights in `model/rating_model.json`.
 - `scripts/leads.py` - Daily Faceoff starting goalies (used by the rating) and the day-of log in `data/log/`.
 - `model/train.py` - refits `model/rating_model.json` from the research data in `/mnt/project-files/research/claude-rating` (needs pandas, scikit-learn, pyarrow).
-- `data/` - written by the "Update data" workflow four times a day (6 AM, 9 AM, 12:30 PM, 5 PM ET). Don't hand-edit; merge `main` into your branch before pushing because the bot commits here often.
+- `data/` - written by the "Update data" workflow four times a day (about 6 AM, 9 AM, 12:40 PM, 5 PM ET). GitHub's own cron skips most runs, so two Claude routines in the build thread ("Start the data update") dispatch it on `main` at those times; the crons stay as a backup. Don't hand-edit; merge `main` into your branch before pushing because the bot commits here often.
 - `docs/research.md` - plain-language research write-up for league members (charts in `docs/img/`).
 - `docs/ideas-ledger.md` - every research idea tried or queued, with its result and verdict. Mirror of `/mnt/project-files/research/claude-rating/ideas-ledger.md`.
 - `tests/` - pytest suite, run by the "Tests" workflow on every PR. `tests/test_page.py` loads the page in Chromium (Playwright) with the real data, picks every team, filters, sorts, opens details, and also loads it with ratings stripped; any JS error fails the build.

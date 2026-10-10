@@ -9,6 +9,7 @@ scoring settings, so no stat-ID mapping is needed here.
 import json
 import os
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -165,7 +166,16 @@ def scoreboard_schedule(s, matchup_sps, today_sp):
     for sp in matchup_sps:
         day = today + timedelta(days=sp - today_sp)
         night_dates[sp] = day
-        events = s.get(f"{site}/scoreboard", params={"dates": day.strftime("%Y%m%d")}, timeout=30).json().get("events", [])
+        events = None
+        for wait in (0, 2, 5):  # one failed day shouldn't stop the whole update
+            time.sleep(wait)
+            try:
+                events = s.get(f"{site}/scoreboard", params={"dates": day.strftime("%Y%m%d")}, timeout=30).json().get("events", [])
+                break
+            except Exception as e:
+                print(f"Scoreboard for {day:%Y-%m-%d} failed: {e!r}", file=sys.stderr)
+        if events is None:
+            continue
         night_counts[sp] = len(events)
         for ev in events:
             for comp in (ev.get("competitions") or [{}])[0].get("competitors", []):
