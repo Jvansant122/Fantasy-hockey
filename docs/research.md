@@ -548,6 +548,10 @@ The data used to refresh first at 9 AM ET. Before that the page still showed the
 
 After a starter gives up 5+ goals, or is pulled after giving up 3+, coaches often go to the backup next time. The site's start model gave that goalie a 44% chance of starting the team's next game, but across 2021-26 he started only 31% of them, and the gap showed up in all five seasons. **The site now lowers his chance for the team's next game only, and moves the difference to his partner, until Daily Faceoff confirms a starter.** It's worth about 0.4 projected points for each goalie, mostly on the stream card before starters are confirmed.
 
+## 52. A goalie's next start after any result
+
+The last game's result matters even when it wasn't a disaster. A goalie who won his last start goes back in a little more often than the start model expects, and one who lost goes back in a little less, in every season from 2021 to 2026. A bad start also keeps a smaller drop into the team's game after next. **The site now nudges the last starter's chance up after a win and down after a loss for the team's next game, and keeps part of the bad-start drop for the game after.** About 0.1 of a start moves between partners after an ordinary win or loss, roughly a quarter of a projected point. Measured on seasons the change wasn't fit to, start predictions got about twice as much better as the bad-start rule alone made them. A Daily Faceoff confirmation still overrides it.
+
 ## What the independent review changed
 
 | Review point | Outcome |

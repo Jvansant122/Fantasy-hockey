@@ -358,17 +358,36 @@ def test_unplayed_regulars_keep_a_season_share(run):
         assert p["cr_season"] == pytest.approx(p["cr_fpg"] * share, abs=0.01)
 
 
-def test_bad_start_lowers_only_the_next_game():
-    """A starter who gave up 5+ (or was pulled after 3+) is less likely to start the next game only (findings 131)."""
+def test_last_start_result_shifts_the_next_games():
+    """A bad start (5+ against, or pulled after 3+) lowers the starter's chance in the next game and a little in
+    the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26"]
-    p_ok, p_bad = {}, {}
-    ok = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates[:1], date(2026, 10, 22), today_p=p_ok)
-    bad = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates[:1], date(2026, 10, 22), today_p=p_bad, bad_last=1)
-    assert p_bad[1] < p_ok[1] and bad[1] + bad[2] == pytest.approx(ok[1] + ok[2])
-    week_ok = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22))
-    week_bad = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), bad_last=1)
-    assert week_ok[1] - week_bad[1] == pytest.approx(ok[1] - bad[1], abs=0.15)  # mostly the one game
+
+    def run(shift, n):
+        p = {}
+        out = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates[:n], date(2026, 10, 22),
+                                   today_p=p, last_start=(1, shift) if shift else None)
+        return p[1], out
+
+    bad = rating.last_start_shift({"ga": 5, "toi": 3600, "wins": 0, "losses": 1, "otl": 0})
+    win = rating.last_start_shift({"ga": 2, "toi": 3600, "wins": 1, "losses": 0, "otl": 0})
+    loss = rating.last_start_shift({"ga": 3, "toi": 3600, "wins": 0, "losses": 0, "otl": 1})
+    assert bad == (rating.BAD_START_LOGIT, rating.BAD_START_LOGIT_2)
+    assert win == (rating.WIN_LOGIT, 0.0) and loss == (rating.LOSS_LOGIT, 0.0)
+    p_ok, ok = run(None, 1)
+    p_bad, b1 = run(bad, 1)
+    p_win, _ = run(win, 1)
+    p_loss, _ = run(loss, 1)
+    assert p_bad < p_loss < p_ok < p_win
+    assert b1[1] + b1[2] == pytest.approx(ok[1] + ok[2])  # the team still has one starter per game
+    # two games: the bad start also costs a little in the second; a win or loss costs nothing there
+    _, ok2 = run(None, 2)
+    _, bad2 = run(bad, 2)
+    _, win2 = run(win, 2)
+    first_game = ok[1] - b1[1]
+    assert ok2[1] - bad2[1] > first_game
+    assert win2[1] - ok2[1] == pytest.approx(run(win, 1)[1][1] - ok[1], abs=0.05)
     assert rating.bad_start({"ga": 5, "toi": 3600}) and rating.bad_start({"ga": 3, "toi": 2000})
     assert not rating.bad_start({"ga": 3, "toi": 3600}) and not rating.bad_start({"ga": 2, "toi": 1200})
