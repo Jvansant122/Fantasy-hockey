@@ -109,7 +109,7 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Your league allows 7 moves a matchup (6 in a 6-day one), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use a third goalie's roster spot on a skater.</span></h2>
+    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Your league allows 7 moves a matchup (6 in a 6-day one), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</span></h2>
     <div class="upgrades" id="upgrades"></div>
   </div>
 
@@ -434,17 +434,28 @@ function renderUpgrades() {
   // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.
   const tradeable = p => p.pos !== "G" && !p.ir && !p.injury && !p.sat_last && (p.last_gp ?? 0) >= 40 && p.proj_ppg != null && p.cr_season != null;
   const teamName = id => (d.teams.find(t => String(t.id) === String(id)) || {}).name || "another team";
+  // Across positions too (findings 143), as long as the roster keeps 11-13 healthy F and 6-8 healthy D afterwards
+  const fit = mine.filter(p => p.pos !== "G" && !p.ir && !p.injury);
+  const nF = fit.filter(p => group(p) === "F").length, nD = fit.length - nF;
+  const shapeOk = (m, o) => {
+    if (group(o) === group(m)) return true;
+    const f = nF + (group(o) === "F") - (group(m) === "F"), dd = nD + (group(o) === "D") - (group(m) === "D");
+    return f >= 11 && f <= 13 && dd >= 6 && dd <= 8;
+  };
   const trades = !d.rated ? [] : mine.filter(tradeable).flatMap(m => d.players
-    .filter(o => !isFA(o) && String(o.team_id) !== state.team && group(o) === group(m) && tradeable(o)
+    .filter(o => !isFA(o) && String(o.team_id) !== state.team && shapeOk(m, o) && tradeable(o)
       && Math.abs(o.proj_ppg - m.proj_ppg) <= 0.05 && o.cr_season - m.cr_season >= 0.3)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 2).map(o => ({ m, o, gap: o.cr_season - m.cr_season })))
     .sort((a, b) => b.gap - a.gap).slice(0, 5);
   if (trades.length) cards.push(`<div class="upg"><b>Trade ideas</b> <span class="drop">· ESPN projects each pair about the same, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
-    ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)} for ${esc(o.name)} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
-  // Carry 2 goalies and stream the third spot: +2 points a week over carrying 3 (research section 37)
-  const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos === "G").sort((a, b) => keep(a) - keep(b));
-  if (myGoalies.length > 2) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length}. Two plus streams beats three by about 2 points a week, so use the extra spot on a skater.</span>
-    ${myGoalies.slice(0, myGoalies.length - 2).map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}, Season ${fmt(p.cr_season)}` : ""} · lowest keep value</span></div>`).join("")}</div>`);
+    ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
+  // Carry 2 goalies plus a stream slot (research sections 37 and 144): a third goalie spot is the stream slot, a fourth is spare
+  const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
+  const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}, Season ${fmt(p.cr_season)}` : ""} · lowest keep value</span></div>`;
+  if (myGoalies.length > 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
+    ${myGoalies.slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
+  else if (myGoalies.length === 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: when a G slot is open tonight, drop ${esc(myGoalies[0].name)} for a confirmed starter (see Stream a goalie tonight).</span>
+    ${gLine(myGoalies[0])}</div>`);
   $("upgrades").innerHTML = cards.join("");
 }
 
