@@ -226,7 +226,8 @@ function computeOpenSlots(d) {
     const playing = mine.filter(p => p.nights.includes(n.sp));
     const count = g => playing.filter(p => group(p) === g).length;
     const f = count("F"), dd = count("D"), g = count("G");
-    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - dd), G: Math.max(0, SLOTS.G - g) };
+    // D slots plus the UTL, which only counts as an open D when it isn't already holding a tenth forward (findings 146)
+    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd) + (f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0), G: Math.max(0, SLOTS.G - g) };
   }
 }
 
@@ -348,15 +349,20 @@ function renderUpgrades() {
   const fas = d.players.filter(p => isFA(p) && !p.injury);
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
+  // No moves left (findings 146): adds wait for next Monday, so rank them by 7 x Season instead of this week
+  const myTeam = d.teams.find(t => String(t.id) === state.team);
+  const noMoves = d.rated && d.move_limit && myTeam?.moves_used >= d.move_limit;
+  const addVal = p => noMoves ? KEEP_GAMES * (p.cr_season ?? 0) : keep(p);
+  const later = noMoves ? " No moves left this matchup; these are next Monday's targets." : "";
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
   if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
   // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];
   const outs = mine.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.games_left > 0)));
-  if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves</span>
+  if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
     ${outs.map(p => {
-      const sub = fas.filter(f => group(f) === group(p)).sort((a, b) => score(b) - score(a))[0];
+      const sub = fas.filter(f => group(f) === group(p)).sort((a, b) => noMoves ? addVal(b) - addVal(a) : score(b) - score(a))[0];
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
       const ir = ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
       return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
@@ -406,27 +412,27 @@ function renderUpgrades() {
       let top = null;
       for (const g of ["F", "D"]) {
         const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
-        const fa = fas.filter(p => group(p) === g && !added.has(p.id)).sort((a, b) => keep(b) - keep(a))[0];
+        const fa = fas.filter(p => group(p) === g && !added.has(p.id)).sort((a, b) => addVal(b) - addVal(a))[0];
         if (!left.length || !fa) continue;
-        const worst = left.reduce((a, b) => keep(a) <= keep(b) ? a : b);
-        if (!top || keep(fa) - keep(worst) > top.gain) top = { fa, worst, gain: keep(fa) - keep(worst) };
+        const worst = left.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
+        if (!top || addVal(fa) - addVal(worst) > top.gain) top = { fa, worst, gain: addVal(fa) - addVal(worst) };
       }
       if (!top || top.gain <= 0.5) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
-    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 2 ? "2 moves" : "move"}</b> <span class="drop">· largest keep-value gains over your weakest player at the same position</span>
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 2 ? "2 moves" : "move"}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}</span>
       ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">+${fmt(m.gain)}</span></div>`).join("")}</div>`);
   }
   const nSwap = cards.length;
   for (const g of ["F", "D", "G"]) {
     const mineG = mine.filter(p => group(p) === g);
     if (!mineG.length) continue;
-    const worst = mineG.reduce((a, b) => keep(a) <= keep(b) ? a : b);
-    const better = fas.filter(p => group(p) === g && keep(p) > keep(worst) + 0.5).sort((a, b) => keep(b) - keep(a)).slice(0, 3);
+    const worst = mineG.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
+    const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
     const kv = p => g === "G" || !d.rated ? "" : ` · keep ${fmt(keep(p))}`;
     if (!better.length) continue;
-    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}</span>
-      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))}${kv(p)} (+${fmt(keep(p) - keep(worst))})</span></div>`).join("")}</div>`);
+    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.${later}</span>
+      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (+${fmt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
   const dropGain = p => {  // the best free agent at his position, and how much he'd add (findings 68)
@@ -441,7 +447,7 @@ function renderUpgrades() {
   const irOpen = (d.ir_slots || 0) - d.players.filter(p => String(p.team_id) === state.team && p.ir).length;
   const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && p.pos !== "G" && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
-  if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.</span>
+  if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.${later}</span>
     ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   // Trade ideas (research findings 103): another team's skater whom ESPN projects the same as mine but the Season rating has 0.3+
   // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.

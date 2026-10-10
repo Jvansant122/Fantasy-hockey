@@ -157,3 +157,19 @@ def test_trade_check(browser, server, data):
     assert page.locator("#trade button[data-rm]").count() == 0  # a new team starts a new trade
     assert errors == []
     ctx.close()
+
+
+def test_no_moves_left_says_so(browser, server, data):
+    """A team at its move limit sees its adds as next Monday's targets (findings 146)."""
+    capped = json.loads(json.dumps(data))
+    capped["move_limit"] = capped.get("move_limit") or 7
+    for t in capped["teams"]:
+        t["moves_used"] = capped["move_limit"]
+    ctx, page, errors = open_page(browser, server, data=capped)
+    found = False
+    for t in data["teams"]:
+        page.select_option("#team", str(t["id"]))
+        found = found or "next Monday's targets" in page.locator("#upgrades").inner_text()
+    assert found
+    assert errors == []
+    ctx.close()

@@ -568,6 +568,10 @@ The plan the simulations score is 2 regular goalies plus one roster spot that ho
 
 To check a trade you're weighing, the page now has a **Trade check** panel. Pick the players you'd give and the ones you'd get, and it adds up their Season ratings. Across 2023-26, the Season gap between two sides predicted how they really did for the rest of the season: each 1 point of gap per team game was worth about 0.87 points per game in results. So the panel shows **about 0.87 × gap × 3.5 points a week** for the rest of the season, plus how often a gap that size picked the side that really did better: 53% under 0.1, 60% from 0.1 to 0.2, 67% from 0.2 to 0.3, 73% from 0.3 to 0.5, and 87% above that. In an uneven trade, a spot you free up counts as the best healthy free agent at those positions, and a spot you'd need counts as dropping your lowest keep value. Jack's Oct 9 trade, Slavin (1.26) for A. Protas (1.06), reads about −0.6 points a week, with that gap picking the right side 2 times in 3. The test used skaters, so the numbers for goalies are rougher.
 
+## 57. When the moves run out, and the utility slot
+
+Jack used his 7th move by Friday morning in both weeks so far, but the page kept suggesting adds he couldn't make. **When your team has used all its moves for the matchup, the Upgrades cards now say "No moves left this matchup; these are next Monday's targets"** and rank the free agents by Season rating (7 × Season, as in the keep value) instead of this week's points. Separately, the open-slot count treated the utility slot as a sixth D slot even when it was already holding a tenth forward. It now counts the utility slot as an open D only when 9 or fewer forwards and 5 or fewer defensemen play that night. On Saturday Oct 10's 14-game night, that removed a phantom open D for 5 of the 12 teams.
+
 ## What the independent review changed
 
 | Review point | Outcome |
