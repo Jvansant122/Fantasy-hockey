@@ -106,6 +106,26 @@ def norm(name):
     return " ".join(words)
 
 
+def pos_group(pos):
+    """G, D or F from an ESPN or NHL position code."""
+    return "G" if pos == "G" else "D" if pos == "D" else "F"
+
+
+def nickname_cands(index, name, team):
+    """Players on the same NHL team with the same last name whose first names share their first two letters
+    (ESPN "Zack", "Sam", "Joe" for the NHL's "Zachary", "Samuel", "Joseph"; findings 112)."""
+    words = norm(name).split()
+    if len(words) < 2 or not team:
+        return {}
+    first, last = words[0], " ".join(words[1:])
+    out = {}
+    for key, cands in index.items():
+        kw = key.split()
+        if len(kw) >= 2 and " ".join(kw[1:]) == last and kw[0][:2] == first[:2] and kw[0] != first:
+            out.update({pid: v for pid, v in cands.items() if v[0] == team})
+    return out
+
+
 def mean(xs):
     xs = [x for x in xs if x is not None]
     return sum(xs) / len(xs) if xs else None
@@ -720,15 +740,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 add(pid, name, team, pos)
 
     def match(p):
-        cands = index.get(norm(p["name"]), {})
+        team = ESPN_TO_NHL.get(p["team"], p["team"])
+        cands = index.get(norm(p["name"]), {}) or nickname_cands(index, p["name"], team)
         if not cands:
             return None
-        team = ESPN_TO_NHL.get(p["team"], p["team"])
+        grp = pos_group(p["pos"])
         same = [pid for pid, (t, _) in cands.items() if t == team]
+        if len(same) > 1:  # teammates with one name (Vancouver's two Elias Petterssons): the position decides (findings 112)
+            same = [pid for pid in same if pos_group(cands[pid][1]) == grp]
         if len(same) == 1:
             return same[0]
-        want_g = p["pos"] == "G"
-        pos_ok = [pid for pid, (_, pos) in cands.items() if (pos == "G") == want_g]
+        pos_ok = [pid for pid, (_, pos) in cands.items() if pos_group(pos) == grp] \
+            or [pid for pid, (_, pos) in cands.items() if (pos == "G") == (grp == "G")]  # a forward ESPN lists at D, or the reverse
         return pos_ok[0] if len(pos_ok) == 1 else None
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)

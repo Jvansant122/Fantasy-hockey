@@ -526,6 +526,10 @@ Other managers judge players by what ESPN shows them. When ESPN projects two ska
 
 ESPN's league settings put the fantasy playoffs in two rounds of two weeks each, likely Mar 8-21 and Mar 22-Apr 4, 2027. The move limit is 1 per day pooled over the matchup, so a round gets 14 moves. The site used to assume every matchup was one Monday-Sunday week. In the second week of a round it would have shown 0 moves left to a manager who had used 7, and replays put a week with no moves about 20 points behind the 7-move plan. **The site now reads each matchup's length from ESPN.** In a playoff round the move limit, the nights strip and the weekly rating all cover both weeks, and the Upgrades panel suggests about 2 skater moves each Monday, carrying the rest. In the final round keep value counts only the round itself, since nothing after it matters. The fantasy season ends about Apr 4, a week before the NHL's last games.
 
+## 47. Matching ESPN names to NHL players
+
+The rating looks up each ESPN player in the NHL's stats by name and team. Two kinds of name broke that lookup. Vancouver has two players named Elias Pettersson, the star center and a young defenseman, so the site gave up on both and rated the star at 0.10 a game. ESPN also uses short first names where the NHL uses full ones ("Zack" Bolduc for Zachary, "Sam" Montembeault for Samuel, "Joe" Veleno for Joseph), which left those players unrated and ranked with retired names. **The lookup now uses position to split same-name teammates, and accepts a short first name when the last name, team and position group match and the first two letters agree.** The players still unmatched are mostly prospects not on an NHL roster, retired players ESPN still lists, and goalies with no NHL team this season.
+
 ## What the independent review changed
 
 | Review point | Outcome |
