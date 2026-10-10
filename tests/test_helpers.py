@@ -115,3 +115,17 @@ def test_week_schedule_reads_every_week_of_the_matchup(monkeypatch):
     games = {}
     out = rating.week_schedule(None, date(2027, 3, 8), games, weeks=2)
     assert out["TOR"] == ["2027-03-08", "2027-03-15"] and len(games["BOS"]) == 2 and len(seen) == 2
+
+
+def test_waiver_players_play_from_the_day_after_they_clear():
+    """Waivers clear at ESPN's first ~3 AM ET run at least 24 hours after the drop (findings 122)."""
+    from datetime import datetime
+    et = fetch.ET
+    ms = lambda *a: int(datetime(*a, tzinfo=et).timestamp() * 1000)
+    tx = [{"status": "EXECUTED", "proposedDate": ms(2026, 10, 9, 20, 17), "items": [{"type": "DROP", "playerId": 1}, {"type": "ADD", "playerId": 9}]},
+          {"status": "EXECUTED", "proposedDate": ms(2026, 10, 9, 2, 30), "items": [{"type": "DROP", "playerId": 2}]},
+          {"status": "CANCELED", "proposedDate": ms(2026, 10, 9, 1), "items": [{"type": "DROP", "playerId": 3}]}]
+    days = fetch.waiver_first_days(tx, date(2026, 10, 9))
+    assert days[1] == date(2026, 10, 11)  # Fri 8:17 PM drop: 24 h is Sat evening, clears the 3 AM Sunday run
+    assert days[2] == date(2026, 10, 10)  # Fri 2:30 AM drop: 24 h is Sat 2:30 AM, before that night's run
+    assert 3 not in days and 9 not in days

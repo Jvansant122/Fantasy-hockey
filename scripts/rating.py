@@ -798,6 +798,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if team in tonight and pid:
                 who, status = tonight[team]
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
+            # on waivers he misses his team's games before he clears (findings 122): keep that share of the starts
+            team_left = len([d for d in sched.get(team, []) if d >= today.isoformat()])
+            if p.get("owner") == "waivers" and team_left > p["games_left"]:
+                starts *= p["games_left"] / team_left
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base

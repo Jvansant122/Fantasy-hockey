@@ -97,6 +97,25 @@ def is_final_matchup(matchup_periods, period):
     return bool(ids) and period >= max(ids)
 
 
+WAIVER_HOURS, WAIVER_RUN_HOUR = 24, 3  # a drop sits on waivers 24 h and clears at ESPN's next ~3 AM ET run (findings 122)
+
+
+def waiver_first_days(transactions, today):
+    """Day each player dropped in these transactions can first play for his new team: ESPN clears waivers at its first
+    overnight run (about 3 AM ET) at least 24 hours after the drop. {ESPN player id: date in ET}; the latest drop wins."""
+    out = {}
+    for t in sorted(transactions or [], key=lambda t: t.get("proposedDate") or 0):
+        when = t.get("proposedDate")
+        if not when or t.get("status") not in (None, "EXECUTED"):
+            continue
+        clear = datetime.fromtimestamp(when / 1000, ET) + timedelta(hours=WAIVER_HOURS)
+        day = clear.date() if clear.hour < WAIVER_RUN_HOUR else clear.date() + timedelta(days=1)
+        for item in t.get("items") or []:
+            if item.get("type") == "DROP" and item.get("playerId") is not None:
+                out[item["playerId"]] = max(day, today + timedelta(days=1))  # on waivers now, so not tonight
+    return out
+
+
 def pro_schedule(s, base, league_url, matchup_sps, today_sp):
     """Return ({proTeamId: {abbrev, periods}}, {sp: game count}, {sp: date}).
 
@@ -191,6 +210,20 @@ def main():
     light = {sp for sp in matchup_sps if night_counts.get(sp, 0) <= LIGHT_NIGHT_MAX_GAMES}
     remaining = [sp for sp in matchup_sps if sp >= today_sp]
 
+    # the league's adds, drops, waivers, trades and lineup moves for today and yesterday (research idea 71);
+    # the drops also say when a player on waivers can first play (findings 122)
+    league_moves, tx, tx_error = None, [], None
+    try:
+        for sp in sorted({max(1, today_sp - 1), today_sp}):
+            tx += get(s, league_url, ["mTransactions2"], {"transactions": {"filterType": {"value": TX_TYPES}}},
+                      scoringPeriodId=sp).get("transactions") or []
+        league_moves = leads.league_log(tx, league["teams"], today_sp)
+        print(f"Logged {len(league_moves['transactions'])} league transactions")
+    except Exception as e:  # noqa: BLE001 - the log is best-effort
+        tx_error = repr(e)
+    today_et = datetime.now(ET).date()
+    first_day = waiver_first_days(tx, today_et)
+
     # Players: my roster plus free agents and waivers, with season, last-season and projected stat lines
     stat_filter = {"value": 3, "additionalValue": [f"00{season}", f"10{season}", f"00{season - 1}"]}
     rostered = {}
@@ -241,8 +274,6 @@ def main():
         else:
             ppg = cur if base_ppg is None else base_ppg
         team = teams.get(p.get("proTeamId"), {"abbrev": "FA", "periods": set()})
-        week_games = [sp for sp in matchup_sps if sp in team["periods"]]
-        rem_games = [sp for sp in remaining if sp in team["periods"]]
         owner_id, slot = rostered.get(pid, (None, None))
         if my_team and owner_id == my_team["id"]:
             owner = "mine"
@@ -250,6 +281,11 @@ def main():
             owner = "other"
         else:
             owner = (entry.get("status") or "FREEAGENT").lower()
+        # on waivers: only the games after he clears count; no drop found means tomorrow at the earliest
+        clears = first_day.get(pid, today_et + timedelta(days=1)) if owner == "waivers" else None
+        first_sp = today_sp + (clears - today_et).days if clears else 0
+        week_games = [sp for sp in matchup_sps if sp in team["periods"] and sp >= first_sp]
+        rem_games = [sp for sp in remaining if sp in team["periods"] and sp >= first_sp]
         players.append({
             "id": pid,
             "name": p.get("fullName"),
@@ -273,6 +309,7 @@ def main():
             "light_left": len([sp for sp in rem_games if sp in light]),
             "nights": week_games,
             "games_next2": len([sp for sp in next_sps if sp in team["periods"]]),
+            "clears": clears.strftime("%a %-d") if clears else None,
         })
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
@@ -280,22 +317,14 @@ def main():
     web = requests.Session()
     web.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
     starters, lead_errors = [], {}
+    if tx_error:
+        lead_errors["league"] = tx_error
     for day in (now, now + timedelta(days=1)):
         if day.weekday() >= now.weekday():  # stay inside this Monday-Sunday matchup
             try:
                 starters.append(leads.fetch_starters(web, day))
             except Exception as e:  # noqa: BLE001 - starters are a bonus, never block the update
                 lead_errors[f"starters {day}"] = repr(e)
-    league_moves = None
-    try:  # the league's adds, drops, waivers, trades and lineup moves for today and yesterday (research idea 71)
-        tx = []
-        for sp in sorted({max(1, today_sp - 1), today_sp}):
-            tx += get(s, league_url, ["mTransactions2"], {"transactions": {"filterType": {"value": TX_TYPES}}},
-                      scoringPeriodId=sp).get("transactions") or []
-        league_moves = leads.league_log(tx, league["teams"], today_sp)
-        print(f"Logged {len(league_moves['transactions'])} league transactions")
-    except Exception as e:  # noqa: BLE001 - the log is best-effort
-        lead_errors["league"] = repr(e)
     lineups = None
     try:  # Daily Faceoff lineups: the page's "Tonight" note benches skaters left out (findings section 65)
         lineups = leads.fetch_lineups(web)
@@ -348,6 +377,7 @@ def main():
 
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
+        "updated_date": datetime.now(ET).date().isoformat(),
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,
         "matchup_weeks": -(-len(matchup_sps) // 7),
