@@ -58,8 +58,9 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self, scratched=(4,), rail_ok=True):
+    def __init__(self, scratched=(4,), rail_ok=True, moved=None):
         self.calls = []
+        self.moved = moved or {}  # player id: his first n games this season were for the other team (a trade)
         self.scratched, self.rail_ok = set(scratched), rail_ok  # healthy scratches on each game page (McAvoy sat the last one)
 
     def get(self, url, params=None, headers=None, timeout=None):
@@ -116,8 +117,9 @@ class FakeSession:
         days = [i for i, d in enumerate(PAST) if lo <= d <= hi] if season == 20262027 else []
         if report.startswith("goalie"):
             return Resp({"data": [goalie_row(pid, name, team, i) for pid, name, team in GOALIES for i in days]})
-        return Resp({"data": [skater_row(pid, name, team, pos, i) for pid, name, team, pos, missed in SKATERS
-                              for i in days if i not in missed]})
+        other = lambda t: TEAMS[1 - TEAMS.index(t)]
+        return Resp({"data": [skater_row(pid, name, other(team) if i < self.moved.get(pid, 0) else team, pos, i)
+                              for pid, name, team, pos, missed in SKATERS for i in days if i not in missed]})
 
 
 def espn(pid, name, team, pos, injury=None, games_left=3):
@@ -439,8 +441,24 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     assert no_list["cr_dress_next"] == listed["cr_dress_next"]
     assert listed["cr_games"] > unlisted["cr_games"]
     base = rating.dress_by_game(0.25, 3, True, 1.0)
-    up = rating.dress_by_game(0.25, 3, True, 1.0, scratch=True)
-    assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, scratch=True)) <= 0.3
+    up = rating.dress_by_game(0.25, 3, True, 1.0, rating.SCRATCH_LOGIT)
+    assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, rating.SCRATCH_LOGIT)) <= 0.3
+
+
+def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
+    """A skater who dressed last game in his first 1-3 games for a new team gets +0.45 on his dress logit; from his
+    4th game with the team, nothing (findings 155)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def matthews(moved, logit):
+        monkeypatch.setattr(rating, "NEW_TEAM_LOGIT", logit)
+        fake = FakeSession(moved={1: moved})
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]["cr_dress_next"]
+    assert matthews(2, 0.45) > matthews(2, 0.0)  # 2 games with TOR after 2 with BOS
+    assert matthews(0, 0.45) == matthews(0, 0.0)  # never moved
 
 
 def test_dress_chance_by_game():
