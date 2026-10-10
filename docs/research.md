@@ -584,6 +584,10 @@ Section 58 treats every player who missed his team's last game alike. But a heal
 
 After a trade or waiver claim, the site judged a player's chance of dressing partly from his old team, where he was often being scratched or only up for a short stint. The new team plays him more: in his first 1-3 games with the new team, a skater who dressed for its last game played 86% of the following games while the site said 78%, in both test seasons. **For those players the site now raises the chance of dressing (+0.45 on the log-odds scale, about 78% to 85%), until his 4th game with the new team.** It's worth about a quarter of a game in a mover's first week, and these are the players people look at on the wire right after a trade.
 
+## 61. Goalies who just changed teams
+
+The goalie start model counts only this season's starts for a goalie's current team. So in his first few starts after a trade or waiver claim he looks like a backup with a tiny sample, even though the team got him to play him. Across five seasons, goalies with 1-3 starts for a new team started the next game 32% of the time; the site said 20%, and it was low in every season. **The site now raises those goalies' start chance (+1.0 on the log-odds scale, before the team's starts are split among its goalies) until his 4th start for the new team.** Goalies called up from the minors with no other NHL team were already about right and are unchanged. It touches about four goalies a season, worth roughly a point a week each while it lasts, and they're the goalies on the wire right after a trade. The Season rating's start share is unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |
