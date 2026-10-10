@@ -391,7 +391,7 @@ function renderUpgrades() {
   if (d.rated && tonight && !stale(d)) {
     const playing = mine.filter(p => p.pos !== "G" && p.nights.includes(tonight.sp));
     const flagged = p => p.dfo_out === true || (p.dfo_out == null && p.sat_last);
-    const val = p => flagged(p) ? -1 : p.cr_fpg * (p.dfo_out === false ? 1 : (p.cr_dress ?? 1));
+    const val = p => flagged(p) ? -1 : p.cr_fpg * (p.dfo_out === false ? 1 : (p.cr_dress_next ?? p.cr_dress ?? 1));
     const order = [...playing].sort((a, b) => val(b) - val(a));
     const room = { F: 9, D: 5, U: 1 };
     const bench = order.filter(p => {

@@ -87,6 +87,19 @@ def last_start_shift(g):
     return (0.0, 0.0)
 
 
+# P(dresses) logit shift by game number from today (1, 2, 3, 4+), for a skater who dressed for his team's last game
+# and for one who missed it: the weekly P is right on average but a player who is out is less likely to play the next
+# game than the last one, and a regular the reverse (findings 147)
+DRESS_SHIFT_IN, DRESS_SHIFT_OUT = (0.6, 0.2, -0.1, -0.3), (-0.55, -0.15, 0.1, 0.2)
+
+
+def dress_by_game(base, n, sat_last, cap):
+    """Chance he dresses for each of his team's next n games: the weekly P shifted by game number, capped."""
+    shifts = DRESS_SHIFT_OUT if sat_last else DRESS_SHIFT_IN
+    z = math.log(min(max(base, 1e-4), 1 - 1e-4) / (1 - min(max(base, 1e-4), 1 - 1e-4)))
+    return [min(1 / (1 + math.exp(-(z + shifts[min(k, 3)]))), cap) for k in range(n)]
+
+
 UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, healthy regular yet to play (findings 118)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
@@ -869,18 +882,19 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             tg = team_games.get(team, [])
-            df_ = None
+            df_, base_dress, cap = None, None, 1.0
             if pid is None:  # not on an NHL roster or in NHL stats this season or last
                 p_dress = NOT_PLAYING_DRESS
             elif f["dressed3"] is None:  # team hasn't played yet
                 p_dress = 0.9 if prev.get(pid) else 0.5
             else:
                 df_ = dress_features(gl, team, tg, f, today) if model.dress_lr else None
-                p_dress = model.dress_logit(df_) if df_ else model.dress(f["dressed3"], f["dressed10"])
+                p_dress = base_dress = model.dress_logit(df_) if df_ else model.dress(f["dressed3"], f["dressed10"])
                 last = gl[-1]["date"] if gl else None
                 idle = None if last is None else (today - date.fromisoformat(last)).days
                 if len(tg) >= 3 and (idle is None or idle > 14):
-                    p_dress = min(p_dress, NOT_PLAYING_DRESS if idle is None else idle_cap(idle))
+                    cap = NOT_PLAYING_DRESS if idle is None else idle_cap(idle)
+                    p_dress = min(p_dress, cap)
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
@@ -900,6 +914,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
+                    base_dress = None  # the news call replaces the lineup model
                 if n.get("fpg_mult") is not None:
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
@@ -909,7 +924,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                    "status": p["injury"], "long_note": bool(note and note["long"]),
                                    "p_dress_table": round(p_dress, 3), "p_dress": round(min(p_dress, inj), 3)})
             p_dress = min(p_dress, inj)
-            exp_games = p["games_left"] * p_dress
+            gn = p["games_left"]
+            per_game = dress_by_game(base_dress, gn, sat_last, min(cap, inj)) if base_dress is not None else [p_dress] * gn
+            exp_games = sum(per_game)
+            dress_next = per_game[0] if per_game else p_dress
+            if gn:
+                p_dress = exp_games / gn  # the week's average, shown as "to dress"
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D") if pid else None}
@@ -921,6 +941,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_season"] = round(season, 2)
         p["cr_games"] = round(exp_games, 2)
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
+        p["cr_dress_next"] = None if p_dress is None else round(dress_next, 2)  # his team's next game: tonight cards
         p["sat_last"] = sat_last
         p["cr_matched"] = pid is not None
         p["nhl_id"] = pid
@@ -938,6 +959,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_games"] = round(p["games_left"] * dress, 2)
             p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
             p["cr_dress"] = round(dress, 2)
+            p["cr_dress_next"] = round(max(0.0, p["cr_dress_next"] - cut), 2)
             p["cr_why"]["displaced"] = regular
 
     # percentile within F / D / G among the players on the site
