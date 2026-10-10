@@ -22,6 +22,8 @@ SKATERS = [  # id, name, team, pos, games missed (by index into PAST)
     (5, "Elias Pettersson", "TOR", "C", set()),  # two teammates with one name (findings 112)
     (6, "Elias Pettersson", "TOR", "D", set()),
     (7, "Zachary Bolduc", "BOS", "R", set()),  # ESPN calls him Zack
+    (8, "Brad Marchand", "BOS", "L", {0, 1, 2, 3}),  # suspended, no games yet (findings 118)
+    (9, "Ryan Spooner", "BOS", "C", {0, 1, 2, 3}),  # healthy regular who hasn't played yet
 ]
 GOALIES = [(11, "Joseph Woll", "TOR"), (12, "Anthony Stolarz", "TOR"), (13, "Jeremy Swayman", "BOS")]
 
@@ -127,6 +129,8 @@ def run(monkeypatch, tmp_path):
         espn(106, "Elias Pettersson", "TOR", "C"),
         espn(107, "Elias N. Pettersson", "TOR", "D"),
         espn(108, "Zack Bolduc", "BOS", "LW"),
+        espn(109, "Brad Marchand", "BOS", "LW", injury="SUSPENSION"),
+        espn(110, "Ryan Spooner", "BOS", "C"),
         espn(111, "Joseph Woll", "TOR", "G"),
         espn(112, "Anthony Stolarz", "TOR", "G"),
         espn(113, "Jeremy Swayman", "BOS", "G"),
@@ -162,7 +166,7 @@ def test_matching_and_injuries(run):
     ghost = players["Not A Real Player"]
     assert ghost["cr_matched"] is False and ghost["cr_dress"] == rating.NOT_PLAYING_DRESS
     logged = [json.loads(line) for line in log.read_text().splitlines()]
-    assert {r["status"] for r in logged} == {"OUT", "DAY_TO_DAY"}
+    assert {r["status"] for r in logged} == {"OUT", "DAY_TO_DAY", "SUSPENSION"}
 
 
 def test_goalie_starts_follow_confirmed_starter(run):
@@ -343,3 +347,12 @@ def test_nickname_needs_same_team_and_last_name():
     assert rating.nickname_cands(index, "Zack Bolduc", "BOS") == {7: ("BOS", "R")}
     assert rating.nickname_cands(index, "Zack Bolduc", "TOR") == {}
     assert rating.nickname_cands(index, "Mike Bolduc", "BOS") == {}
+
+
+def test_unplayed_regulars_keep_a_season_share(run):
+    """A suspended regular takes the short-injury share and a healthy regular who hasn't played 0.38, not the idle cap (findings 118)."""
+    by_name, _, _ = run
+    for name, share in (("Brad Marchand", rating.PRESEASON_INJURED["short"]), ("Ryan Spooner", rating.UNPLAYED_REGULAR)):
+        p = by_name[name]
+        assert p["cr_why"]["gp"] == 0
+        assert p["cr_season"] == pytest.approx(p["cr_fpg"] * share, abs=0.01)

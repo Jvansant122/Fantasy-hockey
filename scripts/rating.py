@@ -65,6 +65,7 @@ DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more wh
 SCHED_SHRINK, SCHED_WIN, SCHED_SLOPE = 15, (-0.175, 0.594, 0.349), 3.4  # starts without a line priced by team strength (findings 70)
 SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
+UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, healthy regular yet to play (findings 118)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -738,6 +739,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             known = index.get(norm(name), {})
             if pid not in known or known[pid][0] is None:
                 add(pid, name, team, pos)
+    on_roster = {pid for r in rosters.values() for pid, _, _ in r}
 
     def match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
@@ -843,10 +845,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             if df_ and model.season_lr:
                 season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]))
-            elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE"):
-                # hurt before playing this season: such regulars dress for ~41% of the rest, not the idle cap's 10% (findings 74)
+            elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
+                # hurt or suspended before playing this season: such regulars dress for ~41% of the rest, not the idle cap's
+                # 10% (findings 74; suspensions take the short-injury share, findings 118)
                 pre = injury_note(notes[p["id"]], today) if p["id"] in notes else None
                 season = fpg * PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"]
+            elif not gl and pid in on_roster and tg and not p.get("injury") and (prev.get(pid) or {}).get("gp", 0) >= UNPLAYED_REGULAR_GP:
+                # a regular (60+ games last season, on a current NHL roster, so not retired or overseas) who hasn't played
+                # while his team has: such players dress for 0.38 of the rest (findings 118)
+                season = fpg * UNPLAYED_REGULAR
             else:
                 season = fpg * p_dress
             if n.get("apply"):

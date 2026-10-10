@@ -534,6 +534,10 @@ The rating looks up each ESPN player in the NHL's stats by name and team. Two ki
 
 The Goalies card (shown when you carry 3) used to name the goalie with the fewest points this week as the one to drop. A starter with one game left that isn't his start would show 0 this week, even while starting most of his team's games. Goalies now use the same keep value as skaters: this week plus 7 games' worth of the Season rating, which for a goalie is points per team game from his share of starts. In 828 three-goalie decisions from 2023-26, keep value picked a different goalie 25% of the time. When it did, the goalie it kept was worth about 1 point a week more for the rest of the season. That held in every season. **The Goalies card and the goalie upgrade list now use keep value.** The goalie stream card stays night by night.
 
+## 49. Players who haven't played yet: suspensions and healthy regulars
+
+The Season rating counts how often a player dresses. A skater who hasn't played a game yet got the 10% idle floor, as if he were out of the league. That made suspended Charlie McAvoy, a 2.2-points-a-game defenseman, look like a 0.2 and put him at the top of the drop list. In past seasons, regulars who had sat out the opening games dressed far more often over the rest of the season. Suspended players matched the short-injury rate of 45%, and healthy regulars who hadn't played by the second Monday dressed for 38% of the rest. **Suspended players now take the 45% share, and a healthy skater with 60+ NHL games last season who hasn't played yet takes 38%.** Everyone else keeps the old rule.
+
 ## What the independent review changed
 
 | Review point | Outcome |
