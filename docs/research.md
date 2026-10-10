@@ -538,6 +538,12 @@ The Goalies card (shown when you carry 3) used to name the goalie with the fewes
 
 The Season rating counts how often a player dresses. A skater who hasn't played a game yet got the 10% idle floor, as if he were out of the league. That made suspended Charlie McAvoy, a 2.2-points-a-game defenseman, look like a 0.2 and put him at the top of the drop list. In past seasons, regulars who had sat out the opening games dressed far more often over the rest of the season. Suspended players matched the short-injury rate of 45%, and healthy regulars who hadn't played by the second Monday dressed for 38% of the rest. **Suspended players now take the 45% share, and a healthy skater with 60+ NHL games last season who hasn't played yet takes 38%.** Everyone else keeps the old rule.
 
+## 50. Waiver players, and fresh numbers in the morning
+
+A player someone drops sits on waivers until ESPN's first overnight run (about 3 AM ET) at least 24 hours after the drop. Until then nobody can add him. The site used to count his games from today, so a waiver player could top Best 2 moves partly on games he can't play. **Players on waivers now count only the games after they clear, and their tag says when ("waivers, clears Sun 11").** Waiver goalies are left out of the stream card, since they can't start tonight.
+
+The data used to refresh first at 9 AM ET. Before that the page still showed the previous evening's numbers: last night's games still counted, and on Monday it was still on last week's matchup. Three of the league's first nine adds came before 9 AM, and replays put the cost at about 3.4 points a week for a manager who makes moves in the morning. **The data now also refreshes at 6 AM ET.** When the page shows an earlier day's data, a note says so and the two cards about tonight are hidden.
+
 ## What the independent review changed
 
 | Review point | Outcome |

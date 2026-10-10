@@ -21,6 +21,7 @@
   h1 { font-size: 20px; margin: 0; }
   h2 { font-size: 15px; margin: 0 0 8px; }
   .sub { color: var(--muted); font-size: 12px; }
+  .sub.warn { color: var(--warn); font-weight: 600; }
   .myteam { font-size: 14px !important; color: var(--text) !important; font-weight: 600; }
   .prompt { color: var(--muted); padding: 4px 0; }
   a { color: var(--accent); }
@@ -96,6 +97,7 @@
 <main>
   <h1 id="title">Free Agent Finder</h1>
   <div class="sub" id="updated">Loading…</div>
+  <div class="sub warn" id="stale" hidden>These numbers are from yesterday evening and still count last night's games. The site refreshes at 6 AM ET.</div>
   <div class="controls" style="margin-top:8px">
     <label class="myteam">Your team <select id="team"><option value="">Pick your team…</option></select></label>
   </div>
@@ -161,6 +163,10 @@ const store = {
 };
 
 const isFA = p => p.owner === "freeagent" || p.owner === "waivers";
+// a player on waivers can't play until he clears, usually 2 days after the drop (findings 122)
+const wvTag = p => p.owner === "waivers" ? `<span class="tag wv">waivers${p.clears ? `, clears ${esc(p.clears)}` : ""}</span>` : "";
+// data from an earlier day than today in New York: it still counts last night's games (findings 123)
+const stale = d => !!d.updated_date && d.updated_date < new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 const group = p => p.pos === "G" ? "G" : p.pos === "D" ? "D" : "F";
 const injLabel = p => p.injury ? p.injury.replaceAll("_", " ").toLowerCase() : "";
 const activeNight = n => !$("left").checked || !n.past;
@@ -265,7 +271,7 @@ function cells(p) {
   const d = state.data;
   const pos = p.slots.filter(s => s !== "F").join("/") || p.pos;
   const teamName = p.team_id != null && state.who === "every" && !onMyTeam(p) ? (state.teamNames[p.team_id] || "") : "";
-  const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + (p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : "") +
+  const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + wvTag(p) +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
     (p.cr_why?.tonight?.status === "Confirmed" ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
   const og = openGames(p);
@@ -340,12 +346,12 @@ function renderUpgrades() {
       const sub = fas.filter(f => group(f) === group(p)).sort((a, b) => score(b) - score(a))[0];
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
       const ir = ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
-      return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${sub.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
+      return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
     }).join("")}</div>`);
   // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
   const tonight = d.nights.find(n => !n.past);
   const startsTonight = p => p.cr_why?.tonight?.status === "Confirmed" ? p.cr_why.tonight.starting : (p.cr_why?.p_today ?? 0) > 0.5;
-  if (d.rated && tonight) {
+  if (d.rated && tonight && !stale(d)) {
     const myG = mine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
     const team = d.teams.find(t => String(t.id) === state.team);
@@ -354,16 +360,16 @@ function renderUpgrades() {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
         : (used == null ? "check your moves left" : `${used} move${used === 1 ? "" : "s"} used this matchup`);
       const pps = p => p.cr_why?.line?.pps ?? p.cr_fpg;
-      const streams = fas.filter(p => p.pos === "G" && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
+      const streams = fas.filter(p => p.pos === "G" && p.owner !== "waivers" && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
         .sort((a, b) => pps(b) - pps(a)).slice(0, 3);
       const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
       cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(cap)}</span>
-        ${streams.length ? streams.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
+        ${streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
           : '<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon, and the site rechecks at 12:30 and 5 PM ET.</div>'}</div>`);
     }
   }
   // Tonight on a crowded night (research findings 65): start by per-game rating, bench anyone Daily Faceoff leaves out
-  if (d.rated && tonight) {
+  if (d.rated && tonight && !stale(d)) {
     const playing = mine.filter(p => p.pos !== "G" && p.nights.includes(tonight.sp));
     const flagged = p => p.dfo_out === true || (p.dfo_out == null && p.sat_last);
     const val = p => flagged(p) ? -1 : p.cr_fpg * (p.dfo_out === false ? 1 : (p.cr_dress ?? 1));
@@ -396,7 +402,7 @@ function renderUpgrades() {
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
     if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 2 ? "2 moves" : "move"}</b> <span class="drop">· largest keep-value gains over your weakest player at the same position</span>
-      ${best.map(m => `<div>${esc(m.fa.name)}${m.fa.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">+${fmt(m.gain)}</span></div>`).join("")}</div>`);
+      ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">+${fmt(m.gain)}</span></div>`).join("")}</div>`);
   }
   const nSwap = cards.length;
   for (const g of ["F", "D", "G"]) {
@@ -407,7 +413,7 @@ function renderUpgrades() {
     const kv = p => g === "G" || !d.rated ? "" : ` · keep ${fmt(keep(p))}`;
     if (!better.length) continue;
     cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}</span>
-      ${better.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))}${kv(p)} (+${fmt(keep(p) - keep(worst))})</span></div>`).join("")}</div>`);
+      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${fmt(score(p))}${kv(p)} (+${fmt(keep(p) - keep(worst))})</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
   const dropGain = p => {  // the best free agent at his position, and how much he'd add (findings 68)
@@ -423,7 +429,7 @@ function renderUpgrades() {
   const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && p.pos !== "G" && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.</span>
-    ${stash.map(p => `<div>${esc(p.name)}${p.owner === "waivers" ? '<span class="tag wv">waivers</span>' : ""}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
+    ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   // Trade ideas (research findings 103): another team's skater whom ESPN projects the same as mine but the Season rating has 0.3+
   // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.
   const tradeable = p => p.pos !== "G" && !p.ir && !p.injury && !p.sat_last && (p.last_gp ?? 0) >= 40 && p.proj_ppg != null && p.cr_season != null;
@@ -524,6 +530,7 @@ fetch("data/players.json", { cache: "no-store" })
     teamOptions(d);
     restore();
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
+    $("stale").hidden = !stale(d);
     setTeam(state.team);
     wire(); render();
   })
