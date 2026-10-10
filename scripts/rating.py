@@ -66,11 +66,24 @@ SCHED_SHRINK, SCHED_WIN, SCHED_SLOPE = 15, (-0.175, 0.594, 0.349), 3.4  # starts
 SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
 BAD_START_LOGIT = -0.7  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131)
+BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
+WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
 
 
 def bad_start(g):
     """5+ goals against, or under 45 minutes on ice with 3+ against."""
     return g["ga"] >= 5 or (g["toi"] < 45 * 60 and g["ga"] >= 3)
+
+
+def last_start_shift(g):
+    """Start-logit shifts for the goalie who started the team's last game: (next game, game after next)."""
+    if bad_start(g):
+        return (BAD_START_LOGIT, BAD_START_LOGIT_2)
+    if g.get("wins"):
+        return (WIN_LOGIT, 0.0)
+    if g.get("losses") or g.get("otl"):
+        return (LOSS_LOGIT, 0.0)
+    return (0.0, 0.0)
 
 
 UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, healthy regular yet to play (findings 118)
@@ -179,6 +192,7 @@ def load_goalie_games(s, season, today):
         out += [{"id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
                  "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0,
                  "ga": r.get("goalsAgainst") or 0, "toi": r.get("timeOnIce") or 0,
+                 "wins": r.get("wins") or 0, "losses": r.get("losses") or 0, "otl": r.get("otLosses") or 0,
                  "fp": 2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
                        + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0)}
                 for r in stats_report(s, "goalie/summary", season, a, b)]
@@ -563,7 +577,7 @@ def ux_features(f, pos, mu):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, bad_last=None):
+                  injury=None, last_start=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -573,7 +587,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     blended with last season's split over SEASON_SHARE_K games), for the Season rating.
     injury: {goalie id: ESPN injury factor}; scales his chance before each game is split among the team's goalies,
     so an injured starter's games go to his partner (findings section 48).
-    bad_last: the goalie whose start in the team's last game was bad; his chance in the next game drops (findings 131)."""
+    last_start: (goalie id, (shift next game, shift game after next)) for whoever started the team's last game:
+    his start logit drops after a bad start or a loss and rises after a win (findings 131-133)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -604,7 +619,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     # rest and workload (findings section 11); games still to come add their likeliest starter as we go
     log = [(date.fromisoformat(d), gid) for d, gid in hist]
     exp = {gid: 0.0 for gid in cands}
-    first = True  # the team's next unplayed game
+    ahead = 0  # unplayed team games so far: 0 is the next one
+    shift_gid, shifts = last_start or (None, ())
     for d in sorted(game_dates):
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
             continue
@@ -624,10 +640,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             raw[gid] = model.p_start({**shares[gid], "started_prev": prev_p[gid], "b2b": b2b, "started_prev_and_b2b": prev_p[gid] * b2b,
                                       "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
-            if gid == bad_last and first and 0 < raw[gid] < 1:
-                raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + BAD_START_LOGIT)))
+            if gid == shift_gid and ahead < len(shifts) and shifts[ahead] and 0 < raw[gid] < 1:
+                raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + shifts[ahead])))
             raw[gid] *= injury.get(gid, 1.0)
-        first = False
+        ahead += 1
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         if d in confirmed:
@@ -715,13 +731,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
-    team_games, starts_by_team, bad_last = {}, {}, {}
+    team_games, starts_by_team, last_start = {}, {}, {}
     for g in sorted(goalie_games, key=lambda g: g["date"]):
         if g["game"] not in team_games.setdefault(g["team"], []):
             team_games[g["team"]].append(g["game"])
         if g["started"]:
             starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
-            bad_last[g["team"]] = g["id"] if bad_start(g) else None  # the latest start wins
+            last_start[g["team"]] = (g["id"], last_start_shift(g))  # the latest start wins
     # each goalie's points per start this season, shrunk over 15 starts (findings sections 27 and 60)
     base = model.g["points_per_start"]
     own = {}
@@ -792,7 +808,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     lines = line_win_probs(odds, today)
     for team, dates in sched.items():
         goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today,
-                                        confirmed.get(team), goalie_today, goalie_season, goalie_inj, bad_last.get(team)))
+                                        confirmed.get(team), goalie_today, goalie_season, goalie_inj, last_start.get(team)))
 
     unmatched = 0
     injury_log = []
