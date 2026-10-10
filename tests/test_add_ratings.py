@@ -58,8 +58,9 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self):
+    def __init__(self, scratched=(4,), rail_ok=True):
         self.calls = []
+        self.scratched, self.rail_ok = set(scratched), rail_ok  # healthy scratches on each game page (McAvoy sat the last one)
 
     def get(self, url, params=None, headers=None, timeout=None):
         self.calls.append(url)
@@ -73,6 +74,15 @@ class FakeSession:
         if url.endswith(f"/schedule/{MONDAY.isoformat()}"):
             return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": "BOS"}, "homeTeam": {"abbrev": "TOR"}}]}
                                       for d in WEEK]})
+        m = re.search(r"/gamecenter/(\d+)/right-rail$", url)
+        if m:
+            if not self.rail_ok:
+                return Resp(status=503)
+            team = TEAMS[int(m.group(1)) % 10]
+            i = (int(m.group(1)) - 2026020000) // 10
+            def side(t):
+                return {"scratches": [{"id": pid} for pid, _, tm, _, missed in SKATERS if tm == t and i in missed and pid in self.scratched]}
+            return Resp({"gameInfo": {"awayTeam": side("BOS"), "homeTeam": side(team)}})
         if url.endswith("/standings-season"):
             return Resp({"seasons": [{"id": 20252026, "standingsEnd": "2026-04-17"}]})
         if "/standings/" in url:  # last season's final table, then this season's
@@ -411,6 +421,26 @@ def test_later_games_are_softened(monkeypatch):
     assert soft1[1] == pytest.approx(hard1[1])  # the next game is unchanged
     assert hard4[1] > 2.5 and soft4[1] < hard4[1]  # a clear no. 1 gets fewer of the later starts
     assert soft4[1] + soft4[2] == pytest.approx(4)  # still one starter per game
+
+
+def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
+    """A skater on the last game's healthy-scratch list gets +0.5 on his dress logit; one who missed it but isn't on
+    the list doesn't; if the list can't be read, missing the game with no ESPN injury counts (findings 153)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def mcavoy(**kw):
+        fake = FakeSession(**kw)
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(101, "Auston Matthews", "TOR", "C")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    listed, unlisted, no_list = mcavoy(), mcavoy(scratched=()), mcavoy(rail_ok=False)
+    assert listed["sat_last"] and listed["cr_dress_next"] > unlisted["cr_dress_next"] + 0.03
+    assert no_list["cr_dress_next"] == listed["cr_dress_next"]
+    assert listed["cr_games"] > unlisted["cr_games"]
+    base = rating.dress_by_game(0.25, 3, True, 1.0)
+    up = rating.dress_by_game(0.25, 3, True, 1.0, scratch=True)
+    assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, scratch=True)) <= 0.3
 
 
 def test_dress_chance_by_game():
