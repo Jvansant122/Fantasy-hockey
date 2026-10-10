@@ -576,6 +576,10 @@ Jack used his 7th move by Friday morning in both weeks so far, but the page kept
 
 The site used to give a skater one chance of dressing for every game left in the week. That number is right on average over the week, but not game by game. A player who missed his team's last game is less likely to play the very next game than one later in the week: he played only 12% of next games, against the site's 18%. A regular runs the other way, 94.5% next game against 91%. **The site now shifts the chance by game number: down for the next game and up later for a player who is out, and the reverse for a regular.** Weekly totals barely move. Tonight's lineup card now uses the next-game chance, which is the decision it's for. ESPN injury caps and the long-idle cap still apply on top. The pattern held in both test seasons.
 
+## 59. Healthy scratches come back more often than injured players
+
+Section 58 treats every player who missed his team's last game alike. But a healthy scratch is far more likely to be back than an injured player. Healthy scratches carry no ESPN injury status, and the site gave them about a 25% chance per game when they really played 34.5%, in both test seasons, at every game number and however long they had been out. **The site now reads the NHL game page's healthy-scratch list for each team's last game and raises those players' chance of dressing (+0.5 on the log-odds scale, about 25% to 34%).** If the list can't be read, a player who missed the game with no ESPN injury status counts as a healthy scratch. Injured players are unchanged: ESPN's status already handles them. It's worth about 0.3-0.4 points a week for fringe forwards and spare defensemen, mostly in mid-week swaps and keep-or-drop calls.
+
 ## What the independent review changed
 
 | Review point | Outcome |
