@@ -580,6 +580,10 @@ The site used to give a skater one chance of dressing for every game left in the
 
 Section 58 treats every player who missed his team's last game alike. But a healthy scratch is far more likely to be back than an injured player. Healthy scratches carry no ESPN injury status, and the site gave them about a 25% chance per game when they really played 34.5%, in both test seasons, at every game number and however long they had been out. **The site now reads the NHL game page's healthy-scratch list for each team's last game and raises those players' chance of dressing (+0.5 on the log-odds scale, about 25% to 34%).** If the list can't be read, a player who missed the game with no ESPN injury status counts as a healthy scratch. Injured players are unchanged: ESPN's status already handles them. It's worth about 0.3-0.4 points a week for fringe forwards and spare defensemen, mostly in mid-week swaps and keep-or-drop calls.
 
+## 60. Skaters who just changed teams
+
+After a trade or waiver claim, the site judged a player's chance of dressing partly from his old team, where he was often being scratched or only up for a short stint. The new team plays him more: in his first 1-3 games with the new team, a skater who dressed for its last game played 86% of the following games while the site said 78%, in both test seasons. **For those players the site now raises the chance of dressing (+0.45 on the log-odds scale, about 78% to 85%), until his 4th game with the new team.** It's worth about a quarter of a game in a mover's first week, and these are the players people look at on the wire right after a trade.
+
 ## What the independent review changed
 
 | Review point | Outcome |
