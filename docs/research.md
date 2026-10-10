@@ -572,6 +572,10 @@ To check a trade you're weighing, the page now has a **Trade check** panel. Pick
 
 Jack used his 7th move by Friday morning in both weeks so far, but the page kept suggesting adds he couldn't make. **When your team has used all its moves for the matchup, the Upgrades cards now say "No moves left this matchup; these are next Monday's targets"** and rank the free agents by Season rating (7 × Season, as in the keep value) instead of this week's points. Separately, the open-slot count treated the utility slot as a sixth D slot even when it was already holding a tenth forward. It now counts the utility slot as an open D only when 9 or fewer forwards and 5 or fewer defensemen play that night. On Saturday Oct 10's 14-game night, that removed a phantom open D for 5 of the 12 teams.
 
+## 58. The chance a skater dresses, game by game
+
+The site used to give a skater one chance of dressing for every game left in the week. That number is right on average over the week, but not game by game. A player who missed his team's last game is less likely to play the very next game than one later in the week: he played only 12% of next games, against the site's 18%. A regular runs the other way, 94.5% next game against 91%. **The site now shifts the chance by game number: down for the next game and up later for a player who is out, and the reverse for a regular.** Weekly totals barely move. Tonight's lineup card now uses the next-game chance, which is the decision it's for. ESPN injury caps and the long-idle cap still apply on top. The pattern held in both test seasons.
+
 ## What the independent review changed
 
 | Review point | Outcome |

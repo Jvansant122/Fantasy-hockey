@@ -143,7 +143,7 @@ def run(monkeypatch, tmp_path):
     return {p["name"]: p for p in players}, unmatched, tmp_path / "injury_log.jsonl"
 
 
-FIELDS = ("cr", "cr_fpg", "cr_games", "cr_dress", "cr_matched", "nhl_id", "cr_why", "cr_pct")
+FIELDS = ("cr", "cr_fpg", "cr_games", "cr_dress", "cr_dress_next", "cr_matched", "nhl_id", "cr_why", "cr_pct")
 
 
 def test_every_player_gets_rating_fields(run):
@@ -154,6 +154,9 @@ def test_every_player_gets_rating_fields(run):
             assert k in p, (p["name"], k)
         assert p["cr"] >= 0 and 0 <= p["cr_pct"] <= 100
         assert isinstance(p["sat_last"], bool)
+        assert p["cr_dress_next"] is None or 0 <= p["cr_dress_next"] <= 1
+        if p["cr_dress"] is not None and p["games_left"]:
+            assert p["cr_games"] == pytest.approx(p["games_left"] * p["cr_dress"], abs=0.02)
         json.dumps(p)  # players.json must stay serialisable
 
 
@@ -408,3 +411,14 @@ def test_later_games_are_softened(monkeypatch):
     assert soft1[1] == pytest.approx(hard1[1])  # the next game is unchanged
     assert hard4[1] > 2.5 and soft4[1] < hard4[1]  # a clear no. 1 gets fewer of the later starts
     assert soft4[1] + soft4[2] == pytest.approx(4)  # still one starter per game
+
+
+def test_dress_chance_by_game():
+    """A skater who missed his team's last game is less likely to play the next one than later ones; a regular the
+    reverse; caps still apply (findings 147)."""
+    out = rating.dress_by_game(0.18, 4, True, 1.0)
+    reg = rating.dress_by_game(0.91, 4, False, 1.0)
+    assert out[0] == pytest.approx(0.12, abs=0.01) and out == sorted(out)
+    assert reg[0] == pytest.approx(0.945, abs=0.01) and reg == sorted(reg, reverse=True)
+    assert max(rating.dress_by_game(0.9, 3, False, 0.5)) <= 0.5
+    assert rating.dress_by_game(0.5, 0, False, 1.0) == []
