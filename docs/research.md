@@ -475,7 +475,7 @@ The move plan was re-run with these settings over 67 weeks (2023-24 to 2025-26),
 | 0 Monday + injury swaps + goalie streams | +2.6 |
 | **2 goalies + an extra skater, 2 Monday + swaps + streams** | **+7.6** |
 
-So the plan holds: **2 skater moves on Monday, the other 5 for injury swaps and confirmed goalie streams.** And **carrying 2 goalies plus an extra skater beats carrying 3 goalies by about 2 points a week**, because the third goalie's starts are easier to get off the wire one confirmed night at a time. With only one manager streaming these gains are on the high side; the earlier runs with all 12 teams streaming ranked the plans the same way.
+So the plan holds: **2 skater moves on Monday, the other 5 for injury swaps and confirmed goalie streams.** And **carrying 2 goalies and using the third roster spot for goalie streams beats carrying a third regular goalie by about 2 points a week**, because the third goalie's starts are easier to get off the wire one confirmed night at a time. That third spot holds whoever you streamed last; it isn't a spare spot for a skater (section 55). With only one manager streaming these gains are on the high side; the earlier runs with all 12 teams streaming ranked the plans the same way.
 
 **On the site:** the Upgrades header states 7 moves and "keep the other 5", the "Stream a goalie tonight" card shows moves left out of 7, and a Goalies card appears when you carry more than 2, naming your weakest goalie this week.
 
@@ -555,6 +555,14 @@ The last game's result matters even when it wasn't a disaster. A goalie who won 
 ## 53. Goalie starts further into the week
 
 To project a week, the site predicts each goalie start in order and treats the likeliest goalie as having started before it predicts the next one. That chaining made it too sure about games later in the week. When it gave a goalie a 90%+ chance three or four games ahead, he actually started only 77-84% of them, so clear no. 1 goalies were overstated by about 0.2 starts every four games. **The site now softens the start chances for every game after the next one, moving them a little toward an even split, and leaves the next game alone.** That cut the overstatement from 0.21 to 0.08 starts and made the predictions better in all five seasons tested. Roughly 0.15 starts a week, about 0.4 projected points, move from clear no. 1s to their partners. A Daily Faceoff confirmation still overrides it.
+
+## 54. Trade ideas across positions
+
+The Trade ideas card used to pair forwards only with forwards and defensemen only with defensemen. In the same 2023-26 replays, forward-for-defenseman trades with the same ESPN projection and a 0.3+ Season rating gap won just as much, about 1 point a week per trade, in all three seasons. Getting a forward was worth a bit more (+1.24) than getting a defenseman (+0.71). **The card now offers trades across positions too**, as long as your roster afterwards still has 11-13 healthy forwards and 6-8 healthy defensemen, the shapes that scored best in the lineup simulations. For Jack's team that took the skaters with a trade idea from 5 to 9 of 15.
+
+## 55. The third goalie spot is the stream slot
+
+The plan the simulations score is 2 regular goalies plus one roster spot that holds the current stream. So a manager following it carries 3 goalies, the third being the last streamer. The Goalies card used to say "use the extra spot on a skater" whenever you had 3. Doing that literally burns a move every time and then forces you to drop a skater on the next stream, which cost about a fifth of a matchup win every 8 weeks in the replays. **With 3 healthy goalies the card now says the third spot is your stream slot and names the goalie to drop for tonight's confirmed starter. It suggests using a spot on a skater only when you carry 4 or more.**
 
 ## What the independent review changed
 
