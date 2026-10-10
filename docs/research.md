@@ -544,6 +544,10 @@ A player someone drops sits on waivers until ESPN's first overnight run (about 3
 
 The data used to refresh first at 9 AM ET. Before that the page still showed the previous evening's numbers: last night's games still counted, and on Monday it was still on last week's matchup. Three of the league's first nine adds came before 9 AM, and replays put the cost at about 3.4 points a week for a manager who makes moves in the morning. **The data now also refreshes at 6 AM ET.** When the page shows an earlier day's data, a note says so and the two cards about tonight are hidden.
 
+## 51. A goalie's next start after a bad game
+
+After a starter gives up 5+ goals, or is pulled after giving up 3+, coaches often go to the backup next time. The site's start model gave that goalie a 44% chance of starting the team's next game, but across 2021-26 he started only 31% of them, and the gap showed up in all five seasons. **The site now lowers his chance for the team's next game only, and moves the difference to his partner, until Daily Faceoff confirms a starter.** It's worth about 0.4 projected points for each goalie, mostly on the stream card before starters are confirmed.
+
 ## What the independent review changed
 
 | Review point | Outcome |
