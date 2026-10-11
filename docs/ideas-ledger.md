@@ -404,3 +404,44 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 327 | Oct 11 18:40 | thread "Sixth hunt" (agent) | Unmatched DFO Confirmed starter ignored | Murray Oct 10: Saros kept 0.90 for 5 runs | Shipped (PR #92, handoff 116) | findings 217 |
 | 328 | Oct 11 18:40 | thread "Sixth hunt" (agent) | Live start chance by rule vs actual, Oct 8-10 (134 games) | All within small-sample noise; morning Brier 0.186 | No change | findings 217 |
 | 329 | Oct 11 17:55 | routine | Non-last goalies by days since own last start on current main (relief/break/b2b/streak shifts live), plus idle-day shift fit, LOSO Brier, third of games 2021-26 | Idle 3 days 0.71 vs 0.77, 9-15 days 0.33 vs 0.26, 16+ 0.13 vs 0.10 (all 5 seasons); -0.4 / -0.3 / +0.3 shifts Brier -0.4% | No change (too small) | findings 218 |
+| 330 | Oct 11 18:55 | routine | Skater P(dresses) sweep for dressed-last-game players (dressed run, last-game TOI rank at position, team scratches in last 10, TOI trend), Monday rows 2024-26 with PR #54/#65/#68 shifts, LOSO fit | Lowest-TOI player 0.772 vs 0.733, others within 0.02; -0.2 fix Brier -0.19% (it was -0.6% before the PR #65/#68 shifts) | No change (covered by PRs #65/#68) | findings 219 |
+| 340 | Oct 11 19:40 | thread "Seventh hunt" (agent) | ESPN schedule view name typo | every run on scoreboard fallback; overnight fix inert | Pending (handoff 117) | findings 230 |
+| 341 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Teams with no game this week (Feb 1, 2027) / roster timeout | goalie Season 0, 'drop Swayman' | Pending (handoff 118) | findings 230 |
+| 342 | Oct 11 19:40 | thread "Seventh hunt" (agent) | check_data in 14-night playoff rounds | blocks every run Mar 8-Apr 4 | Pending (handoff 119) | findings 230 |
+| 343 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Open tab after puck drop | started games still offered | Pending (handoff 120) | findings 230 |
+| 344 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Injury/lineup feed outage | Shesterkin Season 0 to 2.08 | Pending (handoff 121) | findings 230 |
+| 345 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Empty MoneyPuck body, immediate NHL retries | run unrated | Pending (handoff 122) | findings 230 |
+| 346 | Oct 11 19:40 | thread "Seventh hunt" (agent) | check_data with no FAs / no injury statuses | passes silently | Pending (handoff 123) | findings 230 |
+| 347 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Season id fixed in code | next season publishes last season | Pending (handoff 124) | findings 230 |
+| 348 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Offseason skater movers x0.965 | ROS MSE/rank corr better 4/4 seasons, weekly 0 | Pending (handoff 125) | findings 230 |
+| 349 | Oct 11 19:40 | thread "Seventh hunt" (agent) | ESPN 'FA' but playing (Bunting) | 0 games 73/78 runs | Pending (handoff 126) | findings 230 |
+| 350 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Unmatched players, names, positions, ESPN vs NHL team, mid-season mover residual, run history, caching, repo growth | all fine | No change | findings 230 |
+| 351 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Sunday leftover moves capped at 2 (idea 54 re-test: real leftovers 9/12 teams) | 40 moves left Sunday, +2.8 to +9.1 keep per team | Pending (handoff 127) | findings 231 |
+| 352 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Activate from IR with full roster | teams 5, 11 told a move ESPN refuses | Pending (handoff 128) | findings 231 |
+| 353 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Drop list vs open IR slot | Zuccarello offered as drop 61 snapshots | Pending (handoff 129) | findings 231 |
+| 354 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Open roster spot unrecognized | team 7 told 2 needless drops | Pending (handoff 130) | findings 231 |
+| 355 | Oct 11 19:50 | thread "Seventh hunt" (agent) | IR stash cost with full roster | understated for 7/7 teams | Pending (handoff 131) | findings 231 |
+| 356 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Trade deadline check and settings logging | no deadline check | Pending (handoff 132) | findings 231 |
+| 357 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Goalie no. 1 back-to-back nights beyond next game / ordinary nights | Brier -0.53%, 5/5 seasons | Pending (handoff 133) | findings 231 |
+| 358 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Goalie points per start double-counts team strength | per-start error -1.5% 5/5, rank flat; optional | Pending (handoff 134) | findings 231 |
+| 359 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Scoring weights vs ESPN totals, settings, position limits, waiver order, goalie density/home-away/opponent/3-goalie/win model/pps shrink/b2b FP | all fine or already covered | No change | findings 231 |
+| 360 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Zero-rating check false alarm on no-game days | see findings 232 (1) | Pending (handoff 135) | findings 232 |
+| 361 | Oct 11 20:15 | thread "Seventh hunt" (agent) | 'Day N' nights once schedule view fixed | see findings 232 (2) | Pending (handoff 136) | findings 232 |
+| 362 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Playoff round week 1 wording | see findings 232 (3) | Pending (handoff 137) | findings 232 |
+| 363 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Final round wording | see findings 232 (4) | Pending (handoff 138) | findings 232 |
+| 364 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Post-season state | see findings 232 (5) | Pending (handoff 139) | findings 232 |
+| 365 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Morning odds from ESPN scoreboard | see findings 232 (6) | Pending (handoff 140) | findings 232 |
+| 366 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Phone tags cut (PR #93 regression) | see findings 232 (7) | Pending (handoff 141) | findings 232 |
+| 367 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Waiver status in details | see findings 232 (8) | Pending (handoff 142) | findings 232 |
+| 368 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Own players past 300 rows | see findings 232 (9) | Pending (handoff 143) | findings 232 |
+| 369 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Rostered FA-team player hidden | see findings 232 (10) | Pending (handoff 144) | findings 232 |
+| 370 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Tonight tags after puck drop | see findings 232 (11) | Pending (handoff 145) | findings 232 |
+| 371 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Stale note wording | see findings 232 (12) | Pending (handoff 146) | findings 232 |
+| 372 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Goalie per-start label | see findings 232 (13) | Pending (handoff 147) | findings 232 |
+| 373 | Oct 11 20:15 | thread "Seventh hunt" (agent) | 'last 10' label early season | see findings 232 (14) | Pending (handoff 148) | findings 232 |
+| 374 | Oct 11 20:15 | thread "Seventh hunt" (agent) | 'no injury discount' for preseason injured | see findings 232 (15) | Pending (handoff 149) | findings 232 |
+| 375 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Waiver player today_start | see findings 232 (16) | Pending (handoff 150) | findings 232 |
+| 376 | Oct 11 20:15 | thread "Seventh hunt" (agent) | 0.0 with badge | see findings 232 (17) | Pending (handoff 151) | findings 232 |
+| 377 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Pos sort, search, min games max | see findings 232 (18) | Pending (handoff 152) | findings 232 |
+| 378 | Oct 11 20:15 | thread "Seventh hunt" (agent) | DST, two-week rounds in fetch, weekOver, holiday weeks; DFO injuries, ownership trend, DFO PP1 points, O/U, pool gap; table consistency | fine or no signal | No change | findings 232 |
+| 379 | Oct 11 20:15 | thread "Seventh hunt" (agent) | ESPN goalie starterStatus; DTD skaters in DFO lines | promising but n too small | Waiting until Oct 30 review | findings 232 |
