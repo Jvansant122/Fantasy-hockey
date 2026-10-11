@@ -1065,6 +1065,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["sched"] = round(bonus, 2)
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
             why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid and not started else 0.0  # chance he starts tonight (stream card)
+            why["exp_starts"] = round(starts, 2)  # after tonight's start, waivers and news (findings 182)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
             p_dress = None
         else:
@@ -1166,7 +1167,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                      SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
                 if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
-            if in_lines:
+            if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
                 per_game = [dress_next] + per_game[1:]
             exp_games = sum(per_game)

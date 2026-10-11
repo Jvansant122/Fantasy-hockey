@@ -725,6 +725,10 @@ def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
     assert out[True]["cr"] == out[None]["cr"]
     assert out[False]["cr_dress_next"] >= rating.DFO_LINEUP_NEXT and out[False]["cr"] > out[None]["cr"]
     assert out[False]["sat_last"]  # still true; the page's Mid-week swaps card reads dfo_out to leave him out
+    # no game left this week: Daily Faceoff's lines don't make one up (findings 182)
+    players = [dict(espn(104, "Charlie McAvoy", "BOS", "D"), dfo_out=False, games_left=0)]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    assert players[0]["cr_games"] == 0 and players[0]["cr"] == 0
 
 
 def test_opening_games_cut_short(monkeypatch, tmp_path):

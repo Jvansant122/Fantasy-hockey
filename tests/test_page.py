@@ -190,6 +190,13 @@ def test_games_that_already_started_drop_out(browser, server, data):
     got = lambda pid: page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {pid}); return [p.games_left, p.cr]; }})()")
     assert got(sk["id"]) == [sk["games_left"] - 1, pytest.approx(max(0, sk["cr"] - sk["cr_fpg"] * min(sk["cr_dress_next"] or 0, sk["cr_games"])), abs=0.02)]
     assert got(later["id"])[0] == later["games_left"]
+    # the rest of the row follows (findings 182): no stale percentile, tonight's dot greyed, Open skips tonight
+    assert page.evaluate(f"state.data.players.find(p => p.id === {sk['id']}).cr_pct") is None
+    tonight = next(n for n in late["nights"] if not n["past"])
+    gone = page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {sk['id']}); const n = state.data.nights.find(n => !n.past); return [goneTonight(p, n), dots(p)]; }})()")
+    assert gone[0] is True
+    if tonight["sp"] in sk["nights"]:
+        assert gone[1].count("past") >= sum(n["past"] for n in late["nights"]) + 1
     for t in data["teams"]:
         page.select_option("#team", str(t["id"]))
     assert errors == []
