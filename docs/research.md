@@ -596,6 +596,10 @@ The Season rating's long-run start share had the same blind spot. It divided a t
 
 Section 60 fixed the chance a just-traded skater dresses this week. The Season rating had the same lean: for a skater in his first 10 games with a new team, it expected him to dress for 62-67% of the rest of the season, when such players actually dressed 71-72%. It was low in all four seasons checked. **The Season rating now gives those players a small bump (+0.3 on the log-odds scale, about 6 points of dress share) until his 11th game with the new team.** That's worth about half a point a week of keep value per player. Nearly all of them are free agents, so this mostly affects who shows up as a pickup or next Monday's target after a trade.
 
+## 64. A traded player before his first game for the new team
+
+The site took a skater's team from his last NHL game, not from ESPN. So after a trade, every game his old team played before he suited up for the new one counted as a game he missed. For a few days he looked like a scratch: about 40-50% to dress this week and 30-37% for the next game, when a player in that spot dresses about 90% of the time. That happened about 25-30 times a season, right when people look at him on the wire. **When ESPN lists a skater on a different team from his last game, the site now stops counting his old team's games after his last one and gives him the just-traded boost from section 60 from his first game with the new team.** In the replay that takes him to about 88% for the week and 94% for the next game. His games this week already came from ESPN's team.
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -503,6 +503,23 @@ def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
     assert matthews(0, 0.45) == matthews(0, 0.0)  # never moved
 
 
+def test_traded_before_first_game_for_new_team(monkeypatch, tmp_path):
+    """ESPN lists him on a new team but he hasn't played for it: his old team's later games aren't misses and the
+    new-team shift applies (findings 159)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def mcavoy(espn_team):
+        fake = FakeSession(scratched=())
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(104, "Charlie McAvoy", espn_team, "D"), espn(101, "Auston Matthews", "TOR", "C")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    stayed, moved = mcavoy("BOS"), mcavoy("TOR")  # BOS played once after his last game
+    assert stayed["sat_last"] and not moved["sat_last"]
+    assert moved["cr_dress_next"] > 0.85 > stayed["cr_dress_next"]
+    assert moved["cr_dress"] > stayed["cr_dress"]
+
+
 def test_dress_chance_by_game():
     """A skater who missed his team's last game is less likely to play the next one than later ones; a regular the
     reverse; caps still apply (findings 147)."""
