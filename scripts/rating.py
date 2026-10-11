@@ -70,6 +70,8 @@ BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its last: last starter's next-game logit (findings 196)
 # second night of a back-to-back, night-1 starter's logit: the team's no. 1 rests more, a backup who played goes again (findings 200)
 B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
+# the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
+STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
 # a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
@@ -777,6 +779,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     ahead = 0  # unplayed team games so far: 0 is the next one
     shift_gid, shifts = last_start or (None, ())
     new_team = {gid for gid in cands if gid in movers and 1 <= seq.count(gid) <= NEW_TEAM_STARTS}
+    run = next((i for i, x in enumerate(reversed(seq)) if x != seq[-1]), len(seq)) if seq else 0
+    on_streak = STREAK_RANGE[0] <= run <= STREAK_RANGE[1]
     relieved = {gid: RELIEF_RARE_LOGIT if seq[-20:].count(gid) <= RELIEF_RARE_STARTS else 0.0 for gid in relief if gid in cands}
     for d in sorted(game_dates):
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
@@ -804,7 +808,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                                       "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
             z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
-                + (rested if rested and gid == seq[-1] else 0.0)
+                + (rested if rested and gid == seq[-1] else 0.0) \
+                + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0)
             if gid in relieved:
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if z and 0 < raw[gid] < 1:
