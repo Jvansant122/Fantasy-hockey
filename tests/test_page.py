@@ -285,3 +285,140 @@ def test_goalie_in_net_fills_his_slot_and_swaps_need_games(browser, server, data
     assert "gm left" not in swaps
     assert errors == []
     ctx.close()
+
+
+def _now_et():
+    from datetime import datetime, timedelta, timezone
+    return datetime.now(timezone.utc), datetime.now(timezone(timedelta(hours=-4)))
+
+
+def _mine(d, team, pos=None):
+    return [p for p in d["players"] if str(p.get("team_id")) == str(team["id"]) and (pos is None or (p["pos"] == "G") == (pos == "G"))]
+
+
+def test_week_ties_sort_by_keep_value(browser, server, data):
+    """From Sunday's first puck every free agent's Week is 0.0: the table lists them by keep value (findings 211)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    for p in d["players"]:
+        if p["owner"] in ("freeagent", "waivers"):
+            p["cr"], p["cr_games"], p["games_left"] = 0, 0, 0
+    ctx, page, errors = open_page(browser, server, data=d)
+    keeps = page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].slice(0, 30).map(r => keep(state.data.players.find(p => p.id === +r.dataset.id)))")
+    assert len(keeps) > 5 and keeps == sorted(keeps, reverse=True)
+    assert errors == []
+    ctx.close()
+
+
+def test_trade_check_and_ideas_keep_roster_shape(browser, server, data):
+    """A 2-for-1 never drops a goalie (unless goalies are in the trade); trade ideas leave the partner 11-13 F and 6-8 D (findings 211)."""
+    import re
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    team = next(t for t in d["teams"] if len([p for p in _mine(d, t, "G") if not p.get("ir")]) >= 2)
+    g = next(p for p in _mine(d, team, "G") if not p.get("ir"))
+    g.update(cr=0, cr_season=0, injury=None)  # lowest keep value on the team
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    give = next(p for p in _mine(d, team) if p["pos"] != "G" and not p.get("ir"))
+    page.select_option("#tgive", str(give["id"]))
+    for _ in range(2):
+        page.select_option("#tget", page.locator("#tget option:not([value=''])").first.get_attribute("value"))
+    text = page.locator("#trade").inner_text()
+    assert "drop" in text and g["name"] not in text.split("drop", 1)[1]
+    # trade ideas: the partner keeps a legal shape
+    by_name = {p["name"]: p for p in d["players"]}
+    names = {t["name"]: t["id"] for t in d["teams"]}
+    grp = lambda p: "G" if p["pos"] == "G" else "D" if p["pos"] == "D" else "F"
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        for line in page.locator("#upgrades").inner_text().splitlines():
+            m = re.match(r"Offer (.+?)(?: \((F|D)\))? for (.+?)(?: \((F|D)\))? \((.+?)\) ·", line)
+            if not m or not m.group(2):
+                continue
+            mine_p, theirs_p, partner = by_name[m.group(1)], by_name[m.group(3)], names[m.group(5)]
+            healthy = [p for p in d["players"] if str(p.get("team_id")) == str(partner) and p["pos"] != "G" and not p.get("ir") and not p.get("injury")]
+            f = sum(grp(p) == "F" for p in healthy) + (grp(mine_p) == "F") - (grp(theirs_p) == "F")
+            dd = len(healthy) - sum(grp(p) == "F" for p in healthy) + (grp(mine_p) == "D") - (grp(theirs_p) == "D")
+            assert 11 <= f <= 13 and 6 <= dd <= 8, line
+    assert errors == []
+    ctx.close()
+
+
+def test_tonight_card_counts_started_players(browser, server, data):
+    """Players whose game started already fill slots; only the rest are offered for the bench (findings 211)."""
+    from datetime import timedelta
+    if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
+        pytest.skip("needs rated data with a night left")
+    now, et = _now_et()
+    iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    d = json.loads(json.dumps(data))
+    d["updated_date"], d["updated_utc"] = et.date().isoformat(), iso(now)
+    sp = next(n for n in d["nights"] if not n["past"])["sp"]
+    team = d["teams"][0]
+    sk = [p for p in _mine(d, team) if p["pos"] != "G"]
+    for p in sk:
+        p.update(ir=False, injury=None, sat_last=False, dfo_out=None, today_start=None)
+        p["nights"] = sorted(set(p["nights"]) | {sp})
+    fwd = [p for p in sk if p["pos"] != "D"]
+    if len(fwd) < 10 or len(sk) - len(fwd) < 5:
+        pytest.skip("team too small")
+    started = fwd[:3]
+    for p in started:
+        p["today_start"] = iso(now - timedelta(minutes=30))
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    card = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.innerText).find(t => t.startsWith('Tonight')) || ''")
+    benched = [p for p in sk if p["name"] in card.split("bench these", 1)[-1]]
+    assert len(benched) == len(sk) - 15
+    assert not any(p in started for p in benched)
+    assert errors == []
+    ctx.close()
+
+
+def test_goalies_card_after_first_puck(browser, server, data):
+    """After the first puck the Goalies card says a stream counts from tomorrow, not tonight (findings 211)."""
+    from datetime import timedelta
+    if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
+        pytest.skip("needs rated data with a night left")
+    now, et = _now_et()
+    d = json.loads(json.dumps(data))
+    d["updated_date"], d["move_limit"] = et.date().isoformat(), None
+    d["first_start"] = (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    team = d["teams"][0]
+    gs = [p for p in d["players"] if p["pos"] == "G"]
+    for p in _mine(d, team, "G"):
+        p["team_id"] = None
+    for p in [p for p in gs if p["owner"] in ("freeagent", "waivers")][:3]:
+        p.update(team_id=team["id"], owner=str(team["id"]), ir=False, injury=None)
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    text = page.locator("#upgrades").inner_text()
+    goalies = text[text.index("Goalies ·"):]
+    assert "open tonight" not in goalies and ("from tomorrow" in goalies or "next matchup" in goalies)
+    assert errors == []
+    ctx.close()
+
+
+def test_monday_before_first_run_resets_moves(browser, server, data):
+    """Data from a matchup that already ended: moves are reset, not 'no moves left' (findings 211)."""
+    from datetime import timedelta
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    now, et = _now_et()
+    yday = (et - timedelta(days=1)).date()
+    d = json.loads(json.dumps(data))
+    d["updated_date"] = yday.isoformat()
+    d["nights"][-1]["date"] = f"Sun {yday.day}"
+    d["move_limit"] = 7
+    for t in d["teams"]:
+        t["moves_used"] = 7
+    ctx, page, errors = open_page(browser, server, data=d)
+    assert page.evaluate("weekOver(state.data)") is True
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        assert "next Monday's targets" not in page.locator("#upgrades").inner_text()
+    assert errors == []
+    ctx.close()
