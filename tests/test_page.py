@@ -615,7 +615,7 @@ def test_roster_size_rules(browser, server, data):
     healthy_ir, hurt = sk[0], sk[1]
     healthy_ir["ir"] = True
     hurt["injury"] = "INJURY_RESERVE"
-    d["ir_slots"] = 2  # one open
+    d["ir_slots"] = 3  # two open: one for the IR move, one for the stash (findings 240)
     non_ir = len(roster) - 1
     d["roster_max"], d["move_limit"], team["moves_used"] = non_ir, 7, 0
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")  # worth stashing
@@ -635,8 +635,23 @@ def test_roster_size_rules(browser, server, data):
     assert all(not l.startswith("Add ") for l in best[1:])
     stash = _card(page, "IR stash")
     assert "Your roster is full" in stash and "(2 moves)" in stash
+    # the IR move took one of the two open IR slots (handoff 212)
+    assert "· 1 open IR slot." in stash, stash
+    # Activate, Best moves and IR stash each drop a different player (handoff 213)
+    best_drops = [l.split(" for ", 1)[1].split(" +", 1)[0] for l in best if " for " in l]
+    assert best_drops and named not in best_drops, (named, best_drops)
+    stash_drop = stash.split("Your roster is full: drop ", 1)[1].split(", add him", 1)[0]
+    assert stash_drop != named and stash_drop not in best_drops, (named, best_drops, stash_drop)
     assert errors == []
     ctx.close()
+    # only one IR slot open and the Drop list's IR move takes it: no IR stash (handoff 212)
+    d["ir_slots"] = 2
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    assert "Move to IR" in _card(page, "Drop list") and _card(page, "IR stash") == ""
+    assert errors == []
+    ctx.close()
+    d["ir_slots"] = 3
     # full, nothing to move to IR, one move left: no open spot, and no stash that needs two moves
     hurt["injury"] = None
     team["moves_used"] = 6
@@ -1328,3 +1343,215 @@ def test_wide_desktop_and_all_columns_on_phones(browser, server, data):
     assert page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return w.scrollWidth <= w.clientWidth + 1; })()")
     assert errors == []
     ctx.close()
+
+
+def _sunday(data):
+    """The data as a Sunday 3 PM ET run on Oct 11, 2026: Sunday the matchup's last night, first puck at 5 PM ET, 7 moves."""
+    d = json.loads(json.dumps(data))
+    d.update(updated_date="2026-10-11", updated="Sun Oct 11, 3:00 PM ET", updated_utc="2026-10-11T19:00:00Z",
+             first_start="2026-10-11T21:00:00Z", final_matchup=False, move_limit=7, matchup_weeks=1, season_over=False)
+    d["nights"][-1]["date"] = "Sun 11"
+    for n in d["nights"]:
+        n["past"] = n is not d["nights"][-1]
+    last = d["nights"][-1]["sp"]
+    for p in d["players"]:
+        p["today_start"] = d["first_start"] if last in (p.get("nights") or []) else None
+    for t in d["teams"]:
+        t["moves_used"] = 0
+    return d
+
+
+def test_monday_before_rollover_says_nothing_expires(browser, server, data):
+    """Monday 0-4 AM, Sunday's data still has Sunday as tonight: no 'expire tonight ... before the first game' (handoff 210)."""
+    from datetime import datetime, timezone
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _sunday(data)
+    for clock, want in ((datetime(2026, 10, 11, 20, 0, tzinfo=timezone.utc), True),   # Sun 4 PM ET: before the first puck
+                        (datetime(2026, 10, 12, 4, 30, tzinfo=timezone.utc), False),  # Mon 0:30 AM ET
+                        (datetime(2026, 10, 12, 7, 30, tzinfo=timezone.utc), False)):  # Mon 3:30 AM ET
+        ctx, page, errors = open_page(browser, server, data=d, clock=clock)
+        assert page.evaluate("weekOver(state.data)") is False
+        seen = 0
+        for t in d["teams"]:
+            page.select_option("#team", str(t["id"]))
+            seen += "expire tonight" in page.locator("#upgrades").inner_text()
+        assert (seen > 0) == want, (clock, seen)
+        assert errors == []
+        ctx.close()
+
+
+def test_swap_ir_move_isnt_an_open_spot_twice(browser, server, data):
+    """A Mid-week swap of an IR-eligible player uses the spot his IR move opens, so Best moves gets no 'open roster spot';
+    only the player who actually fits the open IR slot is told to move to IR (handoff 211)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _fresh(data)
+    d["move_limit"] = 7
+    team = d["teams"][0]
+    team["moves_used"] = 0
+    roster = _mine(d, team)
+    for p in roster:
+        p.update(ir=False, injury=None, sat_last=False)
+    sk = sorted((p for p in roster if p["pos"] != "G"), key=lambda p: -(p.get("cr_season") or 0))
+    out1, out2 = sk[0], sk[1]  # two out, one IR slot: only one can move to IR
+    for p in (out1, out2):
+        p.update(injury="OUT", games_left=max(p["games_left"], 1))
+    d["ir_slots"], d["roster_max"] = 1, len(roster)
+    for p in d["players"]:  # free agents with a game left, whatever the clock, so the swaps get subs
+        if p["owner"] in ("freeagent", "waivers"):
+            p.update(games_left=max(p["games_left"], 1), today_start=None)
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    swaps = _card(page, "Mid-week swaps")
+    assert swaps.count("→") == 2, swaps
+    assert len([l for l in swaps.split("\n") if "IR-eligible" in l]) == 1, swaps
+    best = _card(page, "Best")
+    assert best and "open roster spot" not in best, best
+    assert errors == []
+    ctx.close()
+    # one out player and 2 moves left: one swap and one Best move, and the swap uses the IR move's spot
+    team["moves_used"] = 5
+    out2["injury"] = None
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    swaps, best = _card(page, "Mid-week swaps"), _card(page, "Best")
+    assert swaps.count("→") == 1 and "IR-eligible" in swaps, swaps
+    assert best and "open roster spot" not in best, best
+    assert errors == []
+    ctx.close()
+
+
+def test_final_with_no_moves_shows_no_drops(browser, server, data):
+    """The final with every move used: no Drop list, no 'fourth goalie' advice; with moves, the goalie line has no keep value
+    and says 'lowest points left' (handoff 214)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _fresh(data)
+    d["final_matchup"], d["move_limit"] = True, 7
+    team = d["teams"][0]
+    for p in _mine(d, team, "G"):
+        p["team_id"] = None
+    for p in [p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_why")][:4]:
+        p.update(team_id=team["id"], owner="other", ir=False, injury=None)
+    for used, shown in ((7, False), (0, True)):
+        team["moves_used"] = used
+        ctx, page, errors = open_page(browser, server, data=d)
+        page.select_option("#team", str(team["id"]))
+        text = page.locator("#upgrades").inner_text()
+        goalies = _card(page, "Goalies")
+        if not shown:
+            assert _card(page, "Drop list") == "" and "fourth spot" not in text and goalies == "", text
+        else:
+            assert "fourth spot" in goalies and _card(page, "Drop list")
+            lines = [l for l in goalies.split("\n")[1:] if l.strip()]
+            assert lines and all("keep" not in l and "lowest points left" in l for l in lines), goalies
+        assert errors == []
+        ctx.close()
+
+
+def test_trade_check_counts_an_ir_move_spot(browser, server, data):
+    """A full roster with an IR-eligible player outside IR and an IR slot open: a 1-for-2 needs no drop (handoff 215)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    team, other = d["teams"][0], d["teams"][1]
+    mine = _mine(d, team)
+    for p in mine:
+        p.update(ir=False, injury=None)
+    sk = [p for p in mine if p["pos"] != "G"]
+    hurt = sk[-1]
+    hurt["injury"] = "OUT"
+    d["ir_slots"], d["roster_max"] = 1, len(mine)
+    theirs = [p for p in _mine(d, other) if p["pos"] != "G" and not p["ir"]]
+    for p in theirs:
+        p["injury"] = None
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    text = _trade(page, [sk[0]["id"]], [theirs[0]["id"], theirs[1]["id"]])
+    assert f"Moving {hurt['name']} to IR opens the spot, so you drop nobody." in text, text
+    assert "You'd need to drop" not in text
+    # 1-for-3: the IR move opens one spot, the other still needs a drop
+    text = _trade(page, [sk[0]["id"]], [theirs[0]["id"], theirs[1]["id"], theirs[2]["id"]])
+    assert f"Move {hurt['name']} to IR, and then you'd need to drop" in text, text
+    # giving the injured player away: no IR move to count
+    text = _trade(page, [hurt["id"]], [theirs[0]["id"], theirs[1]["id"]])
+    assert "to IR" not in text and "You'd need to drop" in text, text
+    assert errors == []
+    ctx.close()
+
+
+def test_ir_stash_counts_best_moves(browser, server, data):
+    """IR stash needs a move left after Best moves takes its picks (handoff 216)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _fresh(data)
+    d["move_limit"] = 7
+    team = d["teams"][0]
+    roster = _mine(d, team)
+    for p in roster:
+        p.update(ir=False, injury=None, sat_last=False)
+    d["ir_slots"], d["roster_max"] = 1, len(roster) + 1  # an open IR slot and an open roster spot
+    fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")
+    fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
+    fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
+    for used, shown in ((0, True), (5, False)):  # 7 left: room for it; 2 left: Best moves takes both
+        team["moves_used"] = used
+        ctx, page, errors = open_page(browser, server, data=d)
+        page.select_option("#team", str(team["id"]))
+        best = [l for l in _card(page, "Best").split("\n")[1:] if l.strip()]
+        assert len(best) == 2, best
+        assert bool(_card(page, "IR stash")) == shown, (used, _card(page, "IR stash"))
+        assert errors == []
+        ctx.close()
+
+
+def test_reload_keeps_trade_picks(browser, server, data):
+    """Trade check's picks come back after a reload (the open tab reloads at each game start) and clear with a new team (handoff 217)."""
+    ctx, page, errors = open_page(browser, server)
+    team, other = data["teams"][0], data["teams"][1]
+    give = next(p for p in _mine(data, team) if p["pos"] != "G")
+    get = next(p for p in _mine(data, other) if p["pos"] != "G")
+    page.select_option("#team", str(team["id"]))
+    page.select_option("#tgive", str(give["id"]))
+    page.select_option("#tget", str(get["id"]))
+    page.reload()
+    page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
+    assert page.evaluate("[state.tgive, state.tget]") == [[give["id"]], [get["id"]]]
+    text = page.locator("#trade").inner_text()
+    assert give["name"] in text and get["name"] in text and "points a week" in text
+    page.select_option("#team", str(other["id"]))
+    page.reload()
+    page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
+    assert page.evaluate("[state.tgive, state.tget]") == [[], []]
+    assert errors == []
+    ctx.close()
+
+
+def test_player_dropped_after_first_puck_frees_his_spot(browser, server, data):
+    """A player dropped after the first puck (pending_drop) holds no roster spot and is never offered as a drop or trade (handoff 220)."""
+    from datetime import datetime, timezone
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _sunday(data)
+    team = d["teams"][0]
+    roster = _mine(d, team)
+    for p in roster:
+        p.update(ir=False, injury=None, sat_last=False)
+    d["roster_max"], d["ir_slots"] = len(roster), 1
+    gone = min((p for p in roster if p["pos"] != "G"), key=lambda p: (p.get("cr") or 0) + 7 * (p.get("cr_season") or 0))
+    clock = datetime(2026, 10, 11, 22, 0, tzinfo=timezone.utc)  # Sun 6 PM ET, after the first puck
+    for pending in (False, True):
+        gone["pending_drop"] = pending
+        ctx, page, errors = open_page(browser, server, data=d, clock=clock)
+        page.select_option("#team", str(team["id"]))
+        drops, best = _card(page, "Drop list"), _card(page, "Best").split("\n")[1:]
+        assert best, best
+        # full roster: every Best move needs a drop, and he's first on the Drop list; dropped already: one spot is open
+        assert (gone["name"] in drops) == (not pending), drops
+        assert ("open roster spot" in best[0]) == pending, best
+        assert not pending or not any(f" for {gone['name']}" in l for l in best), best
+        give = page.evaluate("[...document.querySelectorAll('#tgive option')].map(o => +o.value)")
+        assert (gone["id"] in give) == (not pending)
+        assert errors == []
+        ctx.close()
