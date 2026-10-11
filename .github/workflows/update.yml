@@ -48,7 +48,7 @@ jobs:
       # A bad ESPN answer stops here, so the site keeps the last good data
       - name: Check data
         if: steps.gate.outputs.skip != 'true'
-        run: python scripts/check_data.py
+        run: python scripts/check_data.py --against-head
       - name: Commit data
         if: steps.gate.outputs.skip != 'true'
         run: |

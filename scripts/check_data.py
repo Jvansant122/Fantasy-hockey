@@ -1,12 +1,15 @@
 """Check data/players.json before the update workflow publishes it.
 
-    python scripts/check_data.py                  # exit 1 if the page couldn't render this data
+    python scripts/check_data.py                  # exit 1 if the page couldn't render this data or it breaks a rule below
+    python scripts/check_data.py --against-head   # ... also compared with the published copy (git HEAD), warnings included
     python scripts/check_data.py --require-rated  # also exit 1 if the Claude Rating is missing
 
 Standard library only, like the other daily scripts. tests/test_site_contract.py runs the same checks."""
 import json
-from datetime import date
+import statistics
+import subprocess
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,6 +19,10 @@ PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir",
                  "games", "games_left", "light", "light_left", "nights", "dfo_out", "games_next2", "last_gp", "clears", "today_start"}
 RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_dress_next", "cr_matched", "cr_why", "cr_pct", "cr_season", "cr_season_pct", "sat_last"}
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
+EPS = 0.02  # rounding slack: values are rounded to 2 decimals
+# ESPN scoring period 1 of the 2027 season (sp 7 = Mon Oct 5, 2026): the day-0 the nights' sp count from. Update each season;
+# the check is skipped once the data is more than 300 days past it
+SP1 = date(2026, 9, 29)
 
 
 def problems(data):
@@ -51,13 +58,168 @@ def problems(data):
         out.append(f"{len(bad)} players missing fields, e.g. {bad[0]}")
     if data["rated"] and players and all(not p.get("cr") for p in players):
         out.append("rated is true but every Claude Rating is 0")
+    if not out:
+        out += rules(data)
     return out
+
+
+def _night_dates(data):
+    """{sp: date} from the 'Mon 5' labels: the date within 10 days of updated_date with that day of the month."""
+    t = date.fromisoformat(data["updated_date"])
+    out = {}
+    for n in data["nights"]:
+        dom = n["date"].split()[-1]
+        if not dom.isdigit():
+            return {}
+        out[n["sp"]] = next((t + timedelta(days=k) for k in range(-10, 11) if (t + timedelta(days=k)).day == int(dom)), None)
+    return out
+
+
+def rules(data):
+    """Rules every published version keeps (findings 215: across all 61 versions to Oct 11 these catch the overnight
+    shift, a made-up game, starts for a goalie with no games and the first-puck bugs, with no false alarms)."""
+    out, nights, players, rated = [], data["nights"], data["players"], data["rated"]
+    sps = [n["sp"] for n in nights]
+    ahead = [n["sp"] for n in nights if not n["past"]]
+    today_sp = ahead[0] if ahead else None
+    # N1 scoring periods consecutive, each on its real date (the overnight shift, findings 180)
+    if sps != list(range(sps[0], sps[0] + len(sps))):
+        out.append(f"N1 night scoring periods not consecutive: {sps}")
+    nd = _night_dates(data)
+    if nd and 0 <= (min(d for d in nd.values() if d) - SP1).days <= 300:
+        bad = [(sp, str(d)) for sp, d in nd.items() if d and (d - SP1).days + 1 != sp]
+        if bad:
+            out.append(f"N1 scoring period doesn't match its date (ESPN day not rolled over?): {bad[:3]}")
+    # N2 no more teams playing a night than 2 per game
+    team_nights = {}
+    for p in players:
+        team_nights.setdefault(p["team"], set()).update(p.get("nights") or [])
+    for n in nights:
+        teams = sum(n["sp"] in v for k, v in team_nights.items() if k != "FA")
+        if teams > 2 * n["games"]:
+            out.append(f"N2 {n['date']}: {teams} teams play but {n['games']} games")
+    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1")}
+    for p in players:
+        nm = f"{p['name']} ({p['team']})"
+        pn = p.get("nights") or []
+        # P2 games left = his nights from today, less tonight once his game has started (findings 178); waiver players at most that
+        left = sum(sp in ahead for sp in pn)
+        ts = p.get("today_start")
+        want = left - (1 if today_sp in pn and ts and data.get("updated_utc") and ts <= data["updated_utc"] else 0)
+        if p.get("owner") == "waivers" and p["games_left"] > left or p.get("owner") != "waivers" and p["games_left"] != want:
+            bad["P2"].append(f"{nm} games_left {p['games_left']}, want {want}")
+        if not rated:
+            continue
+        cr, fpg, g = p.get("cr") or 0, p.get("cr_fpg") or 0, p.get("cr_games") or 0
+        # P3 expected games between 0 and games left (a made-up game, findings 182)
+        if g > p["games_left"] + EPS or g < 0:
+            bad["P3"].append(f"{nm} cr_games {g} with {p['games_left']} left")
+        # P4 Week = points a game x expected games
+        if abs(cr - fpg * g) > 0.006 + 0.005 * (g + abs(fpg)):
+            bad["P4"].append(f"{nm} cr {cr} != {fpg} x {g}")
+        # P5 a skater's Season (per team game) never above his points a game
+        if p["pos"] != "G" and p.get("cr_season") is not None and p["cr_season"] > fpg + EPS:
+            bad["P5"].append(f"{nm} cr_season {p['cr_season']} > cr_fpg {fpg}")
+        # P6 dress chances are probabilities
+        for k in ("cr_dress", "cr_dress_next"):
+            if p.get(k) is not None and not 0 <= p[k] <= 1:
+                bad["P6"].append(f"{nm} {k} {p[k]}")
+        # G1 a goalie's expected starts never above his games left or his team's games
+        why = p.get("cr_why") or {}
+        es = why.get("exp_starts") if p["pos"] == "G" else None
+        if es is not None and (es > p["games_left"] + EPS or why.get("team_games", p["games_left"]) < es - EPS):
+            bad["G1"].append(f"{nm} exp_starts {es} of {why.get('team_games')} team games, {p['games_left']} left")
+    out += [f"{k} {len(v)} players, e.g. {v[:3]}" for k, v in bad.items() if v]
+    if rated:
+        # G2 a team's goalies' expected starts sum to at most its games left
+        by_team = {}
+        for p in players:
+            es = (p.get("cr_why") or {}).get("exp_starts") if p["pos"] == "G" else None
+            if es is not None:
+                t = by_team.setdefault(p["team"], [0.0, 0])
+                t[0], t[1] = t[0] + es, max(t[1], p["games_left"])
+        over = [(t, round(v, 2), gl) for t, (v, gl) in by_team.items() if v > gl + 0.05]
+        if over:
+            out.append(f"G2 goalie starts above team games: {over[:4]}")
+    return out
+
+
+def _gp(p):
+    return (p.get("cr_why") or {}).get("gp") or 0
+
+
+def problems_vs_prev(data, prev):
+    """Rules between this version and the published one."""
+    out = []
+    if not (data.get("rated") and prev and prev.get("rated")):
+        return out
+    # X1 a scoring period keeps its date within a matchup (findings 180)
+    if data.get("matchup_period") == prev.get("matchup_period"):
+        was = {n["sp"]: n["date"] for n in prev["nights"]}
+        moved = [(n["sp"], was[n["sp"]], n["date"]) for n in data["nights"] if n["sp"] in was and was[n["sp"]] != n["date"]]
+        if moved:
+            out.append(f"X1 scoring periods moved date since the last version: {moved[:3]}")
+    # X2 games played never go back (an overnight run dropping last night's games, findings 183)
+    old = {p["id"]: p for p in prev["players"]}
+    same = [(p, old[p["id"]]) for p in data["players"] if p["id"] in old and p["pos"] != "G"]
+    now, was = sum(_gp(p) for p, _ in same), sum(_gp(o) for _, o in same)
+    if now < was - 20:
+        out.append(f"X2 skater games played fell {was} -> {now}: last night's games missing")
+    return out
+
+
+def warnings(data, prev):
+    """Signs of a model change gone wrong: printed, never blocking (findings 215)."""
+    out = []
+    if not data.get("rated"):
+        return out
+    players = data["players"]
+    # W1 ESPN's goalie games below his NHL starts: This yr/G inflated (findings 182)
+    lag = [p["name"] for p in players if p["pos"] == "G" and (p.get("cr_why") or {}).get("gs") and p.get("gp") is not None
+           and p["gp"] < p["cr_why"]["gs"]]
+    if lag:
+        out.append(f"W1 {len(lag)} goalies' ESPN games below NHL starts: {lag[:4]}")
+    if not (prev and prev.get("rated")):
+        return out
+    old = {p["id"]: p for p in prev["players"]}
+    same = [(p, old[p["id"]]) for p in players if p["id"] in old and p["pos"] != "G"]
+    # X3 skaters with no new game shouldn't move much: PR #86 moved them median 0.030, p90 0.090; 25 other model PRs stayed under
+    quiet = [(p, o) for p, o in same if p.get("cr_matched") and o.get("cr_fpg") is not None and p.get("cr_fpg") is not None
+             and _gp(p) == _gp(o)]
+    if len(quiet) >= 50:
+        d = sorted(abs(p["cr_fpg"] - o["cr_fpg"]) for p, o in quiet)
+        med, p90 = statistics.median(d), d[int(0.9 * len(d))]
+        if med > 0.02 or p90 > 0.05:
+            out.append(f"X3 {len(quiet)} skaters without a new game moved: median |change in pts/game| {med:.3f}, 90th percentile {p90:.3f}")
+        zero = [abs(p["cr_fpg"] - o["cr_fpg"]) for p, o in quiet if not _gp(p)]
+        if len(zero) >= 10 and statistics.median(zero) > 0.02:
+            out.append(f"X3b {len(zero)} skaters with no NHL games moved: median {statistics.median(zero):.3f}")
+    # X4 next-game dress up more than 0.15 with no game and no status change (a misfiring boost, findings 183 and 213)
+    jumps = [p["name"] for p, o in same if p.get("cr_dress_next") is not None and o.get("cr_dress_next") is not None
+             and p["cr_dress_next"] - o["cr_dress_next"] > 0.15 and p.get("injury") == o.get("injury")
+             and p.get("dfo_out") == o.get("dfo_out") and _gp(p) == _gp(o)]
+    if jumps:
+        out.append(f"X4 {len(jumps)} skaters' next-game dress rose by over 0.15 with no game or status change: {jumps[:5]}")
+    return out
+
+
+def published():
+    """The copy of players.json at git HEAD, or None."""
+    try:
+        return json.loads(subprocess.run(["git", "show", "HEAD:data/players.json"], cwd=ROOT, capture_output=True, check=True).stdout)
+    except (subprocess.CalledProcessError, ValueError, OSError):
+        return None
 
 
 def main(argv):
     path = ROOT / "data" / "players.json"
     data = json.loads(path.read_text())
     errs = problems(data)
+    if "--against-head" in argv:
+        prev = published()
+        errs += problems_vs_prev(data, prev) if not errs else []
+        for w in warnings(data, prev):
+            print(f"::warning::{w}")
     if "--require-rated" in argv and not data.get("rated"):
         errs.append("published without the Claude Rating: the rating step failed (see the 'python scripts/fetch.py' step's log)")
     for e in errs:
