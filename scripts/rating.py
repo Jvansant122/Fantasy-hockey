@@ -100,6 +100,9 @@ SCRATCH_LOGIT = 0.5
 # a skater who dressed for his team's last game in his first 1-3 games after a trade or waiver claim: the new team plays
 # him more than his old-team dressed share says (0.78 to 0.85 per game against 0.86 actual, findings 155)
 NEW_TEAM_LOGIT, NEW_TEAM_GAMES = 0.45, 3
+# the Season rating's rest-of-season dress share for a skater in his first 1-10 games for a new team (0.62-0.67 against
+# 0.71-0.72 actual, findings 158)
+NEW_TEAM_SEASON_LOGIT, NEW_TEAM_SEASON_GAMES = 0.3, 10
 
 
 def dress_by_game(base, n, sat_last, cap, shift=0.0):
@@ -406,10 +409,10 @@ class Model:
         sd = ROOT / "model" / "season_dress.json"
         self.season_lr = json.loads(sd.read_text()) if sd.exists() else None
 
-    def season_dress(self, x):
+    def season_dress(self, x, shift=0.0):
         """Share of the team's remaining games he dresses (rest-of-season logistic, findings section 56)."""
         m = self.season_lr
-        z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items())
+        z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items()) + shift
         return 1 / (1 + math.exp(-z))
 
     def fpg(self, feats):
@@ -940,9 +943,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # just traded or claimed: 1-3 games for his current team after games for another team this season
             run = next((k for k, g in enumerate(reversed(gl)) if g["team"] != gl[-1]["team"]), None) if gl else None
             new_team = not sat_last and run is not None and 1 <= run <= NEW_TEAM_GAMES
+            here = sum(g["team"] == gl[-1]["team"] for g in gl) if gl else 0
+            new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             if df_ and model.season_lr:
-                season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]))
+                season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]),
+                                                 NEW_TEAM_SEASON_LOGIT * new_team_season)
             elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
                 # hurt or suspended before playing this season: such regulars dress for ~41% of the rest, not the idle cap's
                 # 10% (findings 74; suspensions take the short-injury share, findings 118)

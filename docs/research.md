@@ -592,6 +592,10 @@ The goalie start model counts only this season's starts for a goalie's current t
 
 The Season rating's long-run start share had the same blind spot. It divided a traded or claimed goalie's starts for his new team by every game that team had played this season, including the games before he got there. So a goalie with 1-3 starts for his new team read as an 11% starter when he went on to make about a third of the team's next 20 starts, and one with 4-8 starts read as 19% against 33%. **His share now counts only the team's games since his first start for it**, same formula as everyone else. That brings him to 29-31% and cuts the error by about a third. Other goalies are unchanged. A share that's 15-20 points too low is worth about 0.4-0.5 points a game of Season rating, enough to make a traded-in starter look like a drop.
 
+## 63. The Season rating for skaters who just changed teams
+
+Section 60 fixed the chance a just-traded skater dresses this week. The Season rating had the same lean: for a skater in his first 10 games with a new team, it expected him to dress for 62-67% of the rest of the season, when such players actually dressed 71-72%. It was low in all four seasons checked. **The Season rating now gives those players a small bump (+0.3 on the log-odds scale, about 6 points of dress share) until his 11th game with the new team.** That's worth about half a point a week of keep value per player. Nearly all of them are free agents, so this mostly affects who shows up as a pickup or next Monday's target after a trade.
+
 ## What the independent review changed
 
 | Review point | Outcome |

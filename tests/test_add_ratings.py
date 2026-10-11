@@ -492,6 +492,14 @@ def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
         rating.add_ratings(players, 2027, TODAY, MONDAY)
         return players[0]["cr_dress_next"]
     assert matthews(2, 0.45) > matthews(2, 0.0)  # 2 games with TOR after 2 with BOS
+    def season(logit):
+        monkeypatch.setattr(rating, "NEW_TEAM_SEASON_LOGIT", logit)
+        fake = FakeSession(moved={1: 2})
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]["cr_season"]
+    assert season(0.3) > season(0.0)  # Season rating: 2 games for the new team is within the first 10 (findings 158)
     assert matthews(0, 0.45) == matthews(0, 0.0)  # never moved
 
 
