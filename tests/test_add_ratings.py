@@ -3,7 +3,7 @@
 fetch.py swallows rating errors so the site still publishes; this test is what catches a broken rating before merge."""
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 import requests
@@ -673,3 +673,33 @@ def test_confirmed_starter_matches_daily_faceoff_spelling(monkeypatch, tmp_path)
     assert out["Joey Woll"]["Joseph Woll"]["cr_why"]["tonight"] == {"starting": True, "status": "Confirmed"}
     assert out["Joey Woll"]["Joseph Woll"]["cr_games"] == out["Joseph Woll"]["Joseph Woll"]["cr_games"]
     assert "tonight" not in out["Jake Woll"]["Joseph Woll"]["cr_why"]
+
+
+def test_status_cleared_before_he_is_back(monkeypatch, tmp_path):
+    # ESPN dropped a status this week and he hasn't played since: a suspension served or an injury healed (findings 172-173)
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for name, flagged in (("none", ()), ("cleared", (110, 102)), ("old", ())):
+        log = tmp_path / f"{name}.jsonl"
+        day = (TODAY - timedelta(days=10 if name == "old" else 2)).isoformat()
+        log.write_text("".join(json.dumps({"date": day, "espn_id": i, "status": "OUT"}) + "\n" for i in flagged or (110, 102)))
+        if name == "none":
+            log.write_text("")
+        monkeypatch.setattr(rating, "INJURY_LOG", log)
+        players = [espn(110, "Ryan Spooner", "BOS", "C"), espn(102, "Morgan Rielly", "TOR", "D")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        out[name] = {p["name"]: p for p in players}
+    spooner, rielly = out["cleared"]["Ryan Spooner"], out["cleared"]["Morgan Rielly"]
+    # yet to play: 0.75 next game, 0.8 later ones, Season 0.72 of his points a game
+    assert spooner["cr_dress_next"] == rating.CLEARED_NEW_NEXT
+    assert spooner["cr_dress"] == pytest.approx((0.75 + 0.8 * 2) / 3, abs=0.01)
+    assert spooner["cr_season"] == pytest.approx(spooner["cr_fpg"] * rating.CLEARED_NEW_SEASON, abs=0.01)
+    assert out["none"]["Ryan Spooner"]["cr_dress"] < 0.2
+    assert out["none"]["Ryan Spooner"]["cr_season"] < spooner["cr_season"]
+    # in season and still out: more likely back this week and for the rest of the season
+    assert rielly["cr_dress"] > out["none"]["Morgan Rielly"]["cr_dress"]
+    assert rielly["cr_season"] > out["none"]["Morgan Rielly"]["cr_season"]
+    # a status older than a week changes nothing
+    for who in ("Ryan Spooner", "Morgan Rielly"):
+        assert out["old"][who]["cr"] == out["none"][who]["cr"] and out["old"][who]["cr_season"] == out["none"][who]["cr_season"]

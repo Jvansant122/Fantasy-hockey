@@ -196,6 +196,10 @@ def load_scratches(s, game_ids):
 
 
 UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, healthy regular yet to play (findings 118)
+# an ESPN status (injury, suspension) in the injury log within CLEARED_DAYS that ESPN has now dropped, and he hasn't played since
+CLEARED_DAYS = 7
+CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no games yet this season (findings 172)
+CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the last one (findings 173)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -807,6 +811,21 @@ def write_injury_log(entries, today):
     INJURY_LOG.write_text("".join(json.dumps(r) + "\n" for r in kept + entries))
 
 
+def recently_flagged(today):
+    """ESPN ids with any ESPN status in the injury log within the last CLEARED_DAYS days."""
+    cutoff = (today - timedelta(days=CLEARED_DAYS)).isoformat()
+    out = set()
+    if INJURY_LOG.exists():
+        for line in INJURY_LOG.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("date", "") >= cutoff and row.get("espn_id") is not None:
+                out.add(row["espn_id"])
+    return out
+
+
 def load_news():
     path = ROOT / "data" / "news.json"
     if not path.exists():
@@ -849,6 +868,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     odds: today's betting lines (leads.fetch_odds); they price tonight's goalie starts (research section 30).
     injuries: ESPN's injury notes (leads.fetch_injuries); a long absence takes a skater's week to 0 (findings section 58)."""
     notes = {i["athlete_id"]: i for i in injuries or [] if i.get("athlete_id")}
+    flagged = recently_flagged(today)  # read before this run rewrites the log
     s = requests.Session()
     season, prev_season = season_ids(espn_season)
     model = Model()
@@ -1043,6 +1063,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     p_dress = min(p_dress, cap)
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
+            # ESPN dropped his status within the week and he hasn't played since: a suspension served, an injury healed
+            cleared = bool(pid) and not p.get("injury") and p["id"] in flagged and (not gl or sat_last)
+            cleared_new = cleared and not gl and bool(tg)  # yet to play this season (findings 172)
+            cleared_out = cleared and bool(gl)  # in season, still out (findings 173)
+            if cleared_new:
+                base_dress, cap, p_dress = None, 1.0, CLEARED_NEW_DRESS
+            elif cleared_out and base_dress is not None:
+                cap = 1.0
+                p_dress = dress_by_game(base_dress, 1, False, 1.0, CLEARED_LOGIT)[0]
             # sat it as a healthy scratch: on that game's scratch list; if the list can't be read, no ESPN injury status
             scratch = sat_last and not p.get("injury") and (pid in scratches[tg[-1]] if tg[-1] in scratches else True)
             comeback = 0.0 if sat_last or traded or not gl else comeback_logit(tg, {g["game"] for g in gl}, scratch_list, pid)
@@ -1056,7 +1085,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             if df_ and model.season_lr:
                 season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]),
-                                                 NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early))
+                                                 NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
+                                                 + CLEARED_SEASON_LOGIT * cleared_out)
+            elif cleared_new:
+                season = fpg * CLEARED_NEW_SEASON
             elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
                 # hurt or suspended before playing this season: such regulars dress for ~41% of the rest, not the idle cap's
                 # 10% (findings 74; suspensions take the short-injury share, findings 118)
@@ -1083,9 +1115,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p_dress = min(p_dress, inj)
             gn = p["games_left"]
             per_game = dress_by_game(base_dress, gn, sat_last, min(cap, inj),
-                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback, early) if base_dress is not None else [p_dress] * gn
+                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
+                if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
             exp_games = sum(per_game)
-            dress_next = per_game[0] if per_game else p_dress
+            dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
