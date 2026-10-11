@@ -26,6 +26,7 @@ POSITIONS = {1: "C", 2: "LW", 3: "RW", 4: "D", 5: "G"}
 SLOT_NAMES = {0: "C", 1: "LW", 2: "RW", 3: "F", 4: "D", 5: "G"}
 LIGHT_NIGHT_MAX_GAMES = 5  # nights with this many NHL games or fewer count as light
 FREE_AGENT_LIMIT = 400
+FREE_AGENT_GOALIE_LIMIT = 100
 TX_TYPES = ["FREEAGENT", "WAIVER", "WAIVER_ERROR", "ROSTER", "TRADE_ACCEPT", "TRADE_DECLINE", "TRADE_PROPOSAL",
             "TRADE_UPHOLD", "TRADE_VETO", "FUTURE_ROSTER", "RETRO_ROSTER"]
 
@@ -92,6 +93,23 @@ def matchup_days(matchup_periods, period, today_sp, weekday):
     return days if today_sp in days and monday_ok else week
 
 
+def roster_limit(slot_counts):
+    """Players a team can hold outside IR: every lineup and bench slot, not the IR slot '8' (22 here, findings 231).
+    None when ESPN sends no slot counts."""
+    total = sum(v for k, v in (slot_counts or {}).items() if str(k) != "8" and isinstance(v, (int, float)) and v > 0)
+    return int(total) or None
+
+
+def season_last_day(matchup_periods):
+    """Scoring period of the fantasy season's last day: the end of the latest week in any matchup (week 1 is days 1-6,
+    week k >= 2 is days 7k-7 to 7k-1). None when ESPN's map is missing."""
+    weeks = [w for v in (matchup_periods or {}).values() if isinstance(v, list) for w in v if isinstance(w, int) and w >= 1]
+    if not weeks:
+        return None
+    w = max(weeks)
+    return 6 if w == 1 else 7 * w - 1
+
+
 def is_final_matchup(matchup_periods, period):
     """True in the league's last matchup (the final), when nothing after it counts."""
     ids = [int(k) for k in (matchup_periods or {}) if str(k).isdigit()]
@@ -128,6 +146,49 @@ def counts_until(own_start, owner, first_start):
     if own_start and first_start and owner in ("freeagent", "waivers"):
         return min(own_start, first_start)
     return own_start
+
+
+def pending_adds(transactions, rostered, today_sp):
+    """Players a team added today whom ESPN's roster doesn't list yet: an add after the day's first puck waits for ESPN's
+    overnight rollover (findings 236). {ESPN player id: team id}, from today's executed free-agent and waiver adds,
+    unless a later move today dropped him again."""
+    last = {}
+    for t in sorted(transactions or [], key=lambda t: t.get("proposedDate") or 0):
+        if t.get("scoringPeriodId") != today_sp or t.get("status") not in (None, "EXECUTED"):
+            continue
+        for item in t.get("items") or []:
+            pid = item.get("playerId")
+            if pid is None:
+                continue
+            if item.get("type") == "ADD" and t.get("type") in ("FREEAGENT", "WAIVER"):
+                last[pid] = item.get("toTeamId") if item.get("toTeamId") not in (None, -1) else t.get("teamId")
+            elif item.get("type") == "DROP":
+                last[pid] = None
+    return {pid: tid for pid, tid in last.items() if tid is not None and pid not in rostered}
+
+
+def schedule_fields(team, sched, first_sp, today_start, run_utc):
+    """A player's games this matchup from his NHL team's ESPN schedule. sched: {matchup_sps, remaining, light, next_sps,
+    today_sp}. first_sp: the first day he can play (waivers); today_start: when today's game stops counting."""
+    week_games = [sp for sp in sched["matchup_sps"] if sp in team["periods"] and sp >= first_sp]
+    rem_games = [sp for sp in sched["remaining"] if sp in team["periods"] and sp >= first_sp
+                 and not (sp == sched["today_sp"] and today_start and today_start <= run_utc)]
+    return {"team": team["abbrev"].upper(), "games": len(week_games), "games_left": len(rem_games),
+            "light": len([sp for sp in week_games if sp in sched["light"]]),
+            "light_left": len([sp for sp in rem_games if sp in sched["light"]]),
+            "nights": week_games, "games_next2": len([sp for sp in sched["next_sps"] if sp in team["periods"]]),
+            "today_start": today_start}
+
+
+def nights_by_sp(by_date, today_et, today_sp):
+    """{date ISO: value} -> {scoring period: value}; one scoring period is one day."""
+    out = {}
+    for d, v in (by_date or {}).items():
+        try:
+            out[today_sp + (datetime.fromisoformat(d).date() - today_et).days] = v
+        except (TypeError, ValueError):
+            continue
+    return out
 
 
 def utc_iso(dt):
@@ -244,6 +305,10 @@ def main():
     sched_settings = (league.get("settings") or {}).get("scheduleSettings") or {}
     matchup_sps = matchup_days(sched_settings.get("matchupPeriods"), period, today_sp, weekday)
     final_matchup = is_final_matchup(sched_settings.get("matchupPeriods"), period)
+    # after the final's last day ESPN may keep showing the final as a live matchup (findings 232)
+    last_sp = season_last_day(sched_settings.get("matchupPeriods"))
+    season_over = last_sp is not None and today_sp > last_sp
+    season_end = (today_et + timedelta(days=last_sp - today_sp)).strftime("%a %b %-d") if last_sp is not None else None
 
     # Which team is mine
     team_id = os.environ.get("TEAM_ID")
@@ -292,6 +357,13 @@ def main():
     for t in league["teams"]:
         for e in (t.get("roster") or {}).get("entries", []):
             rostered[e["playerId"]] = (t["id"], e.get("lineupSlotId"))
+    # added after the day's first puck: not on ESPN's roster until its rollover, nor in the free-agent pool (findings 236);
+    # on the bench, counting from tomorrow
+    pending = pending_adds(tx, rostered, today_sp)
+    for pid, tid in pending.items():
+        rostered[pid] = (tid, 7)
+    if pending:
+        print(f"{len(pending)} players added after the first puck, not yet on ESPN's rosters")
     my_ids = [pid for pid, (tid, _) in rostered.items() if my_team and tid == my_team["id"]]
 
     fa_filter = {"players": {
@@ -301,6 +373,14 @@ def main():
         "filterStatsForTopScoringPeriodIds": stat_filter,
     }}
     pool = get(s, league_url, ["kona_player_info"], fa_filter, scoringPeriodId=today_sp)["players"]
+    # every free-agent goalie, however few own him: a team's backup can start (Murray, findings 236)
+    goalie_filter = {"players": {**fa_filter["players"], "filterSlotIds": {"value": [5]}, "limit": FREE_AGENT_GOALIE_LIMIT}}
+    try:
+        have = {(e.get("player") or {}).get("id") for e in pool}
+        pool += [e for e in get(s, league_url, ["kona_player_info"], goalie_filter, scoringPeriodId=today_sp)["players"]
+                 if (e.get("player") or {}).get("id") not in have]
+    except (requests.RequestException, KeyError, ValueError) as e:
+        print(f"Free-agent goalie lookup failed: {e!r}", file=sys.stderr)
     # Every team's roster, so the page can show any team. Player cards come in chunks to keep requests small.
     roster_players = {e["playerId"]: e["playerPoolEntry"]["player"] for t in league["teams"]
                       for e in (t.get("roster") or {}).get("entries", []) if (e.get("playerPoolEntry") or {}).get("player")}
@@ -315,6 +395,7 @@ def main():
             print(f"Player card lookup failed ({e}); using roster data for {len(chunk)} players", file=sys.stderr)
             pool += [{"player": roster_players[pid]} for pid in chunk if pid in roster_players]
 
+    sched_info = {"matchup_sps": matchup_sps, "remaining": remaining, "light": light, "next_sps": next_sps, "today_sp": today_sp}
     players = []
     seen = set()
     for entry in pool:
@@ -346,17 +427,16 @@ def main():
         # on waivers: only the games after he clears count; no drop found means tomorrow at the earliest
         clears = first_day.get(pid, today_et + timedelta(days=1)) if owner == "waivers" else None
         first_sp = today_sp + (clears - today_et).days if clears else 0
-        week_games = [sp for sp in matchup_sps if sp in team["periods"] and sp >= first_sp]
         # a game today that already started isn't left to play (findings 178)
         # (a waiver player's game the day before he clears was never his, findings 232)
         today_start = team.get("starts", {}).get(today_sp) if today_sp in team["periods"] and today_sp >= first_sp else None
         today_start = counts_until(today_start, owner, first_start)
-        rem_games = [sp for sp in remaining if sp in team["periods"] and sp >= first_sp
-                     and not (sp == today_sp and today_start and today_start <= run_utc)]
+        if pid in pending and today_start and first_start:  # added after the first puck: counts from tomorrow (findings 236)
+            today_start = first_start
         players.append({
             "id": pid,
             "name": p.get("fullName"),
-            "team": team["abbrev"].upper(),
+            **schedule_fields(team, sched_info, first_sp, today_start, run_utc),
             "pos": pos,
             "slots": sorted({SLOT_NAMES[x] for x in p.get("eligibleSlots", []) if x in SLOT_NAMES}),
             "owner": owner,
@@ -371,15 +451,19 @@ def main():
             "last_ppg": last,
             "last_gp": last_gp,  # trade ideas need a full NHL season last year (findings 103)
             "proj_ppg": proj,
-            "games": len(week_games),
-            "games_left": len(rem_games),
-            "light": len([sp for sp in week_games if sp in light]),
-            "light_left": len([sp for sp in rem_games if sp in light]),
-            "nights": week_games,
-            "games_next2": len([sp for sp in next_sps if sp in team["periods"]]),
             "clears": clears.strftime("%a %-d") if clears else None,
-            "today_start": today_start,  # when today's game stops counting, UTC: his game, or the first puck for a free agent
+            # schedule_fields' today_start: when today's game stops counting, UTC: his game, or the first puck for a free agent
+            **({"pending_add": True} if pid in pending else {}),
         })
+
+    def reschedule(p, nhl_team):
+        """ESPN lists him as 'FA' but an NHL roster has him and he has played: his team's games (findings 230)."""
+        tm = next((t for t in teams.values() if ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()) == nhl_team), None)
+        if tm is None:
+            return
+        own = tm.get("starts", {}).get(today_sp) if today_sp in tm["periods"] else None
+        p.update(schedule_fields(tm, sched_info, 0, counts_until(own, p.get("owner"), first_start), run_utc))
+        print(f"{p['name']} is 'FA' on ESPN but on {nhl_team}'s roster: given its games")
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
     now = today_et  # ESPN's day, not the clock's, until its overnight rollover (findings 180)
@@ -422,7 +506,11 @@ def main():
     try:
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
-        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left))
+        add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left),
+                    reschedule=reschedule)
+        for p in players:  # goalie start chances by night, keyed like nights (findings 236)
+            if p["pos"] == "G" and "cr_g_nights" in p:
+                p["cr_g_nights"] = nights_by_sp(p["cr_g_nights"], today_et, today_sp)
         rated = True
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
@@ -451,7 +539,17 @@ def main():
     print("ESPN lineupSlotStatLimits:", json.dumps(stat_limits))
     print("ESPN scheduleSettings:", json.dumps(settings.get("scheduleSettings")))
     ir_slots = ((settings.get("rosterSettings") or {}).get("lineupSlotCounts") or {}).get("8", 0)
-    print(f"Move limit: {move_limit}, start cap: {goalie_cap}, moves used known for "
+    roster_max = roster_limit((settings.get("rosterSettings") or {}).get("lineupSlotCounts"))
+    # settings the site doesn't use yet, logged so research can check them (findings 231)
+    trade_settings = settings.get("tradeSettings") or {}
+    print("ESPN tradeSettings:", json.dumps(trade_settings))
+    print("ESPN positionLimits:", json.dumps((settings.get("rosterSettings") or {}).get("positionLimits")))
+    print("ESPN scoringItems:", json.dumps((settings.get("scoringSettings") or {}).get("scoringItems")))
+    print("ESPN draftSettings:", json.dumps(settings.get("draftSettings")))
+    # ms since 1970; 0 or missing means no deadline
+    trade_deadline = trade_settings.get("deadlineDate") if isinstance(trade_settings.get("deadlineDate"), (int, float)) and trade_settings.get("deadlineDate") > 0 else None
+    print(f"Move limit: {move_limit}, start cap: {goalie_cap}, roster max: {roster_max}, trade deadline: {trade_deadline}, "
+          f"season over: {season_over}, moves used known for "
           f"{sum(v is not None for v in moves_used.values())} teams")
 
     out = {
@@ -468,6 +566,10 @@ def main():
         "goalie_cap": goalie_cap,
         "move_limit": move_limit,
         "ir_slots": ir_slots,
+        "roster_max": roster_max,  # players allowed outside IR (findings 231)
+        "trade_deadline": trade_deadline,  # ESPN's trade deadline, ms since 1970, or None
+        "season_over": season_over,  # today is after the fantasy final's last day (findings 232)
+        "season_end": season_end,  # the final's last day, e.g. "Sun Apr 4"
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
                    "moves_used": moves_used[t["id"]],
                    # ESPN waiver order, 1 = first claim (findings 212: losing claims cost no move)

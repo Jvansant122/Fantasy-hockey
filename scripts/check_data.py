@@ -18,6 +18,7 @@ NIGHT_FIELDS = {"sp", "date", "games", "light", "past"}
 PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
                  "games", "games_left", "light", "light_left", "nights", "dfo_out", "games_next2", "last_gp", "clears", "today_start"}
 RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_dress_next", "cr_matched", "cr_why", "cr_pct", "cr_season", "cr_season_pct", "sat_last"}
+RATED_GOALIE_FIELDS = {"cr_g_nights"}  # goalies only: start chance by night, for the open G slots (findings 236)
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
 MIN_FREE_AGENTS, MIN_INJURED = 100, 10
 EPS = 0.02  # rounding slack: values are rounded to 2 decimals
@@ -63,7 +64,9 @@ def problems(data):
     if len([p for p in players if p.get("injury")]) < MIN_INJURED:
         out.append(f"only {len([p for p in players if p.get('injury')])} players with an injury status: injury feed missing?")
     need = PLAYER_FIELDS | (RATED_FIELDS if data["rated"] else set())
-    bad = [(p.get("name"), sorted(need - set(p))) for p in players if need - set(p)]
+    need_g = need | (RATED_GOALIE_FIELDS if data["rated"] else set())
+    bad = [(p.get("name"), sorted((need_g if p.get("pos") == "G" else need) - set(p))) for p in players
+           if (need_g if p.get("pos") == "G" else need) - set(p)]
     if bad:
         out.append(f"{len(bad)} players missing fields, e.g. {bad[0]}")
     # with no game left this week (Sunday night, the Olympic break) every Week rating is 0 by right (findings 232)
@@ -152,6 +155,18 @@ def rules(data):
         over = [(t, round(v, 2), gl) for t, (v, gl) in by_team.items() if v > gl + 0.05]
         if over:
             out.append(f"G2 goalie starts above team games: {over[:4]}")
+        # G3 every NHL team with a healthy, matched goalie in the data has a goalie with a Season rating: a team with no
+        # game this week, or a roster that couldn't be read, took its goalies to 0 (findings 230). A team whose goalies
+        # here are all hurt or unmatched can fairly have none.
+        teams = {}
+        for p in players:
+            if p["pos"] == "G" and p["team"] != "FA":
+                t = teams.setdefault(p["team"], [False, False])
+                t[0] |= bool(p.get("cr_matched")) and not p.get("injury")
+                t[1] |= (p.get("cr_season") or 0) > 0
+        zero = sorted(t for t, (healthy, rated_) in teams.items() if healthy and not rated_)
+        if zero:
+            out.append(f"G3 teams whose goalies all have Season 0: {zero[:6]}")
     return out
 
 

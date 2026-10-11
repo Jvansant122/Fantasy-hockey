@@ -19,6 +19,16 @@ def data():
     return json.loads((ROOT / "data" / "players.json").read_text())
 
 
+def test_goalies_carry_the_goalie_fields(data):
+    """Every goalie has check_data's goalie-only fields; a goalie without them fails the publish check."""
+    if not data["rated"]:
+        pytest.skip("unrated data")
+    assert all(check_data.RATED_GOALIE_FIELDS <= set(p) for p in data["players"] if p["pos"] == "G")
+    broken = copy.deepcopy(data)
+    del next(p for p in broken["players"] if p["pos"] == "G")["cr_g_nights"]
+    assert any("missing fields" in e for e in check_data.problems(broken))
+
+
 def test_committed_data_passes_the_publish_check(data):
     assert check_data.problems(data) == []
 
@@ -86,6 +96,17 @@ def test_data_rules_catch_past_bugs(data):
         if p["pos"] != "G" and p.get("cr_fpg") is not None:
             p["cr_fpg"] = round(p["cr_fpg"] + 0.1, 2)
     assert any(w.startswith("X3") for w in check_data.warnings(moved, data))
+    # a team's goalies all at Season 0: a week with no games, or an unread roster (findings 230)
+    no_season = copy.deepcopy(data)
+    team = next(p["team"] for p in no_season["players"] if p["pos"] == "G" and p["team"] != "FA" and p.get("cr_matched") and not p.get("injury"))
+    for p in no_season["players"]:
+        if p["pos"] == "G" and p["team"] == team:
+            p["cr_season"] = 0
+    assert any(e.startswith("G3") for e in check_data.problems(no_season))
+    for p in no_season["players"]:  # ... unless they are all hurt
+        if p["pos"] == "G" and p["team"] == team:
+            p["injury"] = "INJURY_RESERVE"
+    assert not any(e.startswith("G3") for e in check_data.problems(no_season))
     assert check_data.warnings(data, data) == [w for w in check_data.warnings(data, None)]
 
 

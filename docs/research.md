@@ -778,6 +778,26 @@ Moves don't carry over between matchups. At 2 PM on Sunday, Oct 11, 9 of the 12 
 - **Outages.** When ESPN's injury notes or Daily Faceoff's lineups fail, the run reuses the last copy logged in the past day. Without the notes, Shesterkin (out for the season) went back to a Season rating of 2.08. An empty MoneyPuck file now means no xG for that run instead of no ratings at all. NHL API retries now wait 1 and 2 seconds instead of retrying instantly.
 - **Waiver players.** A waiver player whose team plays the day before he clears no longer has that game's start time attached, which would have removed one of his real games after the first puck.
 
+## 101. Injured players, goalie shares and missing players
+
+The seventh idea hunt found several places where the rating misread ESPN or the NHL feed. All are fixed:
+
+- A skater ESPN lists as OUT on the day of his team's game now counts about 3% for that game (it was 35%). Later games keep the 35% cap, and a note that says he misses one game stops counting once that game is played.
+- ESPN often replaces a real injury note ("out until November") with a bare "IR". The site now keeps the last real note it saw, so a long absence stays long. Notes like "without a timetable" or "a few weeks" count as long absences, and stat lines like "four points over five games" are no longer read as return dates.
+- Goalies: an out-for-the-season goalie's starts also go to an injured partner (at half weight); last season's split caps the top goalie at 70%; the no. 1 for back-to-backs is picked among goalies still on the team; and the nights strip counts a goalie's slot by his chance to start that night.
+- A team with no game this week, or whose NHL roster fails to load, keeps its goalies' Season rating, and the publish check now blocks data where a team's healthy goalies all show Season 0.
+- A player ESPN lists as a free agent while he plays for an NHL team gets that team's games. Skaters on a new team since last season are rated 3.5% lower, which is how much movers fell short in past seasons.
+- The details panel says which season a fallback stat line is from, shows a goalie's own points per start before tonight's line and the schedule, and shows how many team games his start share covers.
+
+## 102. Roster spots, trades, playoffs and the end of the season
+
+The page now reads the roster size, trade deadline and season end from ESPN:
+
+- Upgrades count open roster spots and IR moves, so an add that needs no drop says so. The Drop list ranks players the same way as the other cards.
+- Trade check prices the roster spots a trade needs: a goalie you would have to find, then each extra player you'd have to make room for, at the value of the best free agent or the player you'd drop. It says when the other team would have to drop someone. After the deadline, Trade ideas go away and Trade check says the deadline has passed.
+- Playoff rounds and the final use their own wording, and once the season ends the page says so and hides the cards that would describe a matchup that doesn't exist.
+- A tab left open reloads itself when new data is published, search ignores accents, and the stale-data note names the next update time.
+
 ## What the independent review changed
 
 | Review point | Outcome |
