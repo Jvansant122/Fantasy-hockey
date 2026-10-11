@@ -41,6 +41,9 @@
   .night .open em { font-style: normal; color: var(--good); font-weight: 600; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .controls label { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; min-height: 36px; }
+  /* a long team name mustn't push the page sideways on a narrow phone (CI's wider fonts showed it at 320 px) */
+  .controls label { max-width: 100%; min-width: 0; }
+  .controls select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
   input[type=checkbox] { width: 18px; height: 18px; }
   select, input[type=search], input[type=number] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); min-height: 36px; }
   input[type=search] { flex: 1 1 160px; }
