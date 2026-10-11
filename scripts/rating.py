@@ -88,7 +88,7 @@ LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the
 NEW_TEAM_START_LOGIT, NEW_TEAM_STARTS = 1.0, 3
 # goalies on today's roster take ~94% of a team's next 20 starts; call-ups, claims and injury fill-ins take the rest,
 # so the Season start share is scaled down (a no. 1 read 0.71 against 0.65 actual, findings 161)
-SEASON_SHARE_SCALE = 0.93
+SEASON_SHARE_SCALE = 0.88
 
 
 def bad_start(g):
