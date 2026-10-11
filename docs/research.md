@@ -692,6 +692,15 @@ An audit of Sunday's table found two slips. A free agent who sat his last game b
 
 ESPN's goalie games-started count can lag a day behind its points, so This yr/G, Proj/G and ESPN week ran high for 9 of 62 goalies (Jarry 3.2 a start against a real 1.6). **Those columns now count starts from NHL game data** (the Claude Rating already did). And a Daily Faceoff lineup posted before a game the player then sat was still read as "in the lineup" for the next game (2 of 16 cases, Andrae among them). **A team's lineup now counts only if it was updated after its last game started.** (Findings 182.)
 
+## 88. Four more fixes from replaying Sunday
+
+- A player whose injury status cleared got a "back from injury" boost even when he had played through the injury and then sat a game (11 players; next-game chance 0.37 went to 0.59). **The boost now needs no game since the status.**
+- Mid-week swaps could suggest a free agent with no games left this week. **It now picks only free agents with a game left** (unless you're out of moves and planning for next week).
+- Data runs between midnight and ESPN's ~3:30 AM rollover rated players without last night's games. **Those runs now include them**, and the page's note says the numbers are from an overnight update.
+- The goalie stream card counted a goalie already in net as an open slot. **He now fills his slot.**
+
+(Findings 183.)
+
 ## What the independent review changed
 
 | Review point | Outcome |

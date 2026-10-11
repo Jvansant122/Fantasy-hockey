@@ -186,10 +186,14 @@ def test_games_that_already_started_drop_out(browser, server, data):
     sk = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and (p.get("cr") or 0) > 0)
     later = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and p["id"] != sk["id"])
     sk["today_start"], later["today_start"] = iso(now - timedelta(hours=1)), iso(now + timedelta(hours=3))
+    # his last game this week started: nothing is left, not a rounding leftover
+    last = next(p for p in late["players"] if p["games_left"] == 1 and (p.get("cr") or 0) > 0 and p["id"] not in (sk["id"], later["id"]))
+    last["today_start"] = iso(now - timedelta(hours=1))
     ctx, page, errors = open_page(browser, server, data=late)
     got = lambda pid: page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {pid}); return [p.games_left, p.cr]; }})()")
     assert got(sk["id"]) == [sk["games_left"] - 1, pytest.approx(max(0, sk["cr"] - sk["cr_fpg"] * min(sk["cr_dress_next"] or 0, sk["cr_games"])), abs=0.02)]
     assert got(later["id"])[0] == later["games_left"]
+    assert page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {last['id']}); return [p.games_left, p.cr, p.cr_games]; }})()") == [0, 0, 0]
     # the rest of the row follows (findings 182): no stale percentile, tonight's dot greyed, Open skips tonight
     assert page.evaluate(f"state.data.players.find(p => p.id === {sk['id']}).cr_pct") is None
     tonight = next(n for n in late["nights"] if not n["past"])
@@ -247,3 +251,37 @@ def test_stream_card_follows_the_first_puck(browser, server, data):
         assert want in page.locator("#upgrades").inner_text()
         assert errors == []
         ctx.close()
+
+
+def test_goalie_in_net_fills_his_slot_and_swaps_need_games(browser, server, data):
+    """A started goalie still counts as starting tonight; Mid-week swaps never offer a free agent with no games left (findings 183)."""
+    from datetime import datetime, timedelta, timezone
+    iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(timezone.utc)
+    if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
+        pytest.skip("needs rated data with a night left")
+    d = json.loads(json.dumps(data))
+    d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()
+    d["first_start"], d["move_limit"] = iso(now + timedelta(hours=3)), None
+    team = next(t for t in d["teams"] if sum(p["pos"] == "G" and str(p.get("team_id")) == str(t["id"]) for p in d["players"]) >= 2)
+    goalies = [p for p in d["players"] if p["pos"] == "G" and str(p.get("team_id")) == str(team["id"])]
+    for p in goalies:
+        p.update(ir=False, injury=None)
+        p["cr_why"] = dict(p.get("cr_why") or {}, p_today=0, tonight={"starting": False, "status": "Confirmed"})
+    goalies[0].update(today_start=iso(now - timedelta(hours=1)))
+    goalies[0]["cr_why"]["tonight"] = {"starting": True, "status": "Likely"}  # in net, so his p_today is 0
+    goalies[1]["cr_why"]["tonight"]["starting"] = True
+    # someone sat, and no free agent has a game left
+    sk = next(p for p in d["players"] if str(p.get("team_id")) == str(team["id"]) and p["pos"] != "G")
+    sk.update(sat_last=True, dfo_out=None, injury=None, ir=False, games_left=max(sk["games_left"], 1))
+    for p in d["players"]:
+        if p["owner"] in ("freeagent", "waivers"):
+            p["games_left"] = 0
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    text = page.locator("#upgrades").inner_text()
+    assert "open G slot" not in text  # both G slots filled, one goalie already in net
+    swaps = text[text.index("Mid-week swaps"):].split("\n\n")[0]
+    assert "gm left" not in swaps
+    assert errors == []
+    ctx.close()
