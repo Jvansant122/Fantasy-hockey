@@ -602,11 +602,20 @@ function renderUpgrades() {
       const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
       const before = puck && !locked ? ` Add before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET: later adds count from tomorrow.` : "";
       streamShown = true;
+      // only the updates that come before tonight's first puck can still catch a starter for tonight (findings 239)
+      const recheck = () => {
+        const etMin = t => { const [h, m] = t.toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour12: false }).split(":").map(Number); return (h % 24) * 60 + m; };
+        const now = etMin(new Date()), puckMin = puck ? etMin(puck) : 24 * 60;
+        const runs = [[760, "12:40 PM"], [1030, "5 PM"]].filter(([m]) => m > now && m < puckMin).map(([, t]) => t);
+        if (runs.length) return `, and the site rechecks at about ${runs.join(" and ").replace("12:40 PM and", "12:40 and")} ET.`;
+        return puck ? `. The next update comes after tonight's first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET, so a goalie confirmed later can't be added for tonight.`
+          : ". The site doesn't update again before tonight's games.";
+      };
       cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(before)}${esc(cap)}</span>
         ${locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
           : locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
           : streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
-          : '<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon, and the site rechecks at about 12:40 and 5 PM ET.</div>'}</div>`);
+          : `<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon${esc(recheck())}</div>`}</div>`);
     }
   }
   // Tonight on a crowded night (research findings 65): start by per-game rating, bench anyone Daily Faceoff leaves out
@@ -672,18 +681,32 @@ function renderUpgrades() {
     // with any move left, not only 3+: even one unused move is lost (findings 238)
     // not from yesterday's data: Monday 0-4 AM still shows Sunday as tonight (findings 240)
     const lastCall = !noMoves && !reset && !locked && !stale(d) && !d.final_matchup && lastNight && realLeft > 0;
-    for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
+    // hold one move for each night still to come (injury swaps, goalie streams), so a team following the card makes about
+    // 2 moves on Monday and keeps the rest, instead of 2 more at every update (findings 51, 59, 239)
+    const nightsAfter = d.nights.filter(n => !n.past && n !== tonight).length;
+    const hold = lastCall ? 0 : Math.min(nightsAfter, (d.move_limit || 7) - 2);
+    const spare = realLeft != null ? Math.max(0, realLeft - swapSubs.size - hold) : 2;
+    // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
+    const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);
+    const pick = () => {
       let top = null;
       for (const g of ["F", "D"]) {
         const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
-        const fa = fas.filter(p => group(p) === g && !added.has(p.id)).sort((a, b) => addVal(b) - addVal(a))[0];
+        const fa = fas.filter(p => group(p) === g && !added.has(p.id) && !claimLate(p)).sort((a, b) => addVal(b) - addVal(a))[0];
         if (!left.length || !fa) continue;
         const worst = left.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
         if (!top || addVal(fa) - addVal(worst) > top.gain) top = { fa, worst, gain: addVal(fa) - addVal(worst) };
       }
-      if (!top || top.gain <= 0.5) break;
+      return top && top.gain > 0.5 ? top : null;
+    };
+    for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, spare, movesLeft)); i++) {
+      const top = pick();
+      if (!top) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
+    // every move left is held for the nights to come, though a free agent would gain: say so instead of going quiet
+    if (!best.length && !lastCall && realLeft != null && movesLeft > 0 && spare === 0 && pick())
+      cards.push(`<div class="upg"><b>Best moves</b> <span class="drop">· You have ${movesLeft} move${movesLeft === 1 ? "" : "s"} left; one is held for each night still to come (injury swaps, goalie streams). More free up later in the week.</span></div>`);
     // its own line, so a phone doesn't fold it behind 'why' (findings 238); no game today means ESPN's rollover is the deadline
     const expire = lastCall ? `You have ${realLeft} move${realLeft === 1 ? "" : "s"} left, and the ones you don't use expire tonight: add next week's targets ${puck ? `before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : "before ESPN's overnight rollover (about 3 AM ET)"}. Next Monday starts with a fresh set.` : "";
     // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same

@@ -1345,6 +1345,15 @@ def test_wide_desktop_and_all_columns_on_phones(browser, server, data):
     ctx.close()
 
 
+def _et(month, day, hour, minute=0):
+    """A fixed clock at that time in New York in October 2026 (EDT, UTC-4)."""
+    from datetime import datetime, timedelta, timezone
+    return datetime(2026, month, day, hour, minute, tzinfo=timezone(timedelta(hours=-4)))
+
+
+SUN_6PM = _et(10, 11, 18)  # Sun Oct 11, 6 PM ET: after the first puck of the matchup's last night
+
+
 def _sunday(data):
     """The data as a Sunday 3 PM ET run on Oct 11, 2026: Sunday the matchup's last night, first puck at 5 PM ET, 7 moves."""
     d = json.loads(json.dumps(data))
@@ -1386,7 +1395,7 @@ def test_swap_ir_move_isnt_an_open_spot_twice(browser, server, data):
     only the player who actually fits the open IR slot is told to move to IR (handoff 211)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _fresh(data)
+    d = _sunday(data)  # Sunday after the first puck: no night left to hold moves for
     d["move_limit"] = 7
     team = d["teams"][0]
     team["moves_used"] = 0
@@ -1401,7 +1410,7 @@ def test_swap_ir_move_isnt_an_open_spot_twice(browser, server, data):
     for p in d["players"]:  # free agents with a game left, whatever the clock, so the swaps get subs
         if p["owner"] in ("freeagent", "waivers"):
             p.update(games_left=max(p["games_left"], 1), today_start=None)
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     swaps = _card(page, "Mid-week swaps")
     assert swaps.count("→") == 2, swaps
@@ -1413,7 +1422,7 @@ def test_swap_ir_move_isnt_an_open_spot_twice(browser, server, data):
     # one out player and 2 moves left: one swap and one Best move, and the swap uses the IR move's spot
     team["moves_used"] = 5
     out2["injury"] = None
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     swaps, best = _card(page, "Mid-week swaps"), _card(page, "Best")
     assert swaps.count("→") == 1 and "IR-eligible" in swaps, swaps
@@ -1485,7 +1494,7 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     """IR stash needs a move left after Best moves takes its picks (handoff 216)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _fresh(data)
+    d = _sunday(data)  # Sunday after the first puck: no night left to hold moves for
     d["move_limit"] = 7
     team = d["teams"][0]
     roster = _mine(d, team)
@@ -1497,7 +1506,7 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
     for used, shown in ((0, True), (5, False)):  # 7 left: room for it; 2 left: Best moves takes both
         team["moves_used"] = used
-        ctx, page, errors = open_page(browser, server, data=d)
+        ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
         page.select_option("#team", str(team["id"]))
         best = [l for l in _card(page, "Best").split("\n")[1:] if l.strip()]
         assert len(best) == 2, best
@@ -1553,5 +1562,84 @@ def test_player_dropped_after_first_puck_frees_his_spot(browser, server, data):
         assert not pending or not any(f" for {gone['name']}" in l for l in best), best
         give = page.evaluate("[...document.querySelectorAll('#tgive option')].map(o => +o.value)")
         assert (gone["id"] in give) == (not pending)
+
+
+def _weekday(data, day, puck_hour=19):
+    """The data as a 10 AM ET run on day `day` (0 = Mon Oct 5) of the Oct 5-11, 2026 matchup, first puck at puck_hour ET."""
+    d = json.loads(json.dumps(data))
+    d["nights"] = d["nights"][:7]
+    for i, n in enumerate(d["nights"]):
+        n.update(date=f"{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]} {5 + i}", past=i < day)
+    d.update(updated_date=f"2026-10-{5 + day:02d}", updated=f"Oct {5 + day}, 10:00 AM ET", updated_utc=f"2026-10-{5 + day:02d}T14:00:00Z",
+             first_start=f"2026-10-{5 + day:02d}T{puck_hour + 4:02d}:00:00Z", final_matchup=False, move_limit=7, matchup_weeks=1)
+    sp = d["nights"][day]["sp"]
+    for p in d["players"]:
+        p["today_start"] = d["first_start"] if sp in (p.get("nights") or []) else None
+    return d
+
+
+def test_best_moves_hold_moves_for_the_week(browser, server, data):
+    """Best moves offers 2 on Monday, then holds a move for each night still to come instead of 2 more every update (handoff 207)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    for day, used, most in ((0, 0, 2), (0, 2, 0), (2, 2, 1), (4, 2, 2)):  # Mon: 2 then hold 5; Wed: 5 left, 4 held; Fri: 2 held
+        d = _weekday(data, day)
+        for t in d["teams"]:
+            t["moves_used"] = used
+        ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 5 + day, 10))
+        counts, held = [], 0
+        for t in d["teams"]:
+            page.select_option("#team", str(t["id"]))
+            best = _card(page, "Best")
+            counts.append(len([l for l in best.split("\n")[1:] if l.strip()]))
+            if "one is held for each night still to come" in best:
+                held += 1
+                assert f"You have {7 - used} moves left" in best, best
+        assert max(counts) == most, (day, used, counts)
+        assert (held > 0) == (most == 0), (day, used, held)
+        assert errors == []
+        ctx.close()
+
+
+def test_last_night_skips_claims_that_go_through_monday(browser, server, data):
+    """Sunday's use-every-move list leaves out a waiver player who clears after the matchup (handoff 208)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    for clears, listed in (("Mon 12", False), ("Sun 11", True)):
+        d = _sunday(data)
+        star = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] not in ("G", "D") and p.get("cr") is not None)
+        star.update(owner="waivers", clears=clears, injury=None, cr_season=4.0, cr=4.0)
+        ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 11, 16))
+        shown = 0
+        for t in d["teams"]:
+            page.select_option("#team", str(t["id"]))
+            best = _card(page, "Best")
+            assert "expire tonight" in page.locator("#upgrades").inner_text(), t["id"]
+            shown += star["name"] in best
+        assert (shown > 0) == listed, (clears, shown)
+        assert errors == []
+        ctx.close()
+
+
+def test_stream_card_names_only_rechecks_before_the_puck(browser, server, data):
+    """'No free-agent goalie confirmed yet' names only the updates before tonight's first game (handoff 209)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    for puck, now, want in ((19, (10, 0), "rechecks at about 12:40 and 5 PM ET."),
+                            (13, (10, 0), "rechecks at about 12:40 PM ET."),
+                            (19, (13, 0), "rechecks at about 5 PM ET."),
+                            (13, (12, 50), "The next update comes after tonight's first game at 1:00 PM ET, so a goalie confirmed later can't be added for tonight."),
+                            (12, (10, 0), "The next update comes after tonight's first game at 12:00 PM ET")):
+        d = _weekday(data, 5, puck)  # Saturday
+        for p in d["players"]:
+            if p["pos"] == "G" and p.get("cr_why"):
+                p["cr_why"].pop("tonight", None)
+                p["cr_why"]["p_today"] = 0
+        team = d["teams"][0]
+        team["moves_used"] = 2
+        ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 10, *now))
+        page.select_option("#team", str(team["id"]))
+        card = _card(page, "Stream a goalie tonight")
+        assert "No free-agent goalie is confirmed" in card and want in card, (puck, now, card)
         assert errors == []
         ctx.close()
