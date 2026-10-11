@@ -1,5 +1,5 @@
 {
- "updated": "Sun Oct 11, 10:44 AM ET",
+ "updated": "Sun Oct 11, 10:47 AM ET",
  "updated_date": "2026-10-11",
  "team": "New York Mess",
  "matchup_period": 2,
@@ -6056,6 +6056,62 @@
    "cr_season_pct": 70
   },
   {
+   "id": 4697457,
+   "name": "Emil Andrae",
+   "team": "CBJ",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "injury": null,
+   "owned": 0.2,
+   "gp": 3,
+   "ppg": 0.93,
+   "cur_ppg": 1.23,
+   "last_ppg": 0.9,
+   "last_gp": 61,
+   "proj_ppg": null,
+   "games": 2,
+   "games_left": 0,
+   "light": 1,
+   "light_left": 0,
+   "nights": [
+    11,
+    12
+   ],
+   "games_next2": 5,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 0.76,
+   "cr_fpg": 0.84,
+   "cr_season": 0.41,
+   "cr_games": 0.9,
+   "cr_dress": 0.21,
+   "cr_dress_next": 0.9,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482126,
+   "cr_why": {
+    "toi5": 12.33,
+    "toi": 12.33,
+    "pp5": 0.0,
+    "sog": 0.33,
+    "blk": 1.67,
+    "gp": 3,
+    "last_fpg": 0.9,
+    "xfp": {
+     "gp": 3,
+     "fpg": 1.23,
+     "xfpg": 1.06
+    }
+   },
+   "cr_pct": 85,
+   "cr_season_pct": 15
+  },
+  {
    "id": 3095975,
    "name": "Charlie Lindgren",
    "team": "WSH",
@@ -6109,62 +6165,6 @@
    },
    "cr_pct": 92,
    "cr_season_pct": 30
-  },
-  {
-   "id": 4697457,
-   "name": "Emil Andrae",
-   "team": "CBJ",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "injury": null,
-   "owned": 0.2,
-   "gp": 3,
-   "ppg": 0.93,
-   "cur_ppg": 1.23,
-   "last_ppg": 0.9,
-   "last_gp": 61,
-   "proj_ppg": null,
-   "games": 2,
-   "games_left": 0,
-   "light": 1,
-   "light_left": 0,
-   "nights": [
-    11,
-    12
-   ],
-   "games_next2": 5,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 0.69,
-   "cr_fpg": 0.76,
-   "cr_season": 0.37,
-   "cr_games": 0.9,
-   "cr_dress": 0.21,
-   "cr_dress_next": 0.9,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482126,
-   "cr_why": {
-    "toi5": 12.33,
-    "toi": 12.33,
-    "pp5": 0.0,
-    "sog": 0.33,
-    "blk": 1.67,
-    "gp": 3,
-    "last_fpg": 0.9,
-    "xfp": {
-     "gp": 3,
-     "fpg": 1.23,
-     "xfpg": 1.06
-    }
-   },
-   "cr_pct": 85,
-   "cr_season_pct": 14
   },
   {
    "id": 4996097,
@@ -19158,8 +19158,8 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.0,
-   "cr_fpg": 0.68,
-   "cr_season": 0.34,
+   "cr_fpg": 0.81,
+   "cr_season": 0.4,
    "cr_games": 0,
    "cr_dress": 0.15,
    "cr_dress_next": 0.15,
@@ -19184,7 +19184,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 7
+   "cr_season_pct": 8
   },
   {
    "id": 5361655,
@@ -22243,7 +22243,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 1
+   "cr_season_pct": 0
   },
   {
    "id": 3149839,
@@ -24423,7 +24423,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 15
+   "cr_season_pct": 14
   },
   {
    "id": 2976843,
@@ -24917,7 +24917,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 8
+   "cr_season_pct": 7
   },
   {
    "id": 3389,
@@ -37686,8 +37686,8 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.0,
-   "cr_fpg": 0.38,
-   "cr_season": 0.09,
+   "cr_fpg": 1.32,
+   "cr_season": 0.31,
    "cr_games": 0,
    "cr_dress": 0.08,
    "cr_dress_next": 0.08,
@@ -37712,7 +37712,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 0
+   "cr_season_pct": 13
   },
   {
    "id": 3042114,
