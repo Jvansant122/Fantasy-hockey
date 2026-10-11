@@ -146,3 +146,20 @@ def test_mark_lineups_ignores_a_lineup_from_before_the_last_game():
     leads.mark_lineups(players, lineups, {})  # no game times: every lineup counts
     assert [p["dfo_out"] for p in players] == [False, False]
     assert leads.older("2026-10-10T22:43:00.000Z", "2026-10-10T23:00:00Z") and not leads.older(None, "2026-10-10T23:00:00Z")
+
+
+def test_last_logged_reuses_a_recent_good_copy(tmp_path, monkeypatch):
+    """An injury or lineup feed outage reuses the newest logged copy under a day old (findings 230)."""
+    import gzip
+    from datetime import datetime
+    monkeypatch.setattr(leads, "LOG_DIR", tmp_path)
+    def log(name, rec):
+        with gzip.open(tmp_path / f"{name}.json.gz", "wt") as f:
+            json.dump(rec, f)
+    log("2026-10-10-0610", {"injuries": {"old": 1}, "errors": {}})
+    log("2026-10-11-0910", {"injuries": {"new": 1}, "errors": {}})
+    log("2026-10-11-1240", {"errors": {"injuries": "boom"}})
+    now = datetime(2026, 10, 11, 17, 10)
+    assert leads.last_logged("injuries", now) == {"new": 1}
+    assert leads.last_logged("injuries", datetime(2026, 10, 12, 12, 0)) is None  # older than a day
+    assert leads.last_logged("lineups", now) is None

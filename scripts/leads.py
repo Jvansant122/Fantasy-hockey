@@ -172,6 +172,26 @@ def league_log(transactions, teams, scoring_period):
     }
 
 
+def last_logged(key, now, hours=24):
+    """The newest logged copy of `key` ("injuries", "lineups") from a run within `hours` of `now` (naive ET), else None.
+    A feed outage then reuses the last good copy instead of rating without it (findings 230)."""
+    for path in sorted(LOG_DIR.glob("*.json.gz"), reverse=True):
+        try:
+            at = datetime.strptime(path.name[:15], "%Y-%m-%d-%H%M")
+        except ValueError:
+            continue
+        if (now - at).total_seconds() > hours * 3600 or at > now:
+            continue
+        try:
+            with gzip.open(path, "rt") as f:
+                rec = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if rec.get(key) and key not in (rec.get("errors") or {}):
+            return rec[key]
+    return None
+
+
 def write_log(now, players, starters, errors, s, odds=None, injuries=None, league=None, lineups=None):
     """One gzipped JSON per run in data/log, named by ET date and time."""
     rec = {"run_at": now.isoformat(timespec="minutes"), "starters": starters, "errors": dict(errors)}

@@ -770,6 +770,14 @@ Moves don't carry over between matchups. At 2 PM on Sunday, Oct 11, 9 of the 12 
 - **Phone tags (findings 232).** PR #93's narrow name column cut off the waiver, injury and fantasy-team tags on 96% of tagged rows. Tags now sit on their own line under the name and wrap. The Stream, Tonight, Forwards, Defense and Goalies cards keep their explanation lines visible: those lines carry the stream deadline, "bench these" and "your weakest". A team with no moves left gets a "next Monday's targets" note at the top of Upgrades.
 - **Double drops (findings 233).** Mid-week swaps and Best moves sometimes dropped the same player, or together offered more moves than were left: 18 team checks across 14 of 15 data versions. Best moves now skips anyone the swaps card already drops and counts the swaps' adds against the moves left.
 
+## 100. The schedule from ESPN's own view, and data runs that survive outages
+
+- **A misspelled view name (findings 230).** The site asked ESPN for `proTeamsSchedules_wl`, but the view is called `proTeamSchedules_wl`. Every run since the start quietly fell back to ESPN's public scoreboard, which dates nights by the clock, so PR #79's fix for overnight runs never ran. The branch run on the right name gave the same games, nights and start times as the scoreboard. Nights with no NHL games (Thanksgiving, Christmas, the Olympic break) are now dated from ESPN's day instead of showing "Day 86", and they no longer count as light nights. A scoreboard day that fails after its retries now fails the run, so the 30-minute recheck tries again, instead of publishing that night as a night off.
+- **Checks that would have blocked good data (findings 230, 232).** The pre-publish check expected exactly 7 nights, which would have blocked every update of the two-week playoff rounds. It now takes 14 nights in a two-week round and 6 in the short opening week. It also stopped calling a run broken when every Week rating is 0 because no games are left (Sunday nights, Feb 4-7).
+- **Checks that let bad data through.** A run with fewer than 100 free agents, or fewer than 10 players with an injury status, is now blocked: a lost free-agent list or injury feed passed every other rule.
+- **Outages.** When ESPN's injury notes or Daily Faceoff's lineups fail, the run reuses the last copy logged in the past day. Without the notes, Shesterkin (out for the season) went back to a Season rating of 2.08. An empty MoneyPuck file now means no xG for that run instead of no ratings at all. NHL API retries now wait 1 and 2 seconds instead of retrying instantly.
+- **Waiver players.** A waiver player whose team plays the day before he clears no longer has that game's start time attached, which would have removed one of his real games after the first puck.
+
 ## What the independent review changed
 
 | Review point | Outcome |

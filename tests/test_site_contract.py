@@ -56,7 +56,7 @@ def test_check_catches_a_shifted_week(data):
     shifted = json.loads(json.dumps(data))
     for n, label in zip(shifted["nights"], ["Tue 6", "Wed 7", "Thu 8", "Fri 9", "Sat 10", "Sun 11", "Mon 12"]):
         n["date"] = label
-    assert any("Monday to Sunday" in e for e in check_data.problems(shifted))
+    assert any("to a Sunday" in e for e in check_data.problems(shifted))
     wrong_past = json.loads(json.dumps(data))
     for n in wrong_past["nights"]:
         n["past"] = True
@@ -87,3 +87,34 @@ def test_data_rules_catch_past_bugs(data):
             p["cr_fpg"] = round(p["cr_fpg"] + 0.1, 2)
     assert any(w.startswith("X3") for w in check_data.warnings(moved, data))
     assert check_data.warnings(data, data) == [w for w in check_data.warnings(data, None)]
+
+
+def test_check_allows_playoff_rounds_and_empty_weeks(data):
+    """14 nights in a two-week playoff round, and a week with no games left, publish (findings 230, 232)."""
+    from datetime import date, timedelta
+    d = copy.deepcopy(data)
+    first = date.fromisoformat(d["updated_date"]) - timedelta(days=date.fromisoformat(d["updated_date"]).weekday())
+    sp0 = d["nights"][0]["sp"]
+    d["matchup_weeks"] = 2
+    d["nights"] = [{"sp": sp0 + i, "date": (first + timedelta(days=i)).strftime("%a ") + str((first + timedelta(days=i)).day),
+                    "games": 8, "light": False, "past": first + timedelta(days=i) < date.fromisoformat(d["updated_date"])}
+                   for i in range(14)]
+    errs = [e for e in check_data.problems(d) if not e.startswith(("N", "P2", "P3"))]  # players' nights still the 7-night week
+    assert not any("nights" in e for e in errs), errs
+    d["nights"][3]["past"] = not d["nights"][3]["past"]
+    assert any("past nights" in e for e in check_data.problems(d))
+    over = copy.deepcopy(data)  # Sunday night after the last game, or the Olympic break: every Week rating 0
+    for p in over["players"]:
+        p["games_left"], p["cr"], p["cr_games"] = 0, 0, 0
+    assert not any("every Claude Rating is 0" in e for e in check_data.problems(over))
+
+
+def test_check_blocks_a_run_with_no_free_agents_or_injuries(data):
+    """A run that lost the free-agent list or the injury feed passes every other rule (findings 230)."""
+    no_fa = copy.deepcopy(data)
+    no_fa["players"] = [p for p in no_fa["players"] if p["owner"] not in ("freeagent", "waivers")]
+    assert any("free agents" in e for e in check_data.problems(no_fa))
+    no_inj = copy.deepcopy(data)
+    for p in no_inj["players"]:
+        p["injury"] = None
+    assert any("injury status" in e for e in check_data.problems(no_inj))

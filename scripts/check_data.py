@@ -19,6 +19,7 @@ PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir",
                  "games", "games_left", "light", "light_left", "nights", "dfo_out", "games_next2", "last_gp", "clears", "today_start"}
 RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_dress_next", "cr_matched", "cr_why", "cr_pct", "cr_season", "cr_season_pct", "sat_last"}
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
+MIN_FREE_AGENTS, MIN_INJURED = 100, 10
 EPS = 0.02  # rounding slack: values are rounded to 2 decimals
 # ESPN scoring period 1 of the 2027 season (sp 7 = Mon Oct 5, 2026): the day-0 the nights' sp count from. Update each season;
 # the check is skipped once the data is more than 300 days past it
@@ -31,32 +32,42 @@ def problems(data):
     missing = TOP_FIELDS - set(data)
     if missing:
         return [f"missing top-level fields: {sorted(missing)}"]
-    if len(data["nights"]) != 7:
-        out.append(f"{len(data['nights'])} nights, expected 7 (Monday-Sunday)")
+    # 7 a week, 14 in a two-week playoff round, 6 in the short opening matchup (findings 230)
+    want = {7 * (data.get("matchup_weeks") or 1)} | ({6} if data.get("matchup_period") == 1 else set())
+    if len(data["nights"]) not in want:
+        out.append(f"{len(data['nights'])} nights, expected {sorted(want)}")
     for n in data["nights"]:
         if NIGHT_FIELDS - set(n):
             out.append(f"night {n.get('date')} missing {sorted(NIGHT_FIELDS - set(n))}")
-    # nights run Monday to Sunday on consecutive dates, and today isn't already marked past (findings 180)
+    # nights run on consecutive days and end on a Sunday, and today isn't already marked past (findings 180)
     labels = [n.get("date", "") for n in data["nights"]]
     days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    if all(l[:3] in days for l in labels) and [l[:3] for l in labels] != (days * 2)[:len(labels)]:
-        out.append(f"nights don't run Monday to Sunday: {labels}")
+    if all(l[:3] in days for l in labels) and [l[:3] for l in labels] != (days * 3)[days.index(labels[0][:3]):][:len(labels)] \
+            or labels and labels[-1][:3] != "Sun":
+        out.append(f"nights don't run on consecutive days to a Sunday: {labels}")
     nums = [int(l.split()[-1]) for l in labels if l.split()[-1].isdigit()]
     if len(nums) == len(labels) and any(b != a + 1 and b != 1 for a, b in zip(nums, nums[1:])):
         out.append(f"night dates aren't consecutive: {labels}")
     today = data.get("updated_date")
-    if today and len(labels) == 7 and all(l[:3] in days for l in labels):
-        k = date.fromisoformat(today).weekday()  # today's night: not past, and every earlier night past
-        if [bool(n.get("past")) for n in data["nights"]] != [i < k for i in range(7)]:
+    label = date.fromisoformat(today).strftime("%a ") + str(date.fromisoformat(today).day) if today else None
+    if label in labels:
+        k = labels.index(label)  # today's night: not past, and every earlier night past
+        if [bool(n.get("past")) for n in data["nights"]] != [i < k for i in range(len(labels))]:
             out.append(f"past nights don't match today ({today}): {[(n.get('date'), n.get('past')) for n in data['nights']]}")
     players = data["players"]
     if len(players) < MIN_PLAYERS:
         out.append(f"only {len(players)} players")
+    # a run that lost the free-agent list or the injury feed passes every other rule (findings 230): runs have ~400 and ~60
+    if len([p for p in players if p.get("owner") in ("freeagent", "waivers")]) < MIN_FREE_AGENTS:
+        out.append(f"only {len([p for p in players if p.get('owner') in ('freeagent', 'waivers')])} free agents")
+    if len([p for p in players if p.get("injury")]) < MIN_INJURED:
+        out.append(f"only {len([p for p in players if p.get('injury')])} players with an injury status: injury feed missing?")
     need = PLAYER_FIELDS | (RATED_FIELDS if data["rated"] else set())
     bad = [(p.get("name"), sorted(need - set(p))) for p in players if need - set(p)]
     if bad:
         out.append(f"{len(bad)} players missing fields, e.g. {bad[0]}")
-    if data["rated"] and players and all(not p.get("cr") for p in players):
+    # with no game left this week (Sunday night, the Olympic break) every Week rating is 0 by right (findings 232)
+    if data["rated"] and any(p.get("games_left") for p in players) and all(not p.get("cr") for p in players):
         out.append("rated is true but every Claude Rating is 0")
     if not out:
         out += rules(data)
@@ -64,14 +75,14 @@ def problems(data):
 
 
 def _night_dates(data):
-    """{sp: date} from the 'Mon 5' labels: the date within 10 days of updated_date with that day of the month."""
+    """{sp: date} from the 'Mon 5' labels: the date within 15 days of updated_date with that day of the month."""
     t = date.fromisoformat(data["updated_date"])
     out = {}
     for n in data["nights"]:
         dom = n["date"].split()[-1]
         if not dom.isdigit():
             return {}
-        out[n["sp"]] = next((t + timedelta(days=k) for k in range(-10, 11) if (t + timedelta(days=k)).day == int(dom)), None)
+        out[n["sp"]] = next((t + timedelta(days=k) for k in range(-15, 16) if (t + timedelta(days=k)).day == int(dom)), None)
     return out
 
 
