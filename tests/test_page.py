@@ -423,3 +423,41 @@ def test_monday_before_first_run_resets_moves(browser, server, data):
         assert "next Monday's targets" not in page.locator("#upgrades").inner_text()
     assert errors == []
     ctx.close()
+
+
+def test_phone_table_fits_and_cards_fold(browser, server, data):
+    """On a phone the table fits its box, and card explainers and long cards fold (handoffs 106-107, findings 214)."""
+    ctx, page, errors = open_page(browser, server, phone=True)
+    for t in data["teams"]:
+        page.select_option("#team", str(t["id"]))
+        wrap = page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return [w.scrollWidth, w.clientWidth]; })()")
+        assert wrap[0] <= wrap[1] + 1, (t["id"], wrap)
+        # no explainer left unfolded, and folded long cards start closed
+        assert page.locator("#upgrades .upg > .drop").count() == 0
+        assert page.evaluate("[...document.querySelectorAll('#upgrades details.fold')].every(d => !d.open)")
+    assert errors == []
+    ctx.close()
+
+
+def test_gains_say_their_unit(browser, server, data):
+    """Gains read "+x keep", or "+x Season" with no moves left (handoff 108)."""
+    import re
+    ctx, page, errors = open_page(browser, server)
+    gains = []
+    for t in data["teams"]:
+        page.select_option("#team", str(t["id"]))
+        gains += re.findall(r"\+\d+\.\d( \w+)?", " ".join(page.locator("#upgrades .up").all_inner_texts()))
+    assert gains and all(g in (" keep", " Season") for g in gains), sorted(set(gains))  # a team at its limit sees Season
+    ctx.close()
+    capped = json.loads(json.dumps(data))
+    capped["move_limit"] = capped.get("move_limit") or 7
+    for t in capped["teams"]:
+        t["moves_used"] = capped["move_limit"]
+    ctx, page, errors2 = open_page(browser, server, data=capped)
+    gains = []
+    for t in data["teams"]:
+        page.select_option("#team", str(t["id"]))
+        gains += re.findall(r"\+\d+\.\d( \w+)?", " ".join(page.locator("#upgrades .up").all_inner_texts()))
+    assert gains and all(g == " Season" for g in gains), gains[:5]
+    assert errors == errors2 == []
+    ctx.close()
