@@ -412,7 +412,7 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 344 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Injury/lineup feed outage | Shesterkin Season 0 to 2.08 | Shipped (PR #97, handoff 121) | findings 230 |
 | 345 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Empty MoneyPuck body, immediate NHL retries | run unrated | Shipped (PR #97, handoff 122) | findings 230 |
 | 346 | Oct 11 19:40 | thread "Seventh hunt" (agent) | check_data with no FAs / no injury statuses | passes silently | Shipped (PR #97, handoff 123) | findings 230 |
-| 347 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Season id fixed in code | next season publishes last season | Pending (handoff 124) | findings 230 |
+| 347 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Season id fixed in code | next season publishes last season | Shipped (PR #101, handoff 124) | findings 230 |
 | 348 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Offseason skater movers x0.965 | ROS MSE/rank corr better 4/4 seasons, weekly 0 | Shipped (PR #99, handoff 125) | findings 230 |
 | 349 | Oct 11 19:40 | thread "Seventh hunt" (agent) | ESPN 'FA' but playing (Bunting) | 0 games 73/78 runs | Shipped (PR #99, handoff 126) | findings 230 |
 | 350 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Unmatched players, names, positions, ESPN vs NHL team, mid-season mover residual, run history, caching, repo growth | all fine | No change | findings 230 |
@@ -430,7 +430,7 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 362 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Playoff round week 1 wording | see findings 232 (3) | Shipped (PR #99, handoff 137) | findings 232 |
 | 363 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Final round wording | see findings 232 (4) | Shipped (PR #99, handoff 138) | findings 232 |
 | 364 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Post-season state | see findings 232 (5) | Shipped (PR #99, handoff 139) | findings 232 |
-| 365 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Morning odds from ESPN scoreboard | see findings 232 (6) | Pending (handoff 140) | findings 232 |
+| 365 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Morning odds from ESPN scoreboard | see findings 232 (6) | Shipped (PR #101, handoff 140) | findings 232 |
 | 366 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Phone tags cut (PR #93 regression) | see findings 232 (7) | Shipped (PR #96, handoff 141) | findings 232 |
 | 367 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Waiver status in details | see findings 232 (8) | Shipped (PR #99, handoff 142) | findings 232 |
 | 368 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Own players past 300 rows | see findings 232 (9) | Shipped (PR #99, handoff 143) | findings 232 |
@@ -507,3 +507,8 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 437 | Oct 11 22:00 | thread "Seventh hunt" (agent) | PRs #96-#98: Tonight card vs locked slots, bench freshness, old data, #97 data/check_data, #98 wording | fine | No change | findings 238 |
 | 600 | Oct 11 22:20 | thread "League chat page asks" | Weekly win-favourite share (goal-diff model, Monday-available; lines only exist ~1 day ahead) as a skater Week input | +0.017 FP/game top vs bottom decile; weekly rank corr unchanged in 3 held-out seasons (0.6538/0.6426/0.6660, max +0.0002) | No change | findings 301 |
 | 601 | Oct 11 22:20 | thread "League chat page asks" | Expected team goals in the week's games (high-scoring games) as a skater Week input; line sources checked (NHL partner feed = DraftKings, ESPN scoreboard, DraftKings API 403) | +0.006 FP/game top vs bottom decile; rank corr -0.0001; game-day lines worth ~0.1 FP/game (findings 30) | No change | findings 301 |
+| 438 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Best moves re-offers 2 every update | see findings 239 (1) | Pending (handoff 207) | findings 239 |
+| 439 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Sunday expire list includes Monday claims | see findings 239 (2) | Pending (handoff 208) | findings 239 |
+| 440 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Stream card recheck times vs first puck | see findings 239 (3) | Pending (handoff 209) | findings 239 |
+| 441 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Next week's games in Sunday/Monday target ranking | +10.6 projected pts over 8 teams | Not retried (settled: PR #39, findings 91) | findings 239 |
+| 442 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Simulated week: check_data, counts across rollover, waiver clears, moves left, puck-drop removal | fine | No change | findings 239 |
