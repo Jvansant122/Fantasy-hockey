@@ -391,6 +391,22 @@ def test_goalie_new_team_starts_rise():
     assert p2({1})[0] == pytest.approx(base)  # goalie 1 has 7 starts here: past the first few
 
 
+def test_goalie_new_team_season_share_counts_from_arrival():
+    """A goalie who came from another team has his Season start share counted from his first start here, not over
+    the team's whole season; other goalies' shares are unchanged (findings 157)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i < 6 else (2 if i % 2 else 1)) for i, d in enumerate(range(1, 21, 2))]  # 2 arrives at game 7
+
+    def shares(movers):
+        sh = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, ["2026-10-22"], date(2026, 10, 22),
+                             season_share=sh, movers=movers)
+        return sh
+    base, moved = shares(set()), shares({2})
+    assert moved[2] > base[2] + 0.05
+    assert moved[1] == pytest.approx(base[1])
+
+
 def test_last_start_result_shifts_the_next_games():
     """A bad start (5+ against, or pulled after 3+) lowers the starter's chance in the next game and a little in
     the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""

@@ -629,7 +629,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     so an injured starter's games go to his partner (findings section 48).
     last_start: (goalie id, (shift next game, shift game after next)) for whoever started the team's last game:
     his start logit drops after a bad start or a loss and rises after a win (findings 131-133).
-    movers: goalies who started for another NHL team this season; with 1-3 starts for this team their logit rises."""
+    movers: goalies who started for another NHL team this season; with 1-3 starts for this team their logit rises,
+    and their season_share counts only this team's games since their first start for it."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -644,11 +645,13 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     prior = {gid: prev_starts.get(gid, 0) / last_total if last_total else 1 / len(cands) for gid in cands}
     if season_share is not None:
         for gid in cands:
+            # a goalie who came from another team counts only the games since his first start here (findings 157)
+            sq = seq[seq.index(gid):] if gid in movers and gid in seq else seq
             # a quarter recent form (half-life 5 team games) so a new no. 1 shows sooner (findings section 76)
-            w = [0.5 ** ((len(seq) - 1 - i) / 5) for i in range(len(seq))]
-            k0 = 10 * 0.5 ** (len(seq) / 5)
-            ewm = (sum(wi for wi, x in zip(w, seq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
-            season_share[gid] = 0.75 * (sum(x == gid for x in seq) + SEASON_SHARE_K * prior[gid]) / (len(seq) + SEASON_SHARE_K) + 0.25 * ewm
+            w = [0.5 ** ((len(sq) - 1 - i) / 5) for i in range(len(sq))]
+            k0 = 10 * 0.5 ** (len(sq) / 5)
+            ewm = (sum(wi for wi, x in zip(w, sq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
+            season_share[gid] = 0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K) + 0.25 * ewm
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):
