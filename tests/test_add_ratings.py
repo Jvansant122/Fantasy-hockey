@@ -322,6 +322,24 @@ def test_injured_starter_hands_starts_to_backup():
     assert hurt[1] == 0 and hurt[2] == pytest.approx(4.0)
 
 
+def test_no1_rests_on_back_to_backs_still_ahead(monkeypatch):
+    """The no. 1 is counted for fewer starts on a back-to-back still ahead, and slightly more on his ordinary nights
+    (findings 231, handoffs 133 and 190)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    pair, spaced = ["2026-10-23", "2026-10-24"], ["2026-10-23", "2026-10-25"]
+    def starts(dates, on):
+        if not on:
+            monkeypatch.setattr(rating, "B2B_AHEAD_NIGHT1", 0.0)
+            monkeypatch.setattr(rating, "B2B_AHEAD_NIGHT2_NEXT", 0.0)
+            monkeypatch.setattr(rating, "NO1_ORDINARY_LOGIT", 0.0)
+        out = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22))
+        monkeypatch.undo()
+        return out[1]
+    assert starts(pair, True) < starts(pair, False)
+    assert starts(spaced, True) > starts(spaced, False)
+
+
 def test_rest_of_season_dress_share():
     """Season rating availability: a regular plays most of the rest of the season, a player out 10 games much less,
     but more than zero (findings section 56)."""
@@ -435,9 +453,10 @@ def test_departed_goalie_takes_no_starts():
     assert 2 in rating.goalie_starts(model, "TOR", [], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22))
 
 
-def test_last_start_result_shifts_the_next_games():
+def test_last_start_result_shifts_the_next_games(monkeypatch):
     """A bad start (5+ against, or pulled after 3+) lowers the starter's chance in the next game and a little in
     the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""
+    monkeypatch.setattr(rating, "NO1_ORDINARY_LOGIT", 0.0)  # this test is about the last-start shifts alone
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26"]

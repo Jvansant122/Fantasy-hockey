@@ -101,6 +101,11 @@ BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its last: last starter's next-game logit (findings 196)
 # second night of a back-to-back, night-1 starter's logit: the team's no. 1 rests more, a backup who played goes again (findings 200)
 B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
+# back-to-backs still ahead in the week, the no. 1's start logit (most starts in the team's last 20, ties to the last starter):
+# night 1 when it is the next game, night 2 of that pair, night 2 of a pair further ahead, and every other game except the
+# shipped night-2 case above. 2021-26 replay of 12,960 team-game mornings: Brier -0.6%, no. 1 week-sum error -0.7%, better
+# in 5 of 5 seasons (findings 231, handoffs 133 and 190)
+B2B_AHEAD_NIGHT1, B2B_AHEAD_NIGHT2_NEXT, B2B_AHEAD_NIGHT2_LATER, NO1_ORDINARY_LOGIT = -0.4, -1.2, -0.6, 0.15
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 # both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
@@ -1002,6 +1007,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     new_team = {gid for gid in cands if gid in movers and 1 <= seq.count(gid) <= NEW_TEAM_STARTS}
     run = next((i for i, x in enumerate(reversed(seq)) if x != seq[-1]), len(seq)) if seq else 0
     on_streak = STREAK_RANGE[0] <= run <= STREAK_RANGE[1]
+    recent20 = [g for g in seq[-20:] if g in cands]
+    no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
+    dates_sorted = sorted(game_dates)
     relieved = {gid: RELIEF_RARE_LOGIT if seq[-20:].count(gid) <= RELIEF_RARE_STARTS else 0.0 for gid in relief if gid in cands}
     for d in sorted(game_dates):
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
@@ -1035,6 +1043,17 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
                 + (rested if rested and gid == seq[-1] else 0.0) \
                 + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0)
+            if gid == no1:  # back-to-backs still ahead, and his ordinary nights (findings 231)
+                nxt = next((x for x in dates_sorted if x > d), None)
+                prv = [x for x in dates_sorted if x < d and (last_date is None or x > last_date)]
+                n1 = nxt is not None and (date.fromisoformat(nxt) - day).days == 1
+                n2 = bool(prv) and (day - date.fromisoformat(prv[-1])).days == 1
+                if n1 and ahead == 0:
+                    z += B2B_AHEAD_NIGHT1
+                if n2:
+                    z += B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER
+                if not n1 and not n2 and not (ahead == 0 and gap == 1):
+                    z += NO1_ORDINARY_LOGIT
             if gid in relieved:
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if z and 0 < raw[gid] < 1:
