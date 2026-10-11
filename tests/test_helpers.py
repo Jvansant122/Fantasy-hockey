@@ -48,6 +48,41 @@ def test_skater_features_without_games_leans_on_last_season():
     assert f["dressed3"] is None
 
 
+def test_add_ranks_ties_groups_and_flags():
+    def row(pid, pos, toi, pptoi, team="BOS"):
+        return {"id": pid, "game": 1, "team": team, "pos": pos, "toi": toi, "pptoi": pptoi}
+    rows = [row(1, "C", 20, 3), row(2, "L", 20, 3), row(3, "R", 18, 2.5), row(4, "C", 17, 2), row(5, "D", 24, 2),
+            row(6, "D", 22, 0.4), row(7, "D", 22, 0), row(8, "C", 12, 0.3),
+            row(9, "D", 10, 0, team="TOR")]  # the other team in the same game is ranked on its own
+    rating.add_ranks(rows)
+    r = {x["id"]: x for x in rows}
+    # PP rank across all the team's skaters; ties share the smaller rank
+    assert [r[i]["pp_rank"] for i in range(1, 9)] == [1, 1, 3, 4, 4, 6, 8, 7]
+    # TOI rank within forwards (C/L/R together) and within defensemen
+    assert [r[i]["toi_rank"] for i in (1, 2, 3, 4, 8)] == [1, 1, 3, 4, 5]
+    assert [r[i]["toi_rank"] for i in (5, 6, 7)] == [1, 2, 2]
+    assert r[9]["pp_rank"] == 1 and r[9]["toi_rank"] == 1
+    # PP1: top 5 in PP time with over half a minute; top line: top 3 F or top 2 D
+    assert [r[i]["pp1"] for i in range(1, 10)] == [1, 1, 1, 1, 1, 0, 0, 0, 0]
+    assert [r[i]["top_line"] for i in range(1, 9)] == [1, 1, 1, 0, 1, 1, 1, 0]
+
+
+def test_skater_features_ranks_and_usage_terms():
+    games = [{"game": g, "fp": 2.0, "toi": t, "pptoi": 2, "shots": 3, "iCF": 5, "hits": 1, "blockedShots": 1, "goals": 1,
+              "assists": 0, "ppPoints": 0, "points": 1, "pp_rank": k, "toi_rank": k, "pp1": 1.0, "top_line": 0.0}
+             for g, t, k in ((1, 20, 1), (2, 22, 3))]
+    f = rating.skater_features(games, None, None, None, team_games=[1, 2], is_d=True)
+    assert f["is_D"] == 1.0 and f["std_pp_rank"] == 2 and f["l5_pp1"] == 1.0 and f["l20_top_line"] == 0.0
+    assert "prev_pp_rank" not in f
+    assert f["D_x_std_toi"] == 21 and f["std_toi2"] == 441 and f["std_pptoi2"] == 4
+    fwd = rating.skater_features(games, None, None, None, team_games=[1, 2])
+    assert fwd["is_D"] == 0.0 and fwd["D_x_std_toi"] == 0 and fwd["l5_toi2"] == 441
+    prev = {r: 1.0 for r in rating.GAME_RATES} | {"gp": 70}
+    assert rating.skater_features([], prev, None, None, team_games=[])["std_toi_rank"] is None  # no last-season window
+    names = rating.Model().sk["features"]
+    assert all(n in names for n in ("l5_pp_rank", "std_top_line", "D_x_l5_pptoi", "l5_toi2"))
+
+
 def test_stat_split_and_per_game():
     p = {"stats": [{"statSourceId": 0, "statSplitTypeId": 0, "seasonId": 2027, "appliedTotal": 10, "stats": {"34": 4}},
                    {"statSourceId": 1, "statSplitTypeId": 0, "seasonId": 2027, "appliedTotal": 99, "stats": {"34": 1}}]}

@@ -29,6 +29,11 @@ MONEYPUCK = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/reg
 UA = {"User-Agent": "Mozilla/5.0 (fantasy-hockey-lookup)"}
 WEIGHTS = {"goals": 2, "assists": 1, "ppPoints": 0.5, "shPoints": 0.5, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints", "points"]
+# where he ranks in his team-game's PP time and ice time, this season's windows only (findings section 201)
+RANK_RATES = ["pp_rank", "toi_rank", "pp1", "top_line"]
+# position x usage and squared ice time inputs (findings section 201); same as model/train.py
+D_X = ["std_toi", "std_pptoi", "l5_toi", "l5_pptoi", "std_blockedShots", "std_hits"]
+SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
 # ESPN status caps the chance to dress (research findings section 15); recheck day-to-day after ~3 weeks of logs
 INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}  # goalies (inside goalie_starts)
 # skaters (findings section 58): injured players still dress for some of the week, unless the note says it's a long absence
@@ -315,7 +320,30 @@ def load_skater_games(s, season, today):
             row.setdefault(k, 0)
         row["points"] = row["goals"] + row["assists"]
         row["fp"] = sum(row[k] * w for k, w in WEIGHTS.items())
+    add_ranks(rows.values())
     return list(rows.values())
+
+
+def _rank_min(vals):
+    """Rank of each value, 1 = largest, ties share the smaller rank."""
+    return [1 + sum(w > v for w in vals) for v in vals]
+
+
+def add_ranks(rows):
+    """Per (game, team): rank of his PP TOI among the team's skaters, of his TOI among its forwards or defensemen,
+    PP1 (top 5 in PP TOI with over half a minute) and top line (top 3 F or top 2 D in TOI). Same as model/train.py."""
+    teams, groups = {}, {}
+    for r in rows:
+        teams.setdefault((r["game"], r["team"]), []).append(r)
+        groups.setdefault((r["game"], r["team"], pos_group(r["pos"])), []).append(r)
+    for rs in teams.values():
+        for r, k in zip(rs, _rank_min([r["pptoi"] for r in rs])):
+            r["pp_rank"] = k
+            r["pp1"] = 1.0 if k <= 5 and r["pptoi"] > 0.5 else 0.0
+    for (_, _, grp), rs in groups.items():
+        for r, k in zip(rs, _rank_min([r["toi"] for r in rs])):
+            r["toi_rank"] = k
+            r["top_line"] = 1.0 if k <= (2 if grp == "D" else 3) else 0.0
 
 
 def load_goalie_games(s, season, today):
@@ -531,9 +559,9 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
 
-def skater_features(games, prev, xg_now, xg_prev, team_games):
+def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False):
     """Inputs for one skater. games: his games this season, oldest first. team_games: his team's game ids, oldest first."""
-    f = {}
+    f = {"is_D": 1.0 if is_d else 0.0}
     if prev:
         for r in GAME_RATES:
             f[f"prev_{r}"] = prev.get(r)
@@ -550,12 +578,20 @@ def skater_features(games, prev, xg_now, xg_prev, team_games):
             tail = games[-n:] if n else games
             # no games yet this season: lean on last season
             f[f"{w}_{r}"] = mean([g[r] for g in tail]) if tail else f.get(f"prev_{r}")
+    for r in RANK_RATES:  # no last-season window: None before his first game, filled with the training mean
+        for n, w in ((5, "l5"), (10, "l10"), (20, "l20"), (None, "std")):
+            tail = games[-n:] if n else games
+            f[f"{w}_{r}"] = mean([g.get(r) for g in tail]) if tail else None
     if f.get("std_ixg") is None and not gp:
         f["std_ixg"], f["std_onice_xgf"] = f["prev_ixg"], f["prev_onice_xgf"]
     w = min(gp / 20, 1)
     for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits"):
         v = f.get(f"std_{r}")
         f[f"std_{r}_w"] = None if v is None else v * w
+    for n in D_X:
+        f[f"D_x_{n}"] = f["is_D"] * (f.get(n) or 0)
+    for n in SQUARED:
+        f[f"{n}2"] = None if f.get(n) is None else f[n] ** 2
     played = {g["game"] for g in games}
     for n in (3, 10):
         last = team_games[-n:]
@@ -1107,15 +1143,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             traded = bool(gl) and espn_team != team and espn_team in team_games and gl[-1]["game"] in tg
             if traded:
                 tg = tg[:tg.index(gl[-1]["game"]) + 1]
-            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg)
-            f["is_D"] = 1.0 if p["pos"] == "D" else 0.0
+            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D")
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             # opening games cut short: average with his points a game leaving those games out (findings 171)
             kept = short_opening(gl, prev.get(pid)) if pid else None
             if kept is not None:
-                f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg)
-                f2["is_D"] = f["is_D"]
+                f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg,
+                                     is_d=p["pos"] == "D")
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
             df_, base_dress, cap = None, None, 1.0
