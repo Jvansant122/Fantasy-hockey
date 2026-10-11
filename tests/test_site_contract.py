@@ -9,7 +9,7 @@ import subprocess
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, reopen_tonight
 
 import check_data
 
@@ -202,6 +202,7 @@ def test_check_passes_every_day_of_the_playoffs_and_the_opener(data):
     from datetime import date, timedelta
     if not data["rated"]:
         return
+    data = reopen_tonight(copy.deepcopy(data))
     for start, nights, weeks, period in ((date(2027, 3, 8), 14, 2, 24), (date(2027, 3, 22), 14, 2, 25), (date(2026, 9, 29), 6, 1, 1)):
         for k in range(nights):
             today = start + timedelta(days=k)

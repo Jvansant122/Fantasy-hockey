@@ -10,7 +10,7 @@ import threading
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, reopen_tonight
 
 sync_api = pytest.importorskip("playwright.sync_api")
 LOCAL_CHROMIUM = "/opt/pw-browsers/chromium"  # Claude cloud containers ship this; CI downloads its own
@@ -188,7 +188,7 @@ def test_games_that_already_started_drop_out(browser, server, data):
     from datetime import datetime, timedelta, timezone
     iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     now = datetime.now(timezone.utc)
-    late = json.loads(json.dumps(data))
+    late = reopen_tonight(json.loads(json.dumps(data)))
     late["updated_utc"] = iso(now - timedelta(hours=2))
     late["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
     sk = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and (p.get("cr") or 0) > 0)
@@ -369,7 +369,7 @@ def test_tonight_card_counts_started_players(browser, server, data):
     team = d["teams"][0]
     sk = [p for p in _mine(d, team) if p["pos"] != "G"]
     for p in sk:
-        p.update(ir=False, injury=None, sat_last=False, dfo_out=None, today_start=None)
+        p.update(ir=False, injury=None, sat_last=False, dfo_out=None, today_start=None, bench=False)
         p["nights"] = sorted(set(p["nights"]) | {sp})
     fwd = [p for p in sk if p["pos"] != "D"]
     if len(fwd) < 10 or len(sk) - len(fwd) < 5:
