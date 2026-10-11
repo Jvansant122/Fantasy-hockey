@@ -186,10 +186,14 @@ def test_games_that_already_started_drop_out(browser, server, data):
     sk = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and (p.get("cr") or 0) > 0)
     later = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and p["id"] != sk["id"])
     sk["today_start"], later["today_start"] = iso(now - timedelta(hours=1)), iso(now + timedelta(hours=3))
+    # his last game this week started: nothing is left, not a rounding leftover
+    last = next(p for p in late["players"] if p["games_left"] == 1 and (p.get("cr") or 0) > 0 and p["id"] not in (sk["id"], later["id"]))
+    last["today_start"] = iso(now - timedelta(hours=1))
     ctx, page, errors = open_page(browser, server, data=late)
     got = lambda pid: page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {pid}); return [p.games_left, p.cr]; }})()")
     assert got(sk["id"]) == [sk["games_left"] - 1, pytest.approx(max(0, sk["cr"] - sk["cr_fpg"] * min(sk["cr_dress_next"] or 0, sk["cr_games"])), abs=0.02)]
     assert got(later["id"])[0] == later["games_left"]
+    assert page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {last['id']}); return [p.games_left, p.cr, p.cr_games]; }})()") == [0, 0, 0]
     # the rest of the row follows (findings 182): no stale percentile, tonight's dot greyed, Open skips tonight
     assert page.evaluate(f"state.data.players.find(p => p.id === {sk['id']}).cr_pct") is None
     tonight = next(n for n in late["nights"] if not n["past"])

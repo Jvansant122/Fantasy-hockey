@@ -194,6 +194,7 @@ function dropStarted(d) {
       const gone = Math.min(tonightGames, p.cr_games);
       p.cr = Math.max(0, +(p.cr - gone * (p.pos === "G" ? (p.cr_why?.line?.pps ?? p.cr_fpg) : p.cr_fpg)).toFixed(2));
       p.cr_games = +(p.cr_games - gone).toFixed(2);
+      if (p.games_left === 0) p.cr = p.cr_games = 0;  // no rounding leftovers once nothing is left to play
       if (p.cr_why?.exp_starts != null) p.cr_why.exp_starts = Math.max(0, +(p.cr_why.exp_starts - gone).toFixed(2));
       if (p.cr_why) p.cr_why.p_today = 0;
     }
