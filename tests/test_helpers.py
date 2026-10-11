@@ -217,3 +217,16 @@ def test_free_agents_stop_counting_today_at_the_first_puck():
     assert fetch.counts_until(late, "waivers", first) == first
     assert fetch.counts_until(late, "mine", first) == late and fetch.counts_until(late, "other", first) == late
     assert fetch.counts_until(None, "freeagent", first) is None  # no game today
+
+
+def test_skaters_with_no_games_use_last_seasons_usage_ranks():
+    """Before his first game a skater's rank inputs come from last season, not the training mean (findings 213)."""
+    rates = {i: {"gp": 80 - i, "pos": "C" if i < 14 else "D", "toi": 22 - i, "pptoi": max(0, 4 - i * 0.5)} for i in range(22)}
+    rates[99] = {"gp": 5, "pos": "D", "toi": 30, "pptoi": 0}  # a part-timer still gets ranked against the regulars
+    rating.prev_ranks(rates, {i: "BOS" for i in rates})
+    assert (rates[0]["pp_rank"], rates[0]["toi_rank"], rates[0]["pp1"], rates[0]["top_line"]) == (1, 1, 1.0, 1.0)
+    assert rates[13]["toi_rank"] == 13 and rates[13]["pp1"] == 0.0  # 13th forward: outside the regulars, ranked behind them
+    assert rates[99]["toi_rank"] == 1 and rates[99]["top_line"] == 1.0 and rates[99]["pp1"] == 0.0
+    f = rating.skater_features([], rates[0], None, None, [], is_d=False)
+    assert f["std_pp_rank"] == f["l5_toi_rank"] == 1 and f["l10_pp1"] == 1.0
+    assert rating.skater_features([], None, None, None, [])["std_pp_rank"] is None  # nothing to go on: training mean
