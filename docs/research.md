@@ -688,6 +688,10 @@ ESPN holds a free-agent add made after the day's first game starts until its ove
 
 An audit of Sunday's table found two slips. A free agent who sat his last game but is back in Daily Faceoff's lines was given 0.9 of a game even when his team had no games left this week (Emil Andrae topped the free-agent table Sunday evening with 0.76 points and no game). **That lift now applies only when he has a game left.** And when a game started after the data run, the page took it out of the Week rating but not the rest of the row: the Open and Light columns, the night dots, the percentile badge and the details panel still counted it (Desharnais showed Week 0.0 with a 92nd-percentile badge). **All of those now drop the started game too.** (Findings 182.)
 
+## 87. Goalie ESPN columns, and Daily Faceoff lineups from before the last game
+
+ESPN's goalie games-started count can lag a day behind its points, so This yr/G, Proj/G and ESPN week ran high for 9 of 62 goalies (Jarry 3.2 a start against a real 1.6). **Those columns now count starts from NHL game data** (the Claude Rating already did). And a Daily Faceoff lineup posted before a game the player then sat was still read as "in the lineup" for the next game (2 of 16 cases, Andrae among them). **A team's lineup now counts only if it was updated after its last game started.** (Findings 182.)
+
 ## What the independent review changed
 
 | Review point | Outcome |

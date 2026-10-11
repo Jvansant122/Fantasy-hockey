@@ -133,3 +133,16 @@ def test_mark_lineups_matches_daily_faceoff_spellings():
     lineups["VAN"]["players"].pop()
     leads.mark_lineups(players, lineups, {})
     assert players[2]["dfo_out"] is True and players[1]["dfo_out"] is False
+
+
+def test_mark_lineups_ignores_a_lineup_from_before_the_last_game():
+    # posted for the game he then sat: it says nothing about the next one (findings 182)
+    players = [{"name": "Emil Andrae", "team": "CBJ", "pos": "D"}, {"name": "Tim Stützle", "team": "OTT", "pos": "C"}]
+    lineups = {"CBJ": {"updated": "2026-10-10T22:43:00.000Z", "players": [["Emil Andrae", "d3", None, False]]},
+               "OTT": {"updated": "2026-10-11T15:00:00.000Z", "players": [["Tim Stutzle", "f1", None, False]]}}
+    last = {"CBJ": "2026-10-10T23:00:00Z", "OTT": "2026-10-10T23:00:00Z"}
+    leads.mark_lineups(players, lineups, {}, last)
+    assert [p["dfo_out"] for p in players] == [None, False]
+    leads.mark_lineups(players, lineups, {})  # no game times: every lineup counts
+    assert [p["dfo_out"] for p in players] == [False, False]
+    assert leads.older("2026-10-10T22:43:00.000Z", "2026-10-10T23:00:00Z") and not leads.older(None, "2026-10-10T23:00:00Z")

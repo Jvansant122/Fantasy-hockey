@@ -801,3 +801,18 @@ def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     assert gone["Anthony Stolarz"]["cr_why"]["p_today"] == 0
     assert gone["Joseph Woll"]["cr_games"] == pytest.approx(out[None]["Joseph Woll"]["cr_games"], abs=0.01)
     assert rating.game_started({"today_start": "not a date"}) is False and rating.game_started({}) is False
+
+
+def test_goalie_espn_columns_use_nhl_starts(monkeypatch, tmp_path):
+    # ESPN's start count can run a game behind its points (findings 182): This yr/G and Proj/G use NHL starts
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    players = [dict(espn(pid, name, team, "G"), gp=1, cur_ppg=99.0, ppg=50.0, proj_ppg=3.0, last_ppg=2.5) for pid, name, team in
+               [(111, "Joseph Woll", "TOR"), (112, "Anthony Stolarz", "TOR"), (113, "Jeremy Swayman", "BOS")]]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    started = [p for p in players if p["cr_why"]["gs"]]
+    assert started
+    for p in started:
+        assert p["gp"] == p["cr_why"]["gs"] and p["cur_ppg"] < 99
+        assert min(p["cur_ppg"], 3.0) - 0.01 <= p["ppg"] <= max(p["cur_ppg"], 3.0) + 0.01

@@ -390,7 +390,9 @@ def main():
         lineups = leads.fetch_lineups(web)
     except Exception as e:  # noqa: BLE001
         lead_errors["lineups"] = repr(e)
-    leads.mark_lineups(players, lineups, ESPN_TO_NHL)
+    last_start = {ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()): max(v for v in t["starts"].values() if v <= run_utc)
+                  for t in teams.values() if any(v <= run_utc for v in t.get("starts", {}).values())}
+    leads.mark_lineups(players, lineups, ESPN_TO_NHL, last_start)
     injuries = None
     try:  # ESPN injury notes: long absences go to 0 in the weekly rating (findings section 58)
         injuries = leads.fetch_injuries(web)

@@ -12,6 +12,7 @@ import json
 import re
 import time
 import unicodedata
+from datetime import datetime
 from pathlib import Path
 
 LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "log"
@@ -88,14 +89,23 @@ def name_words(name):
                               .lower().replace("-", " ")).split() if len(w) > 1]
 
 
-def mark_lineups(players, lineups, to_nhl):
+def older(updated, start):
+    """The lineup's update time is before the game start (both ISO); unknown times are never older."""
+    try:
+        return bool(updated and start) and datetime.fromisoformat(updated.replace("Z", "+00:00")) < datetime.fromisoformat(start.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+
+
+def mark_lineups(players, lineups, to_nhl, last_start=None):
     """p["dfo_out"]: True when Daily Faceoff has his team's lineup and he isn't in a forward or defense line (scratched,
     injured or not listed), False when he is, None when the lineup is missing. Skaters only (findings section 65).
     A name that isn't in the lineup exactly can match one on his team with the same last name and first two letters of
     the first name (Gabe/Gabriel, Elias N./Elias Nils; findings 175), skipping names another skater matches exactly;
-    with several, the one whose line fits his position."""
+    with several, the one whose line fits his position. A lineup posted before his team's last game started
+    ({NHL abbrev: UTC ISO} in last_start) was for that game, not the next one, so it counts as missing (findings 182)."""
     groups = {team: [(n, group) for n, group, *_ in t.get("players", []) if group in DRESSED]
-              for team, t in (lineups or {}).items() if t.get("players")}
+              for team, t in (lineups or {}).items() if t.get("players") and not older(t.get("updated"), (last_start or {}).get(team))}
     exact = {}
     for p in players:
         if p["pos"] != "G":
