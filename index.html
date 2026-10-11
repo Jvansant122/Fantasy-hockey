@@ -16,6 +16,7 @@
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }  /* .controls' flex would otherwise show a hidden Trade check picker */
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 16px; }
   h1 { font-size: 20px; margin: 0; }
@@ -122,20 +123,20 @@
     <label class="myteam">Your team <select id="team"><option value="">Pick your team…</option></select></label>
   </div>
 
-  <div class="card">
+  <div class="card" id="nightscard">
     <h2>This matchup's nights</h2>
     <div class="nights" id="nights"></div>
     <div class="sub legend"><span>Green outline = light night</span><span id="openkey"></span></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="upgcard">
     <h2>Upgrades</h2>
     <div class="sub" id="upghead">Free agents projected above your team's weakest healthy player, and who to drop. <b>keep</b> = this week's points + about 2 weeks of points per game (Season × 7).
       <details class="more"><summary>How to use your moves</summary>Your league allows 7 moves a matchup (6 in the 6-day first one, 14 in a two-week playoff round), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</details></div>
     <div class="upgrades" id="upgrades" style="margin-top:8px"></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="tradecard">
     <h2>Trade check <span class="sub">pick who you'd give and who you'd get to see what Claude's Season rating says about the trade</span></h2>
     <div class="controls" id="tpick">
       <select id="tgive" aria-label="Add a player to give"></select>
@@ -225,9 +226,19 @@ function weekOver(d) {
   if (!stale(d) || !last) return false;
   const [y, m, day] = d.updated_date.split("-").map(Number), n = +String(last.date).split(" ")[1];
   const end = new Date(Date.UTC(y, m - 1 + (n < day ? 1 : 0), n)).toISOString().slice(0, 10);
-  return end < new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  // ESPN rolls to the new matchup at about 3:10-3:40 AM ET, so until 4 AM Monday the old matchup's moves still count (findings 233)
+  return end < new Date(Date.now() - 4 * 3600e3).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 }
-const stale = d => !!d.updated_date && d.updated_date < new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+// the update workflow's runs, ET (CLAUDE.md): about 6 AM, 9 AM, 12:40 PM and 5 PM
+const RUNS = [[6, 0], [9, 0], [12, 40], [17, 0]];
+function nextRun(now = new Date()) {
+  const [h, m] = now.toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour12: false }).split(":").map(Number);
+  const [rh, rm] = RUNS.find(([rh, rm]) => rh * 60 + rm > (h % 24) * 60 + m) || RUNS[0];
+  return `${rh > 12 ? rh - 12 : rh}${rm ? `:${String(rm).padStart(2, "0")}` : ""} ${rh >= 12 ? "PM" : "AM"}`;
+}
+// after the trade deadline ESPN takes no trades, so the site suggests none (findings 231)
+const tradesClosed = d => !!d.trade_deadline && Date.now() > new Date(d.trade_deadline).getTime();
+const stale = d =>!!d.updated_date && d.updated_date < new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 const group = p => p.pos === "G" ? "G" : p.pos === "D" ? "D" : "F";
 const injLabel = p => p.injury ? p.injury.replaceAll("_", " ").toLowerCase() : "";
 const activeNight = n => !$("left").checked || !n.past;
@@ -256,7 +267,17 @@ function hasRoom(sp, g) {
   return o[g] > 0;
 }
 function val(p, key) {
-  return { week: week(p), games: games(p), light: light(p), opengm: openGames(p), nights: games(p), pos: p.slots.join("/") || p.pos }[key] ?? p[key];
+  return { week: week(p), games: games(p), light: light(p), opengm: openGames(p), nights: games(p), pos: posTxt(p) }[key] ?? p[key];
+}
+// the positions shown in the table (no catch-all F), so the Pos sort matches what you see (findings 232)
+const posTxt = p => p.slots.filter(s => s !== "F").join("/") || p.pos;
+// search ignores accents, case and punctuation ("jt miller", "oreilly") and takes NHL team codes (TBL for ESPN's TB)
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+const ESPN_TO_NHL = { TB: "TBL", NJ: "NJD", SJ: "SJS", LA: "LAK", UTAH: "UTA", WAS: "WSH", MON: "MTL", CLB: "CBJ" };
+function matches(p, q) {
+  if (!q) return true;
+  const team = p.team.toLowerCase(), nhl = (ESPN_TO_NHL[p.team] || p.team).toLowerCase();
+  return norm(p.name).includes(q) || norm(p.name).replace(/ /g, "").includes(q.replace(/ /g, "")) || team.includes(q) || nhl.includes(q);
 }
 // Value used to compare players: the Claude Rating when the data has it, else the old weekly projection
 function score(p) { return state.data.rated ? p.cr : week(p); }
@@ -284,7 +305,7 @@ function computeOpenSlots(d) {
 
 function pctBadge(p, key = "cr_pct") {
   const v = p[key];
-  if (v == null) return "";
+  if (v == null || (key === "cr_pct" && fmt(p.cr) === "0.0")) return "";  // no percentile next to a Week of 0.0 (findings 232)
   return `<span class="pct ${v >= 90 ? "hi" : v >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} in the league and on the wire">${v}</span>`;
 }
 function dots(p) {
@@ -301,9 +322,11 @@ function why(p) {
   if (p.pos === "G") {
     parts.push(`Expected starts ${n(w.exp_starts)} of ${w.team_games} team games left`);
     if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last 10`);
-    if (w.tonight) parts.push(`Daily Faceoff: ${w.tonight.starting ? "starting" : "not starting"} tonight (${w.tonight.status === "Confirmed" ? "confirmed, counted as certain" : w.tonight.status.toLowerCase() + ", not yet counted"})`);
+    // once his team's game starts, tonight is out of the numbers, so the tonight notes go too (findings 232)
+    if (started(p)) parts.push("tonight's game has started");
+    else if (w.tonight) parts.push(`Daily Faceoff: ${w.tonight.starting ? "starting" : "not starting"} tonight (${w.tonight.status === "Confirmed" ? "confirmed, counted as certain" : w.tonight.status.toLowerCase() + ", not yet counted"})`);
     if (w.sched != null && Math.abs(w.sched) >= 0.1) parts.push(`${w.sched > 0 ? "soft" : "tough"} schedule the rest of the week: ${w.sched > 0 ? "+" : "−"}${Math.abs(w.sched).toFixed(1)} pts per start from opponents and home ice`);
-    if (w.line) parts.push(`tonight's betting line gives his team a ${Math.round(w.line.win_prob * 100)}% chance to win, worth ${w.line.pps.toFixed(1)} pts if he starts`);
+    if (w.line && !started(p)) parts.push(`tonight's betting line gives his team a ${Math.round(w.line.win_prob * 100)}% chance to win, worth ${w.line.pps.toFixed(1)} pts if he starts`);
     parts.push(`× ${(+p.cr_fpg || 0).toFixed(2)} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward his last-season rate, or 2.9 without one)` : ""));
   } else {
     parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
@@ -328,6 +351,8 @@ function why(p) {
 function details(p) {
   const og = openGames(p);
   const extra = [`${p.team} · ${p.slots.filter(s => s !== "F").join("/") || p.pos}`, `owned ${fmt(p.owned)}%`];
+  // why a waiver player's games and starts look short (findings 232)
+  if (p.owner === "waivers") extra.unshift(`on waivers: he can't play until he clears${p.clears ? ` ${p.clears}` : ""}, so only games from then count`);
   if (og != null) extra.push(`${og} of ${games(p)} games on nights you have an open slot`);
   return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join(" · ");
 }
@@ -338,7 +363,7 @@ function cells(p) {
   const teamName = p.team_id != null && state.who === "every" && !onMyTeam(p) ? (state.teamNames[p.team_id] || "") : "";
   const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + wvTag(p) +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
-    (p.cr_why?.tonight?.status === "Confirmed" ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
+    (p.cr_why?.tonight?.status === "Confirmed" && !started(p) ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
   const og = openGames(p);
   return {
     name: `${esc(p.name)}${tags ? `<span class="tags">${tags}</span>` : ""}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
@@ -363,14 +388,14 @@ function inRoster(p) {
 
 function render() {
   const d = state.data;
-  const q = $("q").value.trim().toLowerCase(), pos = $("pos").value, ming = +$("ming").value || 0;
+  const q = norm($("q").value), pos = $("pos").value, ming = +$("ming").value || 0;
   const list = d.players.filter(p =>
     inView(p) &&
-    // unsigned players (team FA) only show up when searched for
-    (p.team !== "FA" || q) &&
+    // unsigned free agents (team FA) only show up when searched for; one on a fantasy roster stays in its owner's views (findings 232)
+    (p.team !== "FA" || q || !isFA(p)) &&
     fits(p, pos) && games(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
     (!$("healthy").checked || !p.injury) &&
-    (!q || p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q))
+    matches(p, q)
   );
   const k = state.sort, dir = state.dir;
   list.sort((a, b) => {
@@ -378,8 +403,10 @@ function render() {
     if (typeof x === "string" || typeof y === "string") return dir * String(x ?? "").localeCompare(String(y ?? "")) || keep(b) - keep(a);
     return dir * ((x ?? -1e9) - (y ?? -1e9)) || keep(b) - keep(a);  // ties (every Week 0.0 after Sunday's first puck) by keep value (findings 211)
   });
-  const shown = list.slice(0, 300);
-  $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
+  // the top 300, plus every player of your own or the picked roster further down: they're the drop candidates (findings 232)
+  const shown = list.filter((p, i) => i < 300 || onMyTeam(p) || inRoster(p)), extras = Math.max(0, shown.length - 300);
+  $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
+    (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
   $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
     `<th data-k="${key}" tabindex="0" class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
@@ -404,18 +431,36 @@ function renderUpgrades() {
   const myTeam = d.teams.find(t => String(t.id) === state.team);
   const reset = weekOver(d);
   const noMoves = !reset && d.rated && d.move_limit && myTeam?.moves_used >= d.move_limit;
+  // the final with no moves left: nothing added now ever counts (findings 232)
+  const seasonDone = noMoves && d.final_matchup;
+  // a two-week playoff round's first week: the next Monday is the same round, with the same moves (findings 232)
+  const roundLeft = d.nights.filter(n => !n.past).length > 7;
+  const nextStart = roundLeft ? "the next round" : "next Monday";
   // with no moves left, a waiver player who clears before Monday will be claimed by then (findings 181)
   const fas = d.players.filter(p => isFA(p) && !p.injury && !(noMoves && p.owner === "waivers" && !/^(Mon|Tue)/.test(p.clears || "")));
   const roster = d.players.filter(p => String(p.team_id) === state.team);
   const irOpen = (d.ir_slots || 0) - roster.filter(p => p.ir).length;
-  // a healthy player left in an IR slot scores nothing (findings 181): first thing to fix
-  const irHealthy = roster.filter(p => p.ir && !["OUT", "INJURY_RESERVE"].includes(p.injury));
-  if (irHealthy.length) cards.push(`<div class="upg"><b>Activate from IR</b> <span class="drop">· healthy but in your IR slot, so his points don't count: move him to your lineup.</span>
-    ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
+  const irEligible = p => ["OUT", "INJURY_RESERVE"].includes(p.injury);
+  // roster size (findings 231): ESPN allows roster_max players outside IR (22 here); old data has no roster_max, so no count
+  const rosterMax = d.roster_max || null;
+  const nonIR = roster.filter(p => !p.ir);
+  // an IR-eligible player outside IR with an IR slot open: move him there instead of dropping anyone (findings 231)
+  const irMove = irOpen > 0 ? nonIR.filter(irEligible).sort((a, b) => keep(b) - keep(a)).slice(0, irOpen) : [];
+  const full = rosterMax != null && nonIR.length >= rosterMax;
+  const freeSpots = rosterMax == null ? 0 : Math.max(0, rosterMax - nonIR.length + irMove.length);
   const addVal = p => noMoves ? KEEP_GAMES * (p.cr_season ?? 0) : keep(p);
+  // Drop list: lowest value by the same measure the other cards use (findings 233), IR slot and IR moves excluded
+  const drops = roster.filter(p => !p.ir && p.pos !== "G" && !irMove.includes(p)).sort((a, b) => addVal(a) - addVal(b)).slice(0, 5);
+  // a healthy player left in an IR slot scores nothing (findings 181): first thing to fix
+  const irHealthy = roster.filter(p => p.ir && !irEligible(p));
+  // with a full roster he needs a free spot before he can leave IR (findings 231)
+  const fullNote = full && drops.length ? ` Your roster is full: drop ${drops[0].name} first (a drop uses no move), then move him to your lineup.` : "";
+  if (irHealthy.length) cards.push(`<div class="upg"><b>Activate from IR</b> <span class="drop">· healthy but in your IR slot, so his points don't count: move him to your lineup.${esc(fullNote)}</span>
+    ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
   // a gain in addVal units, labelled: with no moves left addVal is 7 x Season, so show the Season difference
   const gainTxt = v => noMoves ? `+${fmt(v / KEEP_GAMES)} Season` : `+${fmt(v)} ${d.rated && !d.final_matchup ? "keep" : "pts"}`;
-  const later = noMoves ? " No moves left this matchup; these are next Monday's targets." : "";
+  const later = !noMoves ? "" : d.final_matchup ? " No moves left, and the season ends with this matchup."
+    : roundLeft ? " No moves left this round; these are targets for the next round." : " No moves left this matchup; these are next Monday's targets.";
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
   if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
@@ -427,18 +472,24 @@ function renderUpgrades() {
   const swapSubs = new Set(), swapDrops = new Set();
   // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
   const realLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : null;
+  const nextWeek = noMoves || reset;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
     ${outs.map(p => {
-      // no more subs than moves left (findings 233)
-      const sub = realLeft != null && swapSubs.size >= realLeft ? null
-        : fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (noMoves || reset || f.games_left > 0)).sort((a, b) => noMoves || reset ? addVal(b) - addVal(a) : score(b) - score(a))[0];
+      // no more subs than moves left (findings 233), and none after the season's last move
+      const sub = seasonDone || (realLeft != null && swapSubs.size >= realLeft) ? null
+        : fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (nextWeek || f.games_left > 0)).sort((a, b) => nextWeek ? addVal(b) - addVal(a) : score(b) - score(a))[0];
       if (sub) { swapSubs.add(sub.id); swapDrops.add(p.id); }
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
-      const ir = irOpen > 0 && ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
-      return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
+      const ir = irOpen > 0 && irEligible(p) ? " (IR-eligible: move him to IR)" : "";
+      return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} ${nextWeek
+        ? `<span class="sub">${esc(sub.team)}</span> <span class="up">Season ${fmt(sub.cr_season)}</span>`
+        : `<span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>`}` : ""}</div>`;
     }).join("")}</div>`);
+  // moves left after the swaps (2 when the count is unknown)
+  const movesLeft = realLeft != null ? Math.max(0, realLeft - swapSubs.size) : 2;
   // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
   const tonight = d.nights.find(n => !n.past);
+  const lastNight = !!tonight && tonight === d.nights[d.nights.length - 1];
   // ESPN holds an add made after the day's first puck until tomorrow (findings 179)
   const puck = d.first_start ? new Date(d.first_start) : null;
   const locked = !!puck && puck <= new Date() && !stale(d);
@@ -446,6 +497,7 @@ function renderUpgrades() {
   // after his game starts, the same sources as before it: a confirmed starter, else the site's own chance (findings 213)
   const startsTonight = p => p.cr_why?.tonight?.status === "Confirmed" ? !!p.cr_why.tonight.starting
     : ((started(p) ? p.cr_why?.p_today_pre : p.cr_why?.p_today) ?? 0) > 0.5;
+  let streamShown = false;
   if (d.rated && tonight && !stale(d)) {
     const myG = mine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
@@ -459,8 +511,10 @@ function renderUpgrades() {
         .sort((a, b) => pps(b) - pps(a)).slice(0, 3);
       const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
       const before = puck && !locked ? ` Add before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET: later adds count from tomorrow.` : "";
+      streamShown = true;
       cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(before)}${esc(cap)}</span>
-        ${locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
+        ${locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
+          : locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
           : streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
           : '<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon, and the site rechecks at about 12:40 and 5 PM ET.</div>'}</div>`);
     }
@@ -484,59 +538,11 @@ function renderUpgrades() {
     const nF = order.filter(p => group(p) !== "D").length, nD = order.length - nF;
     const crowded = Math.max(0, nF - 9) + Math.max(0, nD - 5) > 1;  // more playing than 9 F + 5 D + 1 UTL can hold
     if (crowded && bench.length) cards.push(`<div class="upg"><b>Tonight</b> <span class="drop">· ${nF} forwards play ${esc(tonight.date)} for 9 F spots and ${nD} D for 5, plus the UTL: start the best per-game ratings, bench these</span>
-      ${bench.map(p => `<div>${esc(p.name)}${flagged(p) ? `<span class="tag inj">${p.dfo_out ? "not in Daily Faceoff's lineup" : "sat last game"}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game</span></div>`).join("")}</div>`);
+      ${bench.map(p => `<div>${esc(p.name)}${flagged(p) ? `<span class="tag inj">${p.dfo_out ? "not in Daily Faceoff's lineup" : "sat last game"}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game</span></div>`).join("")}</div>`);
   }
-  // Best 2 moves (research findings 68): the biggest keep-value gains over your weakest player at the same position
-  if (d.rated) {
-    // no more moves than are left, and not a free agent Mid-week swaps already offered (findings 181)
-    // and not dropping a player Mid-week swaps already drops, nor using the moves its subs take (findings 233)
-    const added = new Set(swapSubs), dropped = new Set(swapDrops), best = [];
-    const movesLeft = realLeft != null ? Math.max(0, realLeft - swapSubs.size) : 2;
-    // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
-    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && tonight && tonight === d.nights[d.nights.length - 1] && movesLeft > 2;
-    for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
-      let top = null;
-      for (const g of ["F", "D"]) {
-        const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
-        const fa = fas.filter(p => group(p) === g && !added.has(p.id)).sort((a, b) => addVal(b) - addVal(a))[0];
-        if (!left.length || !fa) continue;
-        const worst = left.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
-        if (!top || addVal(fa) - addVal(worst) > top.gain) top = { fa, worst, gain: addVal(fa) - addVal(worst) };
-      }
-      if (!top || top.gain <= 0.5) break;
-      added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
-    }
-    const expire = lastCall ? ` You have ${realLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
-    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}${expire}</span>
-      ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span></div>`).join("")}</div>`);
-  }
-  const nSwap = cards.length;
-  for (const g of ["F", "D", "G"]) {
-    const mineG = mine.filter(p => group(p) === g);
-    if (!mineG.length) continue;
-    const worst = mineG.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
-    const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
-    const kv = p => g === "G" || !d.rated ? "" : ` · keep ${fmt(keep(p))}`;
-    if (!better.length) continue;
-    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.${later}</span>
-      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (${gainTxt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
-  }
-  if (cards.length === nSwap) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
-  const dropGain = p => {  // the best free agent at his position, and how much he'd add (findings 68)
-    const fa = d.rated && fas.filter(f => group(f) === group(p)).sort((a, b) => keep(b) - keep(a))[0];
-    return fa && keep(fa) > keep(p) ? ` · ${esc(fa.name)} +${fmt(keep(fa) - keep(p))} keep` : "";
-  };
-  // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded
-  const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => keep(a) - keep(b)).slice(0, 5);
-  if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus about two more weeks of points per game</span>
-    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}${dropGain(p)}</span>${d.rated && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
-  // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only
-  const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && p.pos !== "G" && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
-    .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
-  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.${later}</span>
-    ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   // Trade ideas (research findings 103): another team's skater whom ESPN projects the same as mine but the Season rating has 0.3+
   // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.
+  // Built before Best moves, which says when its drop is also a trade chip (findings 233)
   const tradeable = p => p.pos !== "G" && !p.ir && !p.injury && !p.sat_last && (p.last_gp ?? 0) >= 40 && p.proj_ppg != null && p.cr_season != null;
   const teamName = id => (d.teams.find(t => String(t.id) === String(id)) || {}).name || "another team";
   // Across positions too (findings 143), as long as the roster keeps 11-13 healthy F and 6-8 healthy D afterwards
@@ -553,30 +559,101 @@ function renderUpgrades() {
     const theirs = healthy(o.team_id), tF = theirs.filter(p => group(p) === "F").length;
     return shapeFits(nF, nD, o, m) && shapeFits(tF, theirs.length - tF, m, o);
   };
-  const trades = !d.rated ? [] : mine.filter(tradeable).flatMap(m => d.players
+  // this season's points per game so far, pulled toward last season's with 40 games' weight: the partner sees these too, so
+  // an offer looks fair only when they match as well as ESPN's preseason projection does (findings 235)
+  const blend = p => ((p.cur_ppg ?? 0) * (p.gp ?? 0) + (p.last_ppg ?? 0) * 40) / ((p.gp ?? 0) + 40);
+  // none after ESPN's trade deadline (findings 231); one idea per target player (findings 235)
+  const trades = !d.rated || tradesClosed(d) ? [] : mine.filter(tradeable).flatMap(m => d.players
     .filter(o => !isFA(o) && String(o.team_id) !== state.team && shapeOk(m, o) && tradeable(o)
-      && Math.abs(o.proj_ppg - m.proj_ppg) <= 0.05 && o.cr_season - m.cr_season >= 0.3)
+      && Math.abs(o.proj_ppg - m.proj_ppg) <= 0.05 && Math.abs(blend(o) - blend(m)) <= 0.05 && o.cr_season - m.cr_season >= 0.3)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 2).map(o => ({ m, o, gap: o.cr_season - m.cr_season })))
-    .sort((a, b) => b.gap - a.gap).slice(0, 5);
-  if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN projects each pair about the same, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
+    .sort((a, b) => b.gap - a.gap).filter((t, i, all) => all.findIndex(u => u.o.id === t.o.id) === i).slice(0, 5);
+  const chips = new Set(trades.map(t => t.m.id));
+  // Best 2 moves (research findings 68): the biggest keep-value gains over your weakest player at the same position
+  // none in the final once the moves are gone: nothing after it counts (findings 232)
+  if (d.rated && !seasonDone) {
+    // no more moves than are left, and not a free agent Mid-week swaps already offered (findings 181)
+    // and not dropping a player Mid-week swaps already drops, nor using the moves its subs take (findings 233)
+    const added = new Set(swapSubs), dropped = new Set(swapDrops), best = [];
+    // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
+    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && lastNight && movesLeft > 2;
+    for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
+      let top = null;
+      for (const g of ["F", "D"]) {
+        const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
+        const fa = fas.filter(p => group(p) === g && !added.has(p.id)).sort((a, b) => addVal(b) - addVal(a))[0];
+        if (!left.length || !fa) continue;
+        const worst = left.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
+        if (!top || addVal(fa) - addVal(worst) > top.gain) top = { fa, worst, gain: addVal(fa) - addVal(worst) };
+      }
+      if (!top || top.gain <= 0.5) break;
+      added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
+    }
+    const expire = lastCall ? ` You have ${realLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
+    // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}${expire}</span>
+      ${best.map((m, i) => i < freeSpots
+        ? `<div>Add ${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))} (open roster spot, no drop needed)</span> <span class="up">${gainTxt(m.gain)}</span></div>`
+        : `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span>${chips.has(m.worst.id) ? '<span class="sub"> · try trading him first (Trade ideas)</span>' : ""}</div>`).join("")}</div>`);
+  }
+  const nSwap = cards.length;
+  // keep value next to each gain, goalies too; in the final it equals Week, so it's left out (findings 233)
+  const kv = p => !d.rated || d.final_matchup ? "" : ` · keep ${fmt(keep(p))}`;
+  for (const g of seasonDone ? [] : ["F", "D", "G"]) {
+    const mineG = mine.filter(p => group(p) === g);
+    if (!mineG.length) continue;
+    const worst = mineG.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
+    const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
+    if (!better.length) continue;
+    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.${later}</span>
+      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (${gainTxt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
+  }
+  if (cards.length === nSwap && !seasonDone) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
+  const dropGain = p => {  // the best free agent at his position, by the cards' own measure (findings 68, 233)
+    const fa = d.rated && fas.filter(f => group(f) === group(p)).sort((a, b) => addVal(b) - addVal(a))[0];
+    return fa && addVal(fa) > addVal(p) ? ` · ${esc(fa.name)}${wvTag(fa)} ${gainTxt(addVal(fa) - addVal(p))}` : "";
+  };
+  // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded; IR-eligible players move to IR instead (findings 231)
+  if (drops.length || irMove.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· ${d.final_matchup ? "your lowest points left: this is the final, so nothing after it counts"
+      : noMoves ? "your lowest Season ratings, since adds now wait for the next matchup" : "your lowest keep value: this week plus about two more weeks of points per game"}</span>
+    ${irMove.map(p => `<div>${esc(p.name)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <span class="up">Move to IR</span><span class="sub"> (free, keeps him, opens a roster spot)</span></div>`).join("")}
+    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${noMoves && d.rated ? ` · Season ${fmt(p.cr_season)}` : kv(p)}${dropGain(p)}</span>${d.rated && !d.final_matchup && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
+  // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only. Not in the final: no later weeks
+  // with a full roster it takes a drop and a second move (findings 231)
+  const stash = !d.rated || irOpen <= 0 || d.final_matchup || (full && !(movesLeft >= 2 || noMoves)) ? []
+    : d.players.filter(p => isFA(p) && p.pos !== "G" && irEligible(p) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
+    .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
+  const stashHow = full && drops.length ? `Your roster is full: drop ${drops[0].name}, add him, move him to IR, then use the open spot on your next add (2 moves).`
+    : "Stash in your open IR slot: costs one move, no lineup spot.";
+  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. ${esc(stashHow)} Worth it only for 1.5+ pts/game players.${later}</span>
+    ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · Season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
+  if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN's projection and this season's points so far are about the same for each pair, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
     ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies plus a stream slot (research sections 37 and 144): a third goalie spot is the stream slot, a fourth is spare
   const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}, Season ${fmt(p.cr_season)}` : ""} · lowest keep value</span></div>`;
   if (myGoalies.length > 3) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
     ${myGoalies.slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
-  else if (myGoalies.length === 3) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from next Monday, when a G slot is open, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
-    : locked && tonight === d.nights[d.nights.length - 1] ? `tonight's first game has started and it's the matchup's last night, so an add now counts in the next matchup: from Monday, when a G slot is open, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
-    : locked ? `tonight's first game has started, so an add now counts from tomorrow: when a G slot is open tomorrow, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
-    : `when a G slot is open tonight, drop ${esc(myGoalies[0].name)} for a confirmed starter (see Stream a goalie tonight).`}</span>
-    ${gLine(myGoalies[0])}</div>`);
+  // nothing to stream for once the final's moves or nights are gone (findings 232)
+  else if (myGoalies.length === 3 && !(d.final_matchup && (noMoves || (locked && lastNight)))) {
+    // not tonight's starter: dropping him empties a slot tonight (findings 233)
+    const gDrop = myGoalies.find(p => locked || !startsTonight(p)) ?? myGoalies[0];
+    cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from ${nextStart}, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
+      : locked && lastNight ? `tonight's first game has started and it's the matchup's last night, so an add now counts in the next matchup: from Monday, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
+      : locked ? `tonight's first game has started, so an add now counts from tomorrow: when a G slot is open tomorrow, drop ${esc(gDrop.name)} for a confirmed starter.`
+      : stale(d) || !tonight ? `when a G slot is open on a night, drop ${esc(gDrop.name)} for a confirmed starter.`
+      : `when a G slot is open tonight, drop ${esc(gDrop.name)} for a confirmed starter${streamShown ? " (see Stream a goalie tonight)" : ""}.`}</span>
+    ${gLine(gDrop)}</div>`);
+  }
   // a waiver player listed: a claim is free to try (findings 212: losing claims used no move; Kempe drew three claims)
   if (cards.some(c => c.includes('class="tag wv">waivers'))) {
     const rank = myTeam?.waiver_rank;
     cards.unshift(`<div class="sub wvnote">Players tagged <span class="tag wv">waivers</span> need a claim: put one in on ESPN. A losing claim uses no move${rank ? `; you are #${rank} of ${d.teams.length} in waiver order` : ""}.</div>`);
   }
-  // once, at the top and never folded: no moves left means every add here is for next Monday (findings 233)
-  if (noMoves) cards.unshift('<div class="sub warn wvnote">No moves left this matchup: the adds below are next Monday\'s targets.</div>');
+  // once, at the top and never folded: no moves left means every add here is for next Monday (findings 233),
+  // the next round in a playoff round's first week, or never in the final (findings 232)
+  if (noMoves) cards.unshift(`<div class="sub warn wvnote">${d.final_matchup ? "No moves left, and the season ends with this matchup: nothing added now counts."
+    : roundLeft ? "No moves left this round: the adds below are targets for the next round." : "No moves left this matchup: the adds below are next Monday's targets."}</div>`);
   $("upgrades").innerHTML = cards.join("");
   foldCards();
 }
@@ -605,11 +682,13 @@ function foldCards() {
 function renderNights() {
   const d = state.data;
   $("openkey").textContent = state.team ? "Under each night: your team's empty F / D / G slots (UTL counted as a D unless a tenth forward fills it)" : "Pick your team to see its open slots each night";
+  // stale data's first night still to play was last night: it's over (findings 232)
+  const done = stale(d) ? d.nights.find(n => !n.past) : null;
   $("nights").innerHTML = d.nights.map(n => {
     const o = state.openSlots[n.sp];
     const num = (v, label) => v > 0 ? `<em>${label}${v}</em>` : `${label}0`;
     const open = state.team ? `<span class="open">${num(o.F, "F")} ${num(o.D, "D")} ${num(o.G, "G")}</span>` : "";
-    return `<div class="night ${n.light ? "light" : ""} ${n.past ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
+    return `<div class="night ${n.light ? "light" : ""} ${n.past || n === done ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
   }).join("");
 }
 
@@ -618,9 +697,10 @@ function renderNights() {
 const TRADE_RIGHT = [[0.1, 53], [0.2, 60], [0.3, 67], [0.5, 73], [Infinity, 87]];
 function renderTrade() {
   const d = state.data, byId = id => d.players.find(p => p.id === id);
-  if (!state.team || !d.rated) {
+  if (!state.team || !d.rated || tradesClosed(d)) {
     $("tpick").hidden = true;
-    $("trade").innerHTML = `<div class="prompt">${d.rated ? "Pick your team at the top to check a trade." : "Trade check needs the Claude Rating, which is missing from this update."}</div>`;
+    $("trade").innerHTML = `<div class="prompt">${tradesClosed(d) ? "ESPN's trade deadline has passed, so no more trades can be made this season."
+      : d.rated ? "Pick your team at the top to check a trade." : "Trade check needs the Claude Rating, which is missing from this update."}</div>`;
     return;
   }
   $("tpick").hidden = false;
@@ -637,25 +717,76 @@ function renderTrade() {
   let html = `<div class="tside"><div><b>You give</b>${list(give, "give")}</div><div><b>You get</b>${list(get, "get")}</div></div>`;
   if (give.length && get.length) {
     const sum = (ps, k) => ps.reduce((t, p) => t + (p[k] ?? 0), 0);
-    let gap = sum(get, "cr_season") - sum(give, "cr_season"), extra = "";
-    const k = give.length - get.length;
-    if (k > 0) {  // spots freed: fill them with the best healthy free agents at the positions given
+    let gap = sum(get, "cr_season") - sum(give, "cr_season");
+    const notes = [], plus = [], minus = [];  // players the trade adds to or takes off your side beyond those traded, for ESPN's line too
+    const irElig = p => ["OUT", "INJURY_RESERVE"].includes(p.injury);
+    const healthyFA = p => isFA(p) && !p.injury && !p.ir && p.cr_season != null;
+    const best = (pred, n) => n > 0 ? d.players.filter(p => healthyFA(p) && pred(p)).sort((a, b) => b.cr_season - a.cr_season).slice(0, n) : [];
+    const names = ps => ps.map(p => `${esc(p.name)} (${fmt(p.cr_season)})`).join(", ");
+    // IR players don't hold roster spots (findings 235): one you give frees an IR slot, one you get can go into an open one
+    const irOpenAfter = Math.max(0, (d.ir_slots || 0) - mineAll.filter(p => p.ir).length + give.filter(p => p.ir).length);
+    const irUsed = Math.min(irOpenAfter, get.filter(irElig).length);
+    const delta = give.filter(p => !p.ir).length - (get.length - irUsed);  // roster spots the trade frees; negative when it needs some
+    // keep two healthy goalies (findings 235): the shortfall is filled with the best free-agent goalies first
+    const okG = p => p.pos === "G" && !p.ir && !p.injury;
+    const gAfter = mineAll.filter(okG).length - give.filter(okG).length + get.filter(okG).length;
+    const gFill = best(p => p.pos === "G", 2 - gAfter);
+    if (gFill.length) {
+      gap += sum(gFill, "cr_season"); plus.push(...gFill);
+      notes.push(`You'd have only ${gAfter} healthy goalie${gAfter === 1 ? "" : "s"}: add ${names(gFill)}.`);
+    }
+    const spots = delta - gFill.length;
+    if (spots > 0) {  // spots freed: fill them with the best healthy free agents at the positions given
       const groups = new Set(give.map(group));
-      const fill = d.players.filter(p => isFA(p) && !p.injury && !p.ir && groups.has(group(p)) && p.cr_season != null)
-        .sort((a, b) => b.cr_season - a.cr_season).slice(0, k);
-      gap += sum(fill, "cr_season");
-      if (fill.length) extra = ` Counts the open roster spot${k > 1 ? "s" : ""} as ${fill.map(p => `${esc(p.name)} (${fmt(p.cr_season)})`).join(", ")}, the best healthy free agent${k > 1 ? "s" : ""}.`;
-    } else if (k < 0) {  // spots needed: drop your lowest keep values
-      // not a goalie unless goalies are in the trade (findings 211): most teams carry only 2 healthy
-      const withG = [...give, ...get].some(p => p.pos === "G");
-      const drop = mineAll.filter(p => !p.ir && !state.tgive.includes(p.id) && (withG || p.pos !== "G")).sort((a, b) => keep(a) - keep(b)).slice(0, -k);
-      gap -= sum(drop, "cr_season");
-      if (drop.length) extra = ` You'd need to drop ${drop.map(p => `${esc(p.name)} (${fmt(p.cr_season)})`).join(", ")}, your lowest keep value.`;
+      const fill = best(p => groups.has(group(p)) && !gFill.includes(p), spots);
+      gap += sum(fill, "cr_season"); plus.push(...fill);
+      if (fill.length) notes.push(`Counts the open roster spot${spots > 1 ? "s" : ""} as ${names(fill)}, the best healthy free agent${spots > 1 ? "s" : ""}.`);
+    } else if (spots < 0) {
+      // each spot the players you get take could hold the best free agent instead, so it costs at least him, or the player
+      // you'd drop if he's better (findings 235); a spot for a needed goalie costs the drop only
+      const n = -spots, gSpots = Math.min(n, gFill.length), pSpots = n - gSpots;
+      const groups = new Set(get.map(group));
+      const fill = best(p => groups.has(group(p)) && !gFill.includes(p), pSpots);
+      // an open roster spot needs no drop (findings 235); without roster_max the roster counts as full
+      let open = d.roster_max ? Math.max(0, d.roster_max - mineAll.filter(p => !p.ir).length) : 0;
+      // not a goalie unless goalies are in the trade (findings 211), and never when you're short of goalies
+      const withG = [...give, ...get].some(p => p.pos === "G") && !gFill.length;
+      const cands = mineAll.filter(p => !p.ir && !state.tgive.includes(p.id) && (withG || p.pos !== "G")).sort((a, b) => keep(a) - keep(b));
+      const drop = [], worth = [];
+      const take = () => open > 0 ? (open--, null) : cands[drop.length] ?? null;
+      for (let i = 0; i < pSpots; i++) {
+        const f = fill[i] ?? null, dr = take();
+        if (dr) drop.push(dr);
+        const by = dr && (dr.cr_season ?? 0) >= (f?.cr_season ?? 0) ? dr : f;
+        gap -= by?.cr_season ?? 0;
+        if (by) minus.push(by);
+        worth.push(`${fmt(by?.cr_season ?? 0)} (${[f ? `${esc(f.name)}, the ${i ? "next " : ""}best free agent` : "", dr ? `${f ? "or " : ""}${esc(dr.name)}${f ? " if better" : ", whom you'd drop"}` : ""].filter(Boolean).join(", ")})`);
+      }
+      for (let i = 0; i < gSpots; i++) {
+        const dr = take();
+        if (dr) { drop.push(dr); gap -= dr.cr_season ?? 0; minus.push(dr); }
+      }
+      if (worth.length) notes.push(`Uses ${pSpots > 1 ? `${pSpots} roster spots worth about` : "a roster spot worth about"} ${worth.join(" and ")}.`);
+      if (drop.length) notes.push(`You'd need to drop ${names(drop)}, your lowest keep value.`);
+      else if (d.roster_max) notes.push("Your open roster spot takes him, so you drop nobody.");
+    }
+    // the partner's roster too (findings 235): at the limit, taking more players than he gives means a drop
+    if (d.roster_max) {
+      for (const t of new Set(get.map(p => String(p.team_id)))) {
+        const after = d.players.filter(p => String(p.team_id) === t && !p.ir).length - get.filter(p => String(p.team_id) === t && !p.ir).length + give.length;
+        if (after > d.roster_max) notes.push(`${esc(state.teamNames[t] || "The other team")} would have to drop ${after - d.roster_max === 1 ? "a player" : `${after - d.roster_max} players`} to take ${give.length === 2 ? "two" : "them"}.`);
+      }
     }
     const fpw = 0.87 * gap * 3.5;
     const right = TRADE_RIGHT.find(([cap]) => Math.round(Math.abs(gap) * 100) / 100 < cap)[1];
-    const both = [...give, ...get].every(p => p.proj_ppg != null), espn = sum(get, "proj_ppg") - sum(give, "proj_ppg");
+    // ESPN's line with the same fills and drops as the Season line (findings 235); goalies' per-start projections don't add up with
+    // skaters' per-game ones, so a trade mixing them shows no ESPN line
+    const all = [...give, ...get, ...plus, ...minus];
+    const mixed = all.some(p => p.pos === "G") && all.some(p => p.pos !== "G");
+    const both = !mixed && all.every(p => p.proj_ppg != null);
+    const espn = sum(get, "proj_ppg") - sum(give, "proj_ppg") + sum(plus, "proj_ppg") - sum(minus, "proj_ppg");
     const goalies = [...give, ...get].some(p => p.pos === "G") ? " Goalies are included, but this check was calibrated on skaters." : "";
+    const extra = notes.length ? ` ${notes.join(" ")}` : "";
     html += `<div class="upg" style="margin-top:8px"><b class="${fpw > 0 ? "up" : ""}">About ${fpw >= 0 ? "+" : "−"}${Math.abs(fpw).toFixed(1)} points a week</b> for you for the rest of the season
       <span class="drop">· Season rating ${gap >= 0 ? "+" : "−"}${Math.abs(gap).toFixed(2)} per team game for your side${both ? `; ESPN's projections ${espn >= 0 ? "+" : "−"}${Math.abs(espn).toFixed(2)} a game` : ""}. In past seasons a gap this size picked the side that really did better ${right}% of the time.${extra}${goalies}</span></div>`;
   }
@@ -731,6 +862,17 @@ function restore() {
   if (typeof s.healthy === "boolean") $("healthy").checked = s.healthy;
 }
 
+// An open tab reloads (findings 230): when it comes back after 10+ minutes, and when a game starts, so started games,
+// streams and best moves follow the clock. Your team and filters come back from this browser's storage.
+let loadedAt = Date.now();
+const reloadDue = now => !!state.data && state.data.players.some(p => {
+  const t = p.today_start ? new Date(p.today_start).getTime() : NaN;
+  return t > loadedAt && t <= now;
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Date.now() - loadedAt >= 10 * 60e3) location.reload();
+});
+
 fetch("data/players.json", { cache: "no-store" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => {
@@ -745,12 +887,25 @@ fetch("data/players.json", { cache: "no-store" })
     restore();
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
     $("stale").hidden = !stale(d);
+    // what's true of old data (findings 232): started games are already out of Week and Games, the ratings aren't updated
+    if (stale(d)) $("stale").textContent = `These numbers are from ${d.updated}. Last night's games are already out of Week and Games, but ratings don't include how players did. Next update about ${nextRun()} ET.`;
     // an overnight run (midnight to ESPN's ~3:30 AM rollover) already has last night's games (findings 183)
     const etDay = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     if (stale(d) && d.updated_utc && etDay(d.updated_utc) === etDay(Date.now()))
       $("stale").textContent = "These numbers are from an overnight update, before ESPN moved to today. Last night's games are in, but tonight's lineup cards wait for the 6 AM ET refresh.";
+    // Monday after ESPN's rollover, before the first run (findings 233)
+    if (weekOver(d)) $("stale").textContent = "These are last matchup's numbers. ESPN has started the new matchup with fresh moves; the site refreshes at 6 AM ET.";
+    // after the fantasy final there's nothing to pick up or trade (findings 232)
+    if (d.season_over) {
+      $("stale").hidden = false;
+      $("stale").textContent = `The fantasy season ended${d.season_end ? ` ${d.season_end}` : ""}. Nothing added or traded now counts; see you next season.`;
+      for (const id of ["nightscard", "upgcard", "tradecard"]) $(id).hidden = true;
+    }
+    // two-week playoff rounds have 14 nights (findings 232)
+    $("ming").max = d.nights.length;
     setTeam(state.team);
     wire(); render();
+    setInterval(() => { if (reloadDue(Date.now())) location.reload(); }, 60e3);
   })
   .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
 </script>

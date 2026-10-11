@@ -92,6 +92,23 @@ def matchup_days(matchup_periods, period, today_sp, weekday):
     return days if today_sp in days and monday_ok else week
 
 
+def roster_limit(slot_counts):
+    """Players a team can hold outside IR: every lineup and bench slot, not the IR slot '8' (22 here, findings 231).
+    None when ESPN sends no slot counts."""
+    total = sum(v for k, v in (slot_counts or {}).items() if str(k) != "8" and isinstance(v, (int, float)) and v > 0)
+    return int(total) or None
+
+
+def season_last_day(matchup_periods):
+    """Scoring period of the fantasy season's last day: the end of the latest week in any matchup (week 1 is days 1-6,
+    week k >= 2 is days 7k-7 to 7k-1). None when ESPN's map is missing."""
+    weeks = [w for v in (matchup_periods or {}).values() if isinstance(v, list) for w in v if isinstance(w, int) and w >= 1]
+    if not weeks:
+        return None
+    w = max(weeks)
+    return 6 if w == 1 else 7 * w - 1
+
+
 def is_final_matchup(matchup_periods, period):
     """True in the league's last matchup (the final), when nothing after it counts."""
     ids = [int(k) for k in (matchup_periods or {}) if str(k).isdigit()]
@@ -244,6 +261,10 @@ def main():
     sched_settings = (league.get("settings") or {}).get("scheduleSettings") or {}
     matchup_sps = matchup_days(sched_settings.get("matchupPeriods"), period, today_sp, weekday)
     final_matchup = is_final_matchup(sched_settings.get("matchupPeriods"), period)
+    # after the final's last day ESPN may keep showing the final as a live matchup (findings 232)
+    last_sp = season_last_day(sched_settings.get("matchupPeriods"))
+    season_over = last_sp is not None and today_sp > last_sp
+    season_end = (today_et + timedelta(days=last_sp - today_sp)).strftime("%a %b %-d") if last_sp is not None else None
 
     # Which team is mine
     team_id = os.environ.get("TEAM_ID")
@@ -451,7 +472,17 @@ def main():
     print("ESPN lineupSlotStatLimits:", json.dumps(stat_limits))
     print("ESPN scheduleSettings:", json.dumps(settings.get("scheduleSettings")))
     ir_slots = ((settings.get("rosterSettings") or {}).get("lineupSlotCounts") or {}).get("8", 0)
-    print(f"Move limit: {move_limit}, start cap: {goalie_cap}, moves used known for "
+    roster_max = roster_limit((settings.get("rosterSettings") or {}).get("lineupSlotCounts"))
+    # settings the site doesn't use yet, logged so research can check them (findings 231)
+    trade_settings = settings.get("tradeSettings") or {}
+    print("ESPN tradeSettings:", json.dumps(trade_settings))
+    print("ESPN positionLimits:", json.dumps((settings.get("rosterSettings") or {}).get("positionLimits")))
+    print("ESPN scoringItems:", json.dumps((settings.get("scoringSettings") or {}).get("scoringItems")))
+    print("ESPN draftSettings:", json.dumps(settings.get("draftSettings")))
+    # ms since 1970; 0 or missing means no deadline
+    trade_deadline = trade_settings.get("deadlineDate") if isinstance(trade_settings.get("deadlineDate"), (int, float)) and trade_settings.get("deadlineDate") > 0 else None
+    print(f"Move limit: {move_limit}, start cap: {goalie_cap}, roster max: {roster_max}, trade deadline: {trade_deadline}, "
+          f"season over: {season_over}, moves used known for "
           f"{sum(v is not None for v in moves_used.values())} teams")
 
     out = {
@@ -468,6 +499,10 @@ def main():
         "goalie_cap": goalie_cap,
         "move_limit": move_limit,
         "ir_slots": ir_slots,
+        "roster_max": roster_max,  # players allowed outside IR (findings 231)
+        "trade_deadline": trade_deadline,  # ESPN's trade deadline, ms since 1970, or None
+        "season_over": season_over,  # today is after the fantasy final's last day (findings 232)
+        "season_end": season_end,  # the final's last day, e.g. "Sun Apr 4"
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
                    "moves_used": moves_used[t["id"]],
                    # ESPN waiver order, 1 = first claim (findings 212: losing claims cost no move)

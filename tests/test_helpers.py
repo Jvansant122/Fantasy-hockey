@@ -258,3 +258,18 @@ def test_skaters_with_no_games_use_last_seasons_usage_ranks():
     f = rating.skater_features([], rates[0], None, None, [], is_d=False)
     assert f["std_pp_rank"] == f["l5_toi_rank"] == 1 and f["l10_pp1"] == 1.0
     assert rating.skater_features([], None, None, None, [])["std_pp_rank"] is None  # nothing to go on: training mean
+
+
+def test_roster_limit_leaves_out_the_ir_slot():
+    """ESPN's limit is every lineup and bench slot outside IR: 22 in this league (handoff 128)."""
+    counts = {"0": 2, "1": 2, "2": 2, "3": 3, "4": 5, "5": 2, "6": 1, "7": 5, "8": 2}
+    assert fetch.roster_limit(counts) == 22
+    assert fetch.roster_limit({}) is None and fetch.roster_limit(None) is None
+
+
+def test_season_last_day_ends_with_the_final():
+    """The season ends on the last day of the final's second week (handoff 139): Sun Apr 4, 2027 is day 188."""
+    periods = {str(k): [k] for k in range(1, 24)} | {"24": [24, 25], "25": [26, 27]}
+    assert fetch.season_last_day(periods) == 188
+    assert fetch.season_last_day({"1": [1]}) == 6
+    assert fetch.season_last_day(None) is None
