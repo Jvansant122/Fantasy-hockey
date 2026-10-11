@@ -798,6 +798,24 @@ def test_second_night_of_a_back_to_back(monkeypatch):
     assert p(2, on) > p(2, off) + 0.01  # goalie 2 is the backup
 
 
+def test_starter_five_to_seven_straight_is_due_a_rest(monkeypatch):
+    """The last starter on a 5-7 start run gets -1.0 next game; 4 or 8+ straight, nothing (findings 202)."""
+    model = rating.Model()
+
+    def p1(run, logit):
+        monkeypatch.setattr(rating, "STREAK_LOGIT", logit)
+        seq = [2] + [1, 2] * 4 + [1] * run
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
+        return out[1]
+    for run in (5, 6, 7):
+        assert p1(run, -1.0) < p1(run, 0.0) - 0.05
+    for run in (4, 8):
+        assert p1(run, -1.0) == pytest.approx(p1(run, 0.0))
+
+
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     # tonight's game started before the run: its start is no longer ahead and the stream card's chance is 0 (findings 178)
     from datetime import datetime, timezone

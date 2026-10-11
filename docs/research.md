@@ -705,6 +705,10 @@ ESPN's goalie games-started count can lag a day behind its points, so This yr/G,
 
 On the second night of a back-to-back, the start model treated whoever played night 1 the same way. Replaying every night-2 game from 2021-26 showed two different patterns. A team's no. 1 who played night 1 started night 2 only 11% of the time, against the site's 18%. A backup who played night 1 started again 8.5% of the time, against the site's 4%: coaches sometimes ride a hot backup. **The night-1 starter's chance for night 2 now goes down if he's the no. 1 (most starts in the team's last 20) and up if he isn't.** This beat the old rule in all 5 seasons (prediction error down 2%). A Daily Faceoff confirmation still overrides it. (Findings 200.)
 
+## 90. A starting goalie five to seven games into a run of starts
+
+When a goalie has started each of his team's last 5-7 games, the model gave him a 70% chance of starting the next one, but such goalies actually started only 56% of the time: coaches give the backup a turn. This held in every season. Goalies who reach 8 or more straight starts are workhorses or have no healthy partner, and their next game was harder to predict. **A goalie on a 5-7 start run now has his next-game start chance trimmed (about 9 points), and the backup's raised to match. Runs of 8+ are left alone.** Prediction error fell 2.6%, better in 5 of 5 seasons. A Daily Faceoff confirmation still overrides it. (Findings 202.)
+
 ## What the independent review changed
 
 | Review point | Outcome |
