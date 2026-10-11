@@ -131,6 +131,36 @@ def left_early_shifts(last_toi, avg_toi):
     return ()
 
 
+# just back in the lineup (dressed for the last game): back 1-2 games from a 5+ game absence that was mostly not healthy
+# scratches (an injury) he plays more than the site said (0.73 against 0.81); back 1-3 games from a 1-4 game
+# healthy-scratch spell he sits again more (0.83 against 0.77): rotation players (findings 168)
+BACK_INJURY_LOGIT, BACK_SCRATCH_LOGIT = 0.4, -0.4
+
+
+def comeback_logit(tg, played, scratch_list, pid):
+    """Dress-logit shift for a skater just back in the lineup. tg: his team's game ids, oldest first; played: the ids he
+    dressed for; scratch_list(game id): that game's healthy-scratch ids, or None if it can't be read."""
+    back = 0
+    for x in reversed(tg):
+        if x not in played:
+            break
+        back += 1
+    k, gap = len(tg) - back, 0
+    while k > 0 and tg[k - 1] not in played:
+        gap, k = gap + 1, k - 1
+    if not gap or not k or not 1 <= back <= 3:  # no absence, or no games for the team before it
+        return 0.0
+    long_gap = gap >= 5 and back <= 2
+    if not long_gap and gap > 4:
+        return 0.0
+    lists = [scratch_list(x) for x in tg[k:k + gap][-10:]]
+    known = [pid in l for l in lists if l is not None]
+    scratched = bool(known) and sum(known) >= 0.5 * len(known)  # unreadable lists count as not scratched
+    if long_gap:
+        return 0.0 if scratched else BACK_INJURY_LOGIT
+    return BACK_SCRATCH_LOGIT if scratched else 0.0
+
+
 # the Season rating's rest-of-season dress share for a skater in his first 1-10 games for a new team (0.62-0.67 against
 # 0.71-0.72 actual, findings 158)
 NEW_TEAM_SEASON_LOGIT, NEW_TEAM_SEASON_GAMES = 0.3, 10
@@ -839,6 +869,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             start_teams.setdefault(g["id"], set()).add(g["team"])
     movers = {gid for gid, teams in start_teams.items() if len(teams) > 1}  # started for two NHL teams this season
     scratches = load_scratches(s, {tg[-1] for tg in team_games.values() if tg})
+    tried = {tg[-1] for tg in team_games.values() if tg}
+
+    def scratch_list(gid):  # older games' lists, read only when a player just back needs them (findings 168)
+        if gid not in tried:
+            tried.add(gid)
+            scratches.update(load_scratches(s, {gid}))
+        return scratches.get(gid)
     # each goalie's points per start this season, shrunk over 15 starts (findings sections 27 and 60)
     base = model.g["points_per_start"]
     own = {}
@@ -994,6 +1031,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
             # sat it as a healthy scratch: on that game's scratch list; if the list can't be read, no ESPN injury status
             scratch = sat_last and not p.get("injury") and (pid in scratches[tg[-1]] if tg[-1] in scratches else True)
+            comeback = 0.0 if sat_last or traded or not gl else comeback_logit(tg, {g["game"] for g in gl}, scratch_list, pid)
             # just traded or claimed: 1-3 games for his current team after games for another team this season
             run = next((k for k, g in enumerate(reversed(gl)) if g["team"] != gl[-1]["team"]), None) if gl else None
             new_team = traded or (not sat_last and run is not None and 1 <= run <= NEW_TEAM_GAMES)
@@ -1031,7 +1069,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p_dress = min(p_dress, inj)
             gn = p["games_left"]
             per_game = dress_by_game(base_dress, gn, sat_last, min(cap, inj),
-                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team, early) if base_dress is not None else [p_dress] * gn
+                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback, early) if base_dress is not None else [p_dress] * gn
             exp_games = sum(per_game)
             dress_next = per_game[0] if per_game else p_dress
             if gn:

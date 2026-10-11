@@ -58,8 +58,9 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None):
+    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None):
         self.calls = []
+        self.missed = missed or {}  # player id: games he missed, replacing SKATERS' set
         self.short_last = short_last or {}  # player id: his ice time in seconds in the last game (left early)
         self.moved = moved or {}  # player id: his first n games this season were for the other team (a trade)
         self.scratched, self.rail_ok = set(scratched), rail_ok  # healthy scratches on each game page (McAvoy sat the last one)
@@ -83,7 +84,8 @@ class FakeSession:
             team = TEAMS[int(m.group(1)) % 10]
             i = (int(m.group(1)) - 2026020000) // 10
             def side(t):
-                return {"scratches": [{"id": pid} for pid, _, tm, _, missed in SKATERS if tm == t and i in missed and pid in self.scratched]}
+                return {"scratches": [{"id": pid} for pid, _, tm, _, missed in SKATERS
+                                      if tm == t and i in self.missed.get(pid, missed) and pid in self.scratched]}
             return Resp({"gameInfo": {"awayTeam": side("BOS"), "homeTeam": side(team)}})
         if url.endswith("/standings-season"):
             return Resp({"seasons": [{"id": 20252026, "standingsEnd": "2026-04-17"}]})
@@ -120,7 +122,7 @@ class FakeSession:
             return Resp({"data": [goalie_row(pid, name, team, i) for pid, name, team in GOALIES for i in days]})
         other = lambda t: TEAMS[1 - TEAMS.index(t)]
         rows = [skater_row(pid, name, other(team) if i < self.moved.get(pid, 0) else team, pos, i)
-                for pid, name, team, pos, missed in SKATERS for i in days if i not in missed]
+                for pid, name, team, pos, missed in SKATERS for i in days if i not in self.missed.get(pid, missed)]
         for r in rows:
             if r["playerId"] in self.short_last and r["gameDate"] == PAST[-1]:
                 r["timeOnIcePerGame"] = self.short_last[r["playerId"]]
@@ -555,6 +557,32 @@ def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     assert rating.left_early_shifts(15, 18) == () and rating.left_early_shifts(5, None) == ()
     by = rating.dress_by_game(0.9, 5, False, 1.0, 0.0, (-2.5, -1.8, -1.1))
     assert by[0] < by[1] < by[2] and by[3] == pytest.approx(by[2], abs=0.08)
+
+
+def test_just_back_in_the_lineup(monkeypatch, tmp_path):
+    """Back 1-3 games from a short healthy-scratch spell: sits again more (-0.4); back 1-2 games from a 5+ game absence
+    that wasn't mostly scratches: plays more (+0.4) (findings 168)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def matthews(**kw):
+        fake = FakeSession(missed={1: {2}}, **kw)
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    rotation, hurt = matthews(scratched=(1, 4)), matthews(scratched=(4,))  # sat game 2 as a scratch / not on the list
+    assert not rotation["sat_last"] and rotation["cr_dress_next"] < hurt["cr_dress_next"]
+    tg = list(range(10))
+    lists = {x: set() for x in tg}
+    look = lists.get
+    assert rating.comeback_logit(tg, {0, 1, 2, 8, 9}, look, 7) == rating.BACK_INJURY_LOGIT  # back 2 after missing 5
+    assert rating.comeback_logit(tg, {0, 1, 2, 7, 8, 9}, look, 7) == 0.0  # back 3: no longer
+    assert rating.comeback_logit(tg, {0, 9}, lambda x: {7} if x in (3, 4, 5, 6, 7) else set(), 7) == 0.0  # mostly scratched
+    assert rating.comeback_logit(tg, {0, 1, 2, 3, 4, 5, 8, 9}, lambda x: {7}, 7) == rating.BACK_SCRATCH_LOGIT
+    assert rating.comeback_logit(tg, {0, 1, 2, 3, 4, 5, 8, 9}, look, 7) == 0.0  # short gap not on the list
+    assert rating.comeback_logit(tg, {0, 1, 2, 3, 4, 5, 8, 9}, lambda x: None, 7) == 0.0  # lists unreadable
+    assert rating.comeback_logit(tg, {0, 1, 2, 8, 9}, lambda x: None, 7) == rating.BACK_INJURY_LOGIT
+    assert rating.comeback_logit(tg, {8, 9}, look, 7) == 0.0 and rating.comeback_logit(tg, set(tg), look, 7) == 0.0
 
 
 def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
