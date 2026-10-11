@@ -362,12 +362,19 @@ function renderUpgrades() {
   // weakest healthy player in each group; injured players aren't drop candidates
   if (!state.team) { $("upgrades").innerHTML = '<div class="prompt">Pick your team at the top to see free agents who beat your weakest players.</div>'; return; }
   const mine = myPlayers();
-  const fas = d.players.filter(p => isFA(p) && !p.injury);
   const names = { F: "Forwards", D: "Defense", G: "Goalies" };
   const cards = [];
   // No moves left (findings 146): adds wait for next Monday, so rank them by 7 x Season instead of this week
   const myTeam = d.teams.find(t => String(t.id) === state.team);
   const noMoves = d.rated && d.move_limit && myTeam?.moves_used >= d.move_limit;
+  // with no moves left, a waiver player who clears before Monday will be claimed by then (findings 181)
+  const fas = d.players.filter(p => isFA(p) && !p.injury && !(noMoves && p.owner === "waivers" && !/^(Mon|Tue)/.test(p.clears || "")));
+  const roster = d.players.filter(p => String(p.team_id) === state.team);
+  const irOpen = (d.ir_slots || 0) - roster.filter(p => p.ir).length;
+  // a healthy player left in an IR slot scores nothing (findings 181): first thing to fix
+  const irHealthy = roster.filter(p => p.ir && !["OUT", "INJURY_RESERVE"].includes(p.injury));
+  if (irHealthy.length) cards.push(`<div class="upg"><b>Activate from IR</b> <span class="drop">· healthy but in your IR slot, so his points don't count: move him to your lineup.</span>
+    ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
   const addVal = p => noMoves ? KEEP_GAMES * (p.cr_season ?? 0) : keep(p);
   const later = noMoves ? " No moves left this matchup; these are next Monday's targets." : "";
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
@@ -376,12 +383,15 @@ function renderUpgrades() {
   // unless Daily Faceoff's projected lines have him back in (findings 174);
   // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];
-  const outs = mine.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.dfo_out !== false && p.games_left > 0)));
+  // the whole roster outside the IR slot: myPlayers() already leaves out the injured (findings 181)
+  const outs = roster.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.dfo_out !== false && p.games_left > 0)));
+  const swapSubs = new Set();
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
     ${outs.map(p => {
-      const sub = fas.filter(f => group(f) === group(p)).sort((a, b) => noMoves ? addVal(b) - addVal(a) : score(b) - score(a))[0];
+      const sub = fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id)).sort((a, b) => noMoves ? addVal(b) - addVal(a) : score(b) - score(a))[0];
+      if (sub) swapSubs.add(sub.id);
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
-      const ir = ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
+      const ir = irOpen > 0 && ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
       return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
     }).join("")}</div>`);
   // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
@@ -424,8 +434,10 @@ function renderUpgrades() {
   }
   // Best 2 moves (research findings 68): the biggest keep-value gains over your weakest player at the same position
   if (d.rated) {
-    const added = new Set(), dropped = new Set(), best = [];
-    for (let i = 0; i < 2; i++) {
+    // no more moves than are left, and not a free agent Mid-week swaps already offered (findings 181)
+    const added = new Set(swapSubs), dropped = new Set(), best = [];
+    const movesLeft = !noMoves && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : 2;
+    for (let i = 0; i < Math.min(2, movesLeft); i++) {
       let top = null;
       for (const g of ["F", "D"]) {
         const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
@@ -461,7 +473,6 @@ function renderUpgrades() {
   if (drops.length) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· your lowest keep value: this week plus about two more weeks of points per game</span>
     ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}` : ""}${dropGain(p)}</span></div>`).join("")}</div>`);
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only
-  const irOpen = (d.ir_slots || 0) - d.players.filter(p => String(p.team_id) === state.team && p.ir).length;
   const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && p.pos !== "G" && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.${later}</span>
@@ -490,7 +501,7 @@ function renderUpgrades() {
   const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}, Season ${fmt(p.cr_season)}` : ""} · lowest keep value</span></div>`;
   if (myGoalies.length > 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
     ${myGoalies.slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
-  else if (myGoalies.length === 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: when a G slot is open tonight, drop ${esc(myGoalies[0].name)} for a confirmed starter (see Stream a goalie tonight).</span>
+  else if (myGoalies.length === 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from next Monday, when a G slot is open, drop ${esc(myGoalies[0].name)} for a confirmed starter.` : `when a G slot is open tonight, drop ${esc(myGoalies[0].name)} for a confirmed starter (see Stream a goalie tonight).`}</span>
     ${gLine(myGoalies[0])}</div>`);
   $("upgrades").innerHTML = cards.join("");
 }
