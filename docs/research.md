@@ -857,6 +857,20 @@ The hunt's last audit found five problems in the data side of PRs #97, #99 and #
 
 When a team's no. 1 goalie starts night 1 of a back-to-back and rests night 2, the rating's chain of games logged his backup as night 2's starter, and that "started last game" carried the backup into the following game too. The no. 1 was given a 69% chance there, but he actually started 80% of those games over five seasons. Every other goalie's chance for that one game is now trimmed (-1.0 on the start logit). That lands on 80%, better in all 5 seasons, and adds about 0.4 to the no. 1's Week rating in those weeks. Rechecked on today's code over the same five seasons: start predictions improved in every season. Daily Faceoff confirmations still override.
 
+## 109. Moves held for the rest of the week, and fixes to the roster-spot advice
+
+**Hold a move for each night left.** A week simulated with the real update code showed that Best moves offered 2 new moves at every update. A team that followed it spent 6 or 7 moves by Monday or Tuesday and had none left for injury swaps or goalie streams. That contradicts the tested plan of making about 2 moves on Monday and holding the rest. Best moves now keeps one move for each night still to come. When every move is held, it says so. On Sunday's last call it still uses everything, but it leaves out waiver claims that only go through on Monday, since those use next week's move. The goalie stream card names only the updates that come before tonight's first game.
+
+**Fixes to PR #99's roster-spot advice:**
+- The Sunday expiry note no longer shows between midnight and 4 AM Monday.
+- An open roster spot or IR slot is no longer counted twice across cards.
+- Activate from IR, Best moves and IR stash never drop the same player.
+- The final with no moves left hides the Drop list.
+- Trade check counts the spot an IR move opens.
+- The stash's two-move budget counts Sunday's list.
+- The page's auto-reload keeps a half-built trade.
+- Players dropped after tonight's first game no longer count toward the roster.
+
 ## What the independent review changed
 
 | Review point | Outcome |
