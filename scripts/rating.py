@@ -277,11 +277,22 @@ def season_ids(espn_season):
     return y * 10000 + y + 1, (y - 1) * 10000 + y
 
 
+def et_date():
+    return datetime.now(ZoneInfo("America/New_York")).date()
+
+
+def history_end(today):
+    """Last day of game history to load: yesterday, or last night when a 12-3 AM run still has ESPN on the day before
+    (findings 183). A clock far from today (tests, backfills) leaves it at today - 1."""
+    et = et_date()
+    return (et if 0 < (et - today).days <= 1 else today) - timedelta(days=1)
+
+
 def load_skater_games(s, season, today):
     """This season's skater games with league fantasy points, keyed by (playerId, gameId)."""
     first = date(season // 10000, 9, 20)
     rows = {}
-    for a, b in weekly(first, today - timedelta(days=1)):
+    for a, b in weekly(first, history_end(today)):
         for r in stats_report(s, "skater/summary", season, a, b):
             rows[(r["playerId"], r["gameId"])] = {
                 "id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
@@ -306,7 +317,7 @@ def load_skater_games(s, season, today):
 def load_goalie_games(s, season, today):
     first = date(season // 10000, 9, 20)
     out = []
-    for a, b in weekly(first, today - timedelta(days=1)):
+    for a, b in weekly(first, history_end(today)):
         out += [{"id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
                  "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0,
                  "ga": r.get("goalsAgainst") or 0, "toi": r.get("timeOnIce") or 0,
@@ -833,9 +844,9 @@ def write_injury_log(entries, today):
 
 
 def recently_flagged(today):
-    """ESPN ids with any ESPN status in the injury log within the last CLEARED_DAYS days."""
+    """{ESPN id: latest date flagged} for any ESPN status in the injury log within the last CLEARED_DAYS days."""
     cutoff = (today - timedelta(days=CLEARED_DAYS)).isoformat()
-    out = set()
+    out = {}
     if INJURY_LOG.exists():
         for line in INJURY_LOG.read_text().splitlines():
             try:
@@ -843,7 +854,7 @@ def recently_flagged(today):
             except ValueError:
                 continue
             if row.get("date", "") >= cutoff and row.get("espn_id") is not None:
-                out.add(row["espn_id"])
+                out[row["espn_id"]] = max(out.get(row["espn_id"], ""), row["date"][:10])
     return out
 
 
@@ -1113,7 +1124,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
             # ESPN dropped his status within the week and he hasn't played since: a suspension served, an injury healed
-            cleared = bool(pid) and not p.get("injury") and p["id"] in flagged and (not gl or sat_last)
+            # flagged, and no game since: one who played through the flag and then sat isn't coming back (findings 183)
+            cleared = bool(pid) and not p.get("injury") and p["id"] in flagged and (not gl or sat_last) \
+                and (not gl or gl[-1]["date"][:10] <= flagged[p["id"]])
             cleared_new = cleared and not gl and bool(tg)  # yet to play this season (findings 172)
             cleared_out = cleared and bool(gl)  # in season, still out (findings 173)
             if cleared_new:

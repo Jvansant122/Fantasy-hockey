@@ -396,7 +396,7 @@ function renderUpgrades() {
   const swapSubs = new Set();
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
     ${outs.map(p => {
-      const sub = fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id)).sort((a, b) => noMoves ? addVal(b) - addVal(a) : score(b) - score(a))[0];
+      const sub = fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (noMoves || f.games_left > 0)).sort((a, b) => noMoves ? addVal(b) - addVal(a) : score(b) - score(a))[0];
       if (sub) swapSubs.add(sub.id);
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
       const ir = irOpen > 0 && ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
@@ -404,7 +404,9 @@ function renderUpgrades() {
     }).join("")}</div>`);
   // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
   const tonight = d.nights.find(n => !n.past);
-  const startsTonight = p => p.cr_why?.tonight?.status === "Confirmed" ? p.cr_why.tonight.starting : (p.cr_why?.p_today ?? 0) > 0.5;
+  // a goalie already in net still fills his slot: started() zeroes his p_today (findings 183)
+  const startsTonight = p => started(p) ? !!p.cr_why?.tonight?.starting
+    : p.cr_why?.tonight?.status === "Confirmed" ? p.cr_why.tonight.starting : (p.cr_why?.p_today ?? 0) > 0.5;
   if (d.rated && tonight && !stale(d)) {
     const myG = mine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
@@ -660,6 +662,10 @@ fetch("data/players.json", { cache: "no-store" })
     restore();
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
     $("stale").hidden = !stale(d);
+    // an overnight run (midnight to ESPN's ~3:30 AM rollover) already has last night's games (findings 183)
+    const etDay = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    if (stale(d) && d.updated_utc && etDay(d.updated_utc) === etDay(Date.now()))
+      $("stale").textContent = "These numbers are from an overnight update, before ESPN moved to today. Last night's games are in, but tonight's lineup cards wait for the 6 AM ET refresh.";
     setTeam(state.team);
     wire(); render();
   })

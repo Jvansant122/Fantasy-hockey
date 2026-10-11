@@ -816,3 +816,31 @@ def test_goalie_espn_columns_use_nhl_starts(monkeypatch, tmp_path):
     for p in started:
         assert p["gp"] == p["cr_why"]["gs"] and p["cur_ppg"] < 99
         assert min(p["cur_ppg"], 3.0) - 0.01 <= p["ppg"] <= max(p["cur_ppg"], 3.0) + 0.01
+
+
+def test_cleared_boost_skips_a_player_who_played_since_the_flag(monkeypatch, tmp_path):
+    # McAvoy played Oct 5 and sat Oct 7: a flag from Oct 3 was played through, one from Oct 6 is fresh (findings 183)
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for day in (None, "2026-10-03", "2026-10-06"):
+        log = tmp_path / f"{day}.jsonl"
+        log.write_text(json.dumps({"date": day, "espn_id": 104, "status": "DAY_TO_DAY"}) + "\n" if day else "")
+        monkeypatch.setattr(rating, "INJURY_LOG", log)
+        players = [espn(104, "Charlie McAvoy", "BOS", "D")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        out[day] = players[0]
+    assert out[None]["sat_last"]
+    assert out["2026-10-03"]["cr_dress"] == out[None]["cr_dress"]
+    assert out["2026-10-06"]["cr_dress"] > out[None]["cr_dress"]
+
+
+def test_history_runs_to_last_night_in_an_overnight_run(monkeypatch):
+    # 1 AM Sunday: ESPN is still on Saturday, but Saturday night's games are over (findings 183)
+    sat = date(2026, 10, 10)
+    monkeypatch.setattr(rating, "et_date", lambda: date(2026, 10, 11))
+    assert rating.history_end(sat) == sat
+    monkeypatch.setattr(rating, "et_date", lambda: sat)
+    assert rating.history_end(sat) == date(2026, 10, 9)
+    monkeypatch.setattr(rating, "et_date", lambda: date(2027, 1, 1))  # far-off clock: unchanged
+    assert rating.history_end(sat) == date(2026, 10, 9)
