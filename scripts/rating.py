@@ -111,17 +111,34 @@ SCRATCH_LOGIT = 0.5
 # a skater who dressed for his team's last game in his first 1-3 games after a trade or waiver claim: the new team plays
 # him more than his old-team dressed share says (0.78 to 0.85 per game against 0.86 actual, findings 155)
 NEW_TEAM_LOGIT, NEW_TEAM_GAMES = 0.45, 3
+# dressed for his team's last game but played a fraction of his season-average ice time: he left early, usually hurt,
+# before ESPN flags him (0.70 next game against 0.18 actual under 40%, findings 165). Extra logit shifts for the next
+# game, the one after and later games, by last-game TOI share; ESPN's injury cap takes over once he is flagged.
+LEFT_EARLY_LOGITS = ((0.40, (-2.5, -1.8, -1.1)), (0.55, (-0.8, -0.5, 0.0)))
+
+
+def left_early_shifts(last_toi, avg_toi):
+    """Extra per-game dress logits (next game, the one after, later) for a skater whose last game was short."""
+    if not avg_toi or last_toi is None:
+        return ()
+    for cut, shifts in LEFT_EARLY_LOGITS:
+        if last_toi < cut * avg_toi:
+            return shifts
+    return ()
+
+
 # the Season rating's rest-of-season dress share for a skater in his first 1-10 games for a new team (0.62-0.67 against
 # 0.71-0.72 actual, findings 158)
 NEW_TEAM_SEASON_LOGIT, NEW_TEAM_SEASON_GAMES = 0.3, 10
 
 
-def dress_by_game(base, n, sat_last, cap, shift=0.0):
+def dress_by_game(base, n, sat_last, cap, shift=0.0, by_game=()):
     """Chance he dresses for each of his team's next n games: the weekly P shifted by game number (plus any extra
-    logit shift), capped."""
+    logit shift, and by_game's per-game shifts with its last entry covering later games), capped."""
     shifts = DRESS_SHIFT_OUT if sat_last else DRESS_SHIFT_IN
     z = math.log(min(max(base, 1e-4), 1 - 1e-4) / (1 - min(max(base, 1e-4), 1 - 1e-4))) + shift
-    return [min(1 / (1 + math.exp(-(z + shifts[min(k, 3)]))), cap) for k in range(n)]
+    extra = [by_game[min(k, len(by_game) - 1)] if by_game else 0.0 for k in range(n)]
+    return [min(1 / (1 + math.exp(-(z + shifts[min(k, 3)] + extra[k]))), cap) for k in range(n)]
 
 
 def load_scratches(s, game_ids):
@@ -973,6 +990,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # just traded or claimed: 1-3 games for his current team after games for another team this season
             run = next((k for k, g in enumerate(reversed(gl)) if g["team"] != gl[-1]["team"]), None) if gl else None
             new_team = traded or (not sat_last and run is not None and 1 <= run <= NEW_TEAM_GAMES)
+            # dressed for the last game but barely played it, and ESPN hasn't flagged him yet (findings 165)
+            early = () if sat_last or traded or not gl or p.get("injury") else left_early_shifts(gl[-1]["toi"], f.get("std_toi"))
             here = sum(g["team"] == gl[-1]["team"] for g in gl) if gl else 0
             new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
@@ -1005,7 +1024,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p_dress = min(p_dress, inj)
             gn = p["games_left"]
             per_game = dress_by_game(base_dress, gn, sat_last, min(cap, inj),
-                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team) if base_dress is not None else [p_dress] * gn
+                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team, early) if base_dress is not None else [p_dress] * gn
             exp_games = sum(per_game)
             dress_next = per_game[0] if per_game else p_dress
             if gn:
