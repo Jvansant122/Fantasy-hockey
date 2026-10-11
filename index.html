@@ -185,11 +185,16 @@ function dropStarted(d) {
   for (const p of d.players) {
     if (!started(p) || !d.updated_utc || new Date(d.updated_utc) >= new Date(p.today_start) || !(p.games_left > 0)) continue;
     p.games_left -= 1;
+    const night = d.nights.find(n => !n.past);
+    if (night?.light && p.nights.includes(night.sp) && p.light_left > 0) p.light_left -= 1;
+    p.cr_pct = null;  // its percentile was computed with tonight's game in it (findings 182)
+    if (p.cr_why?.team_games > 0) p.cr_why.team_games -= 1;
     const tonightGames = p.pos === "G" ? (p.cr_why?.p_today ?? 0) : (p.cr_dress_next ?? p.cr_dress ?? 0);
     if (p.cr_games != null) {
       const gone = Math.min(tonightGames, p.cr_games);
       p.cr = Math.max(0, +(p.cr - gone * (p.pos === "G" ? (p.cr_why?.line?.pps ?? p.cr_fpg) : p.cr_fpg)).toFixed(2));
       p.cr_games = +(p.cr_games - gone).toFixed(2);
+      if (p.cr_why?.exp_starts != null) p.cr_why.exp_starts = Math.max(0, +(p.cr_why.exp_starts - gone).toFixed(2));
       if (p.cr_why) p.cr_why.p_today = 0;
     }
   }
@@ -212,9 +217,11 @@ function myPlayers() {
 }
 const onMyTeam = p => state.team !== "" && String(p.team_id) === state.team;
 // Nights this player plays on which one of my slots for his group would otherwise sit empty
+// tonight's game already started for him: like a past night (findings 182)
+const goneTonight = (p, n) => started(p) && n === state.data.nights.find(m => !m.past);
 function openGames(p) {
   if (!isFA(p) || !state.team) return null;
-  return state.data.nights.filter(n => activeNight(n) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
+  return state.data.nights.filter(n => activeNight(n) && !($("left").checked && goneTonight(p, n)) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
 }
 function hasRoom(sp, g) {
   const o = state.openSlots[sp];
@@ -255,8 +262,9 @@ function pctBadge(p, key = "cr_pct") {
 function dots(p) {
   return `<span class="dots">${state.data.nights.map(n => {
     const plays = p.nights.includes(n.sp);
-    const open = plays && isFA(p) && state.team && hasRoom(n.sp, group(p));
-    return `<i class="${plays ? "play" : ""} ${open ? "open" : ""} ${n.past ? "past" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
+    const gone = n.past || goneTonight(p, n);
+    const open = plays && !gone && isFA(p) && state.team && hasRoom(n.sp, group(p));
+    return `<i class="${plays ? "play" : ""} ${open ? "open" : ""} ${gone ? "past" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
   }).join("")}</span>`;
 }
 function why(p) {

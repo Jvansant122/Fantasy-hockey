@@ -684,6 +684,10 @@ ESPN's fantasy day doesn't end at midnight: its scoring period rolls over at abo
 
 ESPN holds a free-agent add made after the day's first game starts until its overnight rollover, even when the player's own game is hours later: all 6 such adds in the logs joined the next day, while all 17 earlier adds joined the same day (and the move still counts on the day it was made). So for free agents and waiver players the site now treats today's game as gone once the day's first puck drops, taking it out of their this-week points, games left, keep value and the add suggestions. Your own players still count until their own game starts. Before first puck, "Stream a goalie tonight" says when the first game starts; after it, the card says a goalie added now plays from tomorrow. (Findings 179.)
 
+## 86. Two leftovers from games that already started
+
+An audit of Sunday's table found two slips. A free agent who sat his last game but is back in Daily Faceoff's lines was given 0.9 of a game even when his team had no games left this week (Emil Andrae topped the free-agent table Sunday evening with 0.76 points and no game). **That lift now applies only when he has a game left.** And when a game started after the data run, the page took it out of the Week rating but not the rest of the row: the Open and Light columns, the night dots, the percentile badge and the details panel still counted it (Desharnais showed Week 0.0 with a 92nd-percentile badge). **All of those now drop the started game too.** (Findings 182.)
+
 ## What the independent review changed
 
 | Review point | Outcome |
