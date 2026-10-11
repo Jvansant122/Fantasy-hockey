@@ -29,7 +29,7 @@
   .nights { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .night { text-align: center; padding: 6px 2px; border-radius: 8px; background: var(--chip); font-size: 11px; min-width: 0; }
   .night b { display: block; font-size: 15px; }
-  .night.light { outline: 2px solid var(--good); outline-offset: -2px; }
+  .night.light { box-shadow: inset 0 0 0 2px var(--good); }
   .night.past { opacity: .45; }
   .night .open { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; }
   .night .open em { font-style: normal; color: var(--good); font-weight: 600; }
@@ -73,6 +73,13 @@
   .upgrades { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
   .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
   .upg .drop { color: var(--muted); }
+  h2 .sub { font-weight: 400; }
+  details.more summary, details.fold > summary { cursor: pointer; color: var(--accent); font-size: 12px; }
+  details.fold > summary { color: var(--text); font-size: 13px; }
+  details.fold > summary b::after { content: " ▸"; color: var(--muted); font-weight: 400; }
+  details.fold[open] > summary b::after { content: " ▾"; }
+  details.more { display: inline; }
+  details.more summary { display: inline; }
   .empty { color: var(--muted); padding: 12px 0; }
   .tside { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 13px; }
   .tside button { font: inherit; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 4px; min-width: 28px; min-height: 28px; }
@@ -83,8 +90,12 @@
     .card { padding: 10px; }
     .wide { display: none; }
     .meta { display: block; }
-    th, td { padding: 6px 5px; }
-    td:first-child { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+    th, td { padding: 6px 4px; }
+    th { padding-top: 12px; padding-bottom: 12px; }
+    td:first-child { max-width: 31vw; overflow: hidden; text-overflow: ellipsis; }
+    .pct { margin-left: 2px; padding: 1px 4px; }
+    td:nth-child(5) .pct { display: none; }
+    .night .open { font-size: 9px; }
     .tag { margin-left: 2px; padding: 1px 4px; }
     select, input[type=search], input[type=number] { min-height: 44px; }
     .controls label { min-height: 44px; }
@@ -112,8 +123,10 @@
   </div>
 
   <div class="card">
-    <h2>Upgrades <span class="sub">free agents projected above your team's weakest healthy player, and who to drop. Your league allows 7 moves a matchup (6 in a 6-day one), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</span></h2>
-    <div class="upgrades" id="upgrades"></div>
+    <h2>Upgrades</h2>
+    <div class="sub" id="upghead">Free agents projected above your team's weakest healthy player, and who to drop. <b>keep</b> = this week's points + about 2 weeks of points per game (Season × 7).
+      <details class="more"><summary>How to use your moves</summary>Your league allows 7 moves a matchup (6 in a 6-day one), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</details></div>
+    <div class="upgrades" id="upgrades" style="margin-top:8px"></div>
   </div>
 
   <div class="card">
@@ -394,6 +407,8 @@ function renderUpgrades() {
   if (irHealthy.length) cards.push(`<div class="upg"><b>Activate from IR</b> <span class="drop">· healthy but in your IR slot, so his points don't count: move him to your lineup.</span>
     ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
   const addVal = p => noMoves ? KEEP_GAMES * (p.cr_season ?? 0) : keep(p);
+  // a gain in addVal units, labelled: with no moves left addVal is 7 x Season, so show the Season difference
+  const gainTxt = v => noMoves ? `+${fmt(v / KEEP_GAMES)} Season` : `+${fmt(v)} ${d.rated && !d.final_matchup ? "keep" : "pts"}`;
   const later = noMoves ? " No moves left this matchup; these are next Monday's targets." : "";
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
   if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
@@ -477,7 +492,7 @@ function renderUpgrades() {
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
     if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 2 ? "2 moves" : "move"}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}</span>
-      ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">+${fmt(m.gain)}</span></div>`).join("")}</div>`);
+      ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span></div>`).join("")}</div>`);
   }
   const nSwap = cards.length;
   for (const g of ["F", "D", "G"]) {
@@ -488,12 +503,12 @@ function renderUpgrades() {
     const kv = p => g === "G" || !d.rated ? "" : ` · keep ${fmt(keep(p))}`;
     if (!better.length) continue;
     cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.${later}</span>
-      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (+${fmt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
+      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (${gainTxt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
   const dropGain = p => {  // the best free agent at his position, and how much he'd add (findings 68)
     const fa = d.rated && fas.filter(f => group(f) === group(p)).sort((a, b) => keep(b) - keep(a))[0];
-    return fa && keep(fa) > keep(p) ? ` · ${esc(fa.name)} +${fmt(keep(fa) - keep(p))}` : "";
+    return fa && keep(fa) > keep(p) ? ` · ${esc(fa.name)} +${fmt(keep(fa) - keep(p))} keep` : "";
   };
   // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded
   const drops = d.players.filter(p => String(p.team_id) === state.team && !p.ir && p.pos !== "G").sort((a, b) => keep(a) - keep(b)).slice(0, 5);
@@ -502,7 +517,7 @@ function renderUpgrades() {
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only
   const stash = !d.rated || irOpen <= 0 ? [] : d.players.filter(p => isFA(p) && p.pos !== "G" && ["OUT", "INJURY_RESERVE"].includes(p.injury) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
-  if (stash.length) cards.push(`<div class="upg"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.${later}</span>
+  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. Stash in your open IR slot: costs one move, no lineup spot. Worth it only for 1.5+ pts/game players.${later}</span>
     ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   // Trade ideas (research findings 103): another team's skater whom ESPN projects the same as mine but the Season rating has 0.3+
   // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.
@@ -527,19 +542,40 @@ function renderUpgrades() {
       && Math.abs(o.proj_ppg - m.proj_ppg) <= 0.05 && o.cr_season - m.cr_season >= 0.3)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 2).map(o => ({ m, o, gap: o.cr_season - m.cr_season })))
     .sort((a, b) => b.gap - a.gap).slice(0, 5);
-  if (trades.length) cards.push(`<div class="upg"><b>Trade ideas</b> <span class="drop">· ESPN projects each pair about the same, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
+  if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN projects each pair about the same, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
     ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies plus a stream slot (research sections 37 and 144): a third goalie spot is the stream slot, a fourth is spare
   const myGoalies = d.players.filter(p => String(p.team_id) === state.team && !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? ` · keep ${fmt(keep(p))}, Season ${fmt(p.cr_season)}` : ""} · lowest keep value</span></div>`;
-  if (myGoalies.length > 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
+  if (myGoalies.length > 3) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
     ${myGoalies.slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
-  else if (myGoalies.length === 3) cards.push(`<div class="upg"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from next Monday, when a G slot is open, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
+  else if (myGoalies.length === 3) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from next Monday, when a G slot is open, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
     : locked && tonight === d.nights[d.nights.length - 1] ? `tonight's first game has started and it's the matchup's last night, so an add now counts in the next matchup: from Monday, when a G slot is open, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
     : locked ? `tonight's first game has started, so an add now counts from tomorrow: when a G slot is open tomorrow, drop ${esc(myGoalies[0].name)} for a confirmed starter.`
     : `when a G slot is open tonight, drop ${esc(myGoalies[0].name)} for a confirmed starter (see Stream a goalie tonight).`}</span>
     ${gLine(myGoalies[0])}</div>`);
   $("upgrades").innerHTML = cards.join("");
+  foldCards();
+}
+
+// On a phone, fold each card's explainer behind "why", and the long cards (trade ideas, IR stash, goalies note) behind
+// their title, so the actionable lines stay near the top (findings 214: Upgrades was 1564 px tall on a phone)
+function foldCards() {
+  if (!matchMedia("(max-width: 640px)").matches) return;
+  for (const c of $("upgrades").querySelectorAll(".upg")) {
+    const title = c.querySelector(":scope > b"), drop = c.querySelector(":scope > .drop");
+    if (!title) continue;
+    if (c.classList.contains("fold")) {
+      const det = document.createElement("details"), sum = document.createElement("summary");
+      det.className = "fold"; sum.append(title);
+      det.append(sum, ...c.childNodes); c.append(det);
+    } else if (drop) {
+      const det = document.createElement("details"), sum = document.createElement("summary");
+      det.className = "more"; sum.textContent = "why";
+      drop.textContent = drop.textContent.replace(/^\s*·\s*/, "");
+      drop.before(" ", det); det.append(sum, " ", drop);
+    }
+  }
 }
 
 function renderNights() {

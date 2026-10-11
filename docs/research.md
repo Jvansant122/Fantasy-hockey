@@ -748,6 +748,14 @@ Two fixes to ratings shipped earlier today (findings 213):
 - **Unsigned players** (Kane, Tarasenko and five more, no NHL team or games) were rated as if they dress for 90% of games. They now get the not-playing 10%.
 - **A player who missed all of last season** (Barkov) was rated like a newcomer. Under 10 games last season now falls back to the season before, for players on an NHL roster or with games this season.
 
+## 96. The page on a phone, and what the numbers mean
+
+On a 390-pixel phone the players table was about 48 pixels wider than the screen, so the Open column and the night dots sat off the edge. The Upgrades section was 1,564 pixels tall, and the table started more than two and a half screens down (findings 214).
+
+- The table now fits: tighter cell padding, a narrower name column, and no percentile badge on the Season column on phones. The light-night outline is drawn inside the box, so it no longer covers the open-slot text.
+- On a phone each card's explanation folds behind "why", and the long cards (Trade ideas, IR stash, the Goalies note) fold behind their title. The Upgrades heading is one plain sentence, with the move advice behind "How to use your moves". Upgrades is now about 930 pixels tall for Jack's team, and the table starts about 700 pixels sooner.
+- Gains say what they measure: "+7.4 keep", or "+1.1 Season" for a team with no moves left. The second used to show seven times the Season difference with no label. The Upgrades heading also defines keep: this week's points plus about two weeks of points per game (Season × 7).
+
 ## What the independent review changed
 
 | Review point | Outcome |
