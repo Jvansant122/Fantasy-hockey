@@ -383,7 +383,7 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 306 | Oct 11 17:40 | thread "Sixth hunt" (agent) | Goalies card says tonight after first puck | Every evening, teams with 3 goalies | Shipped (PR #87, handoff 99) | findings 211 |
 | 307 | Oct 11 17:40 | thread "Sixth hunt" (agent) | Monday 3:40-6:10 AM shows last week's move limit | 4 of 12 teams this week | Shipped (PR #87, handoff 100) | findings 211 |
 | 308 | Oct 11 17:50 | thread "Sixth hunt" (agent) | ESPN automatic lineups and lineup losses, Oct 8-10 (36 team-days) | ESPN auto-sets 11 of 12 teams at rollover, ignores injuries; 3.8 pts lost total | No change (backs findings 139) | findings 212 |
-| 309 | Oct 11 17:50 | thread "Sixth hunt" (agent) | Contested waiver claims and their cost | Kempe 3 claims, Eriksson Ek 2; losing claims cost no move | Pending: handoff 101 | findings 212 |
+| 309 | Oct 11 17:50 | thread "Sixth hunt" (agent) | Contested waiver claims and their cost | Kempe 3 claims, Eriksson Ek 2; losing claims cost no move | Shipped (PR #94, handoff 101) | findings 212 |
 | 310 | Oct 11 17:50 | thread "Sixth hunt" (agent) | Trade processing delay, review, deadline | Processed in 9 s, no review, no deadline seen | No change | findings 212 |
 | 311 | Oct 11 17:50 | thread "Sixth hunt" (agent) | Which free agents managers add vs site ranks | Median keep rank 13, ESPN ownership 9; 2 of 17 site top-3 added | No change (no race, as idea 200) | findings 212 |
 | 312 | Oct 11 17:50 | thread "Sixth hunt" (agent) | UTL slot use in the league | Forwards 81% | No change | findings 212 |

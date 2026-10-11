@@ -452,7 +452,9 @@ def main():
         "move_limit": move_limit,
         "ir_slots": ir_slots,
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
-                   "moves_used": moves_used[t["id"]]} for t in league["teams"]],
+                   "moves_used": moves_used[t["id"]],
+                   # ESPN waiver order, 1 = first claim (findings 212: losing claims cost no move)
+                   "waiver_rank": t.get("waiverRank")} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
     }
     path = Path(__file__).resolve().parent.parent / "data" / "players.json"

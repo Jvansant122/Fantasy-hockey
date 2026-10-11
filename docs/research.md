@@ -756,6 +756,10 @@ On a 390-pixel phone the players table was about 48 pixels wider than the screen
 - On a phone each card's explanation folds behind "why", and the long cards (Trade ideas, IR stash, the Goalies note) fold behind their title. The Upgrades heading is one plain sentence, with the move advice behind "How to use your moves". Upgrades is now about 930 pixels tall for Jack's team, and the table starts about 700 pixels sooner.
 - Gains say what they measure: "+7.4 keep", or "+1.1 Season" for a team with no moves left. The second used to show seven times the Season difference with no label. The Upgrades heading also defines keep: this week's points plus about two weeks of points per game (Season × 7).
 
+## 97. Waiver claims cost nothing to try
+
+In the league's logs Kempe drew claims from three teams and Eriksson Ek from two. Every losing claim was cancelled without using a move, and only the winning claim used one (findings 212). So when Upgrades lists a player on waivers, it now says to put in a claim: a losing claim is free. It also shows your place in ESPN's waiver order (#1 claims first). A drop with a Season rating of 1.5 or more gets a tag: he goes on waivers, and others will claim him.
+
 ## What the independent review changed
 
 | Review point | Outcome |

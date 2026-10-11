@@ -461,3 +461,26 @@ def test_gains_say_their_unit(browser, server, data):
     assert gains and all(g == " Season" for g in gains), gains[:5]
     assert errors == errors2 == []
     ctx.close()
+
+
+def test_waiver_claim_note(browser, server, data):
+    """Waiver players in Upgrades come with a note that a losing claim is free and the team's waiver order (handoff 101)."""
+    d = json.loads(json.dumps(data))
+    for p in d["players"]:
+        if p["owner"] == "freeagent":
+            p["owner"], p["clears"] = "waivers", "Tue 13"
+    for i, t in enumerate(d["teams"]):
+        t["waiver_rank"], t["moves_used"] = i + 1, 0
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(d["teams"][2]["id"]))
+    note = page.locator("#upgrades .wvnote").inner_text()
+    assert "A losing claim uses no move" in note and f"#3 of {len(d['teams'])}" in note
+    # without the waiver order the note still shows, minus the rank
+    for t in d["teams"]:
+        t["waiver_rank"] = None
+    ctx.close()
+    ctx, page, errors2 = open_page(browser, server, data=d)
+    page.select_option("#team", str(d["teams"][2]["id"]))
+    assert "waiver order" not in page.locator("#upgrades .wvnote").inner_text()
+    assert errors == errors2 == []
+    ctx.close()
