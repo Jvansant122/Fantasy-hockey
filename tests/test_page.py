@@ -1260,7 +1260,8 @@ def test_nights_for_a_later_week(browser, server, data):
     cards = page.locator("#upgrades").inner_html()
     week_before = page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].slice(0, 40).map(r => [r.dataset.id, r.children[3].innerText])")
     page.select_option("#wk", str(w["week"]))
-    assert page.locator('#head th[data-k="nights"]').inner_text().startswith(f"Nights ({w['label']})")
+    head = page.locator('#head th[data-k="nights"]').inner_text()
+    assert head.startswith("Nights") and f"({w['label']})" in head
     assert page.locator("#left").is_disabled()
     rows_ = page.evaluate("""[...document.querySelectorAll('#rows tr[data-id]')].map(r => {
       const p = state.data.players.find(p => p.id === +r.dataset.id);
@@ -1643,3 +1644,46 @@ def test_stream_card_names_only_rechecks_before_the_puck(browser, server, data):
         assert "No free-agent goalie is confirmed" in card and want in card, (puck, now, card)
         assert errors == []
         ctx.close()
+
+
+def test_picked_week_keeps_the_phone_table_inside_the_screen(browser, server, data):
+    """A later week's dates don't widen the phone's Nights header, and with All columns an opened row's details stay on
+    screen while the table scrolls sideways (findings 242)."""
+    later = [w for w in data.get("season_weeks", []) if w["sps"][0] > data["nights"][-1]["sp"]]
+    assert later, "the data has no later week to pick"
+    for width in (320, 360, 390):
+        ctx = browser.new_context(viewport={"width": width, "height": 800})
+        page = ctx.new_page()
+        errors = []
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(server)
+        page.wait_for_function("document.body.classList.contains('ready')")
+        page.select_option("#team", str(data["teams"][0]["id"]))
+        page.select_option("#wk", str(later[0]["week"]))
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+        assert page.evaluate("document.querySelector('#rows').closest('div').scrollWidth <= window.innerWidth + 1")
+        # All columns: the table scrolls, the opened row's text stays in view
+        page.check("#allcols")
+        page.locator("#rows tr[data-id]").first.click()
+        page.evaluate("document.querySelector('#rows').closest('div').scrollLeft = 400")
+        r = page.evaluate("(() => { const b = document.querySelector('tr.why .whytxt').getBoundingClientRect(); return [b.left, b.right]; })()")
+        assert r[0] >= 0 and r[1] <= width + 1, r
+        assert errors == []
+        ctx.close()
+
+
+def test_goalie_details_name_the_pull_to_the_league_rate(browser, server, data):
+    """A goalie whose week price differs from his own rate says it was pulled toward the league's rate, before naming the
+    schedule, so a soft schedule isn't blamed for a lower price (findings 231, 242)."""
+    d = json.loads(json.dumps(data))
+    g = next(p for p in d["players"] if p["pos"] == "G" and p.get("cr_why"))
+    g["cr_fpg"], g["cr_why"]["own_pps"], g["cr_why"]["sched"], g["cr_why"]["gs"] = 3.47, 3.96, 0.2, 8
+    g["cr_why"].pop("line", None)
+    ctx, page, errors = open_page(browser, server, d)
+    text = page.evaluate(f"why(state.data.players.find(p => p.id === {g['id']}))")
+    assert "his own 3.96 pts per start" in text
+    assert "this week priced at 3.47: pulled most of the way to the league's rate" in text and "then the schedule" in text
+    g2 = page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {g['id']}); p.cr_why.sched = null; return why(p); }})()")
+    assert "pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)" in g2 and "then" not in g2.split("priced at")[1]
+    assert errors == []
+    ctx.close()

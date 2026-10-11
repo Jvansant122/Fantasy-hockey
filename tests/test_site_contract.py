@@ -225,3 +225,16 @@ def test_a_player_dropped_after_the_first_puck_raises_no_schedule_warning(data):
     assert any(w.startswith("W2") for w in check_data.warnings(d, None))
     p["pending_drop"] = True
     assert not any(w.startswith("W2") for w in check_data.warnings(d, None))
+
+
+def test_check_reads_period_one_from_the_data(data):
+    """With sp1_date in the data, the day-shift rule uses it: a wrong one is caught, the real one passes (findings 242)."""
+    import copy
+    from datetime import date, timedelta
+    d = copy.deepcopy(data)
+    d["sp1_date"] = check_data.SP1.isoformat()
+    assert not [m for m in check_data.problems(d) if m.startswith("N1")]
+    d["sp1_date"] = (check_data.SP1 + timedelta(days=1)).isoformat()
+    assert [m for m in check_data.problems(d) if m.startswith("N1")]
+    d["sp1_date"] = "not a date"
+    assert not [m for m in check_data.problems(d) if m.startswith("N1")]

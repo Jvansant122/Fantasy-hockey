@@ -135,7 +135,14 @@
     body.allcols th.wide, body.allcols td.wide { display: table-cell; }
     body.allcols td:first-child { width: auto; min-width: 120px; max-width: 160px; }
     body.allcols td:first-child .meta { display: none; }
+    /* a picked week's dates would widen the Nights header and squeeze the table: the week menu already names it (findings 242) */
+    body:not(.allcols) .wkl { display: none; }
+    /* the details of a tapped row stay inside the screen while the table scrolls sideways */
+    body.allcols tr.why td { overflow: visible; }
+    body.allcols tr.why .whytxt { position: sticky; left: 8px; max-width: calc(100vw - 56px); white-space: normal; }
   }
+  /* elsewhere the week's dates go on their own line under "Nights" rather than widening the column */
+  th .wkl { display: block; font-weight: 400; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -413,7 +420,8 @@ function why(p) {
     const by = [w.line && !started(p) && "tonight's line", w.sched != null && Math.abs(w.sched) >= 0.01 && "the schedule"].filter(Boolean).join(" and ");
     parts.push(own == null ? `× ${fpg} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward his last-season rate, or 2.9 without one)` : "")
       : `his own ${own} pts per start` + (w.gs != null ? ` (${w.gs} start${w.gs === 1 ? "" : "s"} this season, pulled toward his last-season rate, or 2.9 without one)` : "")
-        + (own !== fpg && by ? `; this week priced at ${fpg} with ${by}` : ""));
+        // this week's starts keep 0.4 of his gap to the league rate before the line or schedule (findings 231, 242)
+        + (own !== fpg ? `; this week priced at ${fpg}: pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)${by ? `, then ${by}` : ""}` : ""));
   } else {
     parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
     // a player yet to play takes a fixed share of the rest, which isn't "no injury discount" when he was hurt (findings 232)
@@ -498,12 +506,12 @@ function render(all = true) {
   $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
     (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
   $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
-    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights (${esc(state.tw.w.label)})` : label}</th>`).join("");
+    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights<span class="wkl">(${esc(state.tw.w.label)})</span>` : label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
     const c = cells(p);
     return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
       COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
-      (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
+      (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}"><div class="whytxt">${esc(details(p))}</div></td></tr>` : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   if (all) { renderUpgrades(); renderTrade(); }
   save();

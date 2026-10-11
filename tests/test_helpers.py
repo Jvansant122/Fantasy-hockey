@@ -411,3 +411,14 @@ def test_carry_injury_notes_edge_cases():
     assert seen == ["2026-10-01T12:00Z"]  # played_since gets the note's full time, not its UTC date
     stored["5"]["status"] = None  # no fantasy status and an unknown feed word: never carried
     assert rating.carry_injury_notes({5: {"short": "ir"}}, stored, {5: "INJURY_RESERVE"}, lambda aid, when: False, today) == set()
+
+
+def test_sp1_date_from_the_season_schedule():
+    """ESPN's period 1 from the whole season's game dates, so the publish check's day-shift rule works next season too;
+    a short scoreboard window gives none (findings 242)."""
+    from datetime import timedelta
+    start = date(2027, 10, 5)
+    nights = {sp: datetime(2027, 10, 5, 19) + timedelta(days=sp - 1) for sp in range(3, 60)}
+    nights[40] += timedelta(days=1)  # one stray late game doesn't move it
+    assert fetch.sp1_date(nights) == start.isoformat()
+    assert fetch.sp1_date({sp: d for sp, d in nights.items() if sp < 20}) is None
