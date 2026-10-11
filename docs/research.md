@@ -713,6 +713,17 @@ When a goalie has started each of his team's last 5-7 games, the model gave him 
 
 The ridge-inputs study tried about 900 extra game-by-game inputs, including the full MoneyPuck game logs. Almost all of the small gain came from something the daily script already has: where a player ranks in his own team's power-play time and ice time each game (top-5 PP time, top-3 forward or top-2 defenseman minutes), plus position-by-usage terms (a defenseman's minutes count differently from a forward's). **The skater points-per-game model now uses those 25 inputs (104 in all, up from 79), refit on 2021-26.** Ranking next week's points improves by about 0.001 overall and 0.003 among waiver players, in every test season. It's a small refinement, not a visible shake-up. (Findings 201.)
 
+## 92. Six page fixes from Sunday night and Monday morning
+
+A replay of the page through Sunday evening and early Monday (findings 211) found six places where its advice went wrong. All are fixed:
+
+- **Ties sort by keep value.** From Sunday's first game until the Monday morning update, every free agent's Week rating is 0.0, so the table fell back to data order. Ties now go to the player with the higher keep value (this week plus 7 games of Season rating), so the best pickups for next week come first.
+- **The trade check never drops a goalie to make room** in a 2-for-1, unless a goalie is part of the trade. Most teams carry only 2 healthy goalies.
+- **Trade ideas check the other team's roster too.** An idea that would leave the partner with fewer than 6 or more than 8 healthy D (or outside 11-13 F) isn't offered, since they won't accept it.
+- **The Tonight card counts players already playing.** A skater whose game has started is already in a lineup slot, so he's counted first and only players still to play are offered for the bench.
+- **The Goalies card after the first game.** Once the day's first game starts, an add counts from tomorrow (next matchup on Sunday), and the card now says so instead of "when a G slot is open tonight".
+- **Monday before the first update.** When the data is from a matchup that already ended, ESPN has already reset everyone's moves, so the page no longer says "no moves left" or caps Best moves at last week's limit.
+
 ## What the independent review changed
 
 | Review point | Outcome |
