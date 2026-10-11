@@ -13,7 +13,7 @@ A one-page site (GitHub Pages) that ranks free agents in Jack's ESPN fantasy hoc
 - `docs/research.md` - plain-language research write-up for league members (charts in `docs/img/`).
 - `docs/ideas-ledger.md` - every research idea tried or queued, with its result and verdict. Mirror of `/mnt/project-files/research/claude-rating/ideas-ledger.md`.
 - `tests/` - pytest suite, run by the "Tests" workflow on every PR. `tests/test_page.py` loads the page in Chromium (Playwright) with the real data, picks every team, filters, sorts, opens details, and also loads it with ratings stripped; any JS error fails the build.
-- `scripts/check_data.py` - the update workflow runs it before committing data (a broken `players.json` is never published) and after (fails the run, so GitHub emails Jack, when the Claude Rating is missing). Add a field to its lists when the page starts depending on one.
+- `scripts/check_data.py` - the update workflow runs it before committing data (a broken `players.json` is never published) and after (fails the run, so GitHub emails Jack, when the Claude Rating is missing). Add a field to its lists when the page starts depending on one. Before publishing it also checks rules every version keeps (`rules`, `problems_vs_prev`: games left match the nights, expected games within games left, Week = pts/game x games, goalie starts within team games, nights on their dates) and prints warnings (`warnings`) when a change moves ratings for players who haven't played. A deliberate model change that trips a warning is fine; a rule failure blocks publishing.
 - `.claude/hooks/session-start.sh` - cloud sessions install the test and research libraries on start.
 
 ## Run the tests

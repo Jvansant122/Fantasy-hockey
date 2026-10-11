@@ -1,6 +1,7 @@
 """The data the page reads, and the page's own script.
 
 index.html reads data/players.json directly, so a renamed or dropped field breaks the site without any error in Actions."""
+import copy
 import json
 import re
 import shutil
@@ -60,3 +61,29 @@ def test_check_catches_a_shifted_week(data):
     for n in wrong_past["nights"]:
         n["past"] = True
     assert any("past nights" in e for e in check_data.problems(wrong_past))
+
+
+def test_data_rules_catch_past_bugs(data):
+    """The publish-time rules (findings 215) pass on today's data and catch each kind of bug they were built from."""
+    assert check_data.rules(data) == []
+    if not data["rated"]:
+        return
+    first = lambda pred: next(p for p in data["players"] if pred(p))
+    made_up = copy.deepcopy(data)  # a player with no games left given one (Andrae, findings 182)
+    p = first(lambda p: p["games_left"] == 0 and p["pos"] != "G")
+    p = next(q for q in made_up["players"] if q["id"] == p["id"])
+    p["cr_games"], p["cr"] = 0.9, round(0.9 * (p["cr_fpg"] or 0), 2)
+    assert any(e.startswith("P3") for e in check_data.problems(made_up))
+    shifted = copy.deepcopy(data)  # each night labelled a day late (the overnight shift, findings 180)
+    for n in shifted["nights"]:
+        n["sp"] += 1
+    assert any(e.startswith("N1") for e in check_data.problems(shifted))
+    assert any(e.startswith("X1") for e in check_data.problems_vs_prev(
+        {**data, "nights": [dict(n, date=m["date"]) for n, m in zip(data["nights"], data["nights"][1:] + data["nights"][:1])]}, data))
+    # a model change moving players who haven't played: a warning, not a failure
+    moved = copy.deepcopy(data)
+    for p in moved["players"]:
+        if p["pos"] != "G" and p.get("cr_fpg") is not None:
+            p["cr_fpg"] = round(p["cr_fpg"] + 0.1, 2)
+    assert any(w.startswith("X3") for w in check_data.warnings(moved, data))
+    assert check_data.warnings(data, data) == [w for w in check_data.warnings(data, None)]
