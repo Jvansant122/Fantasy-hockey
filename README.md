@@ -7,10 +7,10 @@ Live site: https://jvansant122.github.io/Fantasy-hockey/. The research behind th
 ## How it works
 
 - `scripts/fetch.py` pulls your roster, free agents, waivers and the NHL schedule from ESPN and writes `data/players.json`.
-- `.github/workflows/update.yml` runs it every morning (or on demand from the Actions tab) and commits the new data.
-- `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: projected points per game × games left × chance to dress (recent games played plus ESPN injury status). Goalies: expected starts × his own points per start this season, shrunk toward the league average (2.9) over 15 starts. If the NHL or MoneyPuck calls fail, the update still publishes without the rating.
+- `.github/workflows/update.yml` runs it four times a day (or on demand from the Actions tab) and commits the new data.
+- `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: projected points per game × games left × chance to dress (recent games played plus ESPN injury status). Goalies: expected starts × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). If the NHL or MoneyPuck calls fail, the update still publishes without the rating.
 - `model/rating_model.json` holds the model weights; `model/train.py` refits them from the research data (2021-26 seasons).
-- `scripts/leads.py` reads Daily Faceoff's starting goalies (confirmed starters count as certain starts) and, on every run, logs Daily Faceoff starters and lineups, ESPN injury notes, NHL/DraftKings odds and a rating snapshot to `data/log/` for testing later. The workflow runs at 6 AM, 9 AM, 12:30 PM and 5 PM ET.
+- `scripts/leads.py` reads Daily Faceoff's starting goalies (confirmed starters count as certain starts) and, on every run, logs Daily Faceoff starters and lineups, ESPN injury notes, NHL/DraftKings odds and a rating snapshot to `data/log/` for testing later. The workflow runs at about 6 AM, 9 AM, 12:40 PM and 5 PM ET.
 - `data/news.json` (optional, not used yet) is where up to 25 news flags can go later. A flag shows in the row's details, and only changes the numbers (games, starts, or a capped points-per-game multiplier) when its `apply` is true.
 - `index.html` reads that file. GitHub Pages serves it.
 
@@ -34,4 +34,4 @@ python -m pytest
 
 The **Tests** workflow runs these on every pull request. They need no network or secrets: ESPN, NHL, MoneyPuck and Daily Faceoff are faked. They run the rating end to end on a small made-up league and check that `data/players.json` still has every field the page reads. Contributor notes (layout, conventions, how research hands changes to the site) are in [CLAUDE.md](CLAUDE.md).
 
-Note: on a free GitHub plan the Pages site is public even though the repo is private. The cookies stay in encrypted secrets and never appear on the site; the site shows player names, stats and your roster.
+Note: the repo and the Pages site are public: code, docs, `data/players.json` and the run logs in `data/log` (league transactions) are visible to anyone. The cookies stay in encrypted secrets and never appear in either.
