@@ -15,6 +15,7 @@ import json
 import math
 import re
 import sys
+import time
 import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -236,6 +237,7 @@ def nhl_get(s, url, **params):
             if attempt == 2:
                 raise
             print(f"Retrying {url}: {e}", file=sys.stderr)
+            time.sleep(2 ** attempt)  # back off: ~100 calls a run, and an immediate retry hits the same blip (findings 230)
 
 
 def stats_report(s, report, season, start=None, end=None, teams=False):
@@ -456,6 +458,9 @@ def load_xg(s, year):
         print(f"MoneyPuck {year} unavailable: {e}", file=sys.stderr)
         return {}
     lines = text.splitlines()
+    if not lines or "situation" not in lines[0]:  # a 200 with an empty or odd body: rate without xG, not without ratings
+        print(f"MoneyPuck {year} returned no table", file=sys.stderr)
+        return {}
     head = lines[0].split(",")
     ix = {c: head.index(c) for c in head}
     num = lambda f, c: float(f[ix[c]] or 0) if c in ix else 0.0

@@ -1,5 +1,7 @@
 """Small pure helpers in rating.py and fetch.py."""
-from datetime import date
+from datetime import date, datetime
+
+import pytest
 
 import fetch
 import rating
@@ -166,8 +168,8 @@ def test_waiver_players_play_from_the_day_after_they_clear():
     assert 3 not in days and 9 not in days
 
 
-def test_scoreboard_schedule_survives_a_failed_day(monkeypatch):
-    """One ESPN scoreboard call that keeps failing drops that day, not the whole update."""
+def test_scoreboard_schedule_fails_on_a_lost_day(monkeypatch):
+    """A day the scoreboard never returns would show its games as nights off, so the run fails instead (findings 230)."""
     monkeypatch.setattr(fetch.time, "sleep", lambda s: None)
 
     class Resp:
@@ -178,17 +180,43 @@ def test_scoreboard_schedule_survives_a_failed_day(monkeypatch):
             return self.data
 
     class Session:
+        fail = True
+
         def get(self, url, params=None, timeout=None):
             if url.endswith("/teams"):
                 return Resp({"sports": [{"leagues": [{"teams": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
-            if params["dates"].endswith(("1", "3", "5", "7", "9")):
+            if self.fail and params["dates"].endswith(("1", "3", "5", "7", "9")):
                 raise ConnectionError("boom")
             return Resp({"events": [{"date": "2026-10-10T23:00Z", "competitions": [{"competitors": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
 
-    teams, counts, dates = fetch.scoreboard_schedule(Session(), [1, 2], 1)
-    assert len(counts) == 1 and list(counts.values()) == [1]
-    assert teams[10]["periods"] == set(counts)
-    assert teams[10]["starts"] == {sp: "2026-10-10T23:00:00Z" for sp in counts}  # start times for games already started
+    with pytest.raises(RuntimeError):
+        fetch.scoreboard_schedule(Session(), [1, 2], 1)
+    ok = Session()
+    ok.fail = False
+    teams, counts, dates = fetch.scoreboard_schedule(ok, [1, 2], 1)
+    assert counts == {1: 1, 2: 1} and teams[10]["periods"] == {1, 2}
+    assert set(teams[10]["starts"].values()) == {"2026-10-10T23:00:00Z"}
+
+
+def test_pro_schedule_asks_for_the_right_view_and_dates_empty_nights(monkeypatch):
+    """ESPN's view is proTeamSchedules_wl; the misspelled one returned nothing, so every run fell back (findings 230).
+    A night with no NHL games has no date in the view and takes one from its neighbours."""
+    asked = []
+    day = lambda d: int(datetime(2026, 12, d, 19, tzinfo=fetch.ET).timestamp() * 1000)
+    view = {"settings": {"proTeams": [
+        {"id": 10, "abbrev": "Tor", "proGamesByScoringPeriod": {"85": [{"id": 1, "date": day(22)}], "88": [{"id": 2, "date": day(26)}]}},
+        {"id": 1, "abbrev": "Bos", "proGamesByScoringPeriod": {"85": [{"id": 1, "date": day(22)}]}},
+    ]}}
+
+    def get(s, url, views):
+        asked.append(views)
+        return view if views == ["proTeamSchedules_wl"] else {}
+    monkeypatch.setattr(fetch, "get", get)
+    monkeypatch.setattr(fetch, "scoreboard_schedule", lambda *a: pytest.fail("fell back to the scoreboard"))
+    teams, counts, dates = fetch.pro_schedule(None, "base", "league", [85, 86, 87, 88], 85)
+    assert asked == [["proTeamSchedules_wl"]]
+    assert counts == {85: 1, 88: 1} and teams[10]["periods"] == {85, 88}
+    assert [dates[sp].day for sp in (85, 86, 87, 88)] == [22, 23, 25, 26]
 
 
 def test_utc_iso():

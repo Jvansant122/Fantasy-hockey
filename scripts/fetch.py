@@ -146,12 +146,12 @@ def espn_today(night_dates, today_sp, clock_date):
 def pro_schedule(s, base, league_url, matchup_sps, today_sp):
     """Return ({proTeamId: {abbrev, periods, starts}}, {sp: game count}, {sp: date}). starts: {sp: UTC start, ISO}.
 
-    Tries ESPN fantasy's proTeamsSchedules_wl view (season root, then the league endpoint),
+    Tries ESPN fantasy's proTeamSchedules_wl view (season root, then the league endpoint),
     and falls back to ESPN's public NHL scoreboard if neither has settings.proTeams.
     """
     for url in (base, league_url):
         try:
-            data = get(s, url, ["proTeamsSchedules_wl"])
+            data = get(s, url, ["proTeamSchedules_wl"])  # "proTeams..." returns no proTeams (findings 230)
         except requests.RequestException as e:
             print(f"Schedule view failed at {url}: {e}", file=sys.stderr)
             continue
@@ -174,6 +174,12 @@ def pro_schedule(s, base, league_url, matchup_sps, today_sp):
             night_ids.setdefault(sp, set()).update(g.get("id") for g in gl)
             if gl and gl[0].get("date"):
                 night_dates[sp] = datetime.fromtimestamp(gl[0]["date"] / 1000, tz=timezone.utc).astimezone(ET)
+    # nights with no NHL games (Christmas, the Olympic break) have no date in the view: one period is one day
+    if night_dates:
+        for sp in matchup_sps:
+            if sp not in night_dates:
+                k = min(night_dates, key=lambda k: abs(k - sp))
+                night_dates[sp] = night_dates[k] + timedelta(days=sp - k)
     # Both teams list each game, so count unique game ids per night
     return teams, {sp: len(ids) for sp, ids in night_ids.items()}, night_dates
 
@@ -195,15 +201,15 @@ def scoreboard_schedule(s, matchup_sps, today_sp):
         day = today + timedelta(days=sp - today_sp)
         night_dates[sp] = day
         events = None
-        for wait in (0, 2, 5):  # one failed day shouldn't stop the whole update
+        for wait in (0, 2, 5):
             time.sleep(wait)
             try:
                 events = s.get(f"{site}/scoreboard", params={"dates": day.strftime("%Y%m%d")}, timeout=30).json().get("events", [])
                 break
             except Exception as e:
                 print(f"Scoreboard for {day:%Y-%m-%d} failed: {e!r}", file=sys.stderr)
-        if events is None:
-            continue
+        if events is None:  # a missing day would show its games as nights off: fail the run so the recheck retries
+            raise RuntimeError(f"ESPN scoreboard for {day:%Y-%m-%d} failed after retries")
         night_counts[sp] = len(events)
         for ev in events:
             for comp in (ev.get("competitions") or [{}])[0].get("competitors", []):
@@ -260,7 +266,8 @@ def main():
             old.setdefault("starts", {}).update(t.get("starts", {}))
         night_counts = {**more[1], **night_counts}
         night_dates = {**more[2], **night_dates}
-    light = {sp for sp in matchup_sps if night_counts.get(sp, 0) <= LIGHT_NIGHT_MAX_GAMES}
+    # a night with no NHL games (Christmas, the Olympic break) isn't a light night: nobody plays (findings 232)
+    light = {sp for sp in matchup_sps if 0 < night_counts.get(sp, 0) <= LIGHT_NIGHT_MAX_GAMES}
     remaining = [sp for sp in matchup_sps if sp >= today_sp]
 
     # the league's adds, drops, waivers, trades and lineup moves for today and yesterday (research idea 71);
@@ -341,7 +348,8 @@ def main():
         first_sp = today_sp + (clears - today_et).days if clears else 0
         week_games = [sp for sp in matchup_sps if sp in team["periods"] and sp >= first_sp]
         # a game today that already started isn't left to play (findings 178)
-        today_start = team.get("starts", {}).get(today_sp) if today_sp in team["periods"] else None
+        # (a waiver player's game the day before he clears was never his, findings 232)
+        today_start = team.get("starts", {}).get(today_sp) if today_sp in team["periods"] and today_sp >= first_sp else None
         today_start = counts_until(today_start, owner, first_start)
         rem_games = [sp for sp in remaining if sp in team["periods"] and sp >= first_sp
                      and not (sp == today_sp and today_start and today_start <= run_utc)]
@@ -391,6 +399,9 @@ def main():
         lineups = leads.fetch_lineups(web)
     except Exception as e:  # noqa: BLE001
         lead_errors["lineups"] = repr(e)
+        lineups = leads.last_logged("lineups", datetime.now(ET).replace(tzinfo=None))  # last good copy (findings 230)
+        if lineups is not None:
+            lead_errors["lineups"] += " (used the last logged copy)"
     last_start = {ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()): max(v for v in t["starts"].values() if v <= run_utc)
                   for t in teams.values() if any(v <= run_utc for v in t.get("starts", {}).values())}
     leads.mark_lineups(players, lineups, ESPN_TO_NHL, last_start)
@@ -399,6 +410,10 @@ def main():
         injuries = leads.fetch_injuries(web)
     except Exception as e:  # noqa: BLE001
         lead_errors["injuries"] = repr(e)
+        # without the notes, a goalie out for the season rates as a starter again (findings 230): reuse the last good copy
+        injuries = leads.last_logged("injuries", datetime.now(ET).replace(tzinfo=None))
+        if injuries is not None:
+            lead_errors["injuries"] += " (used the last logged copy)"
     odds = None
     try:
         odds = leads.fetch_odds(web)
@@ -415,7 +430,8 @@ def main():
 
     nights = [{
         "sp": sp,
-        "date": night_dates[sp].strftime("%a %-d") if sp in night_dates else f"Day {sp}",
+        # one scoring period is one day, so every night's label comes from ESPN's today (findings 232: no "Day 86")
+        "date": (today_et + timedelta(days=sp - today_sp)).strftime("%a %-d"),
         "games": night_counts.get(sp, 0),
         "light": sp in light,
         "past": sp < today_sp,
