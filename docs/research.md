@@ -731,6 +731,11 @@ Two fixes to ratings shipped earlier today (findings 213):
 - **Players who haven't played yet this season** had no team ice-time ranks (section 91), so the rating filled in a league-average role. That pulled stars down (McAvoy -0.19 points a game, Bedard -0.12) and lifted depth players. They now use last season's role: where they ranked in power-play and total ice time per game among their last team's regulars (12 forwards and 6 defensemen with the most games). Only a player with no NHL games last season either still gets the average.
 - **A no. 1 goalie on the second night of a back-to-back in his team's first 10 games.** The back-to-back rule (section 89) was fit from a team's 11th game on. Before that, the site still gave him about 7% against 3% in reality. A replay of 2021-26 with every rostered goalie (125 cases) gave this. Through game 10 he now gets an extra nudge toward resting, which brings him to 3% and scored better in all 5 seasons. The hunt's first replay said 32%, but it left out backups who hadn't started yet, and the live site always has them. The start-streak rule (section 90) already fits these games (68% shown against 63% real, and a bigger shift scored worse), so it is unchanged.
 
+## 94. Two more fixes to today's changes
+
+- **The injury-cleared boost** (section 88) still went to a player flagged on the same day he played: 6 of 27 day-to-day flags this week were dated a game day. A flag on the day of his last game now counts only if he left that game early, since an injury in a game is flagged that same day (findings 213).
+- **The goalie stream card's open-slot count** switched sources at puck drop. Before the game it used the site's own start chance; once the game started it used Daily Faceoff's unconfirmed guess, so a team's open slots could change from 1 to 2 while nothing new was known. After the start it now uses a confirmed starter if there is one, otherwise the site's chance from before the game (findings 213).
+
 ## What the independent review changed
 
 | Review point | Outcome |
