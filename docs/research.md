@@ -664,6 +664,10 @@ The start model reads days since a goalie's last start as a sign he's been bench
 
 The site counted every game on today's date as still to come until the next morning's data run, but 175-181 games a season start before the 5 PM update (mostly Saturday and Sunday afternoons) and every game of the night has started by about 7:30 PM. On Saturday Oct 10 at 8:30 PM, "Stream a goalie tonight" offered three goalies whose games had already started, so adding one spent a move for no points, and Tyson Foerster showed 2 games left this week when his Saturday game had ended hours earlier. **Each player now carries his team's start time for today. A data run doesn't count a game that has already started, and the page, using your device's clock, treats a player whose game has started as not playing tonight: he's left out of Stream a goalie tonight and the Tonight card, and that game comes out of his games and points for the week.**
 
+## 81. Goalie Season start shares, scored over the whole season
+
+The 0.93 scale on goalie Season start shares was fit to the next 20 starts (section 66). Over the rest of a season shares spread out even more: no. 1 goalies shown at 70% went on to make about 60% of their team's remaining starts. **The scale is now 0.88.** It was more accurate in all three seasons tested, and the goalie Season rating's error fell from 0.545 to 0.537 points a game. Every goalie moves by the same factor, so no ranking changes; only the level on the Goalies card and in keep value comparisons against skaters drops slightly (a no. 1 by about 0.15 points a game).
+
 ## What the independent review changed
 
 | Review point | Outcome |
