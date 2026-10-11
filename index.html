@@ -92,7 +92,9 @@
     .meta { display: block; }
     th, td { padding: 6px 4px; }
     th { padding-top: 12px; padding-bottom: 12px; }
-    td:first-child { max-width: 31vw; overflow: hidden; text-overflow: ellipsis; }
+    /* the name column takes whatever width is left and cuts long names, so the table fits any phone and font */
+    td:first-child { width: 100%; max-width: 1px; overflow: hidden; text-overflow: ellipsis; }
+    td:first-child .meta { overflow: hidden; text-overflow: ellipsis; }
     .pct { margin-left: 2px; padding: 1px 4px; }
     td:nth-child(5) .pct { display: none; }
     .night .open { font-size: 9px; }
