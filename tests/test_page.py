@@ -218,3 +218,25 @@ def test_upgrades_roster_fixes(browser, server, data):
     assert "Best 2 moves" not in text  # one move left
     assert errors == []
     ctx.close()
+
+
+def test_stream_card_follows_the_first_puck(browser, server, data):
+    """Before the day's first game the card says when adds stop counting; after it, adds count from tomorrow (findings 179)."""
+    from datetime import datetime, timedelta, timezone
+    iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(timezone.utc)
+    if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
+        pytest.skip("needs rated data with a night left")
+    for first, want in ((now + timedelta(hours=3), "Add before the first game at"), (now - timedelta(hours=1), "plays from tomorrow")):
+        d = json.loads(json.dumps(data))
+        d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
+        d["first_start"], d["move_limit"] = iso(first), None
+        for p in d["players"]:
+            if p["pos"] == "G" and p.get("cr_why"):
+                p["cr_why"].pop("tonight", None)  # every team has two open G slots tonight
+                p["cr_why"]["p_today"] = 0
+        ctx, page, errors = open_page(browser, server, data=d)
+        page.select_option("#team", str(d["teams"][0]["id"]))
+        assert want in page.locator("#upgrades").inner_text()
+        assert errors == []
+        ctx.close()

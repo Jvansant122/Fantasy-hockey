@@ -680,6 +680,10 @@ Re-rendering the page with each day's real data turned up four mistakes in the U
 
 ESPN's fantasy day doesn't end at midnight: its scoring period rolls over at about 3:10-3:40 AM ET. The data runs took the weekday from the clock but the day from ESPN, so runs between midnight and the rollover labelled the whole week a day off (Saturday's games shown as Sunday's, Sunday missing, and every player's schedule shifted). **Each run now reads today's date from ESPN's current scoring period, and the publish check refuses a week whose nights don't run Monday to Sunday on consecutive dates or whose past nights don't match today.**
 
+## 85. Adds after the day's first game play from tomorrow
+
+ESPN holds a free-agent add made after the day's first game starts until its overnight rollover, even when the player's own game is hours later: all 6 such adds in the logs joined the next day, while all 17 earlier adds joined the same day (and the move still counts on the day it was made). So for free agents and waiver players the site now treats today's game as gone once the day's first puck drops, taking it out of their this-week points, games left, keep value and the add suggestions. Your own players still count until their own game starts. Before first puck, "Stream a goalie tonight" says when the first game starts; after it, the card says a goalie added now plays from tomorrow. (Findings 179.)
+
 ## What the independent review changed
 
 | Review point | Outcome |
