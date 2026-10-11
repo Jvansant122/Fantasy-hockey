@@ -638,7 +638,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
     last_date = hist[-1][0] if hist else None
-    cands = set(goalies) | {g for g in seq[-20:]} | set(confirmed.values())
+    # the roster, not the recent starters: a goalie traded or waived away kept ~40% of his old team's next start
+    # (findings 160); recent starters only stand in when the roster is missing
+    cands = (set(goalies) if goalies else set(seq[-20:])) | set(confirmed.values())
     if not cands:
         return {}
     # early season: pull each share toward his share of the team's starts last season, fading out by the team's
@@ -867,8 +869,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     goalie_exp, goalie_today, goalie_season = {}, {}, {}
     lines = line_win_probs(odds, today)
     for team, dates in sched.items():
-        goalie_exp.update(goalie_starts(model, team, [pid for pid, _, pos in rosters.get(team, []) if pos == "G"], starts_by_team, prev_gs, dates, today,
-                                        confirmed.get(team), goalie_today, goalie_season, goalie_inj, last_start.get(team), movers))
+        roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
+        tod, sea = {}, {}
+        exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
+                            last_start.get(team), movers)
+        # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
+        mine = set(roster_g) | set((confirmed.get(team) or {}).values())
+        keep = (lambda gid: gid in mine) if roster_g else (lambda gid: gid not in goalie_exp)
+        for src, dst in ((exp, goalie_exp), (tod, goalie_today), (sea, goalie_season)):
+            dst.update({gid: v for gid, v in src.items() if keep(gid)})
 
     unmatched = 0
     injury_log = []
