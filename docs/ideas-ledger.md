@@ -528,8 +528,8 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 456 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Kept-note edge cases (PR #99) | see findings 241 (5) | Shipped (PR #104, handoff 222) | findings 241 |
 | 457 | Oct 11 22:55 | thread "Seventh hunt" (agent) | PR #99 rating replay (51 versions, 83 logs) and PR #100 | intended moves only | No change | findings 241 |
 | 333 | Oct 11 22:55 | routine | Calibration of current main's goalie_starts by stacked rule combination (12,406 rows 2021-26), then the game after a b2b night 2 started (night 1) by the no. 1: shift fit on the no. 1 and on the other goalies, LOSO Brier | Stacks calibrated; game after night 2 no. 1 0.687 vs 0.804 (5 of 5); no. 1 shift saturates at 0.73; others -1.0 Brier -4.4%, 0.803 vs 0.804 | Shipped (PR #105, handoff 223) | findings 222 |
-| 458 | Oct 11 23:30 | thread "Seventh hunt" (agent) | Week menu squeezes phone table (PR #103) | see findings 242 (1) | Pending (handoff 224) | findings 242 |
-| 459 | Oct 11 23:30 | thread "Seventh hunt" (agent) | All-columns details width (PR #103) | see findings 242 (2) | Pending (handoff 225) | findings 242 |
-| 460 | Oct 11 23:30 | thread "Seventh hunt" (agent) | Goalie details omit 0.4 pull (PR #102) | see findings 242 (3) | Pending (handoff 226) | findings 242 |
-| 461 | Oct 11 23:30 | thread "Seventh hunt" (agent) | check_data SP1 still fixed (PR #101) | see findings 242 (4) | Pending (handoff 227) | findings 242 |
+| 458 | Oct 11 23:30 | thread "Seventh hunt" (agent) | Week menu squeezes phone table (PR #103) | see findings 242 (1) | Shipped (PR #107, handoff 224) | findings 242 |
+| 459 | Oct 11 23:30 | thread "Seventh hunt" (agent) | All-columns details width (PR #103) | see findings 242 (2) | Shipped (PR #107, handoff 225) | findings 242 |
+| 460 | Oct 11 23:30 | thread "Seventh hunt" (agent) | Goalie details omit 0.4 pull (PR #102) | see findings 242 (3) | Shipped (PR #107, handoff 226) | findings 242 |
+| 461 | Oct 11 23:30 | thread "Seventh hunt" (agent) | check_data SP1 still fixed (PR #101) | see findings 242 (4) | Shipped (PR #107, handoff 227) | findings 242 |
 | 462 | Oct 11 23:30 | thread "Seventh hunt" (agent) | PRs #101-#103: week menu numbers, schedule data, playoffs, saved state, desktop, phone rows, odds mapping, #102 constants | fine | No change | findings 242 |
