@@ -58,8 +58,9 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self, scratched=(4,), rail_ok=True, moved=None):
+    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None):
         self.calls = []
+        self.short_last = short_last or {}  # player id: his ice time in seconds in the last game (left early)
         self.moved = moved or {}  # player id: his first n games this season were for the other team (a trade)
         self.scratched, self.rail_ok = set(scratched), rail_ok  # healthy scratches on each game page (McAvoy sat the last one)
 
@@ -118,8 +119,12 @@ class FakeSession:
         if report.startswith("goalie"):
             return Resp({"data": [goalie_row(pid, name, team, i) for pid, name, team in GOALIES for i in days]})
         other = lambda t: TEAMS[1 - TEAMS.index(t)]
-        return Resp({"data": [skater_row(pid, name, other(team) if i < self.moved.get(pid, 0) else team, pos, i)
-                              for pid, name, team, pos, missed in SKATERS for i in days if i not in missed]})
+        rows = [skater_row(pid, name, other(team) if i < self.moved.get(pid, 0) else team, pos, i)
+                for pid, name, team, pos, missed in SKATERS for i in days if i not in missed]
+        for r in rows:
+            if r["playerId"] in self.short_last and r["gameDate"] == PAST[-1]:
+                r["timeOnIcePerGame"] = self.short_last[r["playerId"]]
+        return Resp({"data": rows})
 
 
 def espn(pid, name, team, pos, injury=None, games_left=3):
@@ -516,6 +521,29 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     base = rating.dress_by_game(0.25, 3, True, 1.0)
     up = rating.dress_by_game(0.25, 3, True, 1.0, rating.SCRATCH_LOGIT)
     assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, rating.SCRATCH_LOGIT)) <= 0.3
+
+
+def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
+    """Dressed for the last game but played under 40% of his average ice time: big dress cut for the next games, until
+    ESPN flags him; 40-55% a small one for two games (findings 165)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def matthews(toi=None, injury=None):
+        fake = FakeSession(short_last={1: toi} if toi is not None else None)
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(101, "Auston Matthews", "TOR", "C", injury=injury), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    full, hurt, short = matthews(), matthews(toi=300), matthews(toi=560)  # usual ~18.5 minutes; 5 and 9.3 last game
+    assert not hurt["sat_last"] and hurt["cr_dress_next"] < 0.45 * full["cr_dress_next"]
+    assert hurt["cr_dress_next"] < short["cr_dress_next"] < full["cr_dress_next"]
+    assert hurt["cr_games"] < full["cr_games"] - 0.5
+    flagged = matthews(toi=300, injury="DAY_TO_DAY")  # ESPN's flag takes over from the left-early cut
+    assert flagged["cr_dress_next"] == pytest.approx(min(matthews(injury="DAY_TO_DAY")["cr_dress_next"], 1.0), abs=0.15)
+    assert rating.left_early_shifts(5, 18) == rating.LEFT_EARLY_LOGITS[0][1] and rating.left_early_shifts(9, 18)[0] < 0
+    assert rating.left_early_shifts(15, 18) == () and rating.left_early_shifts(5, None) == ()
+    by = rating.dress_by_game(0.9, 5, False, 1.0, 0.0, (-2.5, -1.8, -1.1))
+    assert by[0] < by[1] < by[2] and by[3] == pytest.approx(by[2], abs=0.08)
 
 
 def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
