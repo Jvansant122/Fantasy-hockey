@@ -507,19 +507,19 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 437 | Oct 11 22:00 | thread "Seventh hunt" (agent) | PRs #96-#98: Tonight card vs locked slots, bench freshness, old data, #97 data/check_data, #98 wording | fine | No change | findings 238 |
 | 600 | Oct 11 22:20 | thread "League chat page asks" | Weekly win-favourite share (goal-diff model, Monday-available; lines only exist ~1 day ahead) as a skater Week input | +0.017 FP/game top vs bottom decile; weekly rank corr unchanged in 3 held-out seasons (0.6538/0.6426/0.6660, max +0.0002) | No change | findings 301 |
 | 601 | Oct 11 22:20 | thread "League chat page asks" | Expected team goals in the week's games (high-scoring games) as a skater Week input; line sources checked (NHL partner feed = DraftKings, ESPN scoreboard, DraftKings API 403) | +0.006 FP/game top vs bottom decile; rank corr -0.0001; game-day lines worth ~0.1 FP/game (findings 30) | No change | findings 301 |
-| 438 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Best moves re-offers 2 every update | see findings 239 (1) | Pending (handoff 207) | findings 239 |
-| 439 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Sunday expire list includes Monday claims | see findings 239 (2) | Pending (handoff 208) | findings 239 |
-| 440 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Stream card recheck times vs first puck | see findings 239 (3) | Pending (handoff 209) | findings 239 |
+| 438 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Best moves re-offers 2 every update | see findings 239 (1) | Shipped (PR #106, handoff 207) | findings 239 |
+| 439 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Sunday expire list includes Monday claims | see findings 239 (2) | Shipped (PR #106, handoff 208) | findings 239 |
+| 440 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Stream card recheck times vs first puck | see findings 239 (3) | Shipped (PR #106, handoff 209) | findings 239 |
 | 441 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Next week's games in Sunday/Monday target ranking | +10.6 projected pts over 8 teams | Not retried (settled: PR #39, findings 91) | findings 239 |
 | 442 | Oct 11 22:15 | thread "Seventh hunt" (agent) | Simulated week: check_data, counts across rollover, waiver clears, moves left, puck-drop removal | fine | No change | findings 239 |
-| 443 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Monday 0-4 AM expire note (PR #99) | see findings 240 (1) | Pending (handoff 210) | findings 240 |
-| 444 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Open spot counted twice with swap (PR #99) | see findings 240 (2) | Pending (handoff 211) | findings 240 |
-| 445 | Oct 11 22:40 | thread "Seventh hunt" (agent) | IR stash counts used IR slot (PR #99) | see findings 240 (3) | Pending (handoff 212) | findings 240 |
-| 446 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Activate/Best/stash same drop (PR #99) | see findings 240 (4) | Pending (handoff 213) | findings 240 |
-| 447 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Final no-moves drops and 4-goalie card (PR #99) | see findings 240 (5) | Pending (handoff 214) | findings 240 |
-| 448 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Trade check IR-move spot (PR #99) | see findings 240 (6) | Pending (handoff 215) | findings 240 |
-| 449 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Stash budget vs Sunday list (PR #99) | see findings 240 (7) | Pending (handoff 216) | findings 240 |
-| 450 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Reload wipes Trade check (PR #99) | see findings 240 (8) | Pending (handoff 217) | findings 240 |
+| 443 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Monday 0-4 AM expire note (PR #99) | see findings 240 (1) | Shipped (PR #106, handoff 210) | findings 240 |
+| 444 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Open spot counted twice with swap (PR #99) | see findings 240 (2) | Shipped (PR #106, handoff 211) | findings 240 |
+| 445 | Oct 11 22:40 | thread "Seventh hunt" (agent) | IR stash counts used IR slot (PR #99) | see findings 240 (3) | Shipped (PR #106, handoff 212) | findings 240 |
+| 446 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Activate/Best/stash same drop (PR #99) | see findings 240 (4) | Shipped (PR #106, handoff 213) | findings 240 |
+| 447 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Final no-moves drops and 4-goalie card (PR #99) | see findings 240 (5) | Shipped (PR #106, handoff 214) | findings 240 |
+| 448 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Trade check IR-move spot (PR #99) | see findings 240 (6) | Shipped (PR #106, handoff 215) | findings 240 |
+| 449 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Stash budget vs Sunday list (PR #99) | see findings 240 (7) | Shipped (PR #106, handoff 216) | findings 240 |
+| 450 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Reload wipes Trade check (PR #99) | see findings 240 (8) | Shipped (PR #106, handoff 217) | findings 240 |
 | 451 | Oct 11 22:40 | thread "Seventh hunt" (agent) | PR #99 page: roster_max, deadline, trade checks, nights strip, wording, details, search | fine | No change | findings 240 |
 | 452 | Oct 11 22:55 | thread "Seventh hunt" (agent) | check_data N1 on Mar 8 2027 (PR #97) | see findings 241 (1) | Shipped (PR #104, handoff 218) | findings 241 |
 | 453 | Oct 11 22:55 | thread "Seventh hunt" (agent) | One-game OUT rule start times (PR #99) | see findings 241 (2) | Shipped (PR #104, handoff 219) | findings 241 |
@@ -528,3 +528,8 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 456 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Kept-note edge cases (PR #99) | see findings 241 (5) | Shipped (PR #104, handoff 222) | findings 241 |
 | 457 | Oct 11 22:55 | thread "Seventh hunt" (agent) | PR #99 rating replay (51 versions, 83 logs) and PR #100 | intended moves only | No change | findings 241 |
 | 333 | Oct 11 22:55 | routine | Calibration of current main's goalie_starts by stacked rule combination (12,406 rows 2021-26), then the game after a b2b night 2 started (night 1) by the no. 1: shift fit on the no. 1 and on the other goalies, LOSO Brier | Stacks calibrated; game after night 2 no. 1 0.687 vs 0.804 (5 of 5); no. 1 shift saturates at 0.73; others -1.0 Brier -4.4%, 0.803 vs 0.804 | Shipped (PR #105, handoff 223) | findings 222 |
+| 458 | Oct 11 23:30 | thread "Seventh hunt" (agent) | Week menu squeezes phone table (PR #103) | see findings 242 (1) | Pending (handoff 224) | findings 242 |
+| 459 | Oct 11 23:30 | thread "Seventh hunt" (agent) | All-columns details width (PR #103) | see findings 242 (2) | Pending (handoff 225) | findings 242 |
+| 460 | Oct 11 23:30 | thread "Seventh hunt" (agent) | Goalie details omit 0.4 pull (PR #102) | see findings 242 (3) | Pending (handoff 226) | findings 242 |
+| 461 | Oct 11 23:30 | thread "Seventh hunt" (agent) | check_data SP1 still fixed (PR #101) | see findings 242 (4) | Pending (handoff 227) | findings 242 |
+| 462 | Oct 11 23:30 | thread "Seventh hunt" (agent) | PRs #101-#103: week menu numbers, schedule data, playoffs, saved state, desktop, phone rows, odds mapping, #102 constants | fine | No change | findings 242 |
