@@ -917,12 +917,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p_dress = None
         else:
             gl = by_player.get(pid, []) if pid else []
-            team = gl[-1]["team"] if gl else ESPN_TO_NHL.get(p["team"], p["team"])
-            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), team_games.get(team, []))
+            espn_team = ESPN_TO_NHL.get(p["team"], p["team"])
+            team = gl[-1]["team"] if gl else espn_team
+            tg = team_games.get(team, [])
+            # traded or claimed but yet to play for the new team (ESPN already lists it): his old team's games after his
+            # last one aren't misses, so stop its schedule there; the new-team shift applies from game 0 (findings 159)
+            traded = bool(gl) and espn_team != team and espn_team in team_games and gl[-1]["game"] in tg
+            if traded:
+                tg = tg[:tg.index(gl[-1]["game"]) + 1]
+            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg)
             f["is_D"] = 1.0 if p["pos"] == "D" else 0.0
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
-            tg = team_games.get(team, [])
             df_, base_dress, cap = None, None, 1.0
             if pid is None:  # not on an NHL roster or in NHL stats this season or last
                 p_dress = NOT_PLAYING_DRESS
@@ -942,7 +948,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             scratch = sat_last and not p.get("injury") and (pid in scratches[tg[-1]] if tg[-1] in scratches else True)
             # just traded or claimed: 1-3 games for his current team after games for another team this season
             run = next((k for k, g in enumerate(reversed(gl)) if g["team"] != gl[-1]["team"]), None) if gl else None
-            new_team = not sat_last and run is not None and 1 <= run <= NEW_TEAM_GAMES
+            new_team = traded or (not sat_last and run is not None and 1 <= run <= NEW_TEAM_GAMES)
             here = sum(g["team"] == gl[-1]["team"] for g in gl) if gl else 0
             new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
