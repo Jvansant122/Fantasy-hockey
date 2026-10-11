@@ -460,14 +460,14 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 392 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Prior cap 0.7 instead of floor 70 | see findings 234 (2) | Pending (handoff 164) | findings 234 |
 | 393 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Fallback season label (Barkov) | see findings 234 (3) | Pending (handoff 165) | findings 234 |
 | 394 | Oct 11 20:50 | thread "Seventh hunt" (agent) | PR #84 no. 1 counts departed goalies | see findings 234 (4) | Pending (handoff 166) | findings 234 |
-| 395 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Goalie pps shrink target in text | see findings 234 (5) | Pending (handoff 167) | findings 234 |
-| 396 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Injury caps in footer and research summary | see findings 234 (6) | Pending (handoff 168) | findings 234 |
-| 397 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Run times in page and README | see findings 234 (7) | Pending (handoff 169) | findings 234 |
-| 398 | Oct 11 20:50 | thread "Seventh hunt" (agent) | No keepers wording | see findings 234 (8) | Pending (handoff 170) | findings 234 |
-| 399 | Oct 11 20:50 | thread "Seventh hunt" (agent) | rating-components.md stale since PR #81 | see findings 234 (9) | Pending (handoff 171) | findings 234 |
-| 400 | Oct 11 20:50 | thread "Seventh hunt" (agent) | research.md contradictions | see findings 234 (10) | Pending (handoff 172) | findings 234 |
-| 401 | Oct 11 20:50 | thread "Seventh hunt" (agent) | README says repo private | see findings 234 (11) | Pending (handoff 173) | findings 234 |
-| 402 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Playoff move limit and UTL wording | see findings 234 (12) | Pending (handoff 174) | findings 234 |
+| 395 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Goalie pps shrink target in text | see findings 234 (5) | Shipped (PR #98, handoff 167) | findings 234 |
+| 396 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Injury caps in footer and research summary | see findings 234 (6) | Shipped (PR #98, handoff 168) | findings 234 |
+| 397 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Run times in page and README | see findings 234 (7) | Shipped (PR #98, handoff 169) | findings 234 |
+| 398 | Oct 11 20:50 | thread "Seventh hunt" (agent) | No keepers wording | see findings 234 (8) | Shipped (PR #98, handoff 170) | findings 234 |
+| 399 | Oct 11 20:50 | thread "Seventh hunt" (agent) | rating-components.md stale since PR #81 | see findings 234 (9) | Shipped (PR #98, handoff 171) | findings 234 |
+| 400 | Oct 11 20:50 | thread "Seventh hunt" (agent) | research.md contradictions | see findings 234 (10) | Shipped (PR #98, handoff 172) | findings 234 |
+| 401 | Oct 11 20:50 | thread "Seventh hunt" (agent) | README says repo private | see findings 234 (11) | Shipped (PR #98, handoff 173) | findings 234 |
+| 402 | Oct 11 20:50 | thread "Seventh hunt" (agent) | Playoff move limit and UTL wording | see findings 234 (12) | Shipped (PR #98, handoff 174) | findings 234 |
 | 403 | Oct 11 20:50 | thread "Seventh hunt" (agent) | PRs #84-#94 placeholder, season-out flag, ranks, check_data replay, smaller checks; stacked goalie shifts; docs constants | fine or noise | No change | findings 234 |
 | 404 | Oct 11 21:05 | thread "Seventh hunt" (agent) | ESPN OUT on game day counts ~0 | see findings 235 (1) | Pending (handoff 175) | findings 235 |
 | 405 | Oct 11 21:05 | thread "Seventh hunt" (agent) | Trade ideas fair-to-partner market window | see findings 235 (2) | Pending (handoff 176) | findings 235 |
