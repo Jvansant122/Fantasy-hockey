@@ -840,6 +840,19 @@ From the seventh idea hunt's audit of the page:
   - "No moves left" appears once instead of on every card.
   - A long tag no longer spills off a 320 px screen.
 
+## 107. Fixes to the rating side of recent changes
+
+The hunt's last audit found five problems in the data side of PRs #97, #99 and #100:
+
+- The publish check would have blocked every update on Mar 8, the first day of the playoffs, because it read "Sun 21" as Feb 21. It now picks the nearest matching date, and a test runs the check on every playoff day.
+- A player dropped after the day's first game stays on ESPN's roster for that team until the overnight rollover, so two teams showed 23 players against the 22 cap. He is now marked as dropped, and his games stop at today.
+- The rule that ends a one-game OUT note once that game is played compared the note to 5 PM rather than the game's real start time, and missed 3 of the 4 players it was built for. It now uses the start time.
+- An unsigned free agent picked up the stats of an NHL player with the same name. A name already claimed by a rostered player no longer matches a free agent.
+- Three edge cases could have undone keeping the last real injury note when ESPN swaps it for a bare "IR". These are now covered:
+  - A note that is swapped in is marked as seen.
+  - Games played on the note's own day count only after it was posted.
+  - The stored status falls back to the feed's own word.
+
 ## What the independent review changed
 
 | Review point | Outcome |
