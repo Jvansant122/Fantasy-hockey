@@ -75,6 +75,8 @@ LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings
 NO_DECISION_LOGIT = -2.3
 NO_DECISION_LATER = (-2.0 / 0.8, -1.4 / 0.8)  # game after next, then every game after that
 NO_DECISION_GAMES = 16  # covers a two-week playoff round
+# ... and his Season start share runs high until he starts again: 0.48 against 0.33 of the next 20 starts (findings 167)
+NO_DECISION_SEASON = 0.68
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -689,6 +691,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             ewm = (sum(wi for wi, x in zip(w, sq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
             season_share[gid] = SEASON_SHARE_SCALE * (0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K)
                                                       + 0.25 * ewm)
+            # left his last start without a decision and not yet confirmed back in net (findings 167)
+            if last_start and last_start[0] == gid and last_start[1][:1] == (NO_DECISION_LOGIT,) and gid not in confirmed.values():
+                season_share[gid] *= NO_DECISION_SEASON
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):

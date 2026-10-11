@@ -624,6 +624,10 @@ This is the skater version of sections 67-68. A skater who dressed for his team'
 
 Section 69 cut this week's dress chance for a skater who dressed but played well under his usual ice time (likely hurt). His Season rating ran high too: across four seasons, such skaters dressed for 60% of their team's remaining games when the Season rating expected 69% (under 40% of usual ice time), and 56% against 63% (40-55%). It was low in every season. **The Season rating's dress share now gets a small trim for these players**, fit at -0.25 to -0.55 on the logit in every season left out (the site uses -0.4). That is about 0.1 points a game off a 1.2-point skater, roughly 0.7 points a week of keep value. It lasts until he plays a normal game again, and once ESPN flags an injury the injury rules take over. It matters mostly for drop and pickup calls right after an apparent injury.
 
+## 71. The Season rating for a goalie who left his last start early
+
+Sections 67-68 cut this week's start chances for a goalie who left his last start without a decision (nearly always hurt). His Season rating still assumed his usual long-run share of starts: in five seasons of replays, such goalies were credited with 48% of their team's next 20 starts but actually made 33% (no. 1s: 57% credited against 39% made), too high in four of five seasons. **His Season start share is now multiplied by 0.68** (fit at 0.64-0.72 in every season held out) until he starts again or Daily Faceoff confirms him in net. For a no. 1 that is about 0.5 points a game of Season rating, roughly 3.5 points a week of keep value, so the Goalies card no longer treats a goalie who just left hurt as a full keeper. ESPN's injury flag doesn't change goalie Season ratings, so this applies whether or not he has been flagged.
+
 ## What the independent review changed
 
 | Review point | Outcome |
