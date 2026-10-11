@@ -701,6 +701,10 @@ ESPN's goalie games-started count can lag a day behind its points, so This yr/G,
 
 (Findings 183.)
 
+## 89. Goalies on the second night of a back-to-back
+
+On the second night of a back-to-back, the start model treated whoever played night 1 the same way. Replaying every night-2 game from 2021-26 showed two different patterns. A team's no. 1 who played night 1 started night 2 only 11% of the time, against the site's 18%. A backup who played night 1 started again 8.5% of the time, against the site's 4%: coaches sometimes ride a hot backup. **The night-1 starter's chance for night 2 now goes down if he's the no. 1 (most starts in the team's last 20) and up if he isn't.** This beat the old rule in all 5 seasons (prediction error down 2%). A Daily Faceoff confirmation still overrides it. (Findings 200.)
+
 ## What the independent review changed
 
 | Review point | Outcome |
