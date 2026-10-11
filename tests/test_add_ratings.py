@@ -437,18 +437,22 @@ def test_last_start_result_shifts_the_next_games():
     loss = rating.last_start_shift({"ga": 3, "toi": 3600, "wins": 0, "losses": 0, "otl": 1})
     assert bad == (rating.BAD_START_LOGIT, rating.BAD_START_LOGIT_2)
     assert win == (rating.WIN_LOGIT, 0.0) and loss == (rating.LOSS_LOGIT, 0.0)
+    shutout = rating.last_start_shift({"ga": 0, "toi": 3600, "wins": 1, "losses": 0, "otl": 0})
+    hurt = rating.last_start_shift({"ga": 1, "toi": 1500, "wins": 0, "losses": 0, "otl": 0})
+    assert shutout[0] > win[0] and hurt[0] < bad[0]
     p_ok, ok = run(None, 1)
     p_bad, b1 = run(bad, 1)
     p_win, _ = run(win, 1)
     p_loss, _ = run(loss, 1)
-    assert p_bad < p_loss < p_ok < p_win
+    assert p_bad < p_loss < p_ok < p_win < run(shutout, 1)[0]
+    assert run(hurt, 1)[0] < 0.6 * p_bad  # a starter who left without a decision (hurt) starts next far less often
     assert b1[1] + b1[2] == pytest.approx(ok[1] + ok[2])  # the team still has one starter per game
     # two games: the bad start also costs a little in the second; a win or loss costs nothing there
     _, ok2 = run(None, 2)
     _, bad2 = run(bad, 2)
     _, win2 = run(win, 2)
-    first_game = ok[1] - b1[1]
-    assert ok2[1] - bad2[1] > first_game
+    _, next_only2 = run((rating.BAD_START_LOGIT, 0.0), 2)
+    assert bad2[1] < next_only2[1] - 0.01 and ok2[1] > bad2[1]
     assert win2[1] - ok2[1] == pytest.approx(run(win, 1)[1][1] - ok[1], abs=0.05)
     assert rating.bad_start({"ga": 5, "toi": 3600}) and rating.bad_start({"ga": 3, "toi": 2000})
     assert not rating.bad_start({"ga": 3, "toi": 3600}) and not rating.bad_start({"ga": 2, "toi": 1200})
