@@ -65,9 +65,12 @@ DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more wh
 SCHED_SHRINK, SCHED_WIN, SCHED_SLOPE = 15, (-0.175, 0.594, 0.349), 3.4  # starts without a line priced by team strength (findings 70)
 SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
-BAD_START_LOGIT = -0.7  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131)
+BAD_START_LOGIT = -1.0  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131, 163)
 BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
+LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
+# a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163)
+NO_DECISION_LOGIT = -2.3
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -87,10 +90,10 @@ def last_start_shift(g):
     if bad_start(g):
         return (BAD_START_LOGIT, BAD_START_LOGIT_2)
     if g.get("wins"):
-        return (WIN_LOGIT, 0.0)
+        return (WIN_LOGIT + (LOW_GA_WIN_LOGIT if g["ga"] <= 1 else 0.0), 0.0)
     if g.get("losses") or g.get("otl"):
         return (LOSS_LOGIT, 0.0)
-    return (0.0, 0.0)
+    return (NO_DECISION_LOGIT, 0.0)  # started, but another goalie got the decision
 
 
 # P(dresses) logit shift by game number from today (1, 2, 3, 4+), for a skater who dressed for his team's last game
