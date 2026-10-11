@@ -174,7 +174,10 @@ def test_no_moves_left_says_so(browser, server, data):
     found = False
     for t in data["teams"]:
         page.select_option("#team", str(t["id"]))
-        found = found or "next Monday's targets" in page.locator("#upgrades").inner_text()
+        text = page.locator("#upgrades").inner_text()
+        found = found or "next Monday's targets" in text
+        # said once, in the note at the top, not again in every card (findings 238)
+        assert text.count("No moves left") <= 1, (t["id"], text)
     assert found
     assert errors == []
     ctx.close()
@@ -510,34 +513,47 @@ def test_waiver_claim_note(browser, server, data):
 
 
 def test_last_night_before_first_puck_uses_every_move(browser, server, data):
-    """On the matchup's last night before the first game, Best moves lists every move left, since they expire (findings 231)."""
+    """On the matchup's last night before the first game, Best moves lists every move left, since they expire (findings 231).
+    The expiry line is its own line, so phones show it too, and it shows with 1-2 moves left as well (findings 238)."""
     from datetime import datetime, timedelta, timezone
     if not data.get("rated"):
         pytest.skip("needs rated data")
     iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     now = datetime.now(timezone.utc)
-    for first, want_note in ((now + timedelta(hours=3), True), (now - timedelta(hours=1), False)):
+    for first, want_note, used, phone in ((now + timedelta(hours=3), True, 1, False), (now - timedelta(hours=1), False, 1, False),
+                                          (now + timedelta(hours=3), True, 1, True), (now + timedelta(hours=3), True, 6, False),
+                                          (None, True, 1, True)):
         d = json.loads(json.dumps(data))
         d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
         d["final_matchup"] = False
         for n in d["nights"]:
             n["past"] = n is not d["nights"][-1]
-        d["first_start"] = iso(first)
+        d["first_start"] = iso(first) if first else None
         for p in d["players"]:
-            p["today_start"] = iso(first) if d["nights"][-1]["sp"] in (p.get("nights") or []) else None
+            p["today_start"] = iso(first) if first and d["nights"][-1]["sp"] in (p.get("nights") or []) else None
         d["move_limit"] = 7
         for t in d["teams"]:
-            t["moves_used"] = 1
-        ctx, page, errors = open_page(browser, server, data=d)
-        most = 0
+            t["moves_used"] = used
+        ctx, page, errors = open_page(browser, server, data=d, phone=phone)
+        most, seen = 0, 0
         for t in d["teams"]:
             page.select_option("#team", str(t["id"]))
-            text = page.locator("#upgrades").inner_text()
-            assert ("expire tonight" in text) == want_note, (t["id"], first)
-            card = page.locator("#upgrades .upg", has_text="largest keep-value gains")
-            if card.count():
-                most = max(most, card.locator(":scope > div").count())
-        assert (most > 2) == want_note, most
+            text = page.locator("#upgrades").inner_text()  # visible text only: a folded line doesn't count
+            card = page.locator("#upgrades .upg", has_text="Best")
+            if not card.count():
+                continue
+            seen += 1
+            assert ("expire tonight" in text) == want_note, (t["id"], first, phone)
+            if want_note:
+                assert text.count("expire tonight") == 1
+                assert (f"You have {7 - used} move left" if used == 6 else f"You have {7 - used} moves left") in text, text
+                assert ("overnight rollover" in text) == (first is None) and ("before the first game at" in text) == (first is not None)
+            most = max(most, card.locator(":scope > div:not(.sub)").count())
+        assert seen
+        if used == 1 and not phone:
+            assert (most > 2) == want_note, most
+        if used == 6:
+            assert most <= 1
         assert errors == []
         ctx.close()
 
@@ -1021,3 +1037,140 @@ def test_goalie_slots_follow_start_chances_and_new_details(browser, server, data
     goalies = len(_mine(base, team, "G"))
     assert "G2" in strips[0.0]  # no start expected: both slots open
     assert f"G{max(0, 2 - round(0.6 * goalies))}" in strips[0.6], strips[0.6]
+
+
+def test_nothing_jumps_while_the_data_loads(browser, server):
+    """The cards and footer stay hidden until the data has drawn them, so the page doesn't shift as it fills in (findings 237)."""
+    ctx, page, errors = open_page(browser, server)
+    assert page.evaluate("document.body.classList.contains('ready')")
+    page.evaluate("document.body.classList.remove('ready')")
+    assert page.evaluate("[...document.querySelectorAll('main > .card, main > p')].every(e => getComputedStyle(e).display === 'none')")
+    ctx.close()
+    # no data at all: the cards still show, with the 'No data yet' line
+    ctx = browser.new_context()
+    page = ctx.new_page()
+    page.route("**/data/players.json", lambda r: r.fulfill(status=404, body="no"))
+    page.goto(server)
+    page.wait_for_function("document.body.classList.contains('ready')")
+    assert "No data yet" in page.locator("#updated").inner_text()
+    ctx.close()
+
+
+def test_table_only_changes_leave_the_cards_alone(browser, server, data):
+    """Sorting, opening details, searching and filtering don't rebuild Upgrades and Trade check (findings 237)."""
+    ctx, page, errors = open_page(browser, server)
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    page.evaluate("""window.redraws = 0; const u = renderUpgrades, t = renderTrade;
+      renderUpgrades = () => { window.redraws++; u(); }; renderTrade = () => { window.redraws++; t(); }; 0""")
+    page.locator("#head th").nth(3).click()
+    page.locator("#rows tr[data-id]").first.click()
+    page.fill("#q", "a")
+    page.select_option("#pos", "D")
+    page.fill("#ming", "1")
+    page.click("#healthy")
+    page.select_option("#who", "every")
+    assert page.evaluate("window.redraws") == 0
+    page.click("#left")  # Remaining games only changes the games the cards count
+    assert page.evaluate("window.redraws") > 0
+    page.select_option("#team", str(data["teams"][1]["id"]))
+    assert page.evaluate("window.redraws") > 2
+    assert errors == []
+    ctx.close()
+
+
+def test_keyboard_opens_details_and_sorts(browser, server):
+    """Rows take focus and open with Enter or Space; sorting from the keyboard keeps focus on the header (findings 237)."""
+    ctx, page, errors = open_page(browser, server)
+    first = page.locator("#rows tr[data-id]").first
+    pid = first.get_attribute("data-id")
+    assert first.get_attribute("tabindex") == "0" and first.get_attribute("aria-expanded") == "false"
+    first.focus()
+    page.keyboard.press("Enter")
+    assert page.locator("#rows tr.why").count() == 1
+    assert page.evaluate("document.activeElement.dataset.id") == pid
+    assert page.locator(f'#rows tr[data-id="{pid}"]').get_attribute("aria-expanded") == "true"
+    page.keyboard.press(" ")
+    assert page.locator("#rows tr.why").count() == 0
+    page.locator('#head th[data-k="games"]').focus()
+    page.keyboard.press("Enter")
+    assert page.evaluate("document.activeElement.dataset.k") == "games"
+    first_dir = page.locator('#head th[data-k="games"]').get_attribute("aria-sort")
+    page.keyboard.press("Enter")
+    second_dir = page.locator('#head th[data-k="games"]').get_attribute("aria-sort")
+    assert {first_dir, second_dir} == {"ascending", "descending"}
+    assert page.locator("#head th[aria-sort]").count() == 1
+    assert page.get_attribute("#pos", "aria-label") == "Position" and page.get_attribute("#q", "aria-label")
+    assert errors == []
+    ctx.close()
+
+
+CONTRAST_JS = """sel => {
+  const rgb = c => { const m = c.match(/[\\d.]+/g).map(Number); return { r: m[0], g: m[1], b: m[2], a: m.length > 3 ? m[3] : 1 }; };
+  const lum = ({ r, g, b }) => { const f = v => (v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const bg = e => { for (; e; e = e.parentElement) { const c = rgb(getComputedStyle(e).backgroundColor); if (c.a > 0.5) return c; } return { r: 255, g: 255, b: 255 }; };
+  return [...document.querySelectorAll(sel)].filter(e => e.offsetParent).map(e => {
+    const a = lum(rgb(getComputedStyle(e).color)), b = lum(bg(e));
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  });
+}"""
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_tags_badges_and_nights_are_readable(browser, server, data, scheme):
+    """Tags, badges, gains and past nights reach 4.5:1 in both themes; open nights aren't told by colour alone (findings 237)."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, color_scheme=scheme)
+    page = ctx.new_page()
+    page.goto(server)
+    page.wait_for_function("document.body.classList.contains('ready')")
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    page.select_option("#who", "every")
+    for sel in (".tag.inj", ".tag.wv", ".tag.news", ".pct.hi", ".pct.mid", "#upgrades .up", ".night.past", "main > p.sub a"):
+        ratios = page.evaluate(CONTRAST_JS, sel)
+        assert all(r >= 4.5 for r in ratios), (scheme, sel, min(ratios, default=None))
+    assert page.evaluate("[...document.querySelectorAll('.night.past')].every(e => getComputedStyle(e).opacity === '1')")
+    assert page.evaluate("[...document.querySelectorAll('.dots i')].every(e => getComputedStyle(e).opacity === '1')")
+    open_dot = page.locator(".dots i.play.open").first
+    if open_dot.count():
+        assert open_dot.evaluate("e => getComputedStyle(e).borderRadius") == "50%"
+    ctx.close()
+
+
+PHONE_SPILL_JS = """[...document.querySelectorAll('#rows td:first-child .tags .tag')].filter(e => e.offsetParent).filter(e => {
+  const td = e.closest('td').getBoundingClientRect(); return e.getBoundingClientRect().right > td.right + 1; }).length"""
+
+
+@pytest.mark.parametrize("width", [320, 360, 390])
+def test_phone_text_taps_names_and_tags(browser, server, data, width):
+    """Phones: 12 px text at least, 24 px tap targets, names wrap instead of being cut, and a long tag ends in … inside
+    its column (findings 237, 238)."""
+    ctx = browser.new_context(viewport={"width": width, "height": 800})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(server)
+    page.wait_for_function("document.body.classList.contains('ready')")
+    for t in data["teams"][:4]:
+        page.select_option("#team", str(t["id"]))
+        page.select_option("#who", "every")
+        small = page.evaluate("""[...document.querySelectorAll('.night, .night .open, .meta, .tag, .pct, #rows td')].filter(e => e.offsetParent)
+          .filter(e => parseFloat(getComputedStyle(e).fontSize) < 12).length""")
+        assert small == 0
+        short = page.evaluate("""[...document.querySelectorAll('details.more > summary, details.fold > summary, main > .sub a')]
+          .filter(e => e.offsetParent).map(e => e.getBoundingClientRect()).filter(r => r.height < 24).length""")
+        assert short == 0
+        # no name cut short: the cell's text fits its box
+        cut = page.evaluate("[...document.querySelectorAll('#rows td:first-child')].filter(td => td.scrollWidth > td.clientWidth + 1).length")
+        assert cut == 0
+        assert page.evaluate(PHONE_SPILL_JS) == 0
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+    # the longest tag the page shows, in a narrow name column
+    d = json.loads(json.dumps(data))
+    for p in d["players"][:20]:
+        p["injury"], p["ir"] = "SUSPENSION", False
+    page.route("**/data/players.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(d)))
+    page.reload()
+    page.wait_for_function("document.body.classList.contains('ready')")
+    page.select_option("#who", "every")
+    assert page.evaluate(PHONE_SPILL_JS) == 0
+    assert errors == []
+    ctx.close()

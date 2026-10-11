@@ -7,15 +7,17 @@
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #16191d; --muted: #5d6673; --line: #e2e5ea;
-    --accent: #0a6cff; --mine: #eaf2ff; --good: #0f8a4a; --warn: #b25e00; --chip: #eef0f3; --dot: #c9ced6;
+    --accent: #0a62e8; --mine: #eaf2ff; --good: #0b7a41; --warn: #a35600; --chip: #eef0f3; --dot: #7d8590;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #101215; --card: #191c20; --text: #e8eaed; --muted: #9aa3ae; --line: #2a2f35;
-      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c; --dot: #3a4048;
+      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c; --dot: #737b86;
     }
   }
   * { box-sizing: border-box; }
+  /* nothing below the header shows until the data has drawn it, so the page doesn't jump as it fills in (findings 237) */
+  body:not(.ready) .card, body:not(.ready) main > p { display: none; }
   [hidden] { display: none !important; }  /* .controls' flex would otherwise show a hidden Trade check picker */
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 16px; }
@@ -31,7 +33,8 @@
   .night { text-align: center; padding: 6px 2px; border-radius: 8px; background: var(--chip); font-size: 11px; min-width: 0; }
   .night b { display: block; font-size: 15px; }
   .night.light { box-shadow: inset 0 0 0 2px var(--good); }
-  .night.past { opacity: .45; }
+  /* muted text instead of faded opacity, so past nights stay readable (findings 237) */
+  .night.past { color: var(--muted); background: transparent; }
   .night .open { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; }
   .night .open em { font-style: normal; color: var(--good); font-weight: 600; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -63,13 +66,15 @@
   .tag.news { color: var(--accent); }
   .cr { font-weight: 700; }
   .pct { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 10px; margin-left: 4px; background: var(--chip); color: var(--muted); }
-  .pct.hi { background: var(--good); color: #fff; }
+  .pct.hi { background: var(--good); color: var(--card); }
   .pct.mid { color: var(--good); }
   .dots { display: inline-flex; gap: 3px; vertical-align: middle; }
   .dots i { width: 9px; height: 9px; border-radius: 2px; background: transparent; border: 1px solid var(--dot); }
   .dots i.play { background: var(--muted); border-color: var(--muted); }
   .dots i.play.open { background: var(--good); border-color: var(--good); }
-  .dots i.past { opacity: .35; }
+  .dots i.play.past { background: var(--dot); border-color: var(--dot); }
+  /* round as well as green, so an open night isn't told by colour alone (findings 237) */
+  .dots i.play.open { border-radius: 50%; }
   .up { color: var(--good); font-weight: 600; }
   .upgrades { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
   .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
@@ -95,18 +100,26 @@
     th, td { padding: 6px 4px; }
     th { padding-top: 12px; padding-bottom: 12px; }
     /* the name column takes whatever width is left and cuts long names, so the table fits any phone and font */
-    td:first-child { width: 100%; max-width: 1px; overflow: hidden; text-overflow: ellipsis; }
+    /* long names wrap onto a second line rather than being cut (findings 237) */
+    td:first-child { width: 100%; max-width: 1px; overflow: hidden; text-overflow: ellipsis; white-space: normal; overflow-wrap: anywhere; }
     td:first-child .meta { overflow: hidden; text-overflow: ellipsis; }
     /* tags go on their own line and wrap, so the narrow name column doesn't cut them off (findings 232) */
     td:first-child .tags { display: block; white-space: normal; }
+    /* a single tag longer than the column ('suspension' at 320 px) ends in … instead of spilling out (findings 238) */
+    td:first-child .tags .tag:not(.own) { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
     .tags .tag:first-child { margin-left: 0; }
     .pct { margin-left: 2px; padding: 1px 4px; }
     td:nth-child(5) .pct { display: none; }
-    .night .open { font-size: 9px; }
+    .night .open { font-size: 12px; letter-spacing: -.02em; }
     .tag { margin-left: 2px; padding: 1px 4px; }
     select, input[type=search], input[type=number] { min-height: 44px; }
     .controls label { min-height: 44px; }
-    .night { font-size: 10px; padding: 4px 1px; }
+    .night { font-size: 12px; padding: 4px 1px; }
+    /* 12 px text at least, and 24 px tap targets (findings 237) */
+    .meta, .tag, .pct { font-size: 12px; }
+    details.more > summary { display: inline-block; padding: 5px 2px; }
+    details.fold > summary { padding: 4px 0; }
+    main > .sub a { display: inline-block; padding: 5px 0; }
     .night b { font-size: 13px; }
     .tag.own { display: none; }
     .dots { gap: 2px; }
@@ -147,12 +160,12 @@
 
   <div class="card">
     <div class="controls">
-      <input type="search" id="q" placeholder="Search player or team">
+      <input type="search" id="q" placeholder="Search player or team" aria-label="Search player or team">
       <select id="who" aria-label="Which players">
         <option value="fa">Free agents</option><option value="every">Every player</option>
       </select>
       <label id="addfa-wrap"><input type="checkbox" id="addfa" checked> + free agents</label>
-      <select id="pos">
+      <select id="pos" aria-label="Position">
         <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
       </select>
       <label>Min games <input type="number" id="ming" min="0" max="7" value="0"></label>
@@ -408,7 +421,8 @@ function inRoster(p) {
   return w.startsWith("t:") && String(p.team_id) === w.slice(2);
 }
 
-function render() {
+// all = false for table-only changes (sort, details, search, filters): Upgrades and Trade check don't read them (findings 237)
+function render(all = true) {
   const d = state.data;
   const q = norm($("q").value), pos = $("pos").value, ming = +$("ming").value || 0;
   const list = d.players.filter(p =>
@@ -430,15 +444,14 @@ function render() {
   $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
     (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
   $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
-    `<th data-k="${key}" tabindex="0" class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
+    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
     const c = cells(p);
-    return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}">` +
+    return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
       COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
       (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
-  renderUpgrades();
-  renderTrade();
+  if (all) { renderUpgrades(); renderTrade(); }
   store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "team" ? state.team : key === "pos" ? $("pos").value : state[key]])));
 }
 
@@ -481,8 +494,6 @@ function renderUpgrades() {
     ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
   // a gain in addVal units, labelled: with no moves left addVal is 7 x Season, so show the Season difference
   const gainTxt = v => noMoves ? `+${fmt(v / KEEP_GAMES)} Season` : `+${fmt(v)} ${d.rated && !d.final_matchup ? "keep" : "pts"}`;
-  const later = !noMoves ? "" : d.final_matchup ? " No moves left, and the season ends with this matchup."
-    : roundLeft ? " No moves left this round; these are targets for the next round." : " No moves left this matchup; these are next Monday's targets.";
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
   if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
@@ -495,7 +506,7 @@ function renderUpgrades() {
   // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
   const realLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : null;
   const nextWeek = noMoves || reset;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)
-  if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
+  if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.</span>
     ${outs.map(p => {
       // no more subs than moves left (findings 233), and none after the season's last move
       const sub = seasonDone || (realLeft != null && swapSubs.size >= realLeft) ? null
@@ -594,7 +605,8 @@ function renderUpgrades() {
     // and not dropping a player Mid-week swaps already drops, nor using the moves its subs take (findings 233)
     const added = new Set(swapSubs), dropped = new Set(swapDrops), best = [];
     // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
-    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && lastNight && movesLeft > 2;
+    // with any move left, not only 3+: even one unused move is lost (findings 238)
+    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && lastNight && realLeft > 0;
     for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
       let top = null;
       for (const g of ["F", "D"]) {
@@ -607,9 +619,10 @@ function renderUpgrades() {
       if (!top || top.gain <= 0.5) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
-    const expire = lastCall ? ` You have ${realLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
+    // its own line, so a phone doesn't fold it behind 'why' (findings 238); no game today means ESPN's rollover is the deadline
+    const expire = lastCall ? `You have ${realLeft} move${realLeft === 1 ? "" : "s"} left, and the ones you don't use expire tonight: add next week's targets ${puck ? `before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : "before ESPN's overnight rollover (about 3 AM ET)"}. Next Monday starts with a fresh set.` : "";
     // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same
-    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}${expire}</span>
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.</span>${expire ? `<div class="sub warn">${esc(expire)}</div>` : ""}
       ${best.map((m, i) => i < freeSpots
         ? `<div>Add ${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))} (open roster spot, no drop needed)</span> <span class="up">${gainTxt(m.gain)}</span></div>`
         : `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span>${chips.has(m.worst.id) ? '<span class="sub"> · try trading him first (Trade ideas)</span>' : ""}</div>`).join("")}</div>`);
@@ -623,7 +636,7 @@ function renderUpgrades() {
     const worst = mineG.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
     const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
     if (!better.length) continue;
-    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.${later}</span>
+    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.</span>
       ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (${gainTxt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap && !seasonDone) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
@@ -643,7 +656,7 @@ function renderUpgrades() {
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   const stashHow = full && drops.length ? `Your roster is full: drop ${drops[0].name}, add him, move him to IR, then use the open spot on your next add (2 moves).`
     : "Stash in your open IR slot: costs one move, no lineup spot.";
-  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. ${esc(stashHow)} Worth it only for 1.5+ pts/game players.${later}</span>
+  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. ${esc(stashHow)} Worth it only for 1.5+ pts/game players.</span>
     ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · Season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN's projection and this season's points so far are about the same for each pair, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
     ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
@@ -834,11 +847,11 @@ function setTeam(id) {
 function sortBy(key) {
   if (state.sort === key) state.dir = -state.dir;
   else { state.sort = key; state.dir = ["name", "team", "pos"].includes(key) ? 1 : -1; }
-  render();
+  render(false);
 }
 
 function wire() {
-  $("who").addEventListener("input", () => { state.who = $("who").value; showAddFA(); render(); });
+  $("who").addEventListener("input", () => { state.who = $("who").value; showAddFA(); render(false); });
   $("team").addEventListener("input", () => {
     setTeam($("team").value);
     // show the newly picked team's roster with free agents
@@ -846,11 +859,16 @@ function wire() {
     render();
   });
   $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) sortBy(th.dataset.k); });
-  $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sortBy(th.dataset.k); } });
+  // the header and rows are redrawn, so focus goes back to the same header or row (findings 237)
+  $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); const k = th.dataset.k; sortBy(k); $("head").querySelector(`th[data-k="${k}"]`)?.focus(); } });
+  $("rows").addEventListener("keydown", e => {
+    const tr = e.target.closest("tr[data-id]"); if (!tr || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault(); const id = tr.dataset.id; tr.click(); $("rows").querySelector(`tr[data-id="${id}"]`)?.focus();
+  });
   $("rows").addEventListener("click", e => {
     const tr = e.target.closest("tr[data-id]"); if (!tr) return;
     state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
-    render();
+    render(false);
   });
   ["tgive", "tget"].forEach(id => $(id).addEventListener("input", e => {
     const v = +e.target.value; if (!v) return;
@@ -862,7 +880,9 @@ function wire() {
     state[key] = state[key].filter(x => x !== +pid); renderTrade();
   });
   // minr is removed when the data has no ratings
-  ["q", "pos", "ming", "minr", "left", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", render));
+  // Remaining games only changes the games Upgrades counts, so it redraws everything
+  ["q", "pos", "ming", "minr", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", () => render(false)));
+  $("left").addEventListener("input", () => render());
 }
 
 function restore() {
@@ -922,10 +942,10 @@ fetch("data/players.json", { cache: "no-store" })
     // two-week playoff rounds have 14 nights (findings 232)
     $("ming").max = d.nights.length;
     setTeam(state.team);
-    wire(); render();
+    wire(); render(); document.body.classList.add("ready");
     setInterval(() => { if (reloadDue(Date.now())) location.reload(); }, 60e3);
   })
-  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
+  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; document.body.classList.add("ready"); });
 </script>
 </body>
 </html>
