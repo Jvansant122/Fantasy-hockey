@@ -403,6 +403,7 @@ def test_goalie_new_team_season_share_counts_from_arrival():
                              season_share=sh, movers=movers)
         return sh
     base, moved = shares(set()), shares({2})
+    assert sum(base.values()) == pytest.approx(rating.SEASON_SHARE_SCALE, abs=0.05)  # ~6% of starts go to goalies not here yet
     assert moved[2] > base[2] + 0.05
     assert moved[1] == pytest.approx(base[1])
 

@@ -604,6 +604,10 @@ The site took a skater's team from his last NHL game, not from ESPN. So after a 
 
 The goalie start model listed as candidates every goalie who had started for the team in its last 20 games, plus the current roster. So after a goalie was traded or waived away, the site kept giving him part of his old team's starts: about 42% of the next start in the first 3 games after he left, fading to 6% by games 13-20. That left the goalies still there, often a backup just promoted to starter, underrated for weeks. **Start shares now count only the goalies on the team's current NHL roster (plus a Daily Faceoff confirmed starter), and each goalie's numbers come from the team whose roster lists him.** In the replay the real starter's chance of starting the next game rose from 47% to 53%. It affects about 5 goalie moves a season, worth roughly 0.3-1 point a week to the old team's new no. 1 while it lasts.
 
+## 66. Goalie Season ratings trimmed for starts that go to goalies not here yet
+
+A goalie's Season rating multiplies his points per start by his long-run share of the team's starts. Across five seasons, the goalies on a team's roster on any given day went on to make only about 94% of its next 20 starts. The other 6% went to goalies who weren't there yet: call-ups, waiver claims and injury fill-ins. So the shares ran high, most clearly for no. 1s: shown at 71%, they actually got 65%. **Every goalie's Season start share is now multiplied by 0.93** (fit at 0.92-0.93 in every season held out, and more accurate in all five). That lowers a no. 1's Season rating by about 0.13 points a game, roughly 0.9 points a week of keep value. It mainly matters where a goalie is weighed against a skater: the third goalie spot, upgrades and cross-position trade ideas. This week's start chances are unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |

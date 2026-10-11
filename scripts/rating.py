@@ -72,6 +72,9 @@ LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
 NEW_TEAM_START_LOGIT, NEW_TEAM_STARTS = 1.0, 3
+# goalies on today's roster take ~94% of a team's next 20 starts; call-ups, claims and injury fill-ins take the rest,
+# so the Season start share is scaled down (a no. 1 read 0.71 against 0.65 actual, findings 161)
+SEASON_SHARE_SCALE = 0.93
 
 
 def bad_start(g):
@@ -656,7 +659,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             w = [0.5 ** ((len(sq) - 1 - i) / 5) for i in range(len(sq))]
             k0 = 10 * 0.5 ** (len(sq) / 5)
             ewm = (sum(wi for wi, x in zip(w, sq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
-            season_share[gid] = 0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K) + 0.25 * ewm
+            season_share[gid] = SEASON_SHARE_SCALE * (0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K)
+                                                      + 0.25 * ewm)
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):
