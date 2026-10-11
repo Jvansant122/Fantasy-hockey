@@ -1,8 +1,8 @@
 {
- "updated": "Sun Oct 11, 11:17 AM ET",
+ "updated": "Sun Oct 11, 11:22 AM ET",
  "updated_date": "2026-10-11",
  "first_start": "2026-10-11T21:00:00Z",
- "updated_utc": "2026-10-11T15:16:29Z",
+ "updated_utc": "2026-10-11T15:22:12Z",
  "team": "New York Mess",
  "matchup_period": 2,
  "matchup_weeks": 1,
@@ -184,7 +184,7 @@
     "share10": 0.17,
     "tonight": {
      "starting": true,
-     "status": "Unconfirmed"
+     "status": "Confirmed"
     },
     "sched": 0.62,
     "gs": 1,
@@ -6160,63 +6160,6 @@
    "cr_season_pct": 67
   },
   {
-   "id": 4697457,
-   "name": "Emil Andrae",
-   "team": "CBJ",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "injury": null,
-   "owned": 0.2,
-   "gp": 3,
-   "ppg": 0.93,
-   "cur_ppg": 1.23,
-   "last_ppg": 0.9,
-   "last_gp": 61,
-   "proj_ppg": null,
-   "games": 2,
-   "games_left": 0,
-   "light": 1,
-   "light_left": 0,
-   "nights": [
-    11,
-    12
-   ],
-   "games_next2": 5,
-   "clears": null,
-   "today_start": null,
-   "dfo_out": false,
-   "cr": 0.76,
-   "cr_fpg": 0.84,
-   "cr_season": 0.41,
-   "cr_games": 0.9,
-   "cr_dress": 0.21,
-   "cr_dress_next": 0.9,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482126,
-   "cr_why": {
-    "toi5": 12.33,
-    "toi": 12.33,
-    "pp5": 0.0,
-    "sog": 0.33,
-    "blk": 1.67,
-    "gp": 3,
-    "last_fpg": 0.9,
-    "xfp": {
-     "gp": 3,
-     "fpg": 1.23,
-     "xfpg": 1.06
-    }
-   },
-   "cr_pct": 85,
-   "cr_season_pct": 15
-  },
-  {
    "id": 3095975,
    "name": "Charlie Lindgren",
    "team": "WSH",
@@ -6447,7 +6390,7 @@
      "games": "3"
     }
    },
-   "cr_pct": 84,
+   "cr_pct": 85,
    "cr_season_pct": 64
   },
   {
@@ -6852,7 +6795,7 @@
     "last_fpg": null,
     "xfp": null
    },
-   "cr_pct": 81,
+   "cr_pct": 82,
    "cr_season_pct": 1
   },
   {
@@ -6907,7 +6850,7 @@
     "last_fpg": 3.3,
     "xfp": null
    },
-   "cr_pct": 81,
+   "cr_pct": 82,
    "cr_season_pct": 1
   },
   {
@@ -6962,7 +6905,7 @@
     "last_fpg": null,
     "xfp": null
    },
-   "cr_pct": 81,
+   "cr_pct": 82,
    "cr_season_pct": 1
   },
   {
@@ -7394,7 +7337,7 @@
     "share10": 0.83,
     "tonight": {
      "starting": false,
-     "status": "Unconfirmed"
+     "status": "Confirmed"
     },
     "gs": 5,
     "p_today": 0.0
@@ -13640,7 +13583,7 @@
     "share10": 0.0,
     "tonight": {
      "starting": false,
-     "status": "Unconfirmed"
+     "status": "Confirmed"
     },
     "gs": 0,
     "p_today": 0.0
@@ -26724,6 +26667,63 @@
    },
    "cr_pct": 0,
    "cr_season_pct": 23
+  },
+  {
+   "id": 4697457,
+   "name": "Emil Andrae",
+   "team": "CBJ",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "injury": null,
+   "owned": 0.2,
+   "gp": 3,
+   "ppg": 0.93,
+   "cur_ppg": 1.23,
+   "last_ppg": 0.9,
+   "last_gp": 61,
+   "proj_ppg": null,
+   "games": 2,
+   "games_left": 0,
+   "light": 1,
+   "light_left": 0,
+   "nights": [
+    11,
+    12
+   ],
+   "games_next2": 5,
+   "clears": null,
+   "today_start": null,
+   "dfo_out": false,
+   "cr": 0.0,
+   "cr_fpg": 0.84,
+   "cr_season": 0.41,
+   "cr_games": 0,
+   "cr_dress": 0.21,
+   "cr_dress_next": 0.21,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482126,
+   "cr_why": {
+    "toi5": 12.33,
+    "toi": 12.33,
+    "pp5": 0.0,
+    "sog": 0.33,
+    "blk": 1.67,
+    "gp": 3,
+    "last_fpg": 0.9,
+    "xfp": {
+     "gp": 3,
+     "fpg": 1.23,
+     "xfpg": 1.06
+    }
+   },
+   "cr_pct": 0,
+   "cr_season_pct": 15
   },
   {
    "id": 3939856,
