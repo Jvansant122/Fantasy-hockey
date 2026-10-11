@@ -676,6 +676,10 @@ The same check as section 78 for ESPN's OUT tag: a skater flagged OUT who played
 
 Re-rendering the page with each day's real data turned up four mistakes in the Upgrades cards. Mid-week swaps never listed injured players (Konecny and Tavares were out and missing), because it started from a list that had already dropped them. A healthy player left in an IR slot got no warning (Celebrini played Saturday from IR and his 2.9 points didn't count). Best moves offered two moves to a team with one left and could offer the same free agent twice, and with no moves left the Goalies card still said to stream tonight and Next Monday's targets listed waiver players who would be claimed before Monday. **Mid-week swaps now includes injured players (with the IR hint only when an IR slot is open), a new "Activate from IR" line comes first when a healthy player sits in IR, Best moves never offers more moves than are left or repeats a Mid-week swaps pick, and with no moves left the Goalies card and Monday targets account for it.**
 
+## 84. Overnight data runs and ESPN's day
+
+ESPN's fantasy day doesn't end at midnight: its scoring period rolls over at about 3:10-3:40 AM ET. The data runs took the weekday from the clock but the day from ESPN, so runs between midnight and the rollover labelled the whole week a day off (Saturday's games shown as Sunday's, Sunday missing, and every player's schedule shifted). **Each run now reads today's date from ESPN's current scoring period, and the publish check refuses a week whose nights don't run Monday to Sunday on consecutive dates or whose past nights don't match today.**
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -5,6 +5,7 @@
 
 Standard library only, like the other daily scripts. tests/test_site_contract.py runs the same checks."""
 import json
+from datetime import date
 import sys
 from pathlib import Path
 
@@ -28,6 +29,19 @@ def problems(data):
     for n in data["nights"]:
         if NIGHT_FIELDS - set(n):
             out.append(f"night {n.get('date')} missing {sorted(NIGHT_FIELDS - set(n))}")
+    # nights run Monday to Sunday on consecutive dates, and today isn't already marked past (findings 180)
+    labels = [n.get("date", "") for n in data["nights"]]
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    if all(l[:3] in days for l in labels) and [l[:3] for l in labels] != (days * 2)[:len(labels)]:
+        out.append(f"nights don't run Monday to Sunday: {labels}")
+    nums = [int(l.split()[-1]) for l in labels if l.split()[-1].isdigit()]
+    if len(nums) == len(labels) and any(b != a + 1 and b != 1 for a, b in zip(nums, nums[1:])):
+        out.append(f"night dates aren't consecutive: {labels}")
+    today = data.get("updated_date")
+    if today and len(labels) == 7 and all(l[:3] in days for l in labels):
+        k = date.fromisoformat(today).weekday()  # today's night: not past, and every earlier night past
+        if [bool(n.get("past")) for n in data["nights"]] != [i < k for i in range(7)]:
+            out.append(f"past nights don't match today ({today}): {[(n.get('date'), n.get('past')) for n in data['nights']]}")
     players = data["players"]
     if len(players) < MIN_PLAYERS:
         out.append(f"only {len(players)} players")

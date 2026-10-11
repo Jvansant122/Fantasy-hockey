@@ -159,3 +159,13 @@ def test_scoreboard_schedule_survives_a_failed_day(monkeypatch):
 def test_utc_iso():
     from datetime import datetime, timezone, timedelta
     assert fetch.utc_iso(datetime(2026, 10, 10, 19, 0, tzinfo=timezone(timedelta(hours=-4)))) == "2026-10-10T23:00:00Z"
+
+
+def test_espn_today_follows_the_scoring_period():
+    """ESPN rolls its day at about 3:30 AM ET: before that, its current period is still yesterday (findings 180)."""
+    from datetime import date, datetime
+    nights = {9: datetime(2026, 10, 10, 19, tzinfo=fetch.ET), 10: datetime(2026, 10, 11, 17, tzinfo=fetch.ET)}
+    assert fetch.espn_today(nights, 9, date(2026, 10, 11)) == date(2026, 10, 10)  # 1 AM Sunday, ESPN still on Saturday
+    assert fetch.espn_today(nights, 10, date(2026, 10, 11)) == date(2026, 10, 11)
+    assert fetch.espn_today({12: nights[10]}, 10, date(2026, 10, 11)) == date(2026, 10, 9)  # nearest dated period
+    assert fetch.espn_today({}, 10, date(2026, 10, 11)) == date(2026, 10, 11)
