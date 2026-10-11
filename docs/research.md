@@ -672,6 +672,10 @@ The 0.93 scale on goalie Season start shares was fit to the next 20 starts (sect
 
 The same check as section 78 for ESPN's OUT tag: a skater flagged OUT who played his team's last game but under 55% of his usual ice time dressed for only 17-21% of the next games, against the 35% cap the site gave every OUT player. **Such a player is now capped at 15% a game.** An OUT player who played normal minutes in his last game keeps 35% (actual 35%).
 
+## 83. Upgrades card fixes from replaying real days
+
+Re-rendering the page with each day's real data turned up four mistakes in the Upgrades cards. Mid-week swaps never listed injured players (Konecny and Tavares were out and missing), because it started from a list that had already dropped them. A healthy player left in an IR slot got no warning (Celebrini played Saturday from IR and his 2.9 points didn't count). Best moves offered two moves to a team with one left and could offer the same free agent twice, and with no moves left the Goalies card still said to stream tonight and Next Monday's targets listed waiver players who would be claimed before Monday. **Mid-week swaps now includes injured players (with the IR hint only when an IR slot is open), a new "Activate from IR" line comes first when a healthy player sits in IR, Best moves never offers more moves than are left or repeats a Mid-week swaps pick, and with no moves left the Goalies card and Monday targets account for it.**
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -194,3 +194,27 @@ def test_games_that_already_started_drop_out(browser, server, data):
         page.select_option("#team", str(t["id"]))
     assert errors == []
     ctx.close()
+
+
+def test_upgrades_roster_fixes(browser, server, data):
+    """Healthy player in IR, injured players in Mid-week swaps, Best moves capped by moves left (findings 181)."""
+    d = json.loads(json.dumps(data))
+    team = d["teams"][0]
+    mine = [p for p in d["players"] if str(p.get("team_id")) == str(team["id"]) and p["pos"] != "G"]
+    for p in mine:
+        p["ir"] = False
+    healthy_ir, hurt = mine[0], mine[1]
+    healthy_ir.update(ir=True, injury=None)
+    hurt.update(injury="OUT", games_left=max(hurt["games_left"], 1))
+    d["ir_slots"] = 1  # the IR slot is taken, so no "move him to IR" hint
+    d["move_limit"], team["moves_used"] = 7, 6
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    text = page.locator("#upgrades").inner_text()
+    assert "Activate from IR" in text and healthy_ir["name"] in text
+    assert text.index("Activate from IR") < text.index("Mid-week swaps")
+    swaps = text[text.index("Mid-week swaps"):].split("\n\n")[0]
+    assert hurt["name"] in swaps and "IR-eligible" not in swaps
+    assert "Best 2 moves" not in text  # one move left
+    assert errors == []
+    ctx.close()
