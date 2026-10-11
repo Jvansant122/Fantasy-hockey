@@ -620,6 +620,10 @@ Section 67 cut the next-start chance for a starter who left without a decision t
 
 This is the skater version of sections 67-68. A skater who dressed for his team's last game but played under 40% of his usual ice time usually left hurt, often before ESPN flags anything. Because he dressed for that game, the site gave him its "regular" bump and about a 70% chance of dressing next game (62-65% a game across the week). In two seasons of replays, such players dressed for only 18% of the next game and about 24% of the week's games, regulars included. **The site now cuts his dress chance hard for the next game, a bit less for the one after, and still clearly for the rest of the week.** A smaller cut covers the next two games for 40-55% of his usual time (69% shown against 59% actual). Fits held when trained on one season and tested on the other, and the next-game forecast got much more accurate (Brier 0.43 to 0.16). Once ESPN flags an injury, the usual injury rules take over instead. This matters most for the Tonight card and mid-week swaps: about 45 player-weeks a season, each carrying about 1.2 games he wasn't going to play.
 
+## 70. The Season rating for a skater who barely played his last game
+
+Section 69 cut this week's dress chance for a skater who dressed but played well under his usual ice time (likely hurt). His Season rating ran high too: across four seasons, such skaters dressed for 60% of their team's remaining games when the Season rating expected 69% (under 40% of usual ice time), and 56% against 63% (40-55%). It was low in every season. **The Season rating's dress share now gets a small trim for these players**, fit at -0.25 to -0.55 on the logit in every season left out (the site uses -0.4). That is about 0.1 points a game off a 1.2-point skater, roughly 0.7 points a week of keep value. It lasts until he plays a normal game again, and once ESPN flags an injury the injury rules take over. It matters mostly for drop and pickup calls right after an apparent injury.
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -115,6 +115,8 @@ NEW_TEAM_LOGIT, NEW_TEAM_GAMES = 0.45, 3
 # before ESPN flags him (0.70 next game against 0.18 actual under 40%, findings 165). Extra logit shifts for the next
 # game, the one after and later games, by last-game TOI share; ESPN's injury cap takes over once he is flagged.
 LEFT_EARLY_LOGITS = ((0.40, (-2.5, -1.8, -1.1)), (0.55, (-0.8, -0.5, 0.0)))
+# ... and his Season rating's rest-of-season dress share runs high too (0.69/0.63 against 0.60/0.56, findings 166)
+LEFT_EARLY_SEASON_LOGIT = -0.4
 
 
 def left_early_shifts(last_toi, avg_toi):
@@ -997,7 +999,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             if df_ and model.season_lr:
                 season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]),
-                                                 NEW_TEAM_SEASON_LOGIT * new_team_season)
+                                                 NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early))
             elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
                 # hurt or suspended before playing this season: such regulars dress for ~41% of the rest, not the idle cap's
                 # 10% (findings 74; suspensions take the short-injury share, findings 118)

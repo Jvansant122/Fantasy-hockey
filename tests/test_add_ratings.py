@@ -538,6 +538,10 @@ def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     assert not hurt["sat_last"] and hurt["cr_dress_next"] < 0.45 * full["cr_dress_next"]
     assert hurt["cr_dress_next"] < short["cr_dress_next"] < full["cr_dress_next"]
     assert hurt["cr_games"] < full["cr_games"] - 0.5
+    monkeypatch.setattr(rating, "LEFT_EARLY_SEASON_LOGIT", 0.0)
+    assert hurt["cr_season"] < matthews(toi=300)["cr_season"] - 0.02  # Season dress share is trimmed too (findings 166)
+    assert full["cr_season"] == matthews()["cr_season"]
+    monkeypatch.setattr(rating, "LEFT_EARLY_SEASON_LOGIT", -0.4)
     flagged = matthews(toi=300, injury="DAY_TO_DAY")  # ESPN's flag takes over from the left-early cut
     assert flagged["cr_dress_next"] == pytest.approx(min(matthews(injury="DAY_TO_DAY")["cr_dress_next"], 1.0), abs=0.15)
     assert rating.left_early_shifts(5, 18) == rating.LEFT_EARLY_LOGITS[0][1] and rating.left_early_shifts(9, 18)[0] < 0
