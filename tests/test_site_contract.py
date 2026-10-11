@@ -170,3 +170,58 @@ def test_check_rules_for_season_weeks(data):
     differ = copy.deepcopy(ok)
     differ["team_nights"][team] = [sp for sp in differ["team_nights"][team] if sp not in ahead]
     assert not check_data.problems(differ) and any(w.startswith("W2") for w in check_data.warnings(differ, None))
+
+
+def playoff_like(data, start, nights, today, weeks, period):
+    """data reshaped to a matchup of `nights` nights from start, run on today: every rostered player plays every other
+    night, free agents none (the synthetic in findings 241)."""
+    from datetime import timedelta
+    x = copy.deepcopy(data)
+    sp0, tsp = (start - check_data.SP1).days + 1, (today - check_data.SP1).days + 1
+    x["nights"] = [{"sp": sp0 + i, "date": (start + timedelta(days=i)).strftime("%a ") + str((start + timedelta(days=i)).day),
+                    "games": 16, "light": False, "past": sp0 + i < tsp} for i in range(nights)]
+    x.update(updated_date=today.isoformat(), updated_utc=today.isoformat() + "T10:00:00Z", matchup_weeks=weeks,
+             matchup_period=period, season_weeks=[], team_nights={})
+    sps = [n["sp"] for n in x["nights"]]
+    for p in x["players"]:
+        p["nights"] = [] if p["team"] == "FA" else sps[::2]
+        p["games"], p["games_left"], p["today_start"] = len(p["nights"]), sum(s >= tsp for s in p["nights"]), None
+        w = p.get("cr_why") or {}
+        if p["pos"] == "G" and "exp_starts" in w:
+            w["exp_starts"], w["team_games"] = min(w["exp_starts"], p["games_left"] / 2), p["games_left"]
+            p["cr_games"] = w["exp_starts"]
+        else:
+            p["cr_games"] = min(p.get("cr_games") or 0, p["games_left"])
+        p["cr"] = round((p.get("cr_fpg") or 0) * p["cr_games"], 2)
+    return x
+
+
+def test_check_passes_every_day_of_the_playoffs_and_the_opener(data):
+    """Each day of both two-week playoff rounds and the 6-night opener publishes: the N1 date check reads 'Sun 21' as the
+    nearest Sunday the 21st, not Feb 21 (findings 241 (1), which blocked all four runs on Mar 8, 2027)."""
+    from datetime import date, timedelta
+    if not data["rated"]:
+        return
+    for start, nights, weeks, period in ((date(2027, 3, 8), 14, 2, 24), (date(2027, 3, 22), 14, 2, 25), (date(2026, 9, 29), 6, 1, 1)):
+        for k in range(nights):
+            today = start + timedelta(days=k)
+            assert check_data.problems(playoff_like(data, start, nights, today, weeks, period)) == [], today
+    day1 = playoff_like(data, date(2027, 3, 8), 14, date(2027, 3, 8), 2, 24)
+    assert check_data._night_dates(day1)[day1["nights"][-1]["sp"]] == date(2027, 3, 21)
+    for n in day1["nights"]:  # the overnight shift is still caught on day 1
+        n["sp"] += 1
+    assert any(e.startswith("N1") for e in check_data.problems(day1))
+
+
+def test_a_player_dropped_after_the_first_puck_raises_no_schedule_warning(data):
+    """A pending drop's nights stop at today (findings 241 (3)): W2 doesn't flag his team for it."""
+    ahead = {n["sp"] for n in data["nights"] if not n["past"]}
+    d = copy.deepcopy(data)
+    p = next((p for p in d["players"] if p["team"] in d["team_nights"] and p.get("owner") == "other"
+              and len([sp for sp in p.get("nights") or [] if sp in ahead]) >= 2), None)
+    if p is None:
+        return
+    p["nights"] = [sp for sp in p["nights"] if sp <= min(ahead)]
+    assert any(w.startswith("W2") for w in check_data.warnings(d, None))
+    p["pending_drop"] = True
+    assert not any(w.startswith("W2") for w in check_data.warnings(d, None))

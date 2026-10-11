@@ -59,8 +59,9 @@ def goalie_row(pid, name, team, i):
 
 class FakeSession:
     def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=(),
-                 bye=False, roster_down=(), last_team=None):
+                 bye=False, roster_down=(), last_team=None, starts=None):
         self.calls = []
+        self.starts = starts or {}  # game date: its start time (UTC) in the NHL week schedule (findings 241)
         self.bye = bye  # BOS has no game this week (TOR plays MTL instead), like 14 teams the week of Feb 1 (findings 230)
         self.roster_down = set(roster_down)  # teams whose NHL roster can't be read
         self.last_team = last_team or {}  # player id: his team last season, when not his team now
@@ -82,7 +83,8 @@ class FakeSession:
             return Resp(text="\n".join(lines))
         if url.endswith(f"/schedule/{MONDAY.isoformat()}"):
             away = "MTL" if self.bye else "BOS"
-            return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": away}, "homeTeam": {"abbrev": "TOR"}}]}
+            return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": away}, "homeTeam": {"abbrev": "TOR"},
+                                                             **({"startTimeUTC": self.starts[d]} if d in self.starts else {})}]}
                                       for d in WEEK]})
         m = re.search(r"/gamecenter/(\d+)/right-rail$", url)
         if m:
@@ -1218,3 +1220,77 @@ def test_details_fields(run):
     assert by_name["Ryan Spooner"]["cr_why"]["season_share"] == rating.UNPLAYED_REGULAR
     assert "season_share" not in by_name["Auston Matthews"]["cr_why"]
     assert all("cr_g_nights" not in p for p in by_name.values() if p["pos"] != "G")
+
+
+def test_one_game_out_rule_uses_real_start_times(monkeypatch, tmp_path):
+    """A pregame note posted after 5 PM ET (Bogosian 5:37 PM): with the game's start time, the game that night is the one
+    he missed, so he's back to the day-to-day cap; a note posted after the puck dropped still waits (findings 241 (2))."""
+    note = {"athlete_id": 103, "name": "David Pastrnak", "short": "Pastrnak won't play Wednesday.", "long": "",
+            "date": "2026-10-07T21:37Z"}  # 5:37 PM ET on Oct 7, BOS's last game
+
+    def pasta(starts=None):
+        return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="OUT")], FakeSession(starts=starts),
+                    injuries=[note])["David Pastrnak"]["cr_dress_next"]
+    assert pasta() == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)  # no start time: the 5 PM rule
+    assert pasta({"2026-10-07": "2026-10-07T23:00:00Z"}) == pytest.approx(rating.SKATER_INJURY_CAP["DAY_TO_DAY"], abs=0.01)
+    assert pasta({"2026-10-07": "2026-10-07T21:00:00Z"}) == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)  # in progress
+    over = rating.one_game_out_over
+    late = {"short": "Smith won't play Saturday.", "date": "2026-10-07T22:53Z"}  # 6:53 PM ET
+    assert over(late, {"2026-10-07"}, {"2026-10-07": "2026-10-07T23:00:00Z"})
+    assert not over(late, {"2026-10-07"}, {"2026-10-07": "2026-10-07T22:30:00Z"})
+    assert over(dict(late, date="2026-10-07T14:00Z"), {"2026-10-07"}, {})  # no start: before 5 PM counts as before
+
+
+def test_unsigned_free_agent_with_a_rostered_players_name_isnt_matched(monkeypatch, tmp_path):
+    """ESPN's unsigned 'Matt Murray' (FA) shares a name with a rostered NHL goalie: only the rostered one gets his stats
+    (findings 241 (4))."""
+    players = [espn(111, "Joseph Woll", "TOR", "G"), espn(999, "Joseph Woll", "FA", "G", games_left=0)]
+    rate(monkeypatch, tmp_path, players)
+    real, ghost = players
+    assert real["nhl_id"] == 11 and real["cr_season"] > 0
+    assert ghost["nhl_id"] is None and not ghost["cr_matched"] and ghost["cr_season"] == 0
+    alone = rate(monkeypatch, tmp_path, [espn(999, "Joseph Woll", "FA", "G", games_left=0)])["Joseph Woll"]
+    assert alone["nhl_id"] == 11  # nobody on ESPN's rosters has the name: matched as before
+
+
+def test_goalie_dropped_after_the_first_puck_counts_only_tonight(monkeypatch, tmp_path):
+    """A pending drop keeps only today's game for his fantasy team (findings 241 (3)): at most tonight's start chance, and
+    no start chances after today."""
+    def sway(games_left, **kw):
+        return rate(monkeypatch, tmp_path, [dict(espn(113, "Jeremy Swayman", "BOS", "G", games_left=games_left), **kw)])["Jeremy Swayman"]
+    kept, dropped = sway(2), sway(1, pending_drop=True)
+    assert kept["cr_games"] > 1.5
+    assert dropped["cr_games"] <= 1 and dropped["cr_games"] == pytest.approx(dropped["cr_why"]["p_today"], abs=0.01)
+    assert set(dropped["cr_g_nights"]) <= {TODAY.isoformat()}
+    gone = sway(0, pending_drop=True)
+    assert gone["cr_games"] == 0 and gone["cr"] == 0
+
+
+def test_kept_note_edge_cases(monkeypatch, tmp_path):
+    """Three ways the kept injury note could be lost (findings 241 (5))."""
+    notes_file = rating.INJURY_NOTES
+    real = {"athlete_id": 103, "name": "David Pastrnak", "short": "Pastrnak (upper body) will undergo surgery Tuesday.", "long": "",
+            "date": "2026-10-07T23:30Z"}  # 7:30 PM ET during BOS's Oct 7 game, which he played
+    bare = dict(real, short="IR", date="2026-10-09T10:00Z")
+
+    def pasta(note, fake=None):
+        return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="INJURY_RESERVE")], fake,
+                    injuries=[note])["David Pastrnak"]
+    # (2) a note posted during a game he played isn't old news
+    assert pasta(real)["cr"] == 0
+    assert pasta(bare)["cr"] == 0
+    assert pasta(bare, FakeSession(starts={"2026-10-07": "2026-10-07T23:00:00Z"}))["cr"] == 0  # started before the note
+    assert pasta(bare, FakeSession(starts={"2026-10-07": "2026-10-08T00:00:00Z"}))["cr"] > 0  # he played after it
+    # (1) a note in use is seen today, so a season-out note shown as 'ir' for 60+ days isn't pruned
+    old = {"date": "2026-08-01T12:00Z", "short": "Marchand will miss the remainder of the season.", "long": "",
+           "name": "Brad Marchand", "status": "INJURY_RESERVE", "seen": "2026-08-01"}
+    notes_file.write_text(json.dumps({"109": old}))
+    m = rate(monkeypatch, tmp_path, [espn(109, "Brad Marchand", "BOS", "LW", injury="INJURY_RESERVE")],
+             injuries=[{"athlete_id": 109, "name": "Brad Marchand", "short": "ir", "long": "", "date": "2026-10-09T10:00Z"}])
+    assert m["Brad Marchand"]["cr"] == 0
+    assert json.loads(notes_file.read_text())["109"]["seen"] == TODAY.isoformat()
+    # (3) a note on a player outside the data keeps the feed's own status, so it can be carried later
+    notes_file.unlink()
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")],
+         injuries=[dict(real, athlete_id=555, name="Someone Else", status="Injured Reserve")])
+    assert json.loads(notes_file.read_text())["555"]["status"] == "INJURY_RESERVE"

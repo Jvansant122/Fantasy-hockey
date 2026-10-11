@@ -79,14 +79,15 @@ def problems(data):
 
 
 def _night_dates(data):
-    """{sp: date} from the 'Mon 5' labels: the date within 15 days of updated_date with that day of the month."""
+    """{sp: date} from the 'Mon 5' labels: the nearest date to updated_date (within 15 days) with that day of the month, so
+    a 14-night playoff round's 'Sun 21' on Mar 8 is Mar 21, not Feb 21 (findings 241)."""
     t = date.fromisoformat(data["updated_date"])
     out = {}
     for n in data["nights"]:
         dom = n["date"].split()[-1]
         if not dom.isdigit():
             return {}
-        out[n["sp"]] = next((t + timedelta(days=k) for k in range(-15, 16) if (t + timedelta(days=k)).day == int(dom)), None)
+        out[n["sp"]] = next((t + timedelta(days=k) for k in sorted(range(-15, 16), key=abs) if (t + timedelta(days=k)).day == int(dom)), None)
     return out
 
 
@@ -231,7 +232,7 @@ def warnings(data, prev):
         out.append(f"W1 {len(lag)} goalies' ESPN games below NHL starts: {lag[:4]}")
     # W2 the same schedule twice (findings 300): a team's nights this matchup in team_nights match its players' nights
     tn, ahead = data.get("team_nights") or {}, {n["sp"] for n in data["nights"] if not n["past"]}
-    mismatch = sorted({p["team"] for p in players if p["team"] in tn and p.get("owner") != "waivers"
+    mismatch = sorted({p["team"] for p in players if p["team"] in tn and p.get("owner") != "waivers" and not p.get("pending_drop")
                        and {sp for sp in p.get("nights") or [] if sp in ahead} != {sp for sp in tn[p["team"]] if sp in ahead}})
     if mismatch:
         out.append(f"W2 teams whose nights differ from their players' nights this matchup: {mismatch[:6]}")

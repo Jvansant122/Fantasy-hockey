@@ -167,16 +167,39 @@ def pending_adds(transactions, rostered, today_sp):
     return {pid: tid for pid, tid in last.items() if tid is not None and pid not in rostered}
 
 
-def schedule_fields(team, sched, first_sp, today_start, run_utc):
+def pending_drops(transactions, rostered, today_sp):
+    """Players a team dropped today whom ESPN's roster still lists: a drop after the day's first puck leaves him on the
+    team until ESPN's overnight rollover (findings 241 (3)). {ESPN player id: team id}, from today's executed free-agent
+    and waiver drops, unless a later move today added him again, and only while the roster that lists him is the
+    dropping team's."""
+    last = {}
+    for t in sorted(transactions or [], key=lambda t: t.get("proposedDate") or 0):
+        if t.get("scoringPeriodId") != today_sp or t.get("status") not in (None, "EXECUTED") \
+                or t.get("type") not in ("FREEAGENT", "WAIVER"):
+            continue
+        for item in t.get("items") or []:
+            pid = item.get("playerId")
+            if pid is None:
+                continue
+            if item.get("type") == "DROP":
+                last[pid] = item.get("fromTeamId") if item.get("fromTeamId") not in (None, -1) else t.get("teamId")
+            elif item.get("type") == "ADD":
+                last[pid] = None
+    return {pid: tid for pid, tid in last.items() if tid is not None and pid in rostered and rostered[pid][0] == tid}
+
+
+def schedule_fields(team, sched, first_sp, today_start, run_utc, last_sp=None):
     """A player's games this matchup from his NHL team's ESPN schedule. sched: {matchup_sps, remaining, light, next_sps,
-    today_sp}. first_sp: the first day he can play (waivers); today_start: when today's game stops counting."""
-    week_games = [sp for sp in sched["matchup_sps"] if sp in team["periods"] and sp >= first_sp]
-    rem_games = [sp for sp in sched["remaining"] if sp in team["periods"] and sp >= first_sp
+    today_sp}. first_sp: the first day he can play (waivers); today_start: when today's game stops counting; last_sp: the
+    last day he counts for his fantasy team (dropped today, findings 241 (3)), or None."""
+    end = last_sp if last_sp is not None else float("inf")
+    week_games = [sp for sp in sched["matchup_sps"] if sp in team["periods"] and first_sp <= sp <= end]
+    rem_games = [sp for sp in sched["remaining"] if sp in team["periods"] and first_sp <= sp <= end
                  and not (sp == sched["today_sp"] and today_start and today_start <= run_utc)]
     return {"team": team["abbrev"].upper(), "games": len(week_games), "games_left": len(rem_games),
             "light": len([sp for sp in week_games if sp in sched["light"]]),
             "light_left": len([sp for sp in rem_games if sp in sched["light"]]),
-            "nights": week_games, "games_next2": len([sp for sp in sched["next_sps"] if sp in team["periods"]]),
+            "nights": week_games, "games_next2": len([sp for sp in sched["next_sps"] if sp in team["periods"] and sp <= end]),
             "today_start": today_start}
 
 
@@ -424,6 +447,15 @@ def main():
         rostered[pid] = (tid, 7)
     if pending:
         print(f"{len(pending)} players added after the first puck, not yet on ESPN's rosters")
+    # dropped after the first puck: still on ESPN's roster until its rollover, but his team's only through today (findings 241)
+    dropped = {}
+    try:
+        dropped = pending_drops(tx, rostered, today_sp)
+        if dropped:
+            print(f"{len(dropped)} players dropped after the first puck, still on ESPN's rosters until the rollover")
+    except Exception as e:  # noqa: BLE001 - never let this block the update
+        print(f"Pending drops failed: {e!r}", file=sys.stderr)
+        dropped = {}
     my_ids = [pid for pid, (tid, _) in rostered.items() if my_team and tid == my_team["id"]]
 
     fa_filter = {"players": {
@@ -496,7 +528,7 @@ def main():
         players.append({
             "id": pid,
             "name": p.get("fullName"),
-            **schedule_fields(team, sched_info, first_sp, today_start, run_utc),
+            **schedule_fields(team, sched_info, first_sp, today_start, run_utc, today_sp if pid in dropped else None),
             "pos": pos,
             "slots": sorted({SLOT_NAMES[x] for x in p.get("eligibleSlots", []) if x in SLOT_NAMES}),
             "owner": owner,
@@ -514,6 +546,8 @@ def main():
             "clears": clears.strftime("%a %-d") if clears else None,
             # schedule_fields' today_start: when today's game stops counting, UTC: his game, or the first puck for a free agent
             **({"pending_add": True} if pid in pending else {}),
+            # dropped after the first puck: ESPN lists him until its rollover; the page leaves him out of roster counts
+            **({"pending_drop": True} if pid in dropped else {}),
         })
 
     def reschedule(p, nhl_team):
