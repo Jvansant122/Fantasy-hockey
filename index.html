@@ -482,7 +482,9 @@ function renderUpgrades() {
     // no more moves than are left, and not a free agent Mid-week swaps already offered (findings 181)
     const added = new Set(swapSubs), dropped = new Set(), best = [];
     const movesLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : 2;
-    for (let i = 0; i < Math.min(2, movesLeft); i++) {
+    // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
+    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && tonight && tonight === d.nights[d.nights.length - 1] && movesLeft > 2;
+    for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
       let top = null;
       for (const g of ["F", "D"]) {
         const left = mine.filter(p => group(p) === g && !dropped.has(p.id));
@@ -494,7 +496,8 @@ function renderUpgrades() {
       if (!top || top.gain <= 0.5) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
-    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 2 ? "2 moves" : "move"}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}</span>
+    const expire = lastCall ? ` You have ${movesLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}${expire}</span>
       ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span></div>`).join("")}</div>`);
   }
   const nSwap = cards.length;

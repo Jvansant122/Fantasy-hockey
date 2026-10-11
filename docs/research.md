@@ -760,6 +760,10 @@ On a 390-pixel phone the players table was about 48 pixels wider than the screen
 
 In the league's logs Kempe drew claims from three teams and Eriksson Ek from two. Every losing claim was cancelled without using a move, and only the winning claim used one (findings 212). So when Upgrades lists a player on waivers, it now says to put in a claim: a losing claim is free. It also shows your place in ESPN's waiver order (#1 claims first). A drop with a Season rating of 1.5 or more gets a tag: he goes on waivers, and others will claim him.
 
+## 98. Sunday: use every move before it expires
+
+Moves don't carry over between matchups. At 2 PM on Sunday, Oct 11, 9 of the 12 teams had between 1 and 7 moves left, 40 in all, and they vanish at the overnight rollover. An add made on Sunday before the first game still counts in the ending matchup. The page only ever showed 2 Best moves, but the extra moves were worth 2.8 to 9.1 keep points per team (findings 231). On the matchup's last night, before its first game, Best moves now lists every move you have left, with a note that unused moves expire tonight. After the first puck it goes back to two.
+
 ## What the independent review changed
 
 | Review point | Outcome |
