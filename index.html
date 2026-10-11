@@ -178,6 +178,22 @@ const isFA = p => p.owner === "freeagent" || p.owner === "waivers";
 // a player on waivers can't play until he clears, usually 2 days after the drop (findings 122)
 const wvTag = p => p.owner === "waivers" ? `<span class="tag wv">waivers${p.clears ? `, clears ${esc(p.clears)}` : ""}</span>` : "";
 // data from an earlier day than today in New York: it still counts last night's games (findings 123)
+// his team's game today has started (findings 178): it can't be streamed, benched or counted as still to play
+const started = p => !!p.today_start && new Date(p.today_start) <= new Date();
+// data from before that start still counts the game: take it out of this week's games and points
+function dropStarted(d) {
+  for (const p of d.players) {
+    if (!started(p) || !d.updated_utc || new Date(d.updated_utc) >= new Date(p.today_start) || !(p.games_left > 0)) continue;
+    p.games_left -= 1;
+    const tonightGames = p.pos === "G" ? (p.cr_why?.p_today ?? 0) : (p.cr_dress_next ?? p.cr_dress ?? 0);
+    if (p.cr_games != null) {
+      const gone = Math.min(tonightGames, p.cr_games);
+      p.cr = Math.max(0, +(p.cr - gone * (p.pos === "G" ? (p.cr_why?.line?.pps ?? p.cr_fpg) : p.cr_fpg)).toFixed(2));
+      p.cr_games = +(p.cr_games - gone).toFixed(2);
+      if (p.cr_why) p.cr_why.p_today = 0;
+    }
+  }
+}
 const stale = d => !!d.updated_date && d.updated_date < new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 const group = p => p.pos === "G" ? "G" : p.pos === "D" ? "D" : "F";
 const injLabel = p => p.injury ? p.injury.replaceAll("_", " ").toLowerCase() : "";
@@ -380,7 +396,7 @@ function renderUpgrades() {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
         : (used == null ? "check your moves left" : `${used} move${used === 1 ? "" : "s"} used this matchup`);
       const pps = p => p.cr_why?.line?.pps ?? p.cr_fpg;
-      const streams = fas.filter(p => p.pos === "G" && p.owner !== "waivers" && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
+      const streams = fas.filter(p => p.pos === "G" && p.owner !== "waivers" && !started(p) && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
         .sort((a, b) => pps(b) - pps(a)).slice(0, 3);
       const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
       cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(cap)}</span>
@@ -390,7 +406,7 @@ function renderUpgrades() {
   }
   // Tonight on a crowded night (research findings 65): start by per-game rating, bench anyone Daily Faceoff leaves out
   if (d.rated && tonight && !stale(d)) {
-    const playing = mine.filter(p => p.pos !== "G" && p.nights.includes(tonight.sp));
+    const playing = mine.filter(p => p.pos !== "G" && p.nights.includes(tonight.sp) && !started(p));
     const flagged = p => p.dfo_out === true || (p.dfo_out == null && p.sat_last);
     const val = p => flagged(p) ? -1 : p.cr_fpg * (p.dfo_out === false ? 1 : (p.cr_dress_next ?? p.cr_dress ?? 1));
     const order = [...playing].sort((a, b) => val(b) - val(a));
@@ -610,6 +626,7 @@ fetch("data/players.json", { cache: "no-store" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => {
     state.data = d;
+    dropStarted(d);
     if (!d.rated) {
       state.sort = "week";
       COLS.splice(COLS.findIndex(c => c[0] === "cr"), 2);

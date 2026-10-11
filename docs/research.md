@@ -660,6 +660,10 @@ ESPN's day-to-day tag got a flat 50% chance per game. For a skater who played hi
 
 The start model reads days since a goalie's last start as a sign he's been benched. After a team-wide break of four or more days (holidays, the All-Star break, schedule gaps) everyone is rested, so that reading is wrong: in five seasons of replays, the goalie who started the last game before a 4-6 day break started the next one 57% of the time against 50% predicted, and 63% against 47% after 7+ days. **The goalie who started the team's last game now gets a boost for the first game after a break of 4+ days, bigger after 7+.** It predicted starters better in all five seasons. Only that one game changes, and a Daily Faceoff confirmation still overrides.
 
+## 80. Games that already started
+
+The site counted every game on today's date as still to come until the next morning's data run, but 175-181 games a season start before the 5 PM update (mostly Saturday and Sunday afternoons) and every game of the night has started by about 7:30 PM. On Saturday Oct 10 at 8:30 PM, "Stream a goalie tonight" offered three goalies whose games had already started, so adding one spent a move for no points, and Tyson Foerster showed 2 games left this week when his Saturday game had ended hours earlier. **Each player now carries his team's start time for today. A data run doesn't count a game that has already started, and the page, using your device's clock, treats a player whose game has started as not playing tonight: he's left out of Stream a goalie tonight and the Tonight card, and that game comes out of his games and points for the week.**
+
 ## What the independent review changed
 
 | Review point | Outcome |

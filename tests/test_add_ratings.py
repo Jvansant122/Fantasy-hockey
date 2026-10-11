@@ -773,3 +773,24 @@ def test_last_starter_after_a_long_team_break(monkeypatch):
     assert p1("2026-10-27", on)[0] - p1("2026-10-27", ())[0] > p1("2026-10-23", on)[0] - p1("2026-10-23", ())[0]
     # no history at all: nothing to shift, nothing breaks
     assert rating.goalie_starts(model, "TOR", [1, 2], {"TOR": []}, {1: 50, 2: 32}, ["2026-10-27"], date(2026, 10, 27))
+
+
+def test_goalie_game_that_already_started(monkeypatch, tmp_path):
+    # tonight's game started before the run: its start is no longer ahead and the stream card's chance is 0 (findings 178)
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 23, 30, tzinfo=timezone.utc))
+    starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
+    out = {}
+    for start in (None, "2026-10-10T00:00:00Z", "2026-10-09T23:00:00Z"):
+        players = [dict(espn(112, "Anthony Stolarz", "TOR", "G"), today_start=start), dict(espn(111, "Joseph Woll", "TOR", "G"), today_start=start)]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, starters)
+        out[start] = {p["name"]: p for p in players}
+    assert out["2026-10-10T00:00:00Z"]["Anthony Stolarz"]["cr_games"] == out[None]["Anthony Stolarz"]["cr_games"]
+    gone = out["2026-10-09T23:00:00Z"]
+    assert gone["Anthony Stolarz"]["cr_games"] == pytest.approx(out[None]["Anthony Stolarz"]["cr_games"] - 1, abs=0.01)
+    assert gone["Anthony Stolarz"]["cr_why"]["p_today"] == 0
+    assert gone["Joseph Woll"]["cr_games"] == pytest.approx(out[None]["Joseph Woll"]["cr_games"], abs=0.01)
+    assert rating.game_started({"today_start": "not a date"}) is False and rating.game_started({}) is False
