@@ -578,6 +578,9 @@ def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     assert matthews(toi=800, injury="DAY_TO_DAY")["cr_dress_next"] == pytest.approx(0.5, abs=0.01)
     assert 0.5 < matthews(injury="DAY_TO_DAY")["cr_dress_next"] <= 0.75
     assert matthews(injury="DAY_TO_DAY")["cr_dress"] <= 0.75
+    # OUT after leaving early: 0.15, OUT with full minutes keeps 0.35 (handoff 75)
+    assert matthews(toi=300, injury="OUT")["cr_dress_next"] == pytest.approx(rating.OUT_LEFT_EARLY_CAP, abs=0.01)
+    assert matthews(injury="OUT")["cr_dress_next"] == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)
     assert rating.left_early_shifts(5, 18) == rating.LEFT_EARLY_LOGITS[0][1] and rating.left_early_shifts(9, 18)[0] < 0
     assert rating.left_early_shifts(15, 18) == () and rating.left_early_shifts(5, None) == ()
     by = rating.dress_by_game(0.9, 5, False, 1.0, 0.0, (-2.5, -1.8, -1.1))

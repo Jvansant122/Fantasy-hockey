@@ -668,6 +668,10 @@ The site counted every game on today's date as still to come until the next morn
 
 The 0.93 scale on goalie Season start shares was fit to the next 20 starts (section 66). Over the rest of a season shares spread out even more: no. 1 goalies shown at 70% went on to make about 60% of their team's remaining starts. **The scale is now 0.88.** It was more accurate in all three seasons tested, and the goalie Season rating's error fell from 0.545 to 0.537 points a game. Every goalie moves by the same factor, so no ranking changes; only the level on the Goalies card and in keep value comparisons against skaters drops slightly (a no. 1 by about 0.15 points a game).
 
+## 82. Out players who left the last game early
+
+The same check as section 78 for ESPN's OUT tag: a skater flagged OUT who played his team's last game but under 55% of his usual ice time dressed for only 17-21% of the next games, against the 35% cap the site gave every OUT player. **Such a player is now capped at 15% a game.** An OUT player who played normal minutes in his last game keeps 35% (actual 35%).
+
 ## What the independent review changed
 
 | Review point | Outcome |
