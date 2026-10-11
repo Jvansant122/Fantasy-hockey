@@ -798,6 +798,17 @@ The page now reads the roster size, trade deadline and season end from ESPN:
 - Playoff rounds and the final use their own wording, and once the season ends the page says so and hides the cards that would describe a matchup that doesn't exist.
 - A tab left open reloads itself when new data is published, search ignores accents, and the stale-data note names the next update time.
 
+## 103. Back-to-backs later in the week
+
+The rating already rested a team's no. 1 goalie on the second night of a back-to-back when that night was the next game. Two research runs found that he was still counted for too many starts when the back-to-back was later in the week. A replay of every team's mornings over five seasons (12,960 of them) settled on one rule. For the no. 1 (most starts in his team's last 20):
+
+- Night 1 of a back-to-back that starts with the next game: slightly less likely to start (-0.4 on the start logit).
+- Night 2 of that pair: much less likely (-1.2).
+- Night 2 of a back-to-back further ahead: less likely (-0.6).
+- Every other night: a little more likely (+0.15), since the starts he skips on back-to-backs land elsewhere in the week.
+
+The rule improved start predictions by 0.6% and the no. 1's weekly start count by 0.7%, in all five seasons. That beat each of the two proposals on its own. Daily Faceoff confirmations still override it.
+
 ## What the independent review changed
 
 | Review point | Outcome |
