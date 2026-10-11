@@ -357,9 +357,10 @@ function renderUpgrades() {
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
   if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
+  // unless Daily Faceoff's projected lines have him back in (findings 174);
   // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];
-  const outs = mine.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.games_left > 0)));
+  const outs = mine.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.dfo_out !== false && p.games_left > 0)));
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
     ${outs.map(p => {
       const sub = fas.filter(f => group(f) === group(p)).sort((a, b) => noMoves ? addVal(b) - addVal(a) : score(b) - score(a))[0];

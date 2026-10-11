@@ -644,6 +644,10 @@ Daily Faceoff and ESPN sometimes spell a name differently: Gabriel and Gabe Perr
 
 When ESPN drops a player's injury or suspension status but he hasn't played yet, the site used to treat him like any idle player: 10% a game and a low Season rating. Charlie McAvoy's suspension cleared Sunday morning, and the Best moves card told New York Mess to drop him for Denton Mateychuk. In five seasons of ESPN notes, a player whose suspension ended dressed for 86-89% of his team's next seven games, and a regular activated before his first game dressed for 73% of the next game and about three quarters of the rest of the season. In season, a player whose status cleared while he was still out dressed in 35% of that week's games against the 18% the site showed. **Now a player whose ESPN status cleared within the last week and who hasn't played since gets a much higher chance to dress: 75% for the next game and 80% for later ones (with a Season rating of 72% of his points a game) if he hasn't played this season yet, and a clear boost to this week's and the Season's dress chance if he has.** The boost ends with his first game back.
 
+## 76. Sat the last game, but back in Daily Faceoff's lines
+
+A skater who sat his team's last game gets about a 20% chance for the next one. Daily Faceoff's projected lines, which the site already reads, often know better: in the first live days of the season, all 14 skaters with no injury status who had sat the last game but were in Daily Faceoff's forward or defense lines dressed for the next game. **Such a player now gets at least a 90% chance for the next game, the rest of his week is priced as if he had played the last game, and the Mid-week swaps card no longer suggests replacing him.** This is an early read from a few days of logs and will be rechecked at the end-of-October review.
+
 ## What the independent review changed
 
 | Review point | Outcome |

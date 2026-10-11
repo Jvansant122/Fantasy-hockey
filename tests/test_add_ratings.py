@@ -703,3 +703,19 @@ def test_status_cleared_before_he_is_back(monkeypatch, tmp_path):
     # a status older than a week changes nothing
     for who in ("Ryan Spooner", "Morgan Rielly"):
         assert out["old"][who]["cr"] == out["none"][who]["cr"] and out["old"][who]["cr_season"] == out["none"][who]["cr_season"]
+
+
+def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
+    # no ESPN status, sat the last game, Daily Faceoff's lines have him: 14 of 14 dressed next game (findings 174)
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for dfo in (None, True, False):
+        players = [dict(espn(104, "Charlie McAvoy", "BOS", "D"), dfo_out=dfo)]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        out[dfo] = players[0]
+    assert out[None]["sat_last"] and out[None]["cr_dress_next"] < rating.DFO_LINEUP_NEXT
+    assert out[True]["cr"] == out[None]["cr"]
+    assert out[False]["cr_dress_next"] >= rating.DFO_LINEUP_NEXT and out[False]["cr"] > out[None]["cr"]
+    assert out[False]["sat_last"]  # still true; the page's Mid-week swaps card reads dfo_out to leave him out
