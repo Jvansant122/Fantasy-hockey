@@ -445,3 +445,14 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 377 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Pos sort, search, min games max | see findings 232 (18) | Pending (handoff 152) | findings 232 |
 | 378 | Oct 11 20:15 | thread "Seventh hunt" (agent) | DST, two-week rounds in fetch, weekOver, holiday weeks; DFO injuries, ownership trend, DFO PP1 points, O/U, pool gap; table consistency | fine or no signal | No change | findings 232 |
 | 379 | Oct 11 20:15 | thread "Seventh hunt" (agent) | ESPN goalie starterStatus; DTD skaters in DFO lines | promising but n too small | Waiting until Oct 30 review | findings 232 |
+| 380 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Tonight card bench slot (PR #87 regression) | see findings 233 (1) | Pending (handoff 153) | findings 233 |
+| 381 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Swaps + Best moves double drop / over limit | see findings 233 (2) | Pending (handoff 154) | findings 233 |
+| 382 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Phone folds hide actionable lines | see findings 233 (3) | Pending (handoff 155) | findings 233 |
+| 383 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Monday pre-rollover reset and banner | see findings 233 (4) | Pending (handoff 156) | findings 233 |
+| 384 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Drop list ranking units | see findings 233 (5) | Pending (handoff 157) | findings 233 |
+| 385 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Goalies card drops tonight's starter | see findings 233 (6) | Pending (handoff 158) | findings 233 |
+| 386 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Goalie keep gains label | see findings 233 (7) | Pending (handoff 159) | findings 233 |
+| 387 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Swap subs for next week | see findings 233 (8) | Pending (handoff 160) | findings 233 |
+| 388 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Drop is a trade chip | see findings 233 (9) | Pending (handoff 161) | findings 233 |
+| 389 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Tonight header wording | see findings 233 (10) | Pending (handoff 162) | findings 233 |
+| 390 | Oct 11 20:25 | thread "Seventh hunt" (agent) | Trade check, trade idea filters, started-game removal, stream card, waiver note, IR stash, playoff/final cards | fine | No change | findings 233 |
