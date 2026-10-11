@@ -82,14 +82,38 @@ def plain(name):
     return re.sub(r"[^a-z]", "", unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode().lower())
 
 
+def name_words(name):
+    """ASCII lowercase words of two or more letters ("Elias N. Pettersson" -> ["elias", "pettersson"])."""
+    return [w for w in re.sub(r"[^a-z ]", "", unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode()
+                              .lower().replace("-", " ")).split() if len(w) > 1]
+
+
 def mark_lineups(players, lineups, to_nhl):
     """p["dfo_out"]: True when Daily Faceoff has his team's lineup and he isn't in a forward or defense line (scratched,
-    injured or not listed), False when he is, None when the lineup is missing. Skaters only (findings section 65)."""
-    dressed = {team: {plain(n) for n, group, *_ in t.get("players", []) if group in DRESSED}
-               for team, t in (lineups or {}).items() if t.get("players")}
+    injured or not listed), False when he is, None when the lineup is missing. Skaters only (findings section 65).
+    A name that isn't in the lineup exactly can match one on his team with the same last name and first two letters of
+    the first name (Gabe/Gabriel, Elias N./Elias Nils; findings 175), skipping names another skater matches exactly;
+    with several, the one whose line fits his position."""
+    groups = {team: [(n, group) for n, group, *_ in t.get("players", []) if group in DRESSED]
+              for team, t in (lineups or {}).items() if t.get("players")}
+    exact = {}
     for p in players:
-        lineup = dressed.get(to_nhl.get(p["team"], p["team"])) if p["pos"] != "G" else None
-        p["dfo_out"] = None if lineup is None else plain(p["name"]) not in lineup
+        if p["pos"] != "G":
+            exact.setdefault(to_nhl.get(p["team"], p["team"]), set()).add(plain(p["name"]))
+    for p in players:
+        team = to_nhl.get(p["team"], p["team"])
+        lineup = groups.get(team) if p["pos"] != "G" else None
+        if lineup is None:
+            p["dfo_out"] = None
+            continue
+        if plain(p["name"]) in {plain(n) for n, _ in lineup}:
+            p["dfo_out"] = False
+            continue
+        w = name_words(p["name"])
+        cands = [(n, group) for n, group in lineup if len(w) >= 2 and plain(n) not in exact.get(team, ())
+                 and (nw := name_words(n)) and len(nw) >= 2 and nw[-1] == w[-1] and nw[0][:2] == w[0][:2]]
+        fits = [c for c in cands if (c[1][0] == "d") == (p["pos"] == "D")]
+        p["dfo_out"] = not (len(cands) == 1 or fits)
 
 
 def fetch_injuries(s):

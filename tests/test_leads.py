@@ -117,3 +117,19 @@ def test_mark_lineups_flags_skaters_left_out_of_daily_faceoffs_lines():
     lineups = {"OTT": {"players": [["Tim Stutzle", "f1", None, False], ["Hurt Guy", "ir", "ir", False]]}, "SJS": {"error": "x"}}
     leads.mark_lineups(players, lineups, {"SJ": "SJS"})
     assert [p["dfo_out"] for p in players] == [False, True, True, None]
+
+
+def test_mark_lineups_matches_daily_faceoff_spellings():
+    players = [{"name": "Gabe Perreault", "team": "NYR", "pos": "RW"}, {"name": "Elias Pettersson", "team": "VAN", "pos": "C"},
+               {"name": "Elias N. Pettersson", "team": "VAN", "pos": "D"}, {"name": "Mason Perreault", "team": "NYR", "pos": "C"},
+               {"name": "Jake Middleton", "team": "CGY", "pos": "D"}, {"name": "Jacob Smith", "team": "CGY", "pos": "C"}]
+    lineups = {"NYR": {"players": [["Gabriel Perreault", "f1", None, False]]},
+               "VAN": {"players": [["Elias Pettersson", "f1", None, False], ["Elias Nils Pettersson", "d3", None, False]]},
+               "CGY": {"players": [["Jacob Middleton", "d2", None, False], ["Jake Smith", "f4", None, False],
+                                   ["Jacob Smithers", "f2", None, False]]}}
+    leads.mark_lineups(players, lineups, {})
+    assert [p["dfo_out"] for p in players] == [False, False, False, True, False, False]
+    # the defenceman scratched: the forward's exact name never stands in for him
+    lineups["VAN"]["players"].pop()
+    leads.mark_lineups(players, lineups, {})
+    assert players[2]["dfo_out"] is True and players[1]["dfo_out"] is False

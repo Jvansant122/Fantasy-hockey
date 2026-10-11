@@ -657,3 +657,19 @@ def test_dress_chance_by_game():
     assert reg[0] == pytest.approx(0.945, abs=0.01) and reg == sorted(reg, reverse=True)
     assert max(rating.dress_by_game(0.9, 3, False, 0.5)) <= 0.5
     assert rating.dress_by_game(0.5, 0, False, 1.0) == []
+
+
+def test_confirmed_starter_matches_daily_faceoff_spelling(monkeypatch, tmp_path):
+    # Daily Faceoff's "Matthew Murray" is the NHL's "Matt Murray": same team, last name, first two letters (findings 175)
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for spelling in ("Joseph Woll", "Joey Woll", "Jake Woll"):
+        players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [{"date": "2026-10-09", "games": [
+            {"team": "TOR", "goalie": spelling, "status": "Confirmed"}]}])
+        out[spelling] = {p["name"]: p for p in players}
+    assert out["Joey Woll"]["Joseph Woll"]["cr_why"]["tonight"] == {"starting": True, "status": "Confirmed"}
+    assert out["Joey Woll"]["Joseph Woll"]["cr_games"] == out["Joseph Woll"]["Joseph Woll"]["cr_games"]
+    assert "tonight" not in out["Jake Woll"]["Joseph Woll"]["cr_why"]

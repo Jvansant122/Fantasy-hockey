@@ -942,7 +942,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     confirmed, tonight = {}, {}
     for page in starters:
         for g in page.get("games", []):
-            cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")]
+            cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")] \
+                or [pid for pid, (t, pos) in nickname_cands(index, g.get("goalie"), g.get("team")).items() if pos == "G"]  # "Matthew" Murray (findings 175)
             if len(cands) != 1 or not page.get("date") or page["date"] < today.isoformat():
                 continue
             if page["date"] == today.isoformat():
