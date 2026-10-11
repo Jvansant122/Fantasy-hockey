@@ -26,6 +26,11 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rating_model.jso
 CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots.parquet")
 GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints", "points"]
 XG_RATES = ["ixg", "onice_xgf"]
+# where he ranks in his team-game's PP time and ice time (findings section 201): this season's windows only
+RANK_RATES = ["pp_rank", "toi_rank", "pp1", "top_line"]
+# position x usage and squared ice time (findings section 201)
+D_X = ["std_toi", "std_pptoi", "l5_toi", "l5_pptoi", "std_blockedShots", "std_hits"]
+SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
 COMPONENTS = common.COMPONENTS
 TEST_SEASONS = [20232024, 20242025, 20252026]
 # usage x efficiency (research/correlation/findings.md section 4, site-friendly version): per-60 rates from season to
@@ -40,6 +45,8 @@ def feature_names():
     f += [f"{w}_{r}" for w in ("std", "prev") for r in XG_RATES]
     f += ["std_gp", "prev_gp", "is_D", "no_prev", "dressed3", "dressed10"]
     f += [f"std_{r}_w" for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits")]
+    f += [f"{w}_{r}" for w in ("l5", "l10", "l20", "std") for r in RANK_RATES]
+    f += [f"D_x_{n}" for n in D_X] + [f"{n}2" for n in SQUARED]
     return f
 
 
@@ -79,11 +86,24 @@ def ux_features(df, mu):
     return out
 
 
+def add_ranks(sk):
+    """Per (game, team): rank of his PP TOI among the team's skaters and of his TOI among its forwards or defensemen
+    (1 = most, ties share the smaller rank), PP1 (top 5 in PP TOI with over half a minute) and top line (top 3 F or
+    top 2 D in TOI). Same as scripts/rating.py add_ranks."""
+    g = sk.groupby(["gameId", "teamAbbrev"])
+    sk["pp_rank"] = g.pptoi.rank(ascending=False, method="min")
+    sk["toi_rank"] = sk.groupby(["gameId", "teamAbbrev", "pos"]).toi.rank(ascending=False, method="min")
+    sk["pp1"] = ((sk.pp_rank <= 5) & (sk.pptoi > 0.5)).astype(float)
+    sk["top_line"] = (sk.toi_rank <= np.where(sk.pos == "D", 2, 3)).astype(float)
+    return sk
+
+
 def snapshots():
     if os.path.exists(CACHE):
         return pd.read_parquet(CACHE)
-    sk = common.load_skaters()
+    sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
+    common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
     df = common.skater_snapshots(sk)
     df.to_parquet(CACHE)
     return df
@@ -102,6 +122,8 @@ def prep(df, feats=FEATS, mu=None):
     w = np.clip(df.std_gp / 20.0, 0, 1)
     for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits"):
         X[f"std_{r}_w"] = df[f"std_{r}"] * w
+    extra = {f"D_x_{n}": X.is_D * df[n].fillna(0) for n in D_X} | {f"{n}2": df[n] ** 2 for n in SQUARED}
+    X = pd.concat([X, pd.DataFrame(extra, index=df.index)], axis=1)
     return X[feats]
 
 
@@ -115,7 +137,7 @@ def fit_linear(train, feats=FEATS, mu=None):
     Z = sc.transform(X)
     coef, icpt = np.zeros(len(feats)), 0.0
     for c, wt in COMPONENTS.items():
-        m = RidgeCV(alphas=np.logspace(-1, 3, 9)).fit(Z, tr[f"y_{c}"], sample_weight=tr.y_gp)
+        m = RidgeCV(alphas=np.logspace(-1, 5, 13)).fit(Z, tr[f"y_{c}"], sample_weight=tr.y_gp)
         coef += wt * m.coef_ / sc.scale_
         icpt += wt * (m.intercept_ - (m.coef_ * sc.mean_ / sc.scale_).sum())
     return coef, icpt, means
