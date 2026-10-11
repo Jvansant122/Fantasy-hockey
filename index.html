@@ -409,8 +409,13 @@ function renderUpgrades() {
       const streams = fas.filter(p => p.pos === "G" && p.owner !== "waivers" && !started(p) && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
         .sort((a, b) => pps(b) - pps(a)).slice(0, 3);
       const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
-      cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(cap)}</span>
-        ${streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
+      // ESPN holds an add made after the day's first puck until tomorrow (findings 179)
+      const puck = d.first_start ? new Date(d.first_start) : null;
+      const locked = !!puck && puck <= new Date();
+      const before = puck && !locked ? ` Add before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET: later adds count from tomorrow.` : "";
+      cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(before)}${esc(cap)}</span>
+        ${locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
+          : streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
           : '<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon, and the site rechecks at 12:30 and 5 PM ET.</div>'}</div>`);
     }
   }

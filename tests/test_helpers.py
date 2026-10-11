@@ -169,3 +169,16 @@ def test_espn_today_follows_the_scoring_period():
     assert fetch.espn_today(nights, 10, date(2026, 10, 11)) == date(2026, 10, 11)
     assert fetch.espn_today({12: nights[10]}, 10, date(2026, 10, 11)) == date(2026, 10, 9)  # nearest dated period
     assert fetch.espn_today({}, 10, date(2026, 10, 11)) == date(2026, 10, 11)
+
+
+def test_free_agents_stop_counting_today_at_the_first_puck():
+    teams = {1: {"periods": {5, 6}, "starts": {5: "2026-10-11T17:00:00Z"}},
+             2: {"periods": {5}, "starts": {5: "2026-10-11T23:00:00Z"}},
+             3: {"periods": {6}, "starts": {}}}
+    first = fetch.first_puck(teams, 5)
+    assert first == "2026-10-11T17:00:00Z" and fetch.first_puck(teams, 7) is None
+    late = "2026-10-11T23:00:00Z"
+    assert fetch.counts_until(late, "freeagent", first) == first
+    assert fetch.counts_until(late, "waivers", first) == first
+    assert fetch.counts_until(late, "mine", first) == late and fetch.counts_until(late, "other", first) == late
+    assert fetch.counts_until(None, "freeagent", first) is None  # no game today

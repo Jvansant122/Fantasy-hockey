@@ -117,6 +117,19 @@ def waiver_first_days(transactions, today):
     return out
 
 
+def first_puck(teams, sp):
+    """The day's first game start (UTC ISO) across every team, or None on an off day."""
+    return min((t["starts"][sp] for t in teams.values() if sp in t["periods"] and t.get("starts", {}).get(sp)), default=None)
+
+
+def counts_until(own_start, owner, first_start):
+    """When a player's game today stops counting: his own start for a rostered player, but ESPN holds an add made
+    after the day's first puck until its overnight rollover, so a free agent's game today ends then (findings 179)."""
+    if own_start and first_start and owner in ("freeagent", "waivers"):
+        return min(own_start, first_start)
+    return own_start
+
+
 def utc_iso(dt):
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -262,6 +275,8 @@ def main():
     except Exception as e:  # noqa: BLE001 - the log is best-effort
         tx_error = repr(e)
     run_utc = utc_iso(datetime.now(timezone.utc))
+    # ESPN holds an add made after the day's first puck until its overnight rollover (findings 179)
+    first_start = first_puck(teams, today_sp)
     first_day = waiver_first_days(tx, today_et)
 
     # Players: my roster plus free agents and waivers, with season, last-season and projected stat lines
@@ -327,6 +342,7 @@ def main():
         week_games = [sp for sp in matchup_sps if sp in team["periods"] and sp >= first_sp]
         # a game today that already started isn't left to play (findings 178)
         today_start = team.get("starts", {}).get(today_sp) if today_sp in team["periods"] else None
+        today_start = counts_until(today_start, owner, first_start)
         rem_games = [sp for sp in remaining if sp in team["periods"] and sp >= first_sp
                      and not (sp == today_sp and today_start and today_start <= run_utc)]
         players.append({
@@ -353,7 +369,7 @@ def main():
             "nights": week_games,
             "games_next2": len([sp for sp in next_sps if sp in team["periods"]]),
             "clears": clears.strftime("%a %-d") if clears else None,
-            "today_start": today_start,  # his team's game today, UTC; the page drops it once it starts
+            "today_start": today_start,  # when today's game stops counting, UTC: his game, or the first puck for a free agent
         })
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
@@ -422,6 +438,7 @@ def main():
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
         "updated_date": today_et.isoformat(),
+        "first_start": first_start,  # today's first puck, UTC: adds after it count from tomorrow (findings 179)
         "updated_utc": run_utc,  # the page compares it with each player's today_start (findings 178)
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,
