@@ -200,6 +200,7 @@ UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, 
 CLEARED_DAYS = 7
 CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no games yet this season (findings 172)
 CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the last one (findings 173)
+DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
 # ESPN team abbreviations that differ from the NHL's
@@ -1114,11 +1115,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                    "p_dress_table": round(p_dress, 3), "p_dress": round(min(p_dress, inj), 3)})
             p_dress = min(p_dress, inj)
             gn = p["games_left"]
-            per_game = dress_by_game(base_dress, gn, sat_last, min(cap, inj),
+            # sat the last game, but Daily Faceoff's projected lines have him: 14 of 14 dressed next time (findings 174)
+            in_lines = sat_last and not p.get("injury") and p.get("dfo_out") is False
+            per_game = dress_by_game(base_dress, gn, sat_last and not in_lines, min(cap, inj),
                                      SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
                 if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
-            exp_games = sum(per_game)
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
+            if in_lines:
+                dress_next = max(dress_next, DFO_LINEUP_NEXT)
+                per_game = [dress_next] + per_game[1:]
+            exp_games = sum(per_game)
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
