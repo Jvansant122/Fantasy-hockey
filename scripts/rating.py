@@ -1118,7 +1118,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                      SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
                 if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
             exp_games = sum(per_game)
-            dress_next = per_game[0] if per_game else p_dress
+            dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
