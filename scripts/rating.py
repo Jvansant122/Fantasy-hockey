@@ -203,6 +203,7 @@ CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no 
 CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the last one (findings 173)
 # DAY_TO_DAY and dressed for the team's last game: cap by that game's TOI over his season average (findings 176)
 DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.75))
+OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
@@ -1147,8 +1148,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
             inj = 0.0 if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
-            if p.get("injury") == "DAY_TO_DAY" and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
-                inj = next(c for top, c in DTD_PLAYED_CAPS if gl[-1]["toi"] / f["std_toi"] < top)
+            if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
+                share = gl[-1]["toi"] / f["std_toi"]
+                if p["injury"] == "DAY_TO_DAY":
+                    inj = next(c for top, c in DTD_PLAYED_CAPS if share < top)
+                elif share < DTD_PLAYED_CAPS[0][0]:
+                    inj = min(inj, OUT_LEFT_EARLY_CAP)
             if p.get("injury") in SKATER_INJURY_CAP:
                 injury_log.append({"date": today.isoformat(), "espn_id": p["id"], "nhl_id": pid, "name": p["name"],
                                    "status": p["injury"], "long_note": bool(note and note["long"]),
