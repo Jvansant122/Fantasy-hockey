@@ -636,6 +636,10 @@ Two kinds of skater have just come back into the lineup, and they go opposite wa
 
 The site counts only starts, so a goalie who came on in relief in his team's last game looked like an idle backup. In five seasons of replays he started the next game more often than shown: after the starter was pulled, 58% against 47%; after the starter left hurt, 75% against 65%; after other relief appearances, 65% against 45%. The gap was biggest for a third goalie or call-up with 0-3 of the team's last 20 starts (47% against 23%): a rarely used goalie dressing as the backup usually means the regular backup is hurt or gone. **A goalie who relieved in his team's last game now gets a higher start chance for the next game and a smaller boost for the rest of the week, with a bit more for one who rarely starts.** It predicted starters better in all five seasons held out. A Daily Faceoff confirmation still overrides. This matters for streaming: a call-up who just came on in relief is a real stream for the next few games.
 
+## 74. Daily Faceoff names spelled differently
+
+Daily Faceoff and ESPN sometimes spell a name differently: Gabriel and Gabe Perreault, Nicholas and Nick Robertson, Jacob and Jake Middleton, Elias Nils and Elias N. Pettersson, Matthew and Matt Murray. The site matched names exactly, so those four skaters showed as "not in Daily Faceoff's lineup" on every run (and the Tonight card benched them) even though they played every game, and Matt Murray's confirmed start for Nashville on Oct 10 was ignored. **The site now accepts a Daily Faceoff name on the same team with the same last name and the same first two letters of the first name.** Vancouver has two Elias Petterssons, so a name another player matches exactly is never borrowed, and the line (forward or defense) decides between two.
+
 ## What the independent review changed
 
 | Review point | Outcome |
