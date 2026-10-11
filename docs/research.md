@@ -736,6 +736,18 @@ Two fixes to ratings shipped earlier today (findings 213):
 - **The injury-cleared boost** (section 88) still went to a player flagged on the same day he played: 6 of 27 day-to-day flags this week were dated a game day. A flag on the day of his last game now counts only if he left that game early, since an injury in a game is flagged that same day (findings 213).
 - **The goalie stream card's open-slot count** switched sources at puck drop. Before the game it used the site's own start chance; once the game started it used Daily Faceoff's unconfirmed guess, so a team's open slots could change from 1 to 2 while nothing new was known. After the start it now uses a confirmed starter if there is one, otherwise the site's chance from before the game (findings 213).
 
+## 95. Checks before publishing, and six rating fixes
+
+**Checks.** Every data update is now checked before it is published (findings 215). It must keep rules that every past version should have kept: games left match the schedule, expected games never exceed games left, Week equals points a game times games, goalie starts fit in the team's games, and each night sits on its real date. Replayed on all 61 versions up to Oct 11, these rules flag exactly the versions with known bugs and none of the others. A version that breaks a rule isn't published: the site keeps the last good data and GitHub emails Jack. A change that moves the ratings of players who haven't played since the last version prints a warning instead; it would have flagged the slip in section 91 the moment it went live.
+
+**Rating fixes** (findings 216-217):
+- **A goalie out for the season** (Shesterkin, ruled out on Oct 10) had a Season rating of 1.41, the best of any free agent or waiver goalie, because ESPN's headline said only "LTIR". The site now also reads the longer note, in sentences that name him, and gives such a goalie a Season of 0. His share of starts goes to the team's healthy goalies, so Garand, the Rangers' only healthy goalie, is no longer 68th.
+- **A goalie who left his last start without a decision** has his Season share cut (section 79). The share he loses now goes to his partners instead of disappearing, and a goalie ESPN already lists as out isn't cut twice.
+- **Early-season start shares** no longer treat a no. 1 whose old partner left (Swayman, Sorokin, Vejmelka) as a near-100% starter. The prior from last season's starts divides by at least 70, which halved the error in a 2022-26 backtest (0.186 to 0.092, better in 4 of 4 seasons).
+- **A confirmed starter the site can't match** (a call-up who isn't in the NHL data yet) now means the team's other goalies sit that game, instead of keeping their usual chances.
+- **Unsigned players** (Kane, Tarasenko and five more, no NHL team or games) were rated as if they dress for 90% of games. They now get the not-playing 10%.
+- **A player who missed all of last season** (Barkov) was rated like a newcomer. Under 10 games last season now falls back to the season before, for players on an NHL roster or with games this season.
+
 ## What the independent review changed
 
 | Review point | Outcome |
