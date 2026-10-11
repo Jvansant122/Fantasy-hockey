@@ -719,3 +719,28 @@ def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
     assert out[True]["cr"] == out[None]["cr"]
     assert out[False]["cr_dress_next"] >= rating.DFO_LINEUP_NEXT and out[False]["cr"] > out[None]["cr"]
     assert out[False]["sat_last"]  # still true; the page's Mid-week swaps card reads dfo_out to leave him out
+
+
+def test_opening_games_cut_short(monkeypatch, tmp_path):
+    # two games this season, the latest a few minutes: points a game averaged with leaving it out (findings 171)
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for name, games in (("off", 0), ("on", 3)):
+        monkeypatch.setattr(rating, "SHORT_OPENING_GAMES", games)
+        fake = FakeSession(missed={1: {0, 1}}, short_last={1: 200})
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(101, "Auston Matthews", "TOR", "C")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        out[name] = players[0]
+    assert out["on"]["cr_fpg"] > out["off"]["cr_fpg"]
+    assert out["on"]["cr_season"] > out["off"]["cr_season"]
+
+
+def test_short_opening_rule():
+    prev = {"toi": 22.0}
+    assert rating.short_opening([{"toi": 4.5}], prev) == []
+    assert rating.short_opening([{"toi": 21.0}, {"toi": 4.5}], prev) == [{"toi": 21.0}]
+    assert rating.short_opening([{"toi": 4.5}, {"toi": 21.0}], prev) is None  # the latest was full length
+    assert rating.short_opening([{"toi": 21.0}] * 3 + [{"toi": 4.5}], prev) is None  # 4th game on: no change
+    assert rating.short_opening([{"toi": 4.5}], None) is None

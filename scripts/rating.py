@@ -544,6 +544,18 @@ def skater_features(games, prev, xg_now, xg_prev, team_games):
     return f
 
 
+SHORT_OPENING_GAMES, SHORT_OPENING_TOI = 3, 0.5  # 1-3 games, the latest under half of last season's TOI (findings 171)
+
+
+def short_opening(games, prev):
+    """His games this season without the ones cut short, when he has 1-3 games and the latest was under half of last
+    season's average TOI (left hurt in the opening week); None otherwise."""
+    if not games or len(games) > SHORT_OPENING_GAMES or not prev or not prev.get("toi"):
+        return None
+    lo = SHORT_OPENING_TOI * prev["toi"]
+    return [g for g in games if g["toi"] >= lo] if games[-1]["toi"] < lo else None
+
+
 def dress_features(games, team, team_games, f, today):
     """Lineup-history inputs for the P(dresses) logistic, from this season's games on his current team since he joined.
     None when he hasn't played for the team yet (the old table and fallbacks apply)."""
@@ -1049,6 +1061,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             f["is_D"] = 1.0 if p["pos"] == "D" else 0.0
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
+            # opening games cut short: average with his points a game leaving those games out (findings 171)
+            kept = short_opening(gl, prev.get(pid)) if pid else None
+            if kept is not None:
+                f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg)
+                f2["is_D"] = f["is_D"]
+                f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
+                fpg = (fpg + model.fpg(f2)) / 2
             df_, base_dress, cap = None, None, 1.0
             if pid is None:  # not on an NHL roster or in NHL stats this season or last
                 p_dress = NOT_PLAYING_DRESS

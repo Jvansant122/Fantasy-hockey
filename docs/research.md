@@ -648,6 +648,10 @@ When ESPN drops a player's injury or suspension status but he hasn't played yet,
 
 A skater who sat his team's last game gets about a 20% chance for the next one. Daily Faceoff's projected lines, which the site already reads, often know better: in the first live days of the season, all 14 skaters with no injury status who had sat the last game but were in Daily Faceoff's forward or defense lines dressed for the next game. **Such a player now gets at least a 90% chance for the next game, the rest of his week is priced as if he had played the last game, and the Mid-week swaps card no longer suggests replacing him.** This is an early read from a few days of logs and will be rechecked at the end-of-October review.
 
+## 77. Opening games cut short
+
+Jake Sanderson left his only game of the season after four and a half minutes, so the site rated him 0.38 points a game against 2.4 last season. In four seasons of replays, skaters whose 1-3 games this season ended with one under half their usual ice time scored 0.95-0.99 points a game over their next 20 games; the site's number ran 0.32 low, while leaving the short games out ran 0.16 high (players who leave hurt do run a little below last season afterwards). **For a skater with 1-3 games this season whose latest was under half of last season's ice time, the site now averages its usual points a game with the one it gets leaving those short games out.** The error fell from 0.41 to 0.28 points a game, better in all four seasons. From his fourth game on nothing changes. Sanderson goes from 0.38 to about 1.3 points a game.
+
 ## What the independent review changed
 
 | Review point | Outcome |
