@@ -600,6 +600,10 @@ Section 60 fixed the chance a just-traded skater dresses this week. The Season r
 
 The site took a skater's team from his last NHL game, not from ESPN. So after a trade, every game his old team played before he suited up for the new one counted as a game he missed. For a few days he looked like a scratch: about 40-50% to dress this week and 30-37% for the next game, when a player in that spot dresses about 90% of the time. That happened about 25-30 times a season, right when people look at him on the wire. **When ESPN lists a skater on a different team from his last game, the site now stops counting his old team's games after his last one and gives him the just-traded boost from section 60 from his first game with the new team.** In the replay that takes him to about 88% for the week and 94% for the next game. His games this week already came from ESPN's team.
 
+## 65. A goalie who leaves no longer keeps his old team's starts
+
+The goalie start model listed as candidates every goalie who had started for the team in its last 20 games, plus the current roster. So after a goalie was traded or waived away, the site kept giving him part of his old team's starts: about 42% of the next start in the first 3 games after he left, fading to 6% by games 13-20. That left the goalies still there, often a backup just promoted to starter, underrated for weeks. **Start shares now count only the goalies on the team's current NHL roster (plus a Daily Faceoff confirmed starter), and each goalie's numbers come from the team whose roster lists him.** In the replay the real starter's chance of starting the next game rose from 47% to 53%. It affects about 5 goalie moves a season, worth roughly 0.3-1 point a week to the old team's new no. 1 while it lasts.
+
 ## What the independent review changed
 
 | Review point | Outcome |

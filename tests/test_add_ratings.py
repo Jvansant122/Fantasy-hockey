@@ -407,6 +407,17 @@ def test_goalie_new_team_season_share_counts_from_arrival():
     assert moved[1] == pytest.approx(base[1])
 
 
+def test_departed_goalie_takes_no_starts():
+    """A goalie in the team's recent starts who is no longer on its roster gets none of its starts; with no roster
+    the recent starters stand in (findings 160)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 3 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24"]
+    out = rating.goalie_starts(model, "TOR", [1, 3], {"TOR": hist}, {1: 50, 2: 32, 3: 10}, dates, date(2026, 10, 22))
+    assert 2 not in out and sum(out.values()) == pytest.approx(2)
+    assert 2 in rating.goalie_starts(model, "TOR", [], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22))
+
+
 def test_last_start_result_shifts_the_next_games():
     """A bad start (5+ against, or pulled after 3+) lowers the starter's chance in the next game and a little in
     the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""
