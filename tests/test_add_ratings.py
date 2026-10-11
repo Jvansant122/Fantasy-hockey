@@ -878,3 +878,21 @@ def test_history_runs_to_last_night_in_an_overnight_run(monkeypatch):
     assert rating.history_end(sat) == date(2026, 10, 9)
     monkeypatch.setattr(rating, "et_date", lambda: date(2027, 1, 1))  # far-off clock: unchanged
     assert rating.history_end(sat) == date(2026, 10, 9)
+
+
+def test_back_to_back_no1_early_in_the_season(monkeypatch):
+    """Through a team's 10th game the no. 1 on night 2 gets an extra shift after the split; from the 11th, none (findings 213)."""
+    model = rating.Model()
+
+    def p(n_games, early):
+        monkeypatch.setattr(rating, "B2B_NIGHT2_NO1_EARLY", early)
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), 2 if i % 4 == 3 else 1) for i in range(n_games - 1)]
+        last = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        hist.append((last.isoformat(), 1))
+        nxt = last + timedelta(days=1)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
+        return out
+    early, off = p(6, rating.B2B_NIGHT2_NO1_EARLY), p(6, 0.0)
+    assert early[1] < off[1] - 0.02 and early[1] + early[2] == pytest.approx(1)
+    assert p(12, rating.B2B_NIGHT2_NO1_EARLY)[1] == pytest.approx(p(12, 0.0)[1])

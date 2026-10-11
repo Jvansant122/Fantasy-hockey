@@ -77,6 +77,10 @@ BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its 
 B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
+# both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
+# with every rostered goalie, n=125, better in 5 of 5 seasons): an extra shift on his share after the split. The streak shift
+# already fits there (68% against 63%, and a larger one scores worse) (findings 213, handoff 105)
+EARLY_GAMES, B2B_NIGHT2_NO1_EARLY = 10, -1.0
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
 # a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
@@ -232,12 +236,13 @@ def nhl_get(s, url, **params):
             print(f"Retrying {url}: {e}", file=sys.stderr)
 
 
-def stats_report(s, report, season, start=None, end=None):
-    """One NHL stats API report. With dates: one row per player-game; without: season totals per player."""
+def stats_report(s, report, season, start=None, end=None, teams=False):
+    """One NHL stats API report. With dates: one row per player-game; without: season totals per player
+    (teams=True keeps the teamAbbrevs column, which the aggregate view leaves empty)."""
     exp = f"seasonId={season} and gameTypeId=2"
     if start:
         exp += f' and gameDate>="{start}" and gameDate<="{end}"'
-    return nhl_get(s, f"{NHL_STATS}/{report}", isAggregate="false" if start else "true", isGame="true" if start else "false",
+    return nhl_get(s, f"{NHL_STATS}/{report}", isAggregate="false" if start or teams else "true", isGame="true" if start else "false",
                    start=0, limit=-1, cayenneExp=exp).json()["data"]
 
 
@@ -363,10 +368,11 @@ def load_goalie_games(s, season, today):
 def load_prev_season(s, season):
     """Last season's per-game rates per skater, from season totals."""
     out = {}
-    for r in stats_report(s, "skater/summary", season):
+    for r in stats_report(s, "skater/summary", season, teams=True):
         gp = r.get("gamesPlayed") or 0
         if gp:
             out[r["playerId"]] = {"gp": gp, "name": r["skaterFullName"], "pos": r["positionCode"],
+                                  "team": (r.get("teamAbbrevs") or "").split(",")[-1].strip() or None,
                                   "toi": (r.get("timeOnIcePerGame") or 0) / 60,
                                   **{k: (r.get(k) or 0) for k in ("goals", "assists", "ppPoints", "shPoints", "shots")}}
     for r in stats_report(s, "skater/realtime", season):
@@ -382,7 +388,28 @@ def load_prev_season(s, season):
         rates[pid] = {"gp": gp, "name": t["name"], "pos": t["pos"], "fp": fp / gp, "toi": t["toi"],
                       "pptoi": t.get("pptoi_tot", 0) / gp, "points": (t["goals"] + t["assists"]) / gp,
                       **{k: (t.get(k) or 0) / gp for k in ("shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints")}}
+    prev_ranks(rates, {pid: t.get("team") for pid, t in out.items()})
     return rates
+
+
+def prev_ranks(rates, team_of):
+    """Last season's usage ranks, for skaters with no game yet this season (findings 213): his PP TOI/G rank among his last
+    team's regulars (12 F and 6 D with the most games) and his TOI/G rank among its forwards or defensemen, with pp1 and
+    top_line from them as in add_ranks. Without a last team they stay unset and the model fills the training mean."""
+    by_team = {}
+    for pid, r in rates.items():
+        if team_of.get(pid):
+            by_team.setdefault(team_of[pid], []).append(pid)
+    for pids in by_team.values():
+        regs = {g: sorted((p for p in pids if pos_group(rates[p]["pos"]) == g), key=lambda p: -rates[p]["gp"])[:n]
+                for g, n in (("F", 12), ("D", 6))}
+        pool = regs["F"] + regs["D"]
+        for pid in pids:
+            r, grp = rates[pid], pos_group(rates[pid]["pos"])
+            r["pp_rank"] = 1 + sum(rates[q]["pptoi"] > r["pptoi"] for q in pool if q != pid)
+            r["toi_rank"] = 1 + sum(rates[q]["toi"] > r["toi"] for q in regs[grp] if q != pid)
+            r["pp1"] = 1.0 if r["pp_rank"] <= 5 and r["pptoi"] > 0.5 else 0.0
+            r["top_line"] = 1.0 if r["toi_rank"] <= (2 if grp == "D" else 3) else 0.0
 
 
 def load_prev_goalie_season(s, season):
@@ -578,10 +605,10 @@ def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False):
             tail = games[-n:] if n else games
             # no games yet this season: lean on last season
             f[f"{w}_{r}"] = mean([g[r] for g in tail]) if tail else f.get(f"prev_{r}")
-    for r in RANK_RATES:  # no last-season window: None before his first game, filled with the training mean
+    for r in RANK_RATES:  # before his first game: last season's ranks (findings 213), else None and the training mean
         for n, w in ((5, "l5"), (10, "l10"), (20, "l20"), (None, "std")):
             tail = games[-n:] if n else games
-            f[f"{w}_{r}"] = mean([g.get(r) for g in tail]) if tail else None
+            f[f"{w}_{r}"] = mean([g.get(r) for g in tail]) if tail else (prev or {}).get(r)
     if f.get("std_ixg") is None and not gp:
         f["std_ixg"], f["std_onice_xgf"] = f["prev_ixg"], f["prev_onice_xgf"]
     w = min(gp / 20, 1)
@@ -825,9 +852,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         # a team-wide break rests everyone: the last starter isn't benched just because days passed (findings 196)
         gap = (day - date.fromisoformat(last_date)).days if ahead == 0 and last_date else 0
         rested = next((v for days, v in BREAK_LOGITS if gap >= days), 0.0)
+        night2_no1 = False
         if gap == 1 and seq:  # night 2 of a back-to-back: shift whoever started night 1, by role
             top = max(seq[-20:].count(g) for g in set(seq[-20:]))
-            rested = B2B_NIGHT2_NO1 if seq[-20:].count(seq[-1]) == top else B2B_NIGHT2_OTHER
+            night2_no1 = seq[-20:].count(seq[-1]) == top
+            rested = B2B_NIGHT2_NO1 if night2_no1 else B2B_NIGHT2_OTHER
         b2b = float(bool(log) and (day - log[-1][0]).days == 1)
         week = [gid for gd, gid in log if (day - gd).days <= 7]
         raw = {}
@@ -851,9 +880,14 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             if z and 0 < raw[gid] < 1:
                 raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + z)))
             raw[gid] *= injury.get(gid, 1.0)
-        ahead += 1
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
+        early = B2B_NIGHT2_NO1_EARLY if night2_no1 and len(seq) <= EARLY_GAMES else 0.0
+        if early and 0 < p.get(seq[-1], 0) < 1:
+            was = p[seq[-1]]
+            now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + early)))
+            p = {gid: now if gid == seq[-1] else v * (1 - now) / (1 - was) for gid, v in p.items()}
+        ahead += 1
         q = p
         if ahead > 1:  # games after the next one are softened and split across the team's goalies again; the chain keeps p
             q = {gid: v if v <= 0 or v >= 1 else 1 / (1 + math.exp(-LATER_GAME_TEMP * math.log(v / (1 - v)))) for gid, v in p.items()}
