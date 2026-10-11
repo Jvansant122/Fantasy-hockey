@@ -2,7 +2,7 @@
 
 What each part of the rating does, what it uses, how much it was measured to matter, and what it leaves alone. Written for a fantasy manager; the research behind every number is in [the research write-up](research.md), and every idea tried is in the [ideas ledger](ideas-ledger.md).
 
-Current as of Oct 11, 2026 (site code through PR #80).
+Current as of Oct 11, 2026 (site code through PR #97).
 
 ## The two numbers
 
@@ -51,16 +51,19 @@ How good is it overall? Ranking skaters on next week's points per game, the rati
 
 ## 1. Skater points per game
 
-**What it uses:** a per-stat model (ridge regression) with 79 inputs, all from the NHL stats API and MoneyPuck:
+**What it uses:** a per-stat model (ridge regression) with 104 inputs, all from the NHL stats API and MoneyPuck:
 - ice time and power-play time over the last 5, 10 and 20 games;
 - shots, shot attempts, hits, blocks, goals, assists, power-play points and fantasy points per game over the same windows, the season to date and last season;
 - expected goals (his own and on-ice) this season and last;
 - scoring per minute (this season plus half of last, pulled toward the position average) × last-5-game ice time, so a role change counts more for an efficient scorer;
-- games played, whether he's a defenseman, and whether he has a last season.
+- games played, whether he's a defenseman, and whether he has a last season;
+- where he ranks in his own team's power-play time and ice time each game (top-5 PP time, top-3 forward or top-2 defenseman minutes), with position-by-usage terms (25 inputs, PR #86).
 
-Two special cases:
+Special cases:
 - **Opening games cut short (PR #73):** with 1-3 games this season and the latest under half of last season's ice time, the number is the average of the usual one and one that leaves the short games out. Error fell from 0.41 to 0.28 points a game in all four seasons tested (Sanderson went from 0.38 to about 1.3). From his 4th game on nothing changes.
 - **Traded or claimed skaters:** his games for every team this season count, so his rate travels with him. Only his chance of dressing has trade rules (part 2).
+- **Yet to play this season (PR #88):** the team-usage ranks come from last season's role, where he ranked in power-play and total ice time per game among his last team's regulars. Only a player with no NHL games last season gets the league average (it had pulled McAvoy down 0.19 a game and Bedard 0.12).
+- **Lost season (PR #92):** a player with under 10 games last season (Barkov) uses the season before instead, if he is on an NHL roster or has games this season.
 
 ESPN players are matched to NHL stats by name, team and position, which splits same-name teammates (Vancouver's two Elias Petterssons) and accepts short first names ("Zack" Bolduc). A player not matched gets a replacement level of 1.04 (F) / 1.17 (D).
 
@@ -93,7 +96,7 @@ ESPN players are matched to NHL stats by name, team and position, which splits s
 | A regular returns from injury (PR #33) | The least-used healthy skater at that position on his team loses 8 points (F) or 12 (D) | Measured over 351 returns |
 | Idle 15+ days while his team kept playing | Capped at 50% (15-21 days), 20% (22-35), 10% (longer) | |
 
-Fallbacks: before his team has played, 90% if he played last season (50% if not). A player not on any NHL roster or stat sheet gets 10%.
+Fallbacks: before his team has played, 90% if he played last season (50% if not). A player not on any NHL roster or stat sheet gets 10%, and so does an unsigned free agent with no NHL team or games this season (Kane, Tarasenko; PR #92, before which they rated as 90% likely to dress).
 
 **What it changes:** expected games this week (the sum of the per-game chances), which scales the Week rating. Shown as `cr_dress` (the week's average) and `cr_dress_next` (next game, used by the Tonight card).
 
@@ -158,9 +161,12 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 - **Games already started (PR #75):** a data run doesn't count a game that has started, and the page, using your device's clock, takes it out of the player's games and Week points and out of tonight's cards.
 - **Adds after the day's first puck (PR #80):** ESPN holds such an add until its overnight rollover, so for free agents and waiver players today's game is gone once the first game of the day starts (all 6 such logged adds joined the next day). Your own players count until their own game starts.
 - **Waiver players** count only the games after they clear (tag: "waivers, clears Sun 11").
+- **The schedule comes from ESPN's fantasy view (PR #97).** A misspelled view name had sent every run to ESPN's public scoreboard, which dates nights by the clock. Nights with no NHL games (Thanksgiving, Christmas, the Olympic break) now keep ESPN's date and don't count as light nights.
 - The data refreshes at about 6 AM, 9 AM, 12:40 PM and 5 PM ET; when the page shows an earlier day's data, a note says so and tonight's cards are hidden.
 
 **What it changes:** the Week rating for everyone (skaters via games × chance to dress, goalies via the games their starts are spread over). It's why a 4-game week outranks a better player with 2 games.
+
+**Data-run safety (PRs #91, #97):** every update is checked before it publishes (games left match the nights, expected games within games left, Week = points a game × games, goalie starts within team games, nights on their dates; 6, 7 or 14 nights by matchup length). A run with fewer than 100 free agents or 10 injury statuses is blocked, and the site keeps the last good data. When ESPN's injury notes or Daily Faceoff fail, the run reuses the last copy from the past day.
 
 **How much it matters:** a top pickup scores 6.1 in his first week and about 4 in later weeks; most of that edge is schedule. On Oct 10 the stream card had offered goalies whose games had already started. The light-nights dots and **Open** column are shown next to the rating but don't change it: matching pickups to open nights didn't beat taking the best projected weeks.
 
@@ -169,15 +175,17 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 ## 6. Goalie expected starts
 
 **What it uses:** a start model (logistic) for each remaining game: his share of the team's last 5, 10 and 20 starts and the season, last season's share, whether he started the previous game, back-to-backs, his run of straight starts, days since his last start, and team games and his starts in the last 7 days. Only goalies on the team's current NHL roster (plus a Daily Faceoff confirmed starter) share the starts (PR #61). Adjustments on top:
-- **Early season (PR #14):** until his team's 10th game, shares are blended with last season's split.
+- **Early season (PR #14):** until his team's 10th game, shares are blended with last season's split. Last season's starts are divided by at least 70 (PR #92), so a no. 1 whose old partner left (Swayman, Sorokin, Vejmelka) isn't treated as a near-100% starter.
 - **Last game's result (PRs #46-#48, #63):** after a bad start (5+ against, or pulled after 3+) his next-game chance drops and part of the drop carries to the game after; after a win it rises (a bit more after a win allowing 0-1), after a loss it falls.
 - **Left early with no decision (PRs #63-#64):** about 12% for the next game, and the cut lasts the rest of the matchup (easing after the second game), until he starts or is confirmed.
 - **Came on in relief last game (PR #69):** higher chance next game and a smaller boost later, more for a goalie with 0-3 of the last 20 starts.
 - **Long team break (PR #74):** the last starter gets a boost for the first game after 4+ days off, bigger after 7+.
+- **Second night of a back-to-back, night 1 played (PR #84):** the night-1 starter's chance for night 2 goes down if he is the team's no. 1 (most starts in the team's last 20) and up if he isn't; through the team's 10th game a no. 1 gets an extra nudge toward resting (PR #88).
+- **Five to seven straight starts (PR #85):** the starter's next-game chance is trimmed (about 9 points) and the backup's raised to match; runs of 8+ are left alone.
 - **Traded or claimed (PR #57):** +1.0 on the log-odds scale until his 4th start for the new team.
 - **Games 2+ ahead (PR #48):** pulled a little toward an even split, since the chained week ran overconfident.
 - **Injured goalie (PR #17):** his chance shrinks (part 3) before each game is split, so his partner gets his starts.
-- **Daily Faceoff:** a goalie listed as **Confirmed** for today or tomorrow gets that game as a certain start and his partner zero, overriding every shift above. Names spelled differently (Matt / Matthew Murray) still match (PR #70). "Likely" and unconfirmed are shown on the row but don't change the number.
+- **Daily Faceoff:** a goalie listed as **Confirmed** for today or tomorrow gets that game as a certain start and his partner zero, overriding every shift above. Names spelled differently (Matt / Matthew Murray) still match (PR #70). "Likely" and unconfirmed are shown on the row but don't change the number. A confirmed starter the site can't match to NHL data (a call-up) still sits the team's other goalies that game (PR #92).
 
 **What it changes:** expected starts (`exp_starts`), which multiplies points per start into the Week rating. It also gives tonight's start chance used by the stream card.
 
@@ -186,6 +194,8 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 - Early-season blend: error in a team's first 4 games 0.84 → 0.67 starts per goalie. Injured starter: backup 0.98 → 2.38 projected starts per 4 games (actual 2.24).
 - After a bad start the goalie started 31% of next games vs 44% shown (about 0.4 points per goalie). No decision: 12% actual vs ~45% shown, about 20 times a season; over a four-game week about one start moves to the partner. Relief: 58-75% next game vs 45-65% shown. After a 7+ day break the last starter started 63% vs 47%.
 - Later-game softening cut no. 1 overstatement from 0.21 to 0.08 starts per four games. Traded goalies: 32% next start actual vs 20% shown.
+- Back-to-backs: a no. 1 who played night 1 started night 2 11% of the time against 18% shown, a backup 8.5% against 4% (error down 2%, 5 of 5 seasons); in a team's first 10 games 3% against 7% shown. Five to seven straight starts: 56% next start actual against 70% shown (error down 2.6%, 5 of 5 seasons).
+- Early-season prior divided by at least 70: error halved in a 2022-26 backtest (0.186 to 0.092, 4 of 4 seasons).
 - Confirmed starters: worth about a third more points per streamed goalie (+0.76 per day); Confirmed was right 54 of 56 times in the first live days.
 
 **What it doesn't affect:** points per start, skaters.
@@ -207,7 +217,8 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 **What it uses:** his share of his team's starts: three quarters from this season (blended with last season's split over 10 games) and a quarter from recent form, each game counting half as much every 5 team games back (PR #37). Then:
 - × **0.88** for every goalie (PR #76, was 0.93 in PR #62): starts that go to goalies not on the roster yet, and shares spreading over a whole season.
 - A **traded or claimed** goalie's share counts only the team's games since his first start for it (PR #58).
-- A goalie who **left his last start with no decision** gets × 0.68 until he starts again or is confirmed (PR #67).
+- A goalie who **left his last start with no decision** gets × 0.68 until he starts again or is confirmed (PR #67). The share he loses goes to his healthy partners (PR #92), and a goalie ESPN already lists as out isn't cut twice.
+- A goalie **out for the season** (from ESPN's longer note, in sentences that name him) gets a Season of 0, and his share goes to the team's healthy goalies (PR #92: Shesterkin had topped the waiver goalies at 1.41).
 
 Times his points per start (part 7, own rate only).
 
@@ -215,7 +226,7 @@ Times his points per start (part 7, own rate only).
 
 **How much it matters:** the recent-form quarter made rest-of-season errors 11% smaller right after a starter change (+0.013 rank correlation). The 0.88 scale cut the rest-of-season error from 0.545 to 0.537 points a game and moves every goalie by the same factor (a no. 1 drops about 0.15 points a game), so it matters where goalies are weighed against skaters. The trade fix cut the error for movers by about a third (a 1-3 start mover went from 11% to 29-31% of starts). The no-decision trim is worth about 0.5 points a game of Season rating for a no. 1.
 
-**What it doesn't affect:** the Week rating, ESPN injuries (no injury discount in Season).
+**What it doesn't affect:** the Week rating. ESPN's day-to-day, OUT and IR flags don't discount it; the only injury rule is the out-for-the-season 0 above.
 
 ## 9. Keep value
 
@@ -240,16 +251,21 @@ These cards use the rating; none of them change it. All are for the team picked 
 | **Move plan** (Upgrades header) | 7 moves a matchup (6 in the 6-day first one, 14 in a playoff round): 2 skater moves Monday, keep 5 for injury swaps and goalie streams; carry 2 goalies plus a stream slot | +5.6 pts a week over all 7 on Monday; 2 goalies plus a stream slot beats a third regular goalie by about 2 more |
 | **Activate from IR** | A healthy player sitting in your IR slot, whose points don't count | Celebrini's 2.9 points were lost this way on Oct 10 |
 | **Two-week playoff round** | One pool of moves for both weeks; about 2 skater moves each Monday | A week with no moves ran about 20 pts behind |
+| **Waiver claims** (PR #94) | A player on waivers gets "put in a claim": a losing claim uses no move. Shows your place in ESPN's waiver order; a drop with Season 1.5+ is tagged as one others will claim | Every losing claim in the league's logs was cancelled without using a move |
 | **Mid-week swaps** | Your skaters who are out, suspended, or sat the last game (unless back in Daily Faceoff's lines), next to the best free agent at their position; IR-eligible noted when an IR slot is open | +1.1 to +1.4 pts/roster/week from holding moves for this |
 | **Stream a goalie tonight** | When fewer than two of your goalies start tonight: free-agent goalies confirmed to start, ranked by tonight's line, with moves left. Before first puck it says the time to add by; after it, that a goalie added now plays from tomorrow. Waiver goalies and started games are left out | Each of the first 2-3 streams adds 2-4 pts; which confirmed goalie matters little (~0.4) |
-| **Tonight** | On a crowded night, start by per-game rating × next-game dress chance, bench the rest; skaters not in Daily Faceoff's lineup or who sat last game are flagged | +0.9 pts a week, mostly from benching flagged players |
-| **Best 2 moves** | The biggest keep-value gains over your weakest player at the same position, never more than your moves left and never a Mid-week swaps pick | +0.9 pts a week over the best free agent overall |
+| **Tonight** | On a crowded night, start by per-game rating × next-game dress chance, bench the rest; skaters not in Daily Faceoff's lineup or who sat last game are flagged. Started players in the lineup fill their slots first (PR #87), but not those on ESPN's bench (PR #96); F and D counted separately against 9 F and 5 D plus the UTL | +0.9 pts a week, mostly from benching flagged players; before PR #96, 21 of 84 Saturday checks benched players still to play |
+| **Best 2 moves** | The biggest keep-value gains over your weakest player at the same position, never more than your moves left. Skips anyone Mid-week swaps already drops and counts the swaps' adds against moves left (PR #96). On the matchup's last night before its first game, lists every move left and says unused moves expire tonight (PR #95) | +0.9 pts a week over the best free agent overall; Sunday's extra moves were worth 2.8-9.1 keep points per team |
 | **Forwards / Defense / Goalies** | Free agents whose keep value beats your weakest at that position by 0.5+ | The Monday plan beats daily streaming by ~2 pts a week |
 | **Drop list** | Your five lowest keep values, each with the best free agent at his position and the gain | Doubles each move's gain: +3.6 vs +1.7 dropping by season points |
 | **IR stash** | With an open IR slot: up to 3 OUT or IR free agents at 1.5+ pts a game | 15-18 pts rest of season at 1.5-1.8, about 33 at 1.8+ |
-| **Trade ideas** | Up to 5 offers where ESPN projects both players within 0.05 a game but Season differs by 0.3+, across positions if your roster stays at 11-13 F and 6-8 D | About 1 pt a week per trade, better player 70% of the time |
-| **Goalies** | With 3 healthy goalies: the third spot is your stream slot, drop the lowest keep value for tonight's confirmed starter; with 4+, use the extra spot on a skater | Literal "spot on a skater" advice cost about a fifth of a matchup win every 8 weeks |
-| **Trade check** (own panel) | Sums Season ratings for any trade; shows about 0.87 × gap × 3.5 pts a week and how often a gap that size picked the right side (53% to 87%) | Calibrated on 2023-26 skaters; goalies rougher |
+| **Trade ideas** | Up to 5 offers where ESPN projects both players within 0.05 a game but Season differs by 0.3+, across positions if both your roster and the partner's stay at 11-13 F and 6-8 D (partner side, PR #87) | About 1 pt a week per trade, better player 70% of the time |
+| **Goalies** | With 3 healthy goalies: the third spot is your stream slot, drop the lowest keep value for tonight's confirmed starter; with 4+, use the extra spot on a skater. After the day's first game, says a stream counts from tomorrow (PR #87) | Literal "spot on a skater" advice cost about a fifth of a matchup win every 8 weeks |
+| **Trade check** (own panel) | Sums Season ratings for any trade; shows about 0.87 × gap × 3.5 pts a week and how often a gap that size picked the right side (53% to 87%). Never drops a goalie to make room unless goalies are in the trade (PR #87) | Calibrated on 2023-26 skaters; goalies rougher |
+
+**Labels and phones (PRs #93, #96):** gains say what they measure ("+7.4 keep", or "+1.1 Season" with no moves left). On a phone the table fits the screen, each card's explanation folds behind "why" (except the Stream, Tonight, Forwards, Defense and Goalies cards, whose lines carry the deadline and who to bench or drop), and the waiver, injury and team tags wrap on their own line under the name.
+
+**Ties in the table (PR #87):** players tied on the sorted column (every free agent's Week is 0.0 from Sunday's first game until Monday's update) are listed by keep value. Data from a matchup that already ended no longer says no moves are left.
 
 **No moves left:** when your team has used all its moves, the add cards say "No moves left this matchup; these are next Monday's targets" and rank free agents by 7 × Season, waiver players who clear before Monday are dropped from the list, the stream card is hidden, and the Goalies card says to stream from next Monday.
 
