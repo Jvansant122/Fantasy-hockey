@@ -50,6 +50,7 @@ TIMELINE = re.compile(_NUM + r"(?:\s*(?:-|to)\s*" + _NUM + r")?\s*(?:more\s+|add
 INJURY_LOG = ROOT / "data" / "injury_log.jsonl"
 INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # not matched to NHL data at all
+PREV_MIN_GP = 10  # under this many games last season, use the season before (findings 216)
 # no NHL game in 14+ days while the team kept playing: cap by days since his last game (handoff 19-20 audit, re-test 3)
 IDLE_DRESS = ((21, 0.5), (35, 0.2))  # 15-21 days 0.5, 22-35 days 0.2, longer 0.1
 
@@ -91,6 +92,7 @@ NO_DECISION_LATER = (-2.0 / 0.8, -1.4 / 0.8)  # game after next, then every game
 NO_DECISION_GAMES = 16  # covers a two-week playoff round
 # ... and his Season start share runs high until he starts again: 0.48 against 0.33 of the next 20 starts (findings 167)
 NO_DECISION_SEASON = 0.68
+PRIOR_STARTS_FLOOR = 70  # last season's starts the early-season prior divides by, at least (findings 217)
 # a goalie who came on in relief in the team's last game looks like an idle backup, since only starts are counted, but
 # he starts next more often (0.47 against 0.58 after a pulled starter; third goalies and call-ups 0.23 against 0.47):
 # start-logit shifts for the next game and later games, plus more for one with 0-3 of the last 20 starts (findings 170)
@@ -691,8 +693,11 @@ def timeline_days(text):
 
 def injury_note(note, today):
     """What ESPN's latest injury note says (findings section 58): {long, season, days_left}. Status words come from the
-    headline (the longer comment often recaps old injuries); the stated timeline from both."""
+    headline (the longer comment often recaps old injuries); the stated timeline from both. Out for the season also from a
+    sentence of the longer comment that names him, since the headline may say only "LTIR" (Shesterkin, findings 216)."""
     short, long_ = note.get("short") or "", note.get("long") or ""
+    last = (note.get("name") or "").split()[-1:]
+    own = " ".join(x for x in re.split(r"(?<=[.!?])\s+", long_) if last and last[0].lower() in x.lower())
     days = timeline_days(short + " " + long_)
     left = None
     if days is not None:
@@ -700,8 +705,8 @@ def injury_note(note, today):
             left = days - (today - date.fromisoformat((note.get("date") or "")[:10])).days
         except ValueError:
             left = days
-    return {"long": bool(LONG_ABSENCE.search(short)) or (left is not None and left >= 14),
-            "season": bool(SEASON_OUT.search(short)), "days_left": left}
+    season = bool(SEASON_OUT.search(short) or SEASON_OUT.search(own))
+    return {"long": season or bool(LONG_ABSENCE.search(short)) or (left is not None and left >= 14), "season": season, "days_left": left}
 
 
 def usually_back(status, missed, note):
@@ -785,7 +790,7 @@ def ux_features(f, pos, mu):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=(), relief=()):
+                  injury=None, last_start=None, movers=(), relief=(), season_out=()):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -800,7 +805,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     a decision it stays down for every game in the window, until a Daily Faceoff confirmation names him (findings 164).
     movers: goalies who started for another NHL team this season; with 1-3 starts for this team their logit rises,
     and their season_share counts only this team's games since their first start for it.
-    relief: goalies who came on in relief in the team's last game; their start logit rises (findings 170)."""
+    relief: goalies who came on in relief in the team's last game; their start logit rises (findings 170).
+    season_out: goalies ESPN says are out for the season: no season_share, and theirs goes to the healthy ones (findings 216)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -814,6 +820,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     # 10th game, so one opening-night start doesn't read as a 100/0 split (findings section 41)
     k = EARLY_SHARE_K * max(0.0, 1 - len(seq) / EARLY_SHARE_GAMES)
     last_total = sum(prev_starts.get(gid, 0) for gid in cands)
+    # at least a full season's starts: a no. 1 whose old partner left isn't given a prior near 1 (findings 217)
+    last_total = last_total and max(last_total, PRIOR_STARTS_FLOOR)
     prior = {gid: prev_starts.get(gid, 0) / last_total if last_total else 1 / len(cands) for gid in cands}
     if season_share is not None:
         for gid in cands:
@@ -825,9 +833,20 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             ewm = (sum(wi for wi, x in zip(w, sq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
             season_share[gid] = SEASON_SHARE_SCALE * (0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K)
                                                       + 0.25 * ewm)
-            # left his last start without a decision and not yet confirmed back in net (findings 167)
-            if last_start and last_start[0] == gid and last_start[1][:1] == (NO_DECISION_LOGIT,) and gid not in confirmed.values():
-                season_share[gid] *= NO_DECISION_SEASON
+        # out for the season, or left his last start without a decision and not yet confirmed back in net (findings 167),
+        # unless ESPN already has him out: the share he loses goes to the team's healthy goalies (findings 216-217)
+        moved, takers = 0.0, [gid for gid in cands if gid not in season_out and gid not in injury]
+        for gid in cands:
+            cut = 1.0 if gid in season_out else (1 - NO_DECISION_SEASON) if (
+                last_start and last_start[0] == gid and last_start[1][:1] == (NO_DECISION_LOGIT,) and gid not in confirmed.values()
+                and injury.get(gid, 1.0) > 0) else 0.0
+            if cut:
+                moved += season_share[gid] * cut
+                season_share[gid] *= 1 - cut
+                takers = [g for g in takers if g != gid]
+        tot = sum(season_share[g] for g in takers)
+        for g in takers:
+            season_share[g] += moved * season_share[g] / tot if tot else 0.0
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):
@@ -1062,6 +1081,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if pid not in known or known[pid][0] is None:
                 add(pid, name, team, pos)
     on_roster = {pid for r in rosters.values() for pid, _, _ in r}
+    # missed all or most of last season (Barkov): the season before instead of a newcomer's prior, for players on a current
+    # NHL roster or with games this season, so retired players don't come back (findings 216)
+    missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
+    if missed:
+        older = load_prev_season(s, prev_season - 10001)
+        prev.update({pid: older[pid] for pid in missed if (older.get(pid) or {}).get("gp", 0) >= PREV_MIN_GP})
 
     def match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
@@ -1084,25 +1109,34 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         for g in page.get("games", []):
             cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")] \
                 or [pid for pid, (t, pos) in nickname_cands(index, g.get("goalie"), g.get("team")).items() if pos == "G"]  # "Matthew" Murray (findings 175)
-            if len(cands) != 1 or not page.get("date") or page["date"] < today.isoformat():
+            if not page.get("date") or page["date"] < today.isoformat():
+                continue
+            if not cands and g.get("status") == "Confirmed" and g.get("goalie"):
+                # a confirmed starter not in the NHL data yet (a new call-up): the team's other goalies sit (findings 217)
+                confirmed.setdefault(g["team"], {})[page["date"]] = f"unmatched:{g['goalie']}"
+                if page["date"] == today.isoformat():
+                    tonight[g["team"]] = (f"unmatched:{g['goalie']}", "Confirmed")
+            if len(cands) != 1:
                 continue
             if page["date"] == today.isoformat():
                 tonight[g["team"]] = (cands[0], g.get("status"))
             if g.get("status") == "Confirmed":
                 confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
-    goalie_inj = {}
+    goalie_inj, goalie_gone = {}, set()
     for p in players:
         if p["pos"] == "G" and p.get("injury") in INJURY_DRESS:
             pid = match(p)
             if pid:
                 goalie_inj[pid] = INJURY_DRESS[p["injury"]]
+                if p["id"] in notes and injury_note(notes[p["id"]], today)["season"]:
+                    goalie_gone.add(pid)
     goalie_exp, goalie_today, goalie_season = {}, {}, {}
     lines = line_win_probs(odds, today)
     for team, dates in sched.items():
         roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
         tod, sea = {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
-                            last_start.get(team), movers, relief.get(team, ()))
+                            last_start.get(team), movers, relief.get(team, ()), goalie_gone)
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         keep = (lambda gid: gid in mine) if roster_g else (lambda gid: gid not in goalie_exp)
@@ -1190,7 +1224,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
             df_, base_dress, cap = None, None, 1.0
-            if pid is None:  # not on an NHL roster or in NHL stats this season or last
+            if pid is None or (not gl and p["team"] == "FA"):  # not in NHL stats, or unsigned and yet to play (findings 216)
                 p_dress = NOT_PLAYING_DRESS
             elif f["dressed3"] is None:  # team hasn't played yet
                 p_dress = 0.9 if prev.get(pid) else 0.5

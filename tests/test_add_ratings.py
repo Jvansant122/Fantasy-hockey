@@ -58,11 +58,12 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1]):
+    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=()):
         self.calls = []
         self.missed = missed or {}  # player id: games he missed, replacing SKATERS' set
         self.short_last = short_last or {}  # player id: his ice time in seconds in the last game (left early)
-        self.short_date = short_date  # ... on this date (his last game when he sat the team's last)
+        self.short_date = short_date
+        self.away_last = set(away_last)  # player ids who missed all of last season but played the season before  # ... on this date (his last game when he sat the team's last)
         self.moved = moved or {}  # player id: his first n games this season were for the other team (a trade)
         self.scratched, self.rail_ok = set(scratched), rail_ok  # healthy scratches on each game page (McAvoy sat the last one)
 
@@ -108,15 +109,15 @@ class FakeSession:
         report, exp = m.group(1), params["cayenneExp"]
         season = int(re.search(r"seasonId=(\d+)", exp).group(1))
         dates = re.findall(r'gameDate[<>]="([\d-]+)"', exp)
-        if not dates:  # season totals: only last season has any
-            if season != 20252026:
+        if not dates:  # season totals: only last season has any (and the one before, for away_last players)
+            if season != 20252026 and not (season == 20242025 and self.away_last):
                 return Resp({"data": []})
             if report.startswith("goalie"):
                 return Resp({"data": [{"playerId": pid, "gamesStarted": 40, "wins": 22, "losses": 12, "otLosses": 6, "goalsAgainst": 110,
                                   "saves": 1000, "shutouts": 3} for pid, *_ in GOALIES]})
             return Resp({"data": [{**skater_row(pid, name, team, pos, 0), "gamesPlayed": 80, "goals": 20, "assists": 30,
                                    "ppPoints": 15, "shots": 200, "hits": 60, "blockedShots": 50, "ppTimeOnIce": 12000}
-                                  for pid, name, team, pos, _ in SKATERS]})
+                                  for pid, name, team, pos, _ in SKATERS if (pid in self.away_last) == (season == 20242025)]})
         lo, hi = dates
         days = [i for i, d in enumerate(PAST) if lo <= d <= hi] if season == 20262027 else []
         if report.startswith("goalie"):
@@ -491,7 +492,9 @@ def test_goalie_who_left_without_a_decision_stays_out_all_week():
                              confirmed=confirmed, season_share=sea, last_start=(1, shift) if shift else None)
         return sea
     assert season(hurt)[1] == pytest.approx(rating.NO_DECISION_SEASON * season(None)[1])  # Season share too (findings 167)
-    assert season(hurt)[2] == season(None)[2] and season(hurt, {"2026-10-24": 1})[1] == season(None)[1]
+    # the share he loses goes to his partner, so the team's shares still add up (findings 217)
+    assert season(hurt)[2] == pytest.approx(season(None)[2] + (1 - rating.NO_DECISION_SEASON) * season(None)[1])
+    assert season(hurt, {"2026-10-24": 1})[1] == season(None)[1]
     back = per_game(hurt, confirmed={"2026-10-24": 1})
     assert back[1] == 1.0 and all(b > o + 0.1 for b, o in zip(back[2:], out[2:]))  # confirmed back in net: the cut ends
 
@@ -679,7 +682,11 @@ def test_confirmed_starter_matches_daily_faceoff_spelling(monkeypatch, tmp_path)
         out[spelling] = {p["name"]: p for p in players}
     assert out["Joey Woll"]["Joseph Woll"]["cr_why"]["tonight"] == {"starting": True, "status": "Confirmed"}
     assert out["Joey Woll"]["Joseph Woll"]["cr_games"] == out["Joseph Woll"]["Joseph Woll"]["cr_games"]
-    assert "tonight" not in out["Jake Woll"]["Joseph Woll"]["cr_why"]
+    # a confirmed name that matches nobody on the team (a new call-up): the team's goalies sit that game (findings 217)
+    for who in ("Joseph Woll", "Anthony Stolarz"):
+        assert out["Jake Woll"][who]["cr_why"]["tonight"] == {"starting": False, "status": "Confirmed"}
+        assert out["Jake Woll"][who]["cr_why"]["p_today"] == 0
+    assert out["Jake Woll"]["Joseph Woll"]["cr_games"] < out["Joseph Woll"]["Joseph Woll"]["cr_games"] - 0.5
 
 
 def test_status_cleared_before_he_is_back(monkeypatch, tmp_path):
@@ -910,3 +917,58 @@ def test_back_to_back_no1_early_in_the_season(monkeypatch):
     early, off = p(6, rating.B2B_NIGHT2_NO1_EARLY), p(6, 0.0)
     assert early[1] < off[1] - 0.02 and early[1] + early[2] == pytest.approx(1)
     assert p(12, rating.B2B_NIGHT2_NO1_EARLY)[1] == pytest.approx(p(12, 0.0)[1])
+
+
+def test_unsigned_player_counts_as_not_playing(monkeypatch, tmp_path):
+    # ESPN team "FA" and no NHL games this season: 0.1 to dress, week and Season alike (Kane, Tarasenko; findings 216)
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(missed={1: {0, 1, 2, 3}}))
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    players = [espn(101, "Auston Matthews", "FA", "C")]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    p = players[0]
+    assert p["cr_dress"] == pytest.approx(rating.NOT_PLAYING_DRESS) and p["cr_season"] == pytest.approx(p["cr_fpg"] * rating.NOT_PLAYING_DRESS, abs=0.01)
+
+
+def test_player_who_missed_last_season_uses_the_one_before(monkeypatch, tmp_path):
+    # no games last season (Barkov): the season before, not a newcomer's prior (findings 216)
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for name, fake in (("plain", FakeSession()), ("away", FakeSession(away_last={1}))):
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(101, "Auston Matthews", "TOR", "C")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        out[name] = players[0]
+    assert out["away"]["cr_fpg"] == pytest.approx(out["plain"]["cr_fpg"], abs=0.01)
+
+
+def test_goalie_out_for_the_season(monkeypatch):
+    """A goalie out for the season has no Season share and his partner takes it (Shesterkin and Garand, findings 216)."""
+    note = {"name": "Igor Shesterkin", "short": "Shesterkin (lower body) was placed on LTIR.", "date": "2026-10-10",
+            "long": "Jonathan Quick will back up Garand. Shesterkin has been ruled out for the season after surgery."}
+    assert rating.injury_note(note, date(2026, 10, 11))["season"]
+    other = dict(note, name="Jonathan Quick", short="Quick is day-to-day.")
+    assert not rating.injury_note(other, date(2026, 10, 11))["season"]  # the season-ending sentence is about a teammate
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 15, 2))]
+    def sea(out):
+        s = {}
+        rating.goalie_starts(model, "NYR", [1, 2], {"NYR": hist}, {1: 50, 2: 32}, ["2026-10-22"], date(2026, 10, 22),
+                             season_share=s, injury={1: 0.0} if out else None, season_out={1} if out else ())
+        return s
+    base, gone = sea(False), sea(True)
+    assert gone[1] == 0 and gone[2] == pytest.approx(base[1] + base[2])
+
+
+def test_early_prior_when_last_seasons_partner_left(monkeypatch):
+    """Last season's starts divide by at least 70, so a no. 1 whose partner left isn't given a prior near 1 (findings 217)."""
+    model = rating.Model()
+    def share(prev, floor):
+        monkeypatch.setattr(rating, "PRIOR_STARTS_FLOOR", floor)
+        s = {}
+        rating.goalie_starts(model, "BOS", [1, 2], {"BOS": [("2026-10-08", 1)]}, prev, ["2026-10-10"], date(2026, 10, 10), season_share=s)
+        return s
+    alone, before = share({1: 60, 2: 0}, rating.PRIOR_STARTS_FLOOR), share({1: 60, 2: 0}, 0)
+    assert alone[1] < before[1] - 0.05
+    assert share({1: 50, 2: 32}, rating.PRIOR_STARTS_FLOOR) == share({1: 50, 2: 32}, 0)  # 82 starts: no change
