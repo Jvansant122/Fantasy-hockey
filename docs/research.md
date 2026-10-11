@@ -764,6 +764,12 @@ In the league's logs Kempe drew claims from three teams and Eriksson Ek from two
 
 Moves don't carry over between matchups. At 2 PM on Sunday, Oct 11, 9 of the 12 teams had between 1 and 7 moves left, 40 in all, and they vanish at the overnight rollover. An add made on Sunday before the first game still counts in the ending matchup. The page only ever showed 2 Best moves, but the extra moves were worth 2.8 to 9.1 keep points per team (findings 231). On the matchup's last night, before its first game, Best moves now lists every move you have left, with a note that unused moves expire tonight. After the first puck it goes back to two.
 
+## 99. Three fixes to recent page changes
+
+- **Tonight card (findings 233).** Since PR #87 the card counted every player whose game had started as filling a lineup slot. A started player sitting on ESPN's bench holds no slot, so on Saturday 21 of 84 team checks told managers to bench players who were still to play (about 40 points if followed). The data now carries ESPN's bench slot, and only started players in the lineup are counted. The card's header also counts forwards and defensemen separately, against 9 F and 5 D spots plus the UTL.
+- **Phone tags (findings 232).** PR #93's narrow name column cut off the waiver, injury and fantasy-team tags on 96% of tagged rows. Tags now sit on their own line under the name and wrap. The Stream, Tonight, Forwards, Defense and Goalies cards keep their explanation lines visible: those lines carry the stream deadline, "bench these" and "your weakest". A team with no moves left gets a "next Monday's targets" note at the top of Upgrades.
+- **Double drops (findings 233).** Mid-week swaps and Best moves sometimes dropped the same player, or together offered more moves than were left: 18 team checks across 14 of 15 data versions. Best moves now skips anyone the swaps card already drops and counts the swaps' adds against the moves left.
+
 ## What the independent review changed
 
 | Review point | Outcome |
