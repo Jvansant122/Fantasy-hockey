@@ -1064,6 +1064,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 fpg += (starts - (p_today if lined else 0.0)) * bonus / starts
                 why["sched"] = round(bonus, 2)
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
+            # ESPN's games-started count can lag a start its points already include (findings 182): the ESPN columns
+            # (This yr/G, Proj/G, ESPN week) use NHL starts, with fetch.py's blend toward ESPN's projection
+            if pid in own and own[pid][1]:
+                gfp, gs = own[pid]
+                p["gp"], p["cur_ppg"] = gs, round(gfp / gs, 2)
+                prior_ppg = p.get("proj_ppg") if p.get("proj_ppg") is not None else p.get("last_ppg")
+                w = min(gs, 20) / 20 * 0.6
+                p["ppg"] = round(p["cur_ppg"] * w + prior_ppg * (1 - w), 2) if prior_ppg is not None else p["cur_ppg"]
             why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid and not started else 0.0  # chance he starts tonight (stream card)
             why["exp_starts"] = round(starts, 2)  # after tonight's start, waivers and news (findings 182)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
