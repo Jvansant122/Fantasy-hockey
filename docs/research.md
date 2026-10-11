@@ -652,6 +652,14 @@ A skater who sat his team's last game gets about a 20% chance for the next one. 
 
 Jake Sanderson left his only game of the season after four and a half minutes, so the site rated him 0.38 points a game against 2.4 last season. In four seasons of replays, skaters whose 1-3 games this season ended with one under half their usual ice time scored 0.95-0.99 points a game over their next 20 games; the site's number ran 0.32 low, while leaving the short games out ran 0.16 high (players who leave hurt do run a little below last season afterwards). **For a skater with 1-3 games this season whose latest was under half of last season's ice time, the site now averages its usual points a game with the one it gets leaving those short games out.** The error fell from 0.41 to 0.28 points a game, better in all four seasons. From his fourth game on nothing changes. Sanderson goes from 0.38 to about 1.3 points a game.
 
+## 78. Day-to-day players who played the last game
+
+ESPN's day-to-day tag got a flat 50% chance per game. For a skater who played his team's last game, how much he played in it tells far more. In two seasons of injury snapshots, a day-to-day skater whose last game was under 55% of his usual ice time (he left it hurt) dressed for only 8-24% of the next games; at 55-80% about half; at 80% or more 79-97%. **A day-to-day skater who played the last game now gets at most 15% a game if he left it early, 50% if he played a reduced share and 75% if he played his normal minutes.** (The top cap is shaded down from what the history supports because a few full-minute players sat in the first live days.) Prediction error fell by a third in both seasons. A day-to-day skater who missed the last game keeps 50%.
+
+## 79. The starting goalie after a long team break
+
+The start model reads days since a goalie's last start as a sign he's been benched. After a team-wide break of four or more days (holidays, the All-Star break, schedule gaps) everyone is rested, so that reading is wrong: in five seasons of replays, the goalie who started the last game before a 4-6 day break started the next one 57% of the time against 50% predicted, and 63% against 47% after 7+ days. **The goalie who started the team's last game now gets a boost for the first game after a break of 4+ days, bigger after 7+.** It predicted starters better in all five seasons. Only that one game changes, and a Daily Faceoff confirmation still overrides.
+
 ## What the independent review changed
 
 | Review point | Outcome |

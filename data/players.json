@@ -1,5 +1,5 @@
 {
- "updated": "Sun Oct 11, 10:47 AM ET",
+ "updated": "Sun Oct 11, 10:50 AM ET",
  "updated_date": "2026-10-11",
  "team": "New York Mess",
  "matchup_period": 2,
@@ -4008,7 +4008,7 @@
      "xfpg": 1.28
     }
    },
-   "cr_pct": 91,
+   "cr_pct": 90,
    "cr_season_pct": 52
   },
   {
@@ -4066,8 +4066,69 @@
      "xfpg": 0.99
     }
    },
-   "cr_pct": 91,
+   "cr_pct": 90,
    "cr_season_pct": 50
+  },
+  {
+   "id": 4024833,
+   "name": "Pierre-Luc Dubois",
+   "team": "WSH",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "other",
+   "team_id": 3,
+   "ir": false,
+   "injury": "DAY_TO_DAY",
+   "owned": 16.3,
+   "gp": 4,
+   "ppg": 1.62,
+   "cur_ppg": 1.9,
+   "last_ppg": 1.38,
+   "last_gp": 29,
+   "proj_ppg": 1.58,
+   "games": 3,
+   "games_left": 1,
+   "light": 3,
+   "light_left": 1,
+   "nights": [
+    9,
+    11,
+    13
+   ],
+   "games_next2": 5,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 1.17,
+   "cr_fpg": 1.56,
+   "cr_season": 1.32,
+   "cr_games": 0.75,
+   "cr_dress": 0.75,
+   "cr_dress_next": 0.75,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8479400,
+   "cr_why": {
+    "toi5": 17.1,
+    "toi": 17.1,
+    "pp5": 2.95,
+    "sog": 1.5,
+    "blk": 0.75,
+    "gp": 4,
+    "last_fpg": 1.38,
+    "xfp": {
+     "gp": 4,
+     "fpg": 1.9,
+     "xfpg": 2.09
+    },
+    "back": {
+     "games": "0-1"
+    }
+   },
+   "cr_pct": 90,
+   "cr_season_pct": 70
   },
   {
    "id": 4587943,
@@ -4240,7 +4301,7 @@
      "xfpg": 1.06
     }
    },
-   "cr_pct": 90,
+   "cr_pct": 89,
    "cr_season_pct": 49
   },
   {
@@ -4298,7 +4359,7 @@
      "xfpg": 1.28
     }
    },
-   "cr_pct": 90,
+   "cr_pct": 89,
    "cr_season_pct": 47
   },
   {
@@ -4414,7 +4475,7 @@
      "xfpg": 0.8
     }
    },
-   "cr_pct": 89,
+   "cr_pct": 88,
    "cr_season_pct": 49
   },
   {
@@ -4473,7 +4534,7 @@
      "xfpg": 1.17
     }
    },
-   "cr_pct": 89,
+   "cr_pct": 88,
    "cr_season_pct": 44
   },
   {
@@ -4531,7 +4592,7 @@
      "xfpg": 1.13
     }
    },
-   "cr_pct": 89,
+   "cr_pct": 88,
    "cr_season_pct": 47
   },
   {
@@ -4885,7 +4946,7 @@
      "xfpg": 1.17
     }
    },
-   "cr_pct": 88,
+   "cr_pct": 87,
    "cr_season_pct": 38
   },
   {
@@ -5173,7 +5234,7 @@
      "xfpg": 0.72
     }
    },
-   "cr_pct": 87,
+   "cr_pct": 86,
    "cr_season_pct": 25
   },
   {
@@ -5406,7 +5467,7 @@
      "xfpg": 0.53
     }
    },
-   "cr_pct": 86,
+   "cr_pct": 85,
    "cr_season_pct": 20
   },
   {
@@ -5755,7 +5816,7 @@
      "xfpg": 1.41
     }
    },
-   "cr_pct": 85,
+   "cr_pct": 84,
    "cr_season_pct": 16
   },
   {
@@ -5813,7 +5874,7 @@
      "xfpg": 0.87
     }
    },
-   "cr_pct": 85,
+   "cr_pct": 84,
    "cr_season_pct": 18
   },
   {
@@ -5993,67 +6054,6 @@
    },
    "cr_pct": 84,
    "cr_season_pct": 67
-  },
-  {
-   "id": 4024833,
-   "name": "Pierre-Luc Dubois",
-   "team": "WSH",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "other",
-   "team_id": 3,
-   "ir": false,
-   "injury": "DAY_TO_DAY",
-   "owned": 16.3,
-   "gp": 4,
-   "ppg": 1.62,
-   "cur_ppg": 1.9,
-   "last_ppg": 1.38,
-   "last_gp": 29,
-   "proj_ppg": 1.58,
-   "games": 3,
-   "games_left": 1,
-   "light": 3,
-   "light_left": 1,
-   "nights": [
-    9,
-    11,
-    13
-   ],
-   "games_next2": 5,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 0.78,
-   "cr_fpg": 1.56,
-   "cr_season": 1.32,
-   "cr_games": 0.5,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8479400,
-   "cr_why": {
-    "toi5": 17.1,
-    "toi": 17.1,
-    "pp5": 2.95,
-    "sog": 1.5,
-    "blk": 0.75,
-    "gp": 4,
-    "last_fpg": 1.38,
-    "xfp": {
-     "gp": 4,
-     "fpg": 1.9,
-     "xfpg": 2.09
-    },
-    "back": {
-     "games": "0-1"
-    }
-   },
-   "cr_pct": 84,
-   "cr_season_pct": 70
   },
   {
    "id": 4697457,
@@ -12421,8 +12421,8 @@
    "cr_fpg": 1.31,
    "cr_season": 1.15,
    "cr_games": 0,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
+   "cr_dress": 0.75,
+   "cr_dress_next": 0.75,
    "sat_last": false,
    "cr_matched": true,
    "nhl_id": 8480185,
@@ -14234,8 +14234,8 @@
    "cr_fpg": 1.08,
    "cr_season": 0.7,
    "cr_games": 0,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
+   "cr_dress": 0.15,
+   "cr_dress_next": 0.15,
    "sat_last": false,
    "cr_matched": true,
    "nhl_id": 8475690,
@@ -15325,8 +15325,8 @@
    "cr_fpg": 1.14,
    "cr_season": 0.99,
    "cr_games": 0,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
+   "cr_dress": 0.75,
+   "cr_dress_next": 0.75,
    "sat_last": false,
    "cr_matched": true,
    "nhl_id": 8480068,
@@ -26806,8 +26806,8 @@
    "cr_fpg": 1.91,
    "cr_season": 1.6,
    "cr_games": 0,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
+   "cr_dress": 0.15,
+   "cr_dress_next": 0.15,
    "sat_last": false,
    "cr_matched": true,
    "nhl_id": 8483445,

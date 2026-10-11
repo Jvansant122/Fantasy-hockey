@@ -573,8 +573,11 @@ def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     assert hurt["cr_season"] < matthews(toi=300)["cr_season"] - 0.02  # Season dress share is trimmed too (findings 166)
     assert full["cr_season"] == matthews()["cr_season"]
     monkeypatch.setattr(rating, "LEFT_EARLY_SEASON_LOGIT", -0.4)
-    flagged = matthews(toi=300, injury="DAY_TO_DAY")  # ESPN's flag takes over from the left-early cut
-    assert flagged["cr_dress_next"] == pytest.approx(min(matthews(injury="DAY_TO_DAY")["cr_dress_next"], 1.0), abs=0.15)
+    # ESPN's DAY_TO_DAY flag takes over from the left-early cut, capped by last game's share of his ice time (findings 176)
+    assert matthews(toi=300, injury="DAY_TO_DAY")["cr_dress_next"] == pytest.approx(0.15, abs=0.01)
+    assert matthews(toi=800, injury="DAY_TO_DAY")["cr_dress_next"] == pytest.approx(0.5, abs=0.01)
+    assert 0.5 < matthews(injury="DAY_TO_DAY")["cr_dress_next"] <= 0.75
+    assert matthews(injury="DAY_TO_DAY")["cr_dress"] <= 0.75
     assert rating.left_early_shifts(5, 18) == rating.LEFT_EARLY_LOGITS[0][1] and rating.left_early_shifts(9, 18)[0] < 0
     assert rating.left_early_shifts(15, 18) == () and rating.left_early_shifts(5, None) == ()
     by = rating.dress_by_game(0.9, 5, False, 1.0, 0.0, (-2.5, -1.8, -1.1))
@@ -744,3 +747,29 @@ def test_short_opening_rule():
     assert rating.short_opening([{"toi": 4.5}, {"toi": 21.0}], prev) is None  # the latest was full length
     assert rating.short_opening([{"toi": 21.0}] * 3 + [{"toi": 4.5}], prev) is None  # 4th game on: no change
     assert rating.short_opening([{"toi": 4.5}], None) is None
+
+
+def test_last_starter_after_a_long_team_break(monkeypatch):
+    """Team's next game 4-6 days after its last: +0.4 for whoever started that last game, 7+ days +1.5, next game only
+    (findings 196)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]  # goalie 1 started Oct 19
+
+    def p1(day, breaks):
+        monkeypatch.setattr(rating, "BREAK_LOGITS", breaks)
+        p = {}
+        nxt = date.fromisoformat(day)
+        out = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32},
+                                   [day, (nxt + timedelta(days=2)).isoformat()], nxt, today_p=p)
+        return p[1], out
+    on = ((7, 1.5), (4, 0.4))
+    for day in ("2026-10-22", "2026-10-23", "2026-10-27"):
+        (with_, out), (without, base) = p1(day, on), p1(day, ())
+        if day == "2026-10-22":  # 3 days: no break
+            assert with_ == pytest.approx(without)
+        else:
+            assert with_ > without + 0.01
+            assert out[1] - with_ == pytest.approx(base[1] - without, abs=0.02)  # the game after moves only via the chain
+    assert p1("2026-10-27", on)[0] - p1("2026-10-27", ())[0] > p1("2026-10-23", on)[0] - p1("2026-10-23", ())[0]
+    # no history at all: nothing to shift, nothing breaks
+    assert rating.goalie_starts(model, "TOR", [1, 2], {"TOR": []}, {1: 50, 2: 32}, ["2026-10-27"], date(2026, 10, 27))
