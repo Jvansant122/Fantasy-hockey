@@ -484,3 +484,36 @@ def test_waiver_claim_note(browser, server, data):
     assert "waiver order" not in page.locator("#upgrades .wvnote").inner_text()
     assert errors == errors2 == []
     ctx.close()
+
+
+def test_last_night_before_first_puck_uses_every_move(browser, server, data):
+    """On the matchup's last night before the first game, Best moves lists every move left, since they expire (findings 231)."""
+    from datetime import datetime, timedelta, timezone
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(timezone.utc)
+    for first, want_note in ((now + timedelta(hours=3), True), (now - timedelta(hours=1), False)):
+        d = json.loads(json.dumps(data))
+        d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
+        d["final_matchup"] = False
+        for n in d["nights"]:
+            n["past"] = n is not d["nights"][-1]
+        d["first_start"] = iso(first)
+        for p in d["players"]:
+            p["today_start"] = iso(first) if d["nights"][-1]["sp"] in (p.get("nights") or []) else None
+        d["move_limit"] = 7
+        for t in d["teams"]:
+            t["moves_used"] = 1
+        ctx, page, errors = open_page(browser, server, data=d)
+        most = 0
+        for t in d["teams"]:
+            page.select_option("#team", str(t["id"]))
+            text = page.locator("#upgrades").inner_text()
+            assert ("expire tonight" in text) == want_note, (t["id"], first)
+            card = page.locator("#upgrades .upg", has_text="largest keep-value gains")
+            if card.count():
+                most = max(most, card.locator(":scope > div").count())
+        assert (most > 2) == want_note, most
+        assert errors == []
+        ctx.close()
