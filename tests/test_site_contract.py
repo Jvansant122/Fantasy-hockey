@@ -14,9 +14,30 @@ from conftest import ROOT
 import check_data
 
 
+# fields the code now writes that the committed data/players.json predates: filled in here until the next data run
+UNTIL_NEXT_DATA_RUN = {"cr_g_nights": lambda p: {} if p["pos"] == "G" else None}
+
+
 @pytest.fixture(scope="module")
 def data():
-    return json.loads((ROOT / "data" / "players.json").read_text())
+    d = json.loads((ROOT / "data" / "players.json").read_text())
+    if d.get("rated"):
+        for field, fill in UNTIL_NEXT_DATA_RUN.items():  # until the next data run
+            if not any(field in p for p in d["players"]):
+                for p in d["players"]:
+                    if fill(p) is not None:
+                        p[field] = fill(p)
+    return d
+
+
+def test_goalies_carry_the_goalie_fields(data):
+    """Every goalie has check_data's goalie-only fields; a goalie without them fails the publish check."""
+    if not data["rated"]:
+        pytest.skip("unrated data")
+    assert all(check_data.RATED_GOALIE_FIELDS <= set(p) for p in data["players"] if p["pos"] == "G")
+    broken = copy.deepcopy(data)
+    del next(p for p in broken["players"] if p["pos"] == "G")["cr_g_nights"]
+    assert any("missing fields" in e for e in check_data.problems(broken))
 
 
 def test_committed_data_passes_the_publish_check(data):
@@ -37,6 +58,7 @@ def test_page_only_reads_fields_the_data_has(data):
     html = (ROOT / "index.html").read_text()
     used = set(re.findall(r"\bp\.([a-z_][a-z0-9_]*)", html))
     have = set().union(*(p.keys() for p in data["players"])) | {"cr_news"}
+    have |= set(UNTIL_NEXT_DATA_RUN)  # until the next data run: the page reads them with ?. and a fallback
     assert not used - have, used - have
 
 
@@ -86,6 +108,17 @@ def test_data_rules_catch_past_bugs(data):
         if p["pos"] != "G" and p.get("cr_fpg") is not None:
             p["cr_fpg"] = round(p["cr_fpg"] + 0.1, 2)
     assert any(w.startswith("X3") for w in check_data.warnings(moved, data))
+    # a team's goalies all at Season 0: a week with no games, or an unread roster (findings 230)
+    no_season = copy.deepcopy(data)
+    team = next(p["team"] for p in no_season["players"] if p["pos"] == "G" and p["team"] != "FA" and p.get("cr_matched") and not p.get("injury"))
+    for p in no_season["players"]:
+        if p["pos"] == "G" and p["team"] == team:
+            p["cr_season"] = 0
+    assert any(e.startswith("G3") for e in check_data.problems(no_season))
+    for p in no_season["players"]:  # ... unless they are all hurt
+        if p["pos"] == "G" and p["team"] == team:
+            p["injury"] = "INJURY_RESERVE"
+    assert not any(e.startswith("G3") for e in check_data.problems(no_season))
     assert check_data.warnings(data, data) == [w for w in check_data.warnings(data, None)]
 
 

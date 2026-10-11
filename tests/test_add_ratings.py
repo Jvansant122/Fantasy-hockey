@@ -58,8 +58,12 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=()):
+    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=(),
+                 bye=False, roster_down=(), last_team=None):
         self.calls = []
+        self.bye = bye  # BOS has no game this week (TOR plays MTL instead), like 14 teams the week of Feb 1 (findings 230)
+        self.roster_down = set(roster_down)  # teams whose NHL roster can't be read
+        self.last_team = last_team or {}  # player id: his team last season, when not his team now
         self.missed = missed or {}  # player id: games he missed, replacing SKATERS' set
         self.short_last = short_last or {}  # player id: his ice time in seconds in the last game (left early)
         self.short_date = short_date
@@ -77,7 +81,8 @@ class FakeSession:
             lines += [f"{pid},all,4,1.2,3.0" for pid, *_ in SKATERS] + ["1,5on5,4,0.8,2.0"]
             return Resp(text="\n".join(lines))
         if url.endswith(f"/schedule/{MONDAY.isoformat()}"):
-            return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": "BOS"}, "homeTeam": {"abbrev": "TOR"}}]}
+            away = "MTL" if self.bye else "BOS"
+            return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": away}, "homeTeam": {"abbrev": "TOR"}}]}
                                       for d in WEEK]})
         m = re.search(r"/gamecenter/(\d+)/right-rail$", url)
         if m:
@@ -98,6 +103,8 @@ class FakeSession:
         m = re.search(r"/roster/(\w+)/current$", url)
         if m:
             team = m.group(1)
+            if team in self.roster_down:
+                return Resp(status=503)
             def person(pid, name, pos):
                 first, last = name.split(" ", 1)
                 return {"id": pid, "firstName": {"default": first}, "lastName": {"default": last}, "positionCode": pos}
@@ -115,7 +122,7 @@ class FakeSession:
             if report.startswith("goalie"):
                 return Resp({"data": [{"playerId": pid, "gamesStarted": 40, "wins": 22, "losses": 12, "otLosses": 6, "goalsAgainst": 110,
                                   "saves": 1000, "shutouts": 3} for pid, *_ in GOALIES]})
-            return Resp({"data": [{**skater_row(pid, name, team, pos, 0), "gamesPlayed": 80, "goals": 20, "assists": 30,
+            return Resp({"data": [{**skater_row(pid, name, team, pos, 0), "teamAbbrevs": self.last_team.get(pid, team), "gamesPlayed": 80, "goals": 20, "assists": 30,
                                    "ppPoints": 15, "shots": 200, "hits": 60, "blockedShots": 50, "ppTimeOnIce": 12000}
                                   for pid, name, team, pos, _ in SKATERS if (pid in self.away_last) == (season == 20242025)]})
         lo, hi = dates
@@ -941,6 +948,8 @@ def test_player_who_missed_last_season_uses_the_one_before(monkeypatch, tmp_path
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         out[name] = players[0]
     assert out["away"]["cr_fpg"] == pytest.approx(out["plain"]["cr_fpg"], abs=0.01)
+    # the details say which season that line is from (Barkov, findings 234)
+    assert out["away"]["cr_why"]["last_season"] == "2024-25" and "last_season" not in out["plain"]["cr_why"]
 
 
 def test_goalie_out_for_the_season(monkeypatch):
@@ -962,13 +971,231 @@ def test_goalie_out_for_the_season(monkeypatch):
 
 
 def test_early_prior_when_last_seasons_partner_left(monkeypatch):
-    """Last season's starts divide by at least 70, so a no. 1 whose partner left isn't given a prior near 1 (findings 217)."""
+    """The top goalie's share of last season's starts is capped at 0.7 and the excess goes to the others, so a no. 1 whose
+    partner left isn't given a prior near 1, and the team's shares still add up (findings 217, 234)."""
     model = rating.Model()
-    def share(prev, floor):
-        monkeypatch.setattr(rating, "PRIOR_STARTS_FLOOR", floor)
+    def share(prev, cap, goalies=(1, 2)):
+        monkeypatch.setattr(rating, "PRIOR_TOP_CAP", cap)
         s = {}
-        rating.goalie_starts(model, "BOS", [1, 2], {"BOS": [("2026-10-08", 1)]}, prev, ["2026-10-10"], date(2026, 10, 10), season_share=s)
+        rating.goalie_starts(model, "BOS", list(goalies), {"BOS": [("2026-10-08", 1)]}, prev, ["2026-10-10"], date(2026, 10, 10), season_share=s)
         return s
-    alone, before = share({1: 60, 2: 0}, rating.PRIOR_STARTS_FLOOR), share({1: 60, 2: 0}, 0)
-    assert alone[1] < before[1] - 0.05
-    assert share({1: 50, 2: 32}, rating.PRIOR_STARTS_FLOOR) == share({1: 50, 2: 32}, 0)  # 82 starts: no change
+    alone, before = share({1: 60, 2: 0}, 0.7), share({1: 60, 2: 0}, 1.0)
+    assert alone[1] < before[1] - 0.05 and alone[2] > before[2] + 0.05
+    assert sum(alone.values()) == pytest.approx(sum(before.values()))  # no share lost (the old floor lost up to 0.27)
+    assert share({1: 50, 2: 32}, 0.7) == share({1: 50, 2: 32}, 1.0)  # 0.61: no change
+    # the excess goes to the others in proportion to their own starts
+    three = share({1: 80, 2: 15, 3: 5}, 0.7, (1, 2, 3))
+    plain = share({1: 80, 2: 15, 3: 5}, 1.0, (1, 2, 3))
+    assert three[2] - plain[2] > 2 * (three[3] - plain[3]) > 0
+    assert share({1: 60}, 0.7, (1,)) == share({1: 60}, 1.0, (1,))  # one goalie: nothing to cap
+
+
+def rate(monkeypatch, tmp_path, players, fake=None, starters=(), injuries=None, **kw):
+    """add_ratings on these players with a fresh injury log each time (so one call's statuses don't clear the next's)."""
+    monkeypatch.setattr(rating.requests, "Session", lambda: fake or FakeSession())
+    log = tmp_path / "injury_log.jsonl"
+    log.unlink(missing_ok=True)
+    monkeypatch.setattr(rating, "INJURY_LOG", log)
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    rating.add_ratings(players, 2027, TODAY, MONDAY, list(starters), injuries=injuries, **kw)
+    return {p["name"]: p for p in players}
+
+
+def test_out_on_game_day_counts_about_zero(monkeypatch, tmp_path):
+    """ESPN OUT on the day of his team's game, before it starts: that game counts 0.03; later games keep the OUT cap
+    (0 of 20 dressed, findings 235)."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+
+    def matthews(start, injury="OUT"):
+        return rate(monkeypatch, tmp_path, [dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), today_start=start)])["Auston Matthews"]
+    no_game, tonight, started = matthews(None), matthews("2026-10-09T23:00:00Z"), matthews("2026-10-09T15:00:00Z")
+    assert no_game["cr_dress_next"] == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)
+    assert tonight["cr_dress_next"] == rating.OUT_TODAY_CAP
+    assert tonight["cr_games"] == pytest.approx(no_game["cr_games"] - rating.SKATER_INJURY_CAP["OUT"] + rating.OUT_TODAY_CAP, abs=0.02)
+    assert started["cr_games"] == no_game["cr_games"]  # his game already started: games left start tomorrow
+    assert matthews("2026-10-09T23:00:00Z", "DAY_TO_DAY")["cr_games"] == matthews(None, "DAY_TO_DAY")["cr_games"]
+
+
+def test_bare_status_word_keeps_the_last_real_note(monkeypatch, tmp_path):
+    """ESPN replaces the real note with 'IR': the last real one is kept in injury_notes.json and still read, if his status
+    is as severe, it wasn't a day-to-day note, and he hasn't played since (findings 236)."""
+    notes_file = rating.INJURY_NOTES
+    real = {"athlete_id": 103, "name": "David Pastrnak", "short": "Pastrnak (upper body) will undergo surgery Tuesday.", "long": "",
+            "date": "2026-10-08T12:00Z"}
+    bare = dict(real, short="IR", date="2026-10-09T10:00Z")
+
+    def pasta(note, status="INJURY_RESERVE"):
+        return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury=status)], injuries=[note])["David Pastrnak"]
+    assert not notes_file.exists()
+    assert pasta(bare)["cr_dress"] == pytest.approx(rating.SKATER_INJURY_CAP["INJURY_RESERVE"], abs=0.01)  # nothing kept yet
+    assert pasta(real)["cr"] == 0
+    kept = json.loads(notes_file.read_text())
+    assert kept["103"]["short"] == real["short"] and kept["103"]["status"] == "INJURY_RESERVE" and kept["103"]["date"] == real["date"]
+    assert pasta(bare)["cr"] == 0 and pasta(bare)["cr_why"]["back"] == {"games": "16"}
+    assert json.loads(notes_file.read_text())["103"]["short"] == real["short"]  # a bare word never overwrites it
+    assert pasta(bare, "DAY_TO_DAY")["cr_dress"] > 0.1  # a lesser status now: today's note
+    assert pasta(dict(bare, short="out"), "OUT")["cr_dress"] > 0  # OUT is less severe than the IR it was written under
+    # played since the note: it's old news
+    notes_file.write_text(json.dumps({"103": {**kept["103"], "date": "2026-10-05T12:00Z"}}))
+    assert pasta(bare)["cr_dress"] > 0
+    # written under a day-to-day status: not carried
+    notes_file.write_text(json.dumps({"103": {**kept["103"], "status": "DAY_TO_DAY"}}))
+    assert pasta(bare)["cr_dress"] > 0
+    # notes not seen in 60 days are dropped
+    notes_file.write_text(json.dumps({"999": {"date": "2026-07-01T12:00Z", "short": "x", "seen": "2026-07-01"},
+                                      "998": {"date": "2026-07-01T12:00Z", "short": "y", "seen": "2026-10-01"}}))
+    pasta(bare)
+    assert set(json.loads(notes_file.read_text())) == {"998"}
+    # an unreadable file is treated as empty
+    notes_file.write_text("not json")
+    assert pasta(bare)["cr_dress"] > 0
+
+
+def test_bare_status_word_keeps_a_goalie_out_for_the_season(monkeypatch, tmp_path):
+    """Shesterkin's 'out for the remainder of the season' became 'ir': he stays out of the Season split (findings 236)."""
+    note = {"athlete_id": 111, "name": "Joseph Woll", "short": "Woll will miss the remainder of the season.", "long": "",
+            "date": "2026-10-08T12:00Z"}
+
+    def toronto(n):
+        return rate(monkeypatch, tmp_path, [espn(111, "Joseph Woll", "TOR", "G", injury="INJURY_RESERVE"),
+                                            espn(112, "Anthony Stolarz", "TOR", "G")], injuries=[n])
+    first = toronto(note)
+    assert first["Joseph Woll"]["cr_season"] == 0
+    later = toronto(dict(note, short="IR"))
+    assert later["Joseph Woll"]["cr_season"] == 0 and later["Anthony Stolarz"]["cr_season"] == first["Anthony Stolarz"]["cr_season"]
+    rating.INJURY_NOTES.unlink()
+    assert toronto(dict(note, short="IR"))["Joseph Woll"]["cr_season"] > 0  # nothing kept: today's bare word only
+
+
+def test_injury_note_wording_for_long_absences():
+    """Long-absence phrases and return months the old parser missed, and stat lines it read as return dates (findings 236)."""
+    day = date(2026, 10, 9)
+
+    def note(short, long_=""):
+        return rating.injury_note({"short": short, "long": long_, "name": "John Smith", "date": "2026-10-08T12:00Z"}, day)
+    assert note("Smith (lower body) is out without a timetable.")["long"]
+    assert note("Smith (upper body) is not expected back until November.")["days_left"] == 23
+    assert note("Smith (upper body) is not expected back until November.")["long"]
+    assert note("Smith (knee) is a few weeks away.")["long"]
+    assert note("Smith (knee) will be out until at least mid-December.")["long"]
+    assert note("Smith (knee) could be back before Christmas.")["long"]
+    assert note("Smith (knee) is day-to-day.", "Smith is considered week-to-week by the team.")["long"]
+    assert not note("Smith (knee) is day-to-day.", "Jones (knee) is week-to-week.")["long"]  # a teammate's sentence
+    assert note("Smith (knee) is day-to-day.", "The team says it is unclear when he will return.")["long"]
+    assert not note("Smith (knee) is day-to-day.", "He had surgery last summer.")["long"]  # surgery in the long comment is a recap
+    assert not note("Smith (knee) met with hockey operations staff.")["long"]
+    assert note("Smith (knee) requires an operation.")["long"]
+    assert not note("Smith (illness) won't play Thursday.")["long"]
+    # stat lines and old absences aren't return dates
+    assert note("Smith (illness) is out; he has four points over five games.")["days_left"] is None
+    assert note("Smith (hip) is out after he missed the final 26 games of 2025-26.")["days_left"] is None
+    assert note("Smith (hip) will be out for the first three weeks of the season.")["days_left"] == pytest.approx(20)
+    assert note("Smith (knee) is expected to miss 4-6 weeks.")["days_left"] == pytest.approx(34)
+
+
+def test_one_game_out_note_expires_once_that_game_is_played(monkeypatch, tmp_path):
+    """OUT for one named game: once his team has played after the note, the day-to-day cap (findings 236)."""
+    def pasta(when, short="Pastrnak won't play Tuesday against Toronto."):
+        inj = [{"athlete_id": 103, "name": "David Pastrnak", "short": short, "long": "", "date": when}]
+        return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="OUT")], injuries=inj)["David Pastrnak"]
+    assert pasta("2026-10-08T14:00Z")["cr_dress_next"] == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)  # no game since
+    assert pasta("2026-10-06T14:00Z")["cr_dress_next"] == pytest.approx(rating.SKATER_INJURY_CAP["DAY_TO_DAY"], abs=0.01)
+    assert pasta("2026-10-06T14:00Z", "Pastrnak will miss two games.")["cr_dress_next"] == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)
+    over = rating.one_game_out_over
+    assert over({"short": "Smith won't play Saturday.", "date": "2026-10-07T14:00Z"}, {"2026-10-07"})  # 10 AM ET, game that night
+    assert not over({"short": "Smith won't play Saturday.", "date": "2026-10-07T23:30Z"}, {"2026-10-07"})  # posted at 7:30 PM ET
+    assert not over({"short": "Smith will miss 2-3 weeks.", "date": "2026-10-01T14:00Z"}, {"2026-10-07"})
+    assert not over({"short": "Smith (knee) is out.", "date": "2026-10-01T14:00Z"}, {"2026-10-07"})
+
+
+def test_season_out_share_also_goes_to_hurt_partners():
+    """A goalie out for the season: his Season share goes to every other goalie, an injured one at half weight (findings 234)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", [1, 1, 2, 1, 3][i % 5]) for i, d in enumerate(range(1, 21, 2))]
+
+    def sea(injury, season_out):
+        s = {}
+        rating.goalie_starts(model, "NYR", [1, 2, 3], {"NYR": hist}, {1: 50, 2: 28, 3: 4}, ["2026-10-22"], date(2026, 10, 22),
+                             season_share=s, injury=injury, season_out=season_out)
+        return s
+    base, gone = sea({}, ()), sea({1: 0.0, 2: 0.0}, {1})
+    w2, w3 = rating.INJURED_TAKER_WEIGHT * base[2], base[3]
+    assert gone[1] == 0
+    assert gone[2] == pytest.approx(base[2] + base[1] * w2 / (w2 + w3))
+    assert gone[3] == pytest.approx(base[3] + base[1] * w3 / (w2 + w3))
+
+
+def test_back_to_back_no1_counts_only_goalies_still_here(monkeypatch):
+    """Night 2: the no. 1 is the most-used of the goalies still on the team, not a departed one (findings 234)."""
+    model = rating.Model()
+    seq = [9] * 12 + [2, 1, 2, 2]  # 9 was traded away; 2 is the no. 1 now and started night 1
+    hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+    nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=1)
+
+    def p2(no1, other):
+        monkeypatch.setattr(rating, "B2B_NIGHT2_NO1", no1)
+        monkeypatch.setattr(rating, "B2B_NIGHT2_OTHER", other)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 30, 2: 30, 9: 50}, [nxt.isoformat()], nxt, today_p=out)
+        return out[2]
+    assert p2(-0.8, 0.0) < p2(0.0, 0.0) - 0.01
+    assert p2(0.0, 0.9) == pytest.approx(p2(0.0, 0.0))
+
+
+def test_team_with_no_game_this_week_keeps_its_goalies_season(monkeypatch, tmp_path):
+    """BOS has no game this week, or the rosters can't be read: its goalies keep their Season rating (findings 230)."""
+    def goalies(fake, bos_games=3):
+        return rate(monkeypatch, tmp_path, [espn(113, "Jeremy Swayman", "BOS", "G", games_left=bos_games), espn(111, "Joseph Woll", "TOR", "G"),
+                                            espn(112, "Anthony Stolarz", "TOR", "G")], fake=fake)
+    normal, bye, down = goalies(FakeSession()), goalies(FakeSession(bye=True), 0), goalies(FakeSession(roster_down={"TOR", "BOS"}))
+    assert bye["Jeremy Swayman"]["cr_season"] == normal["Jeremy Swayman"]["cr_season"] > 0
+    assert bye["Jeremy Swayman"]["cr_games"] == 0 and bye["Jeremy Swayman"]["cr_g_nights"] == {}
+    for name in normal:  # rosters unreadable: the goalies who started for each team stand in
+        assert down[name]["cr_season"] == normal[name]["cr_season"] > 0
+        assert down[name]["cr_games"] == normal[name]["cr_games"]
+
+
+def test_espn_free_agent_on_an_nhl_roster_gets_his_games(monkeypatch, tmp_path):
+    """ESPN lists him as 'FA' but he plays for TOR: fetch.py's reschedule gives him its games (Bunting, findings 230)."""
+    calls = []
+
+    def reschedule(p, team):
+        calls.append((p["name"], team))
+        p.update(team="TOR", games=4, games_left=2, nights=[7, 9, 11, 13])
+    p = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "FA", "C", games_left=0)], reschedule=reschedule)["Auston Matthews"]
+    assert calls == [("Auston Matthews", "TOR")] and p["cr_games"] > 1.5 and p["cr"] > 0
+    calls.clear()  # unsigned and yet to play: stays a free agent with no games (findings 216)
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "FA", "C", games_left=0)], FakeSession(missed={1: {0, 1, 2, 3}}),
+         reschedule=reschedule)
+    assert calls == []
+
+
+def test_offseason_mover_rated_a_little_lower(monkeypatch, tmp_path):
+    """On a new team since last season and with one team this season: points a game x 0.965 (findings 230)."""
+    def matthews(mult, **kw):
+        monkeypatch.setattr(rating, "OFFSEASON_MOVER_MULT", mult)
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], FakeSession(**kw))["Auston Matthews"]
+    moved, plain = matthews(0.965, last_team={1: "BOS"}), matthews(1.0, last_team={1: "BOS"})
+    assert moved["cr_fpg"] == pytest.approx(0.965 * plain["cr_fpg"], abs=0.006)
+    assert moved["cr_season"] < plain["cr_season"]
+    assert matthews(0.965)["cr_fpg"] == matthews(1.0)["cr_fpg"]  # same team as last season
+    # traded this season (2 games for BOS, then TOR): the in-season mover rules apply, not this
+    assert matthews(0.965, last_team={1: "BOS"}, moved={1: 2})["cr_fpg"] == matthews(1.0, last_team={1: "BOS"}, moved={1: 2})["cr_fpg"]
+
+
+def test_details_fields(run):
+    """The why panel's numbers: a goalie's own points per start and team games counted, the share a player yet to play is
+    given (findings 232), and the start chance by night (findings 236)."""
+    by_name, _, _ = run
+    for name in ("Joseph Woll", "Anthony Stolarz", "Jeremy Swayman"):
+        p = by_name[name]
+        assert p["cr_why"]["n10"] == 4 and p["cr_why"]["own_pps"] > 0
+        assert sum(p["cr_g_nights"].values()) == pytest.approx(p["cr_why"]["exp_starts"], abs=0.02)
+        assert all(0 <= q <= 1 for q in p["cr_g_nights"].values())
+    sto = by_name["Anthony Stolarz"]
+    assert set(sto["cr_g_nights"]) == {"2026-10-09", "2026-10-11"} and sto["cr_g_nights"]["2026-10-09"] == 1.0  # confirmed
+    assert by_name["Brad Marchand"]["cr_why"]["season_share"] == rating.PRESEASON_INJURED["short"]
+    assert by_name["Ryan Spooner"]["cr_why"]["season_share"] == rating.UNPLAYED_REGULAR
+    assert "season_share" not in by_name["Auston Matthews"]["cr_why"]
+    assert all("cr_g_nights" not in p for p in by_name.values() if p["pos"] != "G")

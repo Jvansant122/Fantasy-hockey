@@ -40,8 +40,31 @@ INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DA
 # skaters (findings section 58): injured players still dress for some of the week, unless the note says it's a long absence
 SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}
 LONG_ABSENCE = re.compile(r"remainder of the (?:\d{4}-\d{2} )?(?:regular )?(?:season|campaign)|rest of the (?:regular )?(?:season|campaign)"
-                          r"|season-ending|out for the (?:season|year)|long[- ]term injured reserve|\bltir\b|surgery|surgical|operation"
-                          r"|month-to-month|week-to-week|indefinitely|no timetable|no timeline|extended period|long-term", re.I)
+                          r"|season-ending|out for the (?:season|year)|long[- ]term injured reserve|\bltir\b|surgery|surgical|\boperation\b"
+                          r"|month-to-month|week-to-week|indefinitely|no timetable|no timeline|extended period|long-term"
+                          r"|without a (?:clear )?(?:timetable|timeline)|(?:a few|several) (?:more )?weeks", re.I)
+# long-absence words read from the long comment's sentences that name him or no other injured player; not 'surgery',
+# which the long comment often recaps from an old injury (findings 236)
+LONG_OWN = re.compile(r"week-to-week|month-to-month|indefinitely|(?:no|without a|without any) (?:clear )?(?:timetable|timeline)"
+                      r"|(?:a few|several|a couple of) (?:more )?weeks|unclear when he(?:'ll| will) (?:be (?:available|ready) to )?return", re.I)
+MONTHS = {m: i for i, m in enumerate("january february march april may june july august september october november december".split(), 1)}
+# 'not expected back until November', 'until at least mid-December', 'before Christmas' (findings 236)
+UNTIL = re.compile(r"(?:until|before|back in|return in|until at least|not before)\s+(?:at least\s+|around\s+|roughly\s+|sometime in\s+|\"?maybe\"?\s+)*"
+                   r"(early|mid|late|the middle of|the end of)?[- ]?(" + "|".join(MONTHS) + r")\b|before christmas", re.I)
+# a number after these words is a stat line or an old absence, not a return date ('four points over five games',
+# 'missed the final 26 games'), except 'out/miss for the first ...' (findings 236)
+TL_SKIP_PRE = re.compile(r"\b(?:ago|last|previous|past|first|final|after|since|over|across|through)\s*$")
+# ESPN often replaces the real note with a bare status word; the last real one is kept in INJURY_NOTES (findings 236)
+PLACEHOLDER_NOTE = re.compile(r"^\s*(ir|ir-nr|out|day-to-day|suspension)\s*$", re.I)
+STATUS_SEVERITY = {"DAY_TO_DAY": 0, "OUT": 1, "SUSPENSION": 1, "INJURY_RESERVE": 2}
+INJURY_NOTES_DAYS = 60
+# a one-game OUT note ('won't play Thursday') is stale once his team has played after it: ESPN moves him to day-to-day
+# the next morning (findings 236)
+ONE_GAME_OUT = re.compile(r"(?:won't|will not|not) (?:play|suit up|dress)|will miss|ruled out (?:for|of)", re.I)
+ONE_GAME_NOT = re.compile(r"week|month|indefin|games", re.I)
+ONE_GAME_SAME_DAY_HOUR = 17  # game dates have no start time: a note posted before 5 PM ET came before that night's game
+# ESPN OUT on the day of his team's game: 0 of 20 dressed (findings 235); later games keep the OUT cap
+OUT_TODAY_CAP = 0.03
 SEASON_OUT = re.compile(r"remainder of the (?:\d{4}-\d{2} )?(?:regular )?(?:season|campaign)|rest of the (?:regular )?(?:season|campaign)"
                         r"|season-ending|out for the (?:season|year)", re.I)
 WORDNUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "ten": 10, "twelve": 12,
@@ -49,6 +72,7 @@ WORDNUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seve
 _NUM = r"(\d+|one|two|three|four|five|six|seven|eight|ten|twelve|a couple of|a few|several)"
 TIMELINE = re.compile(_NUM + r"(?:\s*(?:-|to)\s*" + _NUM + r")?\s*(?:more\s+|additional\s+|to\s+\w+\s+)?(day|week|month|game)s?", re.I)
 INJURY_LOG = ROOT / "data" / "injury_log.jsonl"
+INJURY_NOTES = ROOT / "data" / "injury_notes.json"
 INJURY_LOG_DAYS = 28
 NOT_PLAYING_DRESS = 0.1  # not matched to NHL data at all
 PREV_MIN_GP = 10  # under this many games last season, use the season before (findings 216)
@@ -93,7 +117,8 @@ NO_DECISION_LATER = (-2.0 / 0.8, -1.4 / 0.8)  # game after next, then every game
 NO_DECISION_GAMES = 16  # covers a two-week playoff round
 # ... and his Season start share runs high until he starts again: 0.48 against 0.33 of the next 20 starts (findings 167)
 NO_DECISION_SEASON = 0.68
-PRIOR_STARTS_FLOOR = 70  # last season's starts the early-season prior divides by, at least (findings 217)
+PRIOR_TOP_CAP = 0.7  # the early-season prior's top share of last season's starts, at most (findings 234; replaced a 70-start floor)
+INJURED_TAKER_WEIGHT = 0.5  # an injured partner's weight when a goalie's lost Season share is handed out (findings 234)
 # a goalie who came on in relief in the team's last game looks like an idle backup, since only starts are counted, but
 # he starts next more often (0.47 against 0.58 after a pulled starter; third goalies and call-ups 0.23 against 0.47):
 # start-logit shifts for the next game and later games, plus more for one with 0-3 of the last 20 starts (findings 170)
@@ -223,6 +248,7 @@ OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
+OFFSEASON_MOVER_MULT = 0.965  # skater on a new team since last season: leave-one-season-out 0.963-0.970 (findings 230)
 # ESPN team abbreviations that differ from the NHL's
 ESPN_TO_NHL = {"TB": "TBL", "NJ": "NJD", "SJ": "SJS", "LA": "LAK", "UTAH": "UTA", "WAS": "WSH", "MON": "MTL", "CLB": "CBJ"}
 
@@ -389,7 +415,7 @@ def load_prev_season(s, season):
     for pid, t in out.items():
         gp = t["gp"]
         fp = sum((t.get(k) or 0) * w for k, w in WEIGHTS.items())
-        rates[pid] = {"gp": gp, "name": t["name"], "pos": t["pos"], "fp": fp / gp, "toi": t["toi"],
+        rates[pid] = {"gp": gp, "name": t["name"], "pos": t["pos"], "fp": fp / gp, "toi": t["toi"], "team": t.get("team"),
                       "pptoi": t.get("pptoi_tot", 0) / gp, "points": (t["goals"] + t["assists"]) / gp,
                       **{k: (t.get(k) or 0) / gp for k in ("shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints")}}
     prev_ranks(rates, {pid: t.get("team") for pid, t in out.items()})
@@ -543,14 +569,27 @@ def model_win_prob(gd_team, gd_opp, home):
     return 1 / (1 + math.exp(-(SCHED_WIN[0] + SCHED_WIN[1] * (gd_team - gd_opp) + SCHED_WIN[2] * home)))
 
 
-def roster(s, team):
-    """Current NHL roster: [(id, full name, position code)]."""
-    try:
-        data = nhl_get(s, f"{NHL_WEB}/roster/{team}/current").json()
-    except requests.RequestException:
-        return []
-    return [(p["id"], f'{p["firstName"]["default"]} {p["lastName"]["default"]}', p.get("positionCode", "G" if grp == "goalies" else ""))
-            for grp in ("forwards", "defensemen", "goalies") for p in data.get(grp, [])]
+ROSTER_WAITS = (0, 3, 10)  # seconds before each roster try: a timeout must not take a team's goalies to 0 (findings 230)
+
+
+def roster(s, team, goalie_games=()):
+    """Current NHL roster: [(id, full name, position code)]. Tried with backoff; if it still can't be read, the goalies
+    who started for the team this season stand in (from goalie_games), so its goalies keep their Season rating."""
+    for wait in ROSTER_WAITS:
+        time.sleep(wait)
+        try:
+            r = s.get(f"{NHL_WEB}/roster/{team}/current", headers=UA, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            return [(p["id"], f'{p["firstName"]["default"]} {p["lastName"]["default"]}', p.get("positionCode", "G" if grp == "goalies" else ""))
+                    for grp in ("forwards", "defensemen", "goalies") for p in data.get(grp, [])]
+        except (requests.RequestException, ValueError, KeyError, TypeError, AttributeError) as e:
+            print(f"Roster {team} unavailable: {e!r}", file=sys.stderr)
+    names = {}
+    for g in goalie_games:
+        if g["team"] == team and g["started"]:
+            names[g["id"]] = g["name"]
+    return [(gid, name, "G") for gid, name in names.items()]
 
 
 class Model:
@@ -682,9 +721,10 @@ def timeline_days(text):
     best = None
     for m in TIMELINE.finditer(text):
         pre = text[max(0, m.start() - 60):m.start()].lower()
-        if not re.search(r"miss|out|sidelined|recover|timeline|week-to-week|shelved|absen|keep him|expected|estimated|least|another|surgery", pre):
+        if not re.search(r"miss|out|sidelined|recover|timeline|week-to-week|shelved|absen|keep him|expected|estimated|least|another|surgery"
+                         r"|away|require", pre):
             continue
-        if re.search(r"\b(?:ago|last|previous|past|first|after|since)\s*$", pre):
+        if TL_SKIP_PRE.search(pre) and not re.search(r"(?:out|miss) for the first\s*$", pre):
             continue
         lo = _num(m.group(1))
         hi = _num(m.group(2)) if m.group(2) else lo
@@ -699,19 +739,103 @@ def timeline_days(text):
 def injury_note(note, today):
     """What ESPN's latest injury note says (findings section 58): {long, season, days_left}. Status words come from the
     headline (the longer comment often recaps old injuries); the stated timeline from both. Out for the season also from a
-    sentence of the longer comment that names him, since the headline may say only "LTIR" (Shesterkin, findings 216)."""
+    sentence of the longer comment that names him, since the headline may say only "LTIR" (Shesterkin, findings 216).
+    Long-absence words also from long-comment sentences that name him or no other injured player, and a stated return
+    month ('until November') counts as a return date (findings 236)."""
     short, long_ = note.get("short") or "", note.get("long") or ""
     last = (note.get("name") or "").split()[-1:]
-    own = " ".join(x for x in re.split(r"(?<=[.!?])\s+", long_) if last and last[0].lower() in x.lower())
+    sentences = re.split(r"(?<=[.!?])\s+", long_)
+    own = " ".join(x for x in sentences if last and last[0].lower() in x.lower())
+    mine = " ".join(x for x in sentences if last and (last[0].lower() in x.lower() or not re.search(r"[A-Z][\w'.-]+ \([a-z -]+\)", x)))
     days = timeline_days(short + " " + long_)
-    left = None
-    if days is not None:
-        try:
-            left = days - (today - date.fromisoformat((note.get("date") or "")[:10])).days
-        except ValueError:
-            left = days
+    try:
+        nd = date.fromisoformat((note.get("date") or "")[:10])
+    except ValueError:
+        nd = None
+    gone = (today - nd).days if nd else 0
+    left = None if days is None else days - gone
+    u = until_days(short + " " + own, nd or today)
+    if u is not None:
+        left = u - gone if left is None else max(left, u - gone)
     season = bool(SEASON_OUT.search(short) or SEASON_OUT.search(own))
-    return {"long": season or bool(LONG_ABSENCE.search(short)) or (left is not None and left >= 14), "season": season, "days_left": left}
+    long_abs = season or bool(LONG_ABSENCE.search(short)) or bool(LONG_OWN.search(mine)) or (left is not None and left >= 14)
+    return {"long": long_abs, "season": season, "days_left": left}
+
+
+def until_days(text, day):
+    """Days from day to the latest stated return month ('not expected back until November', 'until at least
+    mid-December', 'before Christmas'), or None."""
+    best = None
+    for m in UNTIL.finditer(text):
+        if m.group(0).lower() == "before christmas":
+            d = date(day.year, 12, 25)
+        else:
+            mo = MONTHS[m.group(2).lower()]
+            dom = {"early": 5, "mid": 15, "the middle of": 15, "late": 25, "the end of": 28}.get((m.group(1) or "").lower(), 1)
+            d = date(day.year + (mo < day.month - 1), mo, dom)
+        v = (d - day).days
+        best = v if best is None else max(best, v)
+    return best
+
+
+def one_game_out_over(note, team_game_dates):
+    """A one-game OUT note ('won't play Thursday') once his team has played a game after the note's time (findings 236).
+    team_game_dates: his team's played game dates (ET, ISO). Game dates carry no start time, so a game on the note's own
+    day counts when the note came before ONE_GAME_SAME_DAY_HOUR ET."""
+    short = (note or {}).get("short") or ""
+    if not ONE_GAME_OUT.search(short) or ONE_GAME_NOT.search(short):
+        return False
+    try:
+        when = datetime.fromisoformat((note.get("date") or "").replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    when = (when if when.tzinfo else when.replace(tzinfo=timezone.utc)).astimezone(ET)
+    day = when.date().isoformat()
+    return any(d[:10] > day or (d[:10] == day and when.hour < ONE_GAME_SAME_DAY_HOUR) for d in team_game_dates)
+
+
+def load_injury_notes():
+    """{ESPN id (str): {date, short, long, name, status, seen}}: each player's last real ESPN note (findings 236)."""
+    try:
+        data = json.loads(INJURY_NOTES.read_text())
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def write_injury_notes(stored, today):
+    """Save the notes seen in the last INJURY_NOTES_DAYS days."""
+    cutoff = (today - timedelta(days=INJURY_NOTES_DAYS)).isoformat()
+    kept = {k: v for k, v in sorted(stored.items()) if isinstance(v, dict) and str(v.get("seen") or v.get("date") or "")[:10] >= cutoff}
+    try:
+        INJURY_NOTES.write_text(json.dumps(kept, indent=1, sort_keys=True) + "\n")
+    except OSError as e:
+        print(f"Injury notes not saved: {e!r}", file=sys.stderr)
+
+
+def carry_injury_notes(notes, stored, status, played_since, today):
+    """Swap a bare status word ('ir', 'out') for the player's last real note, and remember each real note (findings 236).
+
+    notes: {ESPN id: today's feed note}, changed in place. stored: load_injury_notes(), changed in place.
+    status: {ESPN id: his ESPN fantasy status now}. played_since(ESPN id, date): he dressed for an NHL game on or after it.
+    The stored note is used when it wasn't written under a day-to-day status, his status now is at least as severe
+    (day-to-day < out, suspension < IR), and he hasn't played since. Returns the ESPN ids whose note was swapped."""
+    swapped = set()
+    for aid, note in list(notes.items()):
+        if not PLACEHOLDER_NOTE.match(note.get("short") or ""):
+            stored[str(aid)] = {"date": note.get("date"), "short": note.get("short"), "long": note.get("long"),
+                                "name": note.get("name"), "status": status.get(aid), "seen": today.isoformat()}
+            continue
+        old = stored.get(str(aid))
+        if not old or old.get("status") == "DAY_TO_DAY":
+            continue
+        if STATUS_SEVERITY.get(status.get(aid), -1) < STATUS_SEVERITY.get(old.get("status"), 9):
+            continue
+        if played_since(aid, str(old.get("date") or "")[:10]):
+            continue
+        notes[aid] = {**note, **{k: old.get(k) for k in ("date", "short", "long")}, "name": note.get("name") or old.get("name")}
+        swapped.add(aid)
+    return swapped
 
 
 def usually_back(status, missed, note):
@@ -795,7 +919,7 @@ def ux_features(f, pos, mu):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=(), relief=(), season_out=()):
+                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -811,7 +935,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     movers: goalies who started for another NHL team this season; with 1-3 starts for this team their logit rises,
     and their season_share counts only this team's games since their first start for it.
     relief: goalies who came on in relief in the team's last game; their start logit rises (findings 170).
-    season_out: goalies ESPN says are out for the season: no season_share, and theirs goes to the healthy ones (findings 216)."""
+    season_out: goalies ESPN says are out for the season: no season_share, and theirs goes to the others (findings 216, 234).
+    by_date: if given, filled with {goalie id: {date: chance he starts}} for each game from today on (findings 236)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -825,9 +950,16 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     # 10th game, so one opening-night start doesn't read as a 100/0 split (findings section 41)
     k = EARLY_SHARE_K * max(0.0, 1 - len(seq) / EARLY_SHARE_GAMES)
     last_total = sum(prev_starts.get(gid, 0) for gid in cands)
-    # at least a full season's starts: a no. 1 whose old partner left isn't given a prior near 1 (findings 217)
-    last_total = last_total and max(last_total, PRIOR_STARTS_FLOOR)
     prior = {gid: prev_starts.get(gid, 0) / last_total if last_total else 1 / len(cands) for gid in cands}
+    # a no. 1 whose old partner left isn't given a prior near 1: the top prior is capped and the excess goes to the
+    # others in proportion to theirs, evenly if they had none (findings 217, 234)
+    top_gid = max(sorted(cands, key=str), key=prior.get)
+    if len(cands) >= 2 and prior[top_gid] > PRIOR_TOP_CAP:
+        extra, others = prior[top_gid] - PRIOR_TOP_CAP, [g for g in cands if g != top_gid]
+        rest = sum(prior[g] for g in others)
+        prior[top_gid] = PRIOR_TOP_CAP
+        for g in others:
+            prior[g] += extra * (prior[g] / rest if rest else 1 / len(others))
     if season_share is not None:
         for gid in cands:
             # a goalie who came from another team counts only the games since his first start here (findings 157)
@@ -839,8 +971,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             season_share[gid] = SEASON_SHARE_SCALE * (0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K)
                                                       + 0.25 * ewm)
         # out for the season, or left his last start without a decision and not yet confirmed back in net (findings 167),
-        # unless ESPN already has him out: the share he loses goes to the team's healthy goalies (findings 216-217)
-        moved, takers = 0.0, [gid for gid in cands if gid not in season_out and gid not in injury]
+        # unless ESPN already has him out: the share he loses goes to the team's other goalies, a short-term injured one
+        # (out, IR) at half weight, since he is back for most of the rest (findings 216-217, 234)
+        moved, takers = 0.0, [gid for gid in cands if gid not in season_out]
         for gid in cands:
             cut = 1.0 if gid in season_out else (1 - NO_DECISION_SEASON) if (
                 last_start and last_start[0] == gid and last_start[1][:1] == (NO_DECISION_LOGIT,) and gid not in confirmed.values()
@@ -849,9 +982,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 moved += season_share[gid] * cut
                 season_share[gid] *= 1 - cut
                 takers = [g for g in takers if g != gid]
-        tot = sum(season_share[g] for g in takers)
+        wt = {g: season_share[g] * (INJURED_TAKER_WEIGHT if injury.get(g, 1.0) <= 0 else 1.0) for g in takers}
+        tot = sum(wt.values())
         for g in takers:
-            season_share[g] += moved * season_share[g] / tot if tot else 0.0
+            season_share[g] += moved * wt[g] / tot if tot else 0.0
     shares = {}
     for gid in cands:
         def sh(n, gid=gid):
@@ -878,8 +1012,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         rested = next((v for days, v in BREAK_LOGITS if gap >= days), 0.0)
         night2_no1 = False
         if gap == 1 and seq:  # night 2 of a back-to-back: shift whoever started night 1, by role
-            top = max(seq[-20:].count(g) for g in set(seq[-20:]))
-            night2_no1 = seq[-20:].count(seq[-1]) == top
+            # the no. 1 among the goalies still here: a departed no. 1's starts don't count (findings 234)
+            recent = [g for g in seq[-20:] if g in cands]
+            top = max((recent.count(g) for g in set(recent)), default=0)
+            night2_no1 = bool(recent) and recent.count(seq[-1]) == top
             rested = B2B_NIGHT2_NO1 if night2_no1 else B2B_NIGHT2_OTHER
         b2b = float(bool(log) and (day - log[-1][0]).days == 1)
         week = [gid for gd, gid in log if (day - gd).days <= 7]
@@ -926,6 +1062,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 exp[gid] += q[gid]
                 if d == today.isoformat() and today_p is not None:
                     today_p[gid] = q[gid]
+                if by_date is not None:
+                    by_date.setdefault(gid, {})[d] = q[gid]
         likely = max(p, key=p.get)
         log.append((day, likely if p[likely] > 0.5 else None))
         prev_p = p
@@ -1005,14 +1143,16 @@ def line_win_probs(odds, today, now=None):
     return out
 
 
-def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1):
+def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
 
     starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
     odds: today's betting lines (leads.fetch_odds); they price tonight's goalie starts (research section 30).
-    injuries: ESPN's injury notes (leads.fetch_injuries); a long absence takes a skater's week to 0 (findings section 58)."""
+    injuries: ESPN's injury notes (leads.fetch_injuries); a long absence takes a skater's week to 0 (findings section 58).
+    reschedule(p, nhl team): fetch.py's, gives a player ESPN lists as 'FA' his NHL team's games (findings 230)."""
     notes = {i["athlete_id"]: i for i in injuries or [] if i.get("athlete_id")}
     flagged = recently_flagged(today)  # read before this run rewrites the log
+    stored_notes = load_injury_notes()
     s = requests.Session()
     season, prev_season = season_ids(espn_season)
     model = Model()
@@ -1035,6 +1175,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if g["started"]:
             starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
             last_start[g["team"]] = (g["id"], last_start_shift(g))  # the latest start wins
+    team_dates = {}  # each team's played game dates (ET)
+    for g in goalie_games:
+        team_dates.setdefault(g["team"], set()).add(g["date"][:10])
     # came on in relief in his team's latest game (findings 170)
     relief = {}
     for g in goalie_games:
@@ -1079,8 +1222,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for g in goalie_games:
         add(g["id"], g["name"], g["team"], "G")
     rosters = {}
-    for team in sched:
-        rosters[team] = roster(s, team)
+    # every team with a game this week or this season: one with no game this week keeps its goalies' Season (findings 230)
+    for team in sorted(set(sched) | set(team_games)):
+        rosters[team] = roster(s, team, goalie_games)
         for pid, name, pos in rosters[team]:
             known = index.get(norm(name), {})
             if pid not in known or known[pid][0] is None:
@@ -1091,7 +1235,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     if missed:
         older = load_prev_season(s, prev_season - 10001)
-        prev.update({pid: older[pid] for pid in missed if (older.get(pid) or {}).get("gp", 0) >= PREV_MIN_GP})
+        label = f"{(prev_season - 10001) // 10000}-{str((prev_season - 10001) % 100).zfill(2)}"  # 20242025 -> 2024-25 (findings 234)
+        prev.update({pid: dict(older[pid], season_label=label) for pid in missed if (older.get(pid) or {}).get("gp", 0) >= PREV_MIN_GP})
 
     def match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
@@ -1127,6 +1272,27 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 tonight[g["team"]] = (cands[0], g.get("status"))
             if g.get("status") == "Confirmed":
                 confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
+    # ESPN lists him as a free agent ('FA') but he has played this season and an NHL roster has him: his team's games
+    # (Bunting, findings 230)
+    roster_team = {pid: team for team, r in rosters.items() for pid, _, _ in r}
+    for p in players:
+        if reschedule and p["pos"] != "G" and p.get("team") == "FA":
+            pid = match(p)
+            if pid in by_player and roster_team.get(pid):
+                reschedule(p, roster_team[pid])
+    # a bare status word ('ir') in place of ESPN's real note: the last real note, if it still applies (findings 236)
+    pid_of = {p["id"]: match(p) for p in players}
+    goalie_dates = {}
+    for g in goalie_games:
+        goalie_dates.setdefault(g["id"], []).append(g["date"][:10])
+
+    def played_since(aid, day):
+        pid = pid_of.get(aid)
+        return bool(pid and day) and (any(g["date"][:10] >= day for g in by_player.get(pid, []))
+                                      or any(d >= day for d in goalie_dates.get(pid, [])))
+    carried = carry_injury_notes(notes, stored_notes, {p["id"]: p.get("injury") for p in players}, played_since, today)
+    if carried:
+        print(f"Kept the last real injury note for {len(carried)} players whose note is now a bare status word")
     goalie_inj, goalie_gone = {}, set()
     for p in players:
         if p["pos"] == "G" and p.get("injury") in INJURY_DRESS:
@@ -1135,18 +1301,21 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 goalie_inj[pid] = INJURY_DRESS[p["injury"]]
                 if p["id"] in notes and injury_note(notes[p["id"]], today)["season"]:
                     goalie_gone.add(pid)
-    goalie_exp, goalie_today, goalie_season = {}, {}, {}
+    goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
-    for team, dates in sched.items():
+    # every team, not just those with a game this week: no game this week keeps the Season rating (findings 230)
+    for team in sorted(set(sched) | set(team_games)):
+        dates = sched.get(team, [])
         roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
-        tod, sea = {}, {}
+        tod, sea, nights = {}, {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
-                            last_start.get(team), movers, relief.get(team, ()), goalie_gone)
+                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights)
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
-        keep = (lambda gid: gid in mine) if roster_g else (lambda gid: gid not in goalie_exp)
-        for src, dst in ((exp, goalie_exp), (tod, goalie_today), (sea, goalie_season)):
-            dst.update({gid: v for gid, v in src.items() if keep(gid)})
+        # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
+        kept = {gid for gid in set(exp) | set(sea) if (gid in mine if roster_g else gid not in goalie_exp)}
+        for src, dst in ((nights, goalie_nights), (exp, goalie_exp), (tod, goalie_today), (sea, goalie_season)):
+            dst.update({gid: v for gid, v in src.items() if gid in kept})
 
     unmatched = 0
     injury_log = []
@@ -1163,7 +1332,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             starts = goalie_exp.get(pid, 0.0) if pid else 0.0
             seq = [gid for _, gid in starts_by_team.get(team, [])][-10:]
             why = {"exp_starts": round(starts, 2), "team_games": p["games_left"],
-                   "share10": round(sum(x == pid for x in seq) / len(seq), 2) if seq and pid else None}
+                   "share10": round(sum(x == pid for x in seq) / len(seq), 2) if seq and pid else None,
+                   "n10": len(seq)}  # the team may have played fewer than 10 (findings 232)
             if team in tonight and pid:
                 who, status = tonight[team]
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
@@ -1178,7 +1348,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base
+            why["own_pps"] = round(fpg, 2)  # his own, before tonight's line and the schedule (findings 232)
             season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
+            # start chance per game from today, for the page's open-slot count (findings 236)
+            p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())} if pid else {}
             # tonight's game priced by the betting line: 2.9 + 4.1 x (win probability - 0.5) per start
             p_today = min(goalie_today.get(pid, 0.0), starts) if pid and not started else 0.0
             if team in lines and p_today > 0 and starts > 0:
@@ -1228,6 +1401,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                      is_d=p["pos"] == "D")
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
+            # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)
+            last_team = (prev.get(pid) or {}).get("team") if pid else None
+            if last_team and team in rosters and last_team != team and not traded and len({g["team"] for g in gl}) <= 1:
+                fpg *= OFFSEASON_MOVER_MULT
             df_, base_dress, cap = None, None, 1.0
             if pid is None or (not gl and p["team"] == "FA"):  # not in NHL stats, or unsigned and yet to play (findings 216)
                 p_dress = NOT_PLAYING_DRESS
@@ -1267,23 +1444,27 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             here = sum(g["team"] == gl[-1]["team"] for g in gl) if gl else 0
             new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
+            # season_share: a fixed share for a player yet to play, which the details name (findings 232)
+            season_share = None
             if df_ and model.season_lr:
                 season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]),
                                                  NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                                  + CLEARED_SEASON_LOGIT * cleared_out)
             elif cleared_new:
-                season = fpg * CLEARED_NEW_SEASON
+                season_share = CLEARED_NEW_SEASON
             elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
                 # hurt or suspended before playing this season: such regulars dress for ~41% of the rest, not the idle cap's
                 # 10% (findings 74; suspensions take the short-injury share, findings 118)
                 pre = injury_note(notes[p["id"]], today) if p["id"] in notes else None
-                season = fpg * PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"]
+                season_share = PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"]
             elif not gl and pid in on_roster and tg and not p.get("injury") and (prev.get(pid) or {}).get("gp", 0) >= UNPLAYED_REGULAR_GP:
                 # a regular (60+ games last season, on a current NHL roster, so not retired or overseas) who hasn't played
                 # while his team has: such players dress for 0.38 of the rest (findings 118)
-                season = fpg * UNPLAYED_REGULAR
+                season_share = UNPLAYED_REGULAR
             else:
                 season = fpg * p_dress
+            if season_share is not None:
+                season = fpg * season_share
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -1292,6 +1473,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
             inj = 0.0 if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
+            # OUT for one named game that his team has since played: day-to-day, as ESPN has him by the next morning (findings 236)
+            one_game_over = p.get("injury") == "OUT" and p["id"] in notes and not (note and note["long"]) \
+                and one_game_out_over(notes[p["id"]], team_dates.get(team, ()))
+            if one_game_over:
+                inj = SKATER_INJURY_CAP["DAY_TO_DAY"]
             if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
                 share = gl[-1]["toi"] / f["std_toi"]
                 if p["injury"] == "DAY_TO_DAY":
@@ -1313,6 +1499,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
                 per_game = [dress_next] + per_game[1:]
+            # ESPN has him OUT on the day of his team's game, still to start: that game counts ~0 (findings 235)
+            if p.get("injury") == "OUT" and not one_game_over and per_game and p.get("today_start") and not game_started(p):
+                per_game[0] = min(per_game[0], OUT_TODAY_CAP)
+                dress_next = per_game[0]
             exp_games = sum(per_game)
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
@@ -1320,6 +1510,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D") if pid else None}
             why = {k: (round(v, 2) if isinstance(v, float) else v) for k, v in why.items()}
+            if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
+                why["last_season"] = prev[pid]["season_label"]
+            if season_share is not None:
+                why["season_share"] = round(season_share, 2)
             if p.get("injury") in SKATER_INJURY_CAP and p["injury"] != "SUSPENSION":
                 why["back"] = usually_back(p["injury"], sat_last, note)
         p["cr"] = round(fpg * exp_games, 2)
@@ -1359,5 +1553,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 below = sum(v < p[key] for v in vals)
                 p[key + "_pct" if key != "cr" else "cr_pct"] = round(100 * below / max(len(vals) - 1, 1))
     write_injury_log(injury_log, today)
+    write_injury_notes(stored_notes, today)
     print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")
     return unmatched

@@ -247,6 +247,34 @@ def test_free_agents_stop_counting_today_at_the_first_puck():
     assert fetch.counts_until(None, "freeagent", first) is None  # no game today
 
 
+def test_adds_after_the_first_puck_stay_in_the_data():
+    """Today's executed free-agent and waiver adds that ESPN's roster doesn't list yet (findings 236)."""
+    tx = [{"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 3, "proposedDate": 2,
+           "items": [{"type": "ADD", "playerId": 1, "toTeamId": 3}, {"type": "DROP", "playerId": 2, "fromTeamId": 3}]},
+          {"type": "WAIVER", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 4, "proposedDate": 3,
+           "items": [{"type": "ADD", "playerId": 5, "toTeamId": 4}]},
+          {"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 11, "teamId": 4, "proposedDate": 1,
+           "items": [{"type": "ADD", "playerId": 6, "toTeamId": 4}]},  # yesterday
+          {"type": "FREEAGENT", "status": "CANCELED", "scoringPeriodId": 12, "teamId": 4, "proposedDate": 4,
+           "items": [{"type": "ADD", "playerId": 7, "toTeamId": 4}]},
+          {"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 5, "proposedDate": 5,
+           "items": [{"type": "ADD", "playerId": 8, "toTeamId": 5}]},
+          {"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 5, "proposedDate": 6,
+           "items": [{"type": "DROP", "playerId": 8, "fromTeamId": 5}]}]  # added and dropped again
+    assert fetch.pending_adds(tx, {5: (4, 7)}, 12) == {1: 3}  # 5 is already on ESPN's roster
+
+
+def test_schedule_fields_and_nights_by_scoring_period():
+    team = {"abbrev": "Tor", "periods": {7, 9, 11, 14}, "starts": {9: "2026-10-07T23:00:00Z"}}
+    sched = {"matchup_sps": list(range(7, 14)), "remaining": [9, 10, 11, 12, 13], "light": {11}, "next_sps": list(range(14, 28)),
+             "today_sp": 9}
+    f = fetch.schedule_fields(team, sched, 0, "2026-10-07T23:00:00Z", "2026-10-07T22:00:00Z")
+    assert (f["team"], f["games"], f["games_left"], f["light_left"], f["nights"], f["games_next2"]) == ("TOR", 3, 2, 1, [7, 9, 11], 1)
+    assert fetch.schedule_fields(team, sched, 0, "2026-10-07T23:00:00Z", "2026-10-08T00:00:00Z")["games_left"] == 1  # started
+    assert fetch.schedule_fields(team, sched, 10, None, "2026-10-07T22:00:00Z")["nights"] == [11]  # on waivers until sp 10
+    assert fetch.nights_by_sp({"2026-10-07": 0.6, "2026-10-09": 0.4, "bad": 1}, date(2026, 10, 7), 9) == {9: 0.6, 11: 0.4}
+
+
 def test_skaters_with_no_games_use_last_seasons_usage_ranks():
     """Before his first game a skater's rank inputs come from last season, not the training mean (findings 213)."""
     rates = {i: {"gp": 80 - i, "pos": "C" if i < 14 else "D", "toi": 22 - i, "pptoi": max(0, 4 - i * 0.5)} for i in range(22)}

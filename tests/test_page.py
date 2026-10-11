@@ -982,3 +982,42 @@ def test_trade_check_roster_spots(browser, server, data):
         assert "would have to drop a player to take two" in text
     assert errors == []
     ctx.close()
+
+
+def test_goalie_slots_follow_start_chances_and_new_details(browser, server, data):
+    """The nights strip counts a goalie by his chance to start each later night (findings 236); the details name his own
+    points per start, the team games counted, the season a fallback line is from and a yet-to-play share (findings 232-234)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    from datetime import datetime, timedelta, timezone
+    base = json.loads(json.dumps(data))
+    base["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()
+    for n in base["nights"]:
+        n["past"] = False  # tonight is the first night; the six after it use the per-night chances
+    sps = [n["sp"] for n in base["nights"]]
+    team = next(t for t in base["teams"] if len(_mine(base, t, "G")) >= 2)
+    for p in base["players"]:
+        if p["pos"] == "G":
+            p["cr_why"] = dict(p.get("cr_why") or {}, own_pps=3.1, n10=6)
+        else:
+            p["cr_why"] = dict(p.get("cr_why") or {}, season_share=0.45, last_season="2024-25", last_fpg=1.2)
+    for p in _mine(base, team, "G"):
+        p.update(ir=False, injury=None, nights=sps, today_start=None)
+    strips = {}
+    for q in (0.0, 0.6):
+        d = json.loads(json.dumps(base))
+        for p in _mine(d, team, "G"):
+            p["cr_g_nights"] = {str(sp): q for sp in sps}
+        ctx, page, errors = open_page(browser, server, data=d)
+        page.select_option("#team", str(team["id"]))
+        strips[q] = page.locator("#nights .night").nth(3).inner_text()
+        for i in range(min(8, rows(page))):
+            page.locator("#rows tr[data-id]").nth(i).click()
+            text = page.locator("#rows tr.why").inner_text()
+            assert "his own 3.10 pts per start" in text or "expects him in about 45% of the rest" in text, text
+            assert "his team's last 10" not in text
+        assert errors == []
+        ctx.close()
+    goalies = len(_mine(base, team, "G"))
+    assert "G2" in strips[0.0]  # no start expected: both slots open
+    assert f"G{max(0, 2 - round(0.6 * goalies))}" in strips[0.6], strips[0.6]
