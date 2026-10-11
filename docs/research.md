@@ -709,6 +709,10 @@ On the second night of a back-to-back, the start model treated whoever played ni
 
 When a goalie has started each of his team's last 5-7 games, the model gave him a 70% chance of starting the next one, but such goalies actually started only 56% of the time: coaches give the backup a turn. This held in every season. Goalies who reach 8 or more straight starts are workhorses or have no healthy partner, and their next game was harder to predict. **A goalie on a 5-7 start run now has his next-game start chance trimmed (about 9 points), and the backup's raised to match. Runs of 8+ are left alone.** Prediction error fell 2.6%, better in 5 of 5 seasons. A Daily Faceoff confirmation still overrides it. (Findings 202.)
 
+## 91. Where a skater ranks in his team's ice time
+
+The ridge-inputs study tried about 900 extra game-by-game inputs, including the full MoneyPuck game logs. Almost all of the small gain came from something the daily script already has: where a player ranks in his own team's power-play time and ice time each game (top-5 PP time, top-3 forward or top-2 defenseman minutes), plus position-by-usage terms (a defenseman's minutes count differently from a forward's). **The skater points-per-game model now uses those 25 inputs (104 in all, up from 79), refit on 2021-26.** Ranking next week's points improves by about 0.001 overall and 0.003 among waiver players, in every test season. It's a small refinement, not a visible shake-up. (Findings 201.)
+
 ## What the independent review changed
 
 | Review point | Outcome |
