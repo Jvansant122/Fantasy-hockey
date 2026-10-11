@@ -482,6 +482,13 @@ def test_goalie_who_left_without_a_decision_stays_out_all_week():
     ok, out, next_only = per_game(None), per_game(hurt), per_game((rating.NO_DECISION_LOGIT, 0.0))
     assert all(o < k - 0.2 for o, k in zip(out, ok))
     assert all(o < n - 0.15 for o, n in zip(out[1:], next_only[1:]))  # not just the next game
+    def season(shift, confirmed=None):
+        sea = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22),
+                             confirmed=confirmed, season_share=sea, last_start=(1, shift) if shift else None)
+        return sea
+    assert season(hurt)[1] == pytest.approx(rating.NO_DECISION_SEASON * season(None)[1])  # Season share too (findings 167)
+    assert season(hurt)[2] == season(None)[2] and season(hurt, {"2026-10-24": 1})[1] == season(None)[1]
     back = per_game(hurt, confirmed={"2026-10-24": 1})
     assert back[1] == 1.0 and all(b > o + 0.1 for b, o in zip(back[2:], out[2:]))  # confirmed back in net: the cut ends
 
