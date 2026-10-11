@@ -13,7 +13,8 @@ from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "goalie_cap", "move_limit", "ir_slots", "matchup_weeks", "final_matchup", "updated_date", "updated_utc", "first_start"}
+TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "goalie_cap", "move_limit", "ir_slots", "matchup_weeks", "final_matchup", "updated_date", "updated_utc", "first_start",
+              "season_weeks", "team_nights"}  # the last two feed the table's Nights week picker (findings 300); empty is allowed
 NIGHT_FIELDS = {"sp", "date", "games", "light", "past"}
 PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
                  "games", "games_left", "light", "light_left", "nights", "dfo_out", "games_next2", "last_gp", "clears", "today_start"}
@@ -144,6 +145,7 @@ def rules(data):
         if es is not None and (es > p["games_left"] + EPS or why.get("team_games", p["games_left"]) < es - EPS):
             bad["G1"].append(f"{nm} exp_starts {es} of {why.get('team_games')} team games, {p['games_left']} left")
     out += [f"{k} {len(v)} players, e.g. {v[:3]}" for k, v in bad.items() if v]
+    out += week_rules(data, ahead)
     if rated:
         # G2 a team's goalies' expected starts sum to at most its games left
         by_team = {}
@@ -167,6 +169,28 @@ def rules(data):
         zero = sorted(t for t, (healthy, rated_) in teams.items() if healthy and not rated_)
         if zero:
             out.append(f"G3 teams whose goalies all have Season 0: {zero[:6]}")
+    return out
+
+
+def week_rules(data, ahead):
+    """S1 each published week is a Monday-Sunday fantasy week (week 1 periods 1-6, week k 7k-7 to 7k-1), in order, its
+    games, light nights and dates inside it; S2 each team plays at most once a night (so at most 7 a week), from today,
+    inside the published weeks (findings 300)."""
+    out, weeks, tn = [], data.get("season_weeks") or [], data.get("team_nights") or {}
+    for i, w in enumerate(weeks):
+        k, sps = w.get("week"), w.get("sps") or []
+        want = (list(range(1, 7)) if k == 1 else list(range(7 * k - 7, 7 * k))) if isinstance(k, int) else None
+        if sps != want or (i and k != (weeks[i - 1].get("week") or 0) + 1):
+            out.append(f"S1 week {k} has periods {sps[:2]}...{sps[-1:]} or is out of order")
+        elif not {int(x) for x in (w.get("games") or {})} <= set(sps) or not set(w.get("light") or []) <= set(sps) \
+                or len(w.get("dates") or sps) != len(sps):
+            out.append(f"S1 week {k} lists games, light nights or dates outside its periods")
+    allowed = {sp for w in weeks for sp in w.get("sps") or []}
+    today_sp = ahead[0] if ahead else None
+    for team, sps in tn.items():
+        if len(set(sps)) != len(sps) or sps != sorted(sps) or (today_sp and any(sp < today_sp for sp in sps)) \
+                or any(sp not in allowed for sp in sps):
+            out.append(f"S2 {team}'s nights aren't unique, in order, from today and inside the published weeks: {sps[:8]}")
     return out
 
 
@@ -205,6 +229,12 @@ def warnings(data, prev):
            and p["gp"] < p["cr_why"]["gs"]]
     if lag:
         out.append(f"W1 {len(lag)} goalies' ESPN games below NHL starts: {lag[:4]}")
+    # W2 the same schedule twice (findings 300): a team's nights this matchup in team_nights match its players' nights
+    tn, ahead = data.get("team_nights") or {}, {n["sp"] for n in data["nights"] if not n["past"]}
+    mismatch = sorted({p["team"] for p in players if p["team"] in tn and p.get("owner") != "waivers"
+                       and {sp for sp in p.get("nights") or [] if sp in ahead} != {sp for sp in tn[p["team"]] if sp in ahead}})
+    if mismatch:
+        out.append(f"W2 teams whose nights differ from their players' nights this matchup: {mismatch[:6]}")
     if not (prev and prev.get("rated")):
         return out
     old = {p["id"]: p for p in prev["players"]}

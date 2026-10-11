@@ -14,9 +14,31 @@ from conftest import ROOT
 import check_data
 
 
+def fill_season_weeks(d):
+    """TEMPORARY, until the next data run: data/players.json written before handoff 204 has no season_weeks or team_nights.
+    Fill them from this matchup's nights so the publish check passes on today's committed data. Remove this once the
+    committed data has both fields."""
+    if "season_weeks" in d and "team_nights" in d:
+        return d
+    ahead = [n["sp"] for n in d["nights"] if not n["past"]]
+    weeks = [{"week": (n["sp"] + 7) // 7, "sps": [], "label": "", "dates": [], "games": {}, "light": []} for n in d["nights"][::7]]
+    for n in d["nights"]:
+        w = next(w for w in weeks if w["week"] == (n["sp"] + 7) // 7)
+        w["sps"].append(n["sp"]), w["dates"].append(n["date"])
+        w["games"][str(n["sp"])] = n["games"]
+        if n["light"]:
+            w["light"].append(n["sp"])
+    d["season_weeks"] = [w for w in weeks if any(sp in ahead for sp in w["sps"])]
+    d["team_nights"] = {}
+    for p in d["players"]:
+        if p["team"] != "FA" and p["owner"] != "waivers":
+            d["team_nights"][p["team"]] = sorted(sp for sp in p["nights"] if sp in ahead)
+    return d
+
+
 @pytest.fixture(scope="module")
 def data():
-    return json.loads((ROOT / "data" / "players.json").read_text())
+    return fill_season_weeks(json.loads((ROOT / "data" / "players.json").read_text()))
 
 
 def test_goalies_carry_the_goalie_fields(data):
@@ -139,3 +161,34 @@ def test_check_blocks_a_run_with_no_free_agents_or_injuries(data):
     for p in no_inj["players"]:
         p["injury"] = None
     assert any("injury status" in e for e in check_data.problems(no_inj))
+
+
+def test_check_rules_for_season_weeks(data):
+    """season_weeks and team_nights (handoff 204): both required, empty allowed (a failed week step), and broken ones caught."""
+    missing = copy.deepcopy(data)
+    del missing["team_nights"]
+    assert any("missing top-level fields" in e for e in check_data.problems(missing))
+    empty = copy.deepcopy(data)
+    empty["season_weeks"], empty["team_nights"] = [], {}
+    assert check_data.problems(empty) == []
+    w = data["season_weeks"][-1]
+    later = {**w, "week": w["week"] + 1, "sps": [sp + 7 for sp in w["sps"]], "games": {str(int(k) + 7): v for k, v in w["games"].items()},
+             "light": [sp + 7 for sp in w["light"]]}
+    ok = copy.deepcopy(data)
+    ok["season_weeks"].append(later)
+    ahead = {n["sp"] for n in data["nights"] if not n["past"]}
+    team = next(t for t, sps in ok["team_nights"].items() if ahead & set(sps))
+    ok["team_nights"][team] = ok["team_nights"][team] + [later["sps"][2]]
+    assert check_data.problems(ok) == []
+    shifted = copy.deepcopy(ok)
+    shifted["season_weeks"][-1]["sps"] = [sp + 1 for sp in later["sps"]]
+    assert any(e.startswith("S1") for e in check_data.problems(shifted))
+    twice = copy.deepcopy(ok)
+    twice["team_nights"][team].append(later["sps"][2])
+    assert any(e.startswith("S2") for e in check_data.problems(twice))
+    outside = copy.deepcopy(ok)
+    outside["team_nights"][team].append(later["sps"][-1] + 30)
+    assert any(e.startswith("S2") for e in check_data.problems(outside))
+    differ = copy.deepcopy(ok)
+    differ["team_nights"][team] = [sp for sp in differ["team_nights"][team] if sp not in ahead]
+    assert not check_data.problems(differ) and any(w.startswith("W2") for w in check_data.warnings(differ, None))

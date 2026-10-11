@@ -191,6 +191,45 @@ def nights_by_sp(by_date, today_et, today_sp):
     return out
 
 
+def week_sps(week):
+    """Scoring periods of fantasy week k: week 1 is the 6-day opener (days 1-6), week k >= 2 is days 7k-7 to 7k-1."""
+    return list(range(1, 7)) if week == 1 else list(range(7 * week - 7, 7 * week))
+
+
+def season_weeks(night_counts, night_dates, today_sp, today_et, last_sp=None):
+    """Every Monday-Sunday week from this one to the season's last, for the page's Nights week picker (findings 300):
+    [{week, sps, label 'Oct 19-25', dates ['Mon 19', ...], games {sp: NHL games}, light [sps with 1-5 games]}].
+    Only weeks the schedule covers: the fantasy view has the whole season, the scoreboard fallback only its window."""
+    if not night_dates:
+        return []
+    hi = max(night_dates)  # weeks start at this one, which the schedule always covers, so only the end can fall short
+    if last_sp is not None:
+        hi = min(hi, last_sp)
+    out = []
+    for week in range((today_sp + 7) // 7, (hi + 7) // 7 + 1):
+        sps = week_sps(week)
+        if sps[-1] > hi:
+            break
+        days = [today_et + timedelta(days=sp - today_sp) for sp in sps]
+        first, last = days[0], days[-1]
+        label = f"{first:%b} {first.day}-{last.day}" if first.month == last.month else f"{first:%b} {first.day}-{last:%b} {last.day}"
+        games = {sp: night_counts.get(sp, 0) for sp in sps}
+        out.append({"week": week, "sps": sps, "label": label, "dates": [f"{d:%a} {d.day}" for d in days], "games": games,
+                    "light": [sp for sp in sps if 0 < games[sp] <= LIGHT_NIGHT_MAX_GAMES]})
+    return out
+
+
+def team_nights(teams, today_sp, weeks):
+    """{team abbrev as players carry it: [every scoring period it plays from today in the published weeks]}."""
+    shown = {sp for w in weeks for sp in w["sps"] if sp >= today_sp}
+    out = {}
+    for t in teams.values():
+        abbrev = (t.get("abbrev") or "").upper()
+        if abbrev:
+            out[abbrev] = sorted(sp for sp in t.get("periods", ()) if sp in shown)
+    return out
+
+
 def utc_iso(dt):
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -545,6 +584,16 @@ def main():
         "light": sp in light,
         "past": sp < today_sp,
     } for sp in matchup_sps]
+    # every later Monday-Sunday week's nights, for the table's Nights week picker (findings 300); optional: a failure here
+    # publishes empty lists and the page keeps to this matchup
+    weeks, nights_by_team = [], {}
+    try:
+        weeks = season_weeks(night_counts, night_dates, today_sp, today_et, last_sp)
+        nights_by_team = team_nights(teams, today_sp, weeks)
+        print(f"Season weeks: {len(weeks)} ({weeks[0]['label'] if weeks else '-'} to {weeks[-1]['label'] if weeks else '-'})")
+    except Exception as e:  # noqa: BLE001 - never let the week picker block the update
+        print(f"Season weeks failed, publishing without them: {e!r}", file=sys.stderr)
+        weeks, nights_by_team = [], {}
 
     # moves used this matchup and the league's limit, and any per-slot start cap, for the goalie-stream advice (findings section 52)
     settings = league.get("settings") or {}
@@ -583,6 +632,8 @@ def main():
         "matchup_weeks": -(-len(matchup_sps) // 7),
         "final_matchup": final_matchup,
         "nights": nights,
+        "season_weeks": weeks,  # this Monday-Sunday week through the season's last (findings 300)
+        "team_nights": nights_by_team,  # {NHL team: scoring periods it plays from today}, for later weeks' Nights
         "rated": rated,
         "goalie_cap": goalie_cap,
         "move_limit": move_limit,

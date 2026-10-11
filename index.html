@@ -20,7 +20,9 @@
   body:not(.ready) .card, body:not(.ready) main > p { display: none; }
   [hidden] { display: none !important; }  /* .controls' flex would otherwise show a hidden Trade check picker */
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  /* wide enough for every column of the table on a desktop (findings 300); text keeps a readable line length */
+  main { max-width: 1600px; margin: 0 auto; padding: 16px; }
+  .card > p, main > .sub { max-width: 75ch; }  /* written without the p tag: the contract test reads any p-dot name as a data field */
   h1 { font-size: 20px; margin: 0; }
   h2 { font-size: 15px; margin: 0 0 8px; }
   .sub { color: var(--muted); font-size: 12px; }
@@ -92,6 +94,7 @@
   .tside button { font: inherit; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 4px; min-width: 28px; min-height: 28px; }
   #tpick select { flex: 1 1 200px; min-width: 0; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+  .controls label.phoneonly { display: none; }
   @media (max-width: 640px) {
     main { padding: 10px; }
     .card { padding: 10px; }
@@ -124,6 +127,11 @@
     .tag.own { display: none; }
     .dots { gap: 2px; }
     .dots i { width: 7px; height: 7px; }
+    /* All columns (findings 300): every column again, the table scrolls sideways under the pinned name column */
+    .controls label.phoneonly { display: flex; }
+    body.allcols th.wide, body.allcols td.wide { display: table-cell; }
+    body.allcols td:first-child { width: auto; min-width: 120px; max-width: 160px; }
+    body.allcols td:first-child .meta { display: none; }
   }
 </style>
 </head>
@@ -166,12 +174,14 @@
       </select>
       <label id="addfa-wrap"><input type="checkbox" id="addfa" checked> + free agents</label>
       <select id="pos" aria-label="Position">
-        <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
+        <option value="">All positions</option><option value="S">Skaters (D + F)</option><option>G</option><option>D</option><option value="F">Any F</option><option>C</option><option>LW</option><option>RW</option>
       </select>
+      <select id="wk" aria-label="Nights week" hidden><option value="">This matchup</option></select>
       <label>Min games <input type="number" id="ming" min="0" max="7" value="0"></label>
       <label>Min rating <input type="number" id="minr" min="0" step="0.5" value="0"></label>
       <label><input type="checkbox" id="left" checked> Remaining games only</label>
       <label><input type="checkbox" id="healthy"> Hide injured</label>
+      <label class="phoneonly"><input type="checkbox" id="allcols"> All columns</label>
     </div>
     <div class="sub count" id="count"></div>
     <div class="tablewrap">
@@ -189,14 +199,16 @@
 // UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
 const SLOTS = { F: 9, D: 6, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
-const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa"];
-const CHECKS = ["left", "healthy", "addfa"];
-const state = { tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
+const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa", "allcols"];
+const CHECKS = ["left", "healthy", "addfa", "allcols"];
+// wk: the table's Nights week, "" for this matchup (not saved); tw: that week's nights, schedule and open slots
+const state = { tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {}, wk: "", tw: null };
 // [key, label, align, shown on phones]
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
-  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["opengm", "Open", "r", true], ["light", "Light", "r", false],
-  ["ppg", "Proj/G", "r", false], ["week", "ESPN week", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  // Proj/G and This yr/G right after Games (findings 300)
+  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "Proj/G", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  ["opengm", "Open", "r", true], ["light", "Light", "r", false], ["week", "ESPN week", "r", false],
   ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
 ];
 const $ = id => document.getElementById(id);
@@ -260,6 +272,7 @@ function light(p) { return $("left").checked ? p.light_left : p.light; }
 function week(p) { return (p.ppg || 0) * games(p); }
 function fits(p, pos) {
   if (!pos) return true;
+  if (pos === "S") return p.pos !== "G";
   if (pos === "F") return ["C", "LW", "RW"].some(s => p.slots.includes(s));
   return p.slots.includes(pos);
 }
@@ -279,8 +292,18 @@ function hasRoom(sp, g) {
   const o = state.openSlots[sp];
   return o[g] > 0;
 }
+// The table's Games, Light and Open: this matchup, or the later week picked in Nights week (findings 300).
+// Week, Season, ESPN week and the cards stay on this matchup.
+function tGames(p) { const t = state.tw; return t ? t.nights.filter(n => t.plays(p, n.sp)).length : games(p); }
+function tLight(p) { const t = state.tw; return t ? t.nights.filter(n => n.light && t.plays(p, n.sp)).length : light(p); }
+function tOpen(p) {
+  const t = state.tw;
+  if (!t) return openGames(p);
+  if (!isFA(p) || !state.team) return null;
+  return t.nights.filter(n => t.plays(p, n.sp) && t.slots[n.sp]?.[group(p)] > 0).length;
+}
 function val(p, key) {
-  return { week: week(p), games: games(p), light: light(p), opengm: openGames(p), nights: games(p), pos: posTxt(p) }[key] ?? p[key];
+  return { week: week(p), games: tGames(p), light: tLight(p), opengm: tOpen(p), nights: tGames(p), pos: posTxt(p) }[key] ?? p[key];
 }
 // the positions shown in the table (no catch-all F), so the Pos sort matches what you see (findings 232)
 const posTxt = p => p.slots.filter(s => s !== "F").join("/") || p.pos;
@@ -324,10 +347,32 @@ function computeOpenSlots(d) {
     const goalies = playing.filter(p => group(p) === "G");
     // past nights, and data without the rating: every goalie whose team plays fills a slot, as before
     const g = n.past || !d.rated ? goalies.length : Math.round(goalies.reduce((s, p) => s + gStart(p, n, tonight), 0));
-    const f = count("F"), dd = count("D");
-    // D slots plus the UTL, which only counts as an open D when it isn't already holding a tenth forward (findings 146)
-    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd) + (f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0), G: Math.max(0, SLOTS.G - g) };
+    state.openSlots[n.sp] = slotsLeft(count("F"), count("D"), g);
   }
+}
+// D slots plus the UTL, which only counts as an open D when it isn't already holding a tenth forward (findings 146)
+const slotsLeft = (f, dd, g) => ({ F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd) + (f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0), G: Math.max(0, SLOTS.G - g) });
+// A later week picked in Nights week (findings 300): its nights from season_weeks, each team's games from team_nights, and
+// my active, healthy players' open slots those nights. A goalie fills a slot by his recent share of his team's starts.
+function pickWeek(v) {
+  const d = state.data, w = v ? (d.season_weeks || []).find(x => String(x.week) === v) : null;
+  state.tw = null;
+  if (!w) return;
+  const sets = {};
+  const plays = (p, sp) => (sets[p.team] ??= new Set(d.team_nights?.[p.team] || [])).has(sp);
+  const nights = w.sps.map((sp, i) => ({ sp, date: w.dates?.[i] ?? "", games: w.games?.[sp] ?? 0, light: (w.light || []).includes(sp) }));
+  const slots = {};
+  if (state.team) {
+    const mine = myPlayers();
+    for (const n of nights) {
+      const playing = mine.filter(p => plays(p, n.sp));
+      const count = g => playing.filter(p => group(p) === g).length;
+      const goalies = playing.filter(p => group(p) === "G");
+      const g = d.rated ? Math.round(goalies.reduce((s, p) => s + (p.cr_why?.share10 ?? 1), 0)) : goalies.length;
+      slots[n.sp] = slotsLeft(count("F"), count("D"), g);
+    }
+  }
+  state.tw = { w, nights, plays, slots };
 }
 
 function pctBadge(p, key = "cr_pct") {
@@ -336,6 +381,11 @@ function pctBadge(p, key = "cr_pct") {
   return `<span class="pct ${v >= 90 ? "hi" : v >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} in the league and on the wire">${v}</span>`;
 }
 function dots(p) {
+  const t = state.tw;
+  if (t) return `<span class="dots">${t.nights.map(n => {
+    const plays = t.plays(p, n.sp), open = plays && isFA(p) && state.team && t.slots[n.sp]?.[group(p)] > 0;
+    return `<i class="${plays ? "play" : ""} ${open ? "open" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
+  }).join("")}</span>`;
   return `<span class="dots">${state.data.nights.map(n => {
     const plays = p.nights.includes(n.sp);
     const gone = n.past || goneTonight(p, n);
@@ -384,11 +434,11 @@ function why(p) {
   return parts.join(" · ");
 }
 function details(p) {
-  const og = openGames(p);
+  const og = tOpen(p);
   const extra = [`${p.team} · ${p.slots.filter(s => s !== "F").join("/") || p.pos}`, `owned ${fmt(p.owned)}%`];
   // why a waiver player's games and starts look short (findings 232)
   if (p.owner === "waivers") extra.unshift(`on waivers: he can't play until he clears${p.clears ? ` ${p.clears}` : ""}, so only games from then count`);
-  if (og != null) extra.push(`${og} of ${games(p)} games on nights you have an open slot`);
+  if (og != null) extra.push(`${og} of ${tGames(p)} games${state.tw ? ` in the week of ${state.tw.w.label}` : ""} on nights you have an open slot`);
   return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join(" · ");
 }
 
@@ -399,12 +449,12 @@ function cells(p) {
   const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + wvTag(p) +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
     (p.cr_why?.tonight?.status === "Confirmed" && !started(p) ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
-  const og = openGames(p);
+  const og = tOpen(p);
   return {
     name: `${esc(p.name)}${tags ? `<span class="tags">${tags}</span>` : ""}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
     cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "",
-    cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: games(p),
-    opengm: og == null ? "–" : og, light: light(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
+    cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: tGames(p),
+    opengm: og == null ? "–" : og, light: tLight(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
     cur_ppg: fmt(p.cur_ppg), last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
   };
 }
@@ -429,7 +479,7 @@ function render(all = true) {
     inView(p) &&
     // unsigned free agents (team FA) only show up when searched for; one on a fantasy roster stays in its owner's views (findings 232)
     (p.team !== "FA" || q || !isFA(p)) &&
-    fits(p, pos) && games(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
+    fits(p, pos) && tGames(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
     (!$("healthy").checked || !p.injury) &&
     matches(p, q)
   );
@@ -444,7 +494,7 @@ function render(all = true) {
   $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
     (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
   $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
-    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
+    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights (${esc(state.tw.w.label)})` : label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
     const c = cells(p);
     return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
@@ -841,6 +891,7 @@ function setTeam(id) {
   if (id !== state.team) state.tgive = [], state.tget = [];
   state.team = id;
   computeOpenSlots(state.data);
+  pickWeek(state.wk);
   renderNights();
 }
 
@@ -880,6 +931,13 @@ function wire() {
     state[key] = state[key].filter(x => x !== +pid); renderTrade();
   });
   // minr is removed when the data has no ratings
+  // a later week: the table's nights, games and open slots for it; Remaining games only doesn't apply (findings 300)
+  $("wk").addEventListener("input", () => {
+    state.wk = $("wk").value; pickWeek(state.wk);
+    $("left").disabled = !!state.tw;
+    render(false);
+  });
+  $("allcols").addEventListener("input", () => { document.body.classList.toggle("allcols", $("allcols").checked); render(false); });
   // Remaining games only changes the games Upgrades counts, so it redraws everything
   ["q", "pos", "ming", "minr", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", () => render(false)));
   $("left").addEventListener("input", () => render());
@@ -898,6 +956,16 @@ function restore() {
   if (typeof s.pos === "string" && [...$("pos").options].some(o => o.value === s.pos)) $("pos").value = s.pos;
   if (typeof s.left === "boolean") $("left").checked = s.left;
   if (typeof s.healthy === "boolean") $("healthy").checked = s.healthy;
+  if (typeof s.allcols === "boolean") $("allcols").checked = s.allcols;
+  document.body.classList.toggle("allcols", $("allcols").checked);
+}
+
+// Nights week: one option per Monday-Sunday week after this matchup; old data without season_weeks has none (findings 300)
+function weekOptions(d) {
+  const end = d.nights?.[d.nights.length - 1]?.sp ?? 0;
+  const later = (d.season_weeks || []).filter(w => w.sps?.[0] > end);
+  $("wk").insertAdjacentHTML("beforeend", later.map(w => `<option value="${esc(w.week)}">Week of ${esc(String(w.label).split("-")[0])}</option>`).join(""));
+  $("wk").hidden = !later.length;
 }
 
 // An open tab reloads (findings 230): when it comes back after 10+ minutes, and when a game starts, so started games,
@@ -922,6 +990,7 @@ fetch("data/players.json", { cache: "no-store" })
       $("minr").parentElement.remove();
     }
     teamOptions(d);
+    weekOptions(d);
     restore();
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
     $("stale").hidden = !stale(d);

@@ -93,7 +93,7 @@ def test_every_team_view_and_details(browser, server, data):
 
 def test_filters_and_sorting(browser, server):
     ctx, page, errors = open_page(browser, server)
-    for pos in ["C", "LW", "RW", "F", "D", "G", ""]:
+    for pos in ["S", "G", "D", "F", "C", "LW", "RW", ""]:
         page.select_option("#pos", pos)
     page.select_option("#who", "every")
     page.fill("#q", "a")
@@ -1172,5 +1172,159 @@ def test_phone_text_taps_names_and_tags(browser, server, data, width):
     page.wait_for_function("document.body.classList.contains('ready')")
     page.select_option("#who", "every")
     assert page.evaluate(PHONE_SPILL_JS) == 0
+    assert errors == []
+    ctx.close()
+
+
+def test_position_filter_order_and_skaters(browser, server):
+    """Positions read All, Skaters (D + F), G, D, Any F, C, LW, RW; Skaters shows everyone but goalies (findings 300)."""
+    ctx, page, errors = open_page(browser, server)
+    assert page.evaluate("[...document.querySelectorAll('#pos option')].map(o => o.value)") == ["", "S", "G", "D", "F", "C", "LW", "RW"]
+    assert page.locator("#pos option").nth(1).inner_text() == "Skaters (D + F)"
+    page.select_option("#who", "every")
+    page.select_option("#pos", "S")
+    shown = page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].map(r => state.data.players.find(p => p.id === +r.dataset.id).pos)")
+    assert shown and "G" not in shown and {"D"} < set(shown)
+    page.reload()
+    page.wait_for_function("document.body.classList.contains('ready')")
+    assert page.input_value("#pos") == "S"  # remembered like the others
+    assert errors == []
+    ctx.close()
+
+
+def test_column_order(browser, server):
+    """Proj/G and This yr/G follow Games; phones still show Player, Week, Season, Nights, Open (findings 300)."""
+    ctx, page, errors = open_page(browser, server)
+    heads = page.locator("#head th").all_inner_texts()
+    assert [h.rstrip(" ▾▴") for h in heads] == ["Player", "Team", "Pos", "Week", "Season", "Nights", "Games", "Proj/G", "This yr/G",
+                                                "Open", "Light", "ESPN week", "Last yr/G", "% Own"]
+    ctx.close()
+    ctx, page, errors2 = open_page(browser, server, phone=True)
+    shown = page.evaluate("[...document.querySelectorAll('#head th')].filter(th => th.offsetParent).map(th => th.dataset.k)")
+    assert shown == ["name", "cr", "cr_season", "nights", "opengm"]
+    assert errors == errors2 == []
+    ctx.close()
+
+
+def _with_weeks(data):
+    """data with season_weeks and team_nights. Data from before handoff 204 has neither: then one made-up later week, the
+    week after this matchup, where each NHL team plays on the same weekdays as this matchup."""
+    import check_data
+    d = json.loads(json.dumps(data))
+    if d.get("season_weeks") and d.get("team_nights") and any(w["sps"][0] > d["nights"][-1]["sp"] for w in d["season_weeks"]):
+        return d
+    from datetime import timedelta
+    last = d["nights"][-1]
+    sunday = check_data._night_dates(d)[last["sp"]]
+    sps = list(range(last["sp"] + 1, last["sp"] + 8))
+    days = [sunday + timedelta(days=i + 1) for i in range(7)]
+    games = {str(sp): n["games"] for sp, n in zip(sps, d["nights"][-7:])}
+    ahead = {n["sp"] for n in d["nights"] if not n["past"]}
+    d["season_weeks"] = [{"week": (sps[0] + 7) // 7, "sps": sps, "label": f"{days[0]:%b} {days[0].day}-{days[-1].day}",
+                          "dates": [f"{x:%a} {x.day}" for x in days], "games": games,
+                          "light": [sp for sp in sps if 0 < games[str(sp)] <= 5]}]
+    d["team_nights"] = {}
+    for p in d["players"]:
+        if p["team"] != "FA" and p["owner"] != "waivers":
+            d["team_nights"][p["team"]] = sorted({sp for sp in p["nights"] if sp in ahead} | {sp + 7 for sp in p["nights"] if sp + 7 in sps})
+    return d
+
+
+def test_nights_for_a_later_week(browser, server, data):
+    """Nights week (findings 300): a later week's dots, games, light nights and open slots in the table; Week and the cards
+    stay on this matchup; old data has no picker."""
+    d = _with_weeks(data)
+    ctx, page, errors = open_page(browser, server, data=d)
+    team = d["teams"][0]
+    page.select_option("#team", str(team["id"]))
+    assert page.locator("#wk").is_visible()
+    later = [w for w in d["season_weeks"] if w["sps"][0] > d["nights"][-1]["sp"]]
+    assert page.locator("#wk option").count() == 1 + len(later)
+    assert page.locator("#wk option").first.inner_text() == "This matchup"
+    w = later[0]
+    cards = page.locator("#upgrades").inner_html()
+    week_before = page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].slice(0, 40).map(r => [r.dataset.id, r.children[3].innerText])")
+    page.select_option("#wk", str(w["week"]))
+    assert page.locator('#head th[data-k="nights"]').inner_text().startswith(f"Nights ({w['label']})")
+    assert page.locator("#left").is_disabled()
+    rows_ = page.evaluate("""[...document.querySelectorAll('#rows tr[data-id]')].map(r => {
+      const p = state.data.players.find(p => p.id === +r.dataset.id);
+      return { id: r.dataset.id, team: p.team, fa: p.owner === 'freeagent' || p.owner === 'waivers', pos: p.pos,
+               games: +r.children[6].innerText, open: r.children[9].innerText, light: +r.children[10].innerText,
+               dots: [...r.children[5].querySelectorAll('i')].map(i => i.className.trim()), week: r.children[3].innerText }; })""")
+    light = set(w["light"])
+    for r in rows_:
+        plays = [sp in d["team_nights"].get(r["team"], []) for sp in w["sps"]]
+        assert r["games"] == sum(plays), r
+        assert r["light"] == sum(p and sp in light for p, sp in zip(plays, w["sps"])), r
+        assert len(r["dots"]) == len(w["sps"]) and [c.startswith("play") for c in r["dots"]] == plays, r
+        assert "past" not in " ".join(r["dots"])
+        if r["fa"]:
+            assert r["open"] != "–" and int(r["open"]) <= r["games"], r
+            assert int(r["open"]) == sum("open" in c for c in r["dots"])
+        else:
+            assert r["open"] == "–"
+    # Week stays this matchup's; the cards don't change
+    before = dict(week_before)
+    assert all(before[r["id"]] == r["week"] for r in rows_ if r["id"] in before)
+    assert page.locator("#upgrades").inner_html() == cards
+    # an empty slot every night the week's schedule leaves one: count it the same way here
+    slots = page.evaluate("state.tw.slots")
+    mine = [p for p in _mine(d, team) if not p["ir"] and p.get("injury") not in ("OUT", "INJURY_RESERVE", "SUSPENSION") and p["pos"] != "G"]
+    for sp in w["sps"]:
+        f = sum(1 for p in mine if p["pos"] != "D" and sp in d["team_nights"].get(p["team"], []))
+        dd = sum(1 for p in mine if p["pos"] == "D" and sp in d["team_nights"].get(p["team"], []))
+        assert slots[str(sp)]["F"] == max(0, 9 - f) and slots[str(sp)]["D"] == max(0, 5 - dd) + (1 if f <= 9 and dd <= 5 else 0)
+    # Min games counts the week's games; sorting and details follow it
+    page.fill("#ming", "4")
+    assert all(int(t) >= 4 for t in page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].map(r => r.children[6].innerText)"))
+    page.locator('#head th[data-k="opengm"]').click()
+    page.locator("#rows tr[data-id]").first.click()
+    assert f"in the week of {w['label']}" in page.locator("#rows tr.why").inner_text()
+    # back to this matchup
+    page.select_option("#wk", "")
+    assert page.locator('#head th[data-k="nights"]').inner_text().startswith("Nights") and "(" not in page.locator('#head th[data-k="nights"]').inner_text()
+    assert not page.locator("#left").is_disabled()
+    assert errors == []
+    ctx.close()
+    # data without the new fields: no picker, the page as before
+    old = json.loads(json.dumps(data))
+    old.pop("season_weeks", None), old.pop("team_nights", None)
+    ctx, page, errors = open_page(browser, server, data=old)
+    assert page.locator("#wk").is_hidden() and rows(page) > 0
+    assert errors == []
+    ctx.close()
+
+
+def test_wide_desktop_and_all_columns_on_phones(browser, server, data):
+    """The desktop table fits without sideways scrolling from 1366 px; phones can turn on every column, which scroll
+    inside the table, not the page (findings 300)."""
+    for width in (1366, 1920):
+        ctx = browser.new_context(viewport={"width": width, "height": 900})
+        page = ctx.new_page()
+        page.goto(server)
+        page.wait_for_function("document.body.classList.contains('ready')")
+        page.select_option("#team", str(data["teams"][0]["id"]))
+        wrap = page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return [w.scrollWidth, w.clientWidth]; })()")
+        assert wrap[0] <= wrap[1] + 1, (width, wrap)
+        assert page.locator("#allcols").is_hidden()  # phones only
+        assert page.evaluate("document.querySelector('main > p.sub').getBoundingClientRect().width") < 900
+        ctx.close()
+    ctx, page, errors = open_page(browser, server, phone=True)
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    assert page.locator("#allcols").is_visible() and not page.locator("#allcols").is_checked()
+    page.check("#allcols")
+    assert page.evaluate("[...document.querySelectorAll('#head th')].filter(th => th.offsetParent).length") == 14
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+    wrap = page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return [w.scrollWidth, w.clientWidth]; })()")
+    assert wrap[0] > wrap[1]  # the table scrolls sideways inside its box
+    page.evaluate("document.querySelector('.tablewrap').scrollLeft = 400")
+    assert page.evaluate("document.querySelector('#rows td').getBoundingClientRect().left") >= page.evaluate("document.querySelector('.tablewrap').getBoundingClientRect().left") - 1
+    page.reload()
+    page.wait_for_function("document.body.classList.contains('ready')")
+    assert page.locator("#allcols").is_checked() and page.evaluate("document.body.classList.contains('allcols')")
+    page.uncheck("#allcols")
+    assert page.evaluate("[...document.querySelectorAll('#head th')].filter(th => th.offsetParent).length") == 5
+    assert page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return w.scrollWidth <= w.clientWidth + 1; })()")
     assert errors == []
     ctx.close()
