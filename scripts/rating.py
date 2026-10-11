@@ -84,6 +84,11 @@ def idle_cap(days):
     return next((cap for top, cap in IDLE_DRESS if days <= top), NOT_PLAYING_DRESS)
 ET = ZoneInfo("America/New_York")
 LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by the moneyline (findings section 30)
+# this week's starts (not Season): his own points per start already carry his team's strength, so with the line or the
+# schedule on top strong teams' starters read ~0.5 high. Week pricing keeps 0.4 of his gap to the league's rate this season
+# (shrunk over 300 starts to 2.89), and the schedule slope drops to 3.0. 13,120 starts 2021-26: per-start error -1.5% and
+# weekly goalie error -0.3%, rank flat (findings 231 (8), handoff 134)
+WEEK_PPS_KEEP, WEEK_SCHED_SLOPE, LEAGUE_PPS_PRIOR = 0.4, 3.0, 300
 # expected fantasy points (xG research, sections 3-5): assist-share priors (all situations, power play) and the hot/cold note
 XFP_SHARE_F, XFP_SHARE_D, XFP_PRIOR_GOALS = (0.51, 0.46), (0.32, 0.57), 15
 LUCK_MIN_GP, LUCK_GAP = 15, 0.15
@@ -93,7 +98,7 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
-SCHED_SHRINK, SCHED_WIN, SCHED_SLOPE = 15, (-0.175, 0.594, 0.349), 3.4  # starts without a line priced by team strength (findings 70)
+SCHED_SHRINK, SCHED_WIN = 15, (-0.175, 0.594, 0.349)  # starts without a line priced by team strength (findings 70; slope WEEK_SCHED_SLOPE)
 SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
 BAD_START_LOGIT = -1.0  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131, 163)
@@ -1225,6 +1230,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # the prior is his own last-season pts/start, itself shrunk to the league mean over 15 starts (findings section 60)
     prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp) in prev_goalies.items() if n}
     pps = {gid: (fp + prior.get(gid, base) * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
+    # the league's points per start this season, for this week's pricing (findings 231 (8))
+    league_pps = (sum(fp for fp, _ in own.values()) + base * LEAGUE_PPS_PRIOR) / (sum(n for _, n in own.values()) + LEAGUE_PPS_PRIOR)
     by_player = {}
     for g in sorted(games, key=lambda g: g["date"]):
         by_player.setdefault(g["id"], []).append(g)
@@ -1371,10 +1378,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
             # start chance per game from today, for the page's open-slot count (findings 236)
             p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())} if pid else {}
-            # tonight's game priced by the betting line: 2.9 + 4.1 x (win probability - 0.5) per start
+            # this week's starts: 0.4 of his gap to the league rate, then the line or the schedule (findings 231 (8))
+            fpg = league_pps + WEEK_PPS_KEEP * (fpg - league_pps)
+            # tonight's game priced by the betting line: that + 4.1 x (win probability - 0.5) per start
             p_today = min(goalie_today.get(pid, 0.0), starts) if pid and not started else 0.0
             if team in lines and p_today > 0 and starts > 0:
-                line_pps = base + LINE_PPS_SLOPE * (lines[team] - 0.5)
+                line_pps = fpg + LINE_PPS_SLOPE * (lines[team] - 0.5)
                 why["line"] = {"win_prob": round(lines[team], 2), "pps": round(line_pps, 2)}
                 fpg = ((starts - p_today) * fpg + p_today * line_pps) / starts
             # the rest of the week's starts, with no line yet, priced by team strength and home ice (findings section 70)
@@ -1382,7 +1391,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             rest = [(d, opp, home) for d, opp, home in week_games.get(team, [])
                     if d > today.isoformat() or (d == today.isoformat() and not lined and not started)]
             if strength and team in strength and rest and starts > 0:
-                bonus = sum(SCHED_SLOPE * (model_win_prob(strength[team], strength.get(opp, 0.0), home) - 0.5) for _, opp, home in rest) / len(rest)
+                bonus = sum(WEEK_SCHED_SLOPE * (model_win_prob(strength[team], strength.get(opp, 0.0), home) - 0.5) for _, opp, home in rest) / len(rest)
                 fpg += (starts - (p_today if lined else 0.0)) * bonus / starts
                 why["sched"] = round(bonus, 2)
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None

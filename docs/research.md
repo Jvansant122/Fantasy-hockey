@@ -815,6 +815,10 @@ The rule improved start predictions by 0.6% and the no. 1's weekly start count b
 
 **Next season.** The update used to assume the 2026-27 season. It now works the season out from the date (August to December belong to the season ending the next year). After the fantasy final, the first update publishes "season over"; later updates find nothing to change and skip themselves, so the site doesn't commit the same data all summer.
 
+## 105. Goalie points per start this week
+
+A goalie's own points per start already carry his team's strength: good teams win more, so their starters score more. Adding the betting line or the schedule on top counted that strength twice. Over 13,120 starts from 2021-26, the top fifth of goalies by points per start scored 3.69 per start against 4.26 predicted, and the bottom fifth 2.93 against 2.38. For this week's starts only (Season is unchanged), the rating now keeps 0.4 of a goalie's gap to the league's rate this season, then adds 3.0 × (his team's win chance from team strength − 50%), or 4.1 × (the betting line's win chance − 50%) for tonight. Per-start error fell 1.5% (5 of 5 seasons) and weekly goalie error 0.3%; the ranking of goalies barely moves.
+
 ## What the independent review changed
 
 | Review point | Outcome |
