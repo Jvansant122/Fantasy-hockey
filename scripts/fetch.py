@@ -117,8 +117,12 @@ def waiver_first_days(transactions, today):
     return out
 
 
+def utc_iso(dt):
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def pro_schedule(s, base, league_url, matchup_sps, today_sp):
-    """Return ({proTeamId: {abbrev, periods}}, {sp: game count}, {sp: date}).
+    """Return ({proTeamId: {abbrev, periods, starts}}, {sp: game count}, {sp: date}). starts: {sp: UTC start, ISO}.
 
     Tries ESPN fantasy's proTeamsSchedules_wl view (season root, then the league endpoint),
     and falls back to ESPN's public NHL scoreboard if neither has settings.proTeams.
@@ -140,7 +144,9 @@ def pro_schedule(s, base, league_url, matchup_sps, today_sp):
     teams, night_ids, night_dates = {}, {}, {}
     for pt in pro_teams:
         games = pt.get("proGamesByScoringPeriod") or {}
-        teams[pt["id"]] = {"abbrev": pt.get("abbrev", ""), "periods": {int(k) for k in games}}
+        teams[pt["id"]] = {"abbrev": pt.get("abbrev", ""), "periods": {int(k) for k in games},
+                           "starts": {int(k): utc_iso(datetime.fromtimestamp(gl[0]["date"] / 1000, tz=timezone.utc))
+                                      for k, gl in games.items() if gl and gl[0].get("date")}}
         for sp, gl in games.items():
             sp = int(sp)
             night_ids.setdefault(sp, set()).update(g.get("id") for g in gl)
@@ -160,7 +166,7 @@ def scoreboard_schedule(s, matchup_sps, today_sp):
         for league in sport.get("leagues", []):
             for t in league.get("teams", []):
                 t = t.get("team", t)
-                teams[int(t["id"])] = {"abbrev": t.get("abbreviation", ""), "periods": set()}
+                teams[int(t["id"])] = {"abbrev": t.get("abbreviation", ""), "periods": set(), "starts": {}}
     today = datetime.now(ET).replace(hour=12, minute=0, second=0, microsecond=0)
     night_counts, night_dates = {}, {}
     for sp in matchup_sps:
@@ -180,7 +186,10 @@ def scoreboard_schedule(s, matchup_sps, today_sp):
         for ev in events:
             for comp in (ev.get("competitions") or [{}])[0].get("competitors", []):
                 tid = int(comp["team"]["id"])
-                teams.setdefault(tid, {"abbrev": comp["team"].get("abbreviation", ""), "periods": set()})["periods"].add(sp)
+                team = teams.setdefault(tid, {"abbrev": comp["team"].get("abbreviation", ""), "periods": set(), "starts": {}})
+                team["periods"].add(sp)
+                if ev.get("date"):
+                    team.setdefault("starts", {})[sp] = utc_iso(datetime.fromisoformat(ev["date"].replace("Z", "+00:00")))
     return teams, night_counts, night_dates
 
 
@@ -232,6 +241,7 @@ def main():
     except Exception as e:  # noqa: BLE001 - the log is best-effort
         tx_error = repr(e)
     today_et = datetime.now(ET).date()
+    run_utc = utc_iso(datetime.now(timezone.utc))
     first_day = waiver_first_days(tx, today_et)
 
     # Players: my roster plus free agents and waivers, with season, last-season and projected stat lines
@@ -283,7 +293,7 @@ def main():
             ppg = cur * w + base_ppg * (1 - w)
         else:
             ppg = cur if base_ppg is None else base_ppg
-        team = teams.get(p.get("proTeamId"), {"abbrev": "FA", "periods": set()})
+        team = teams.get(p.get("proTeamId"), {"abbrev": "FA", "periods": set(), "starts": {}})
         owner_id, slot = rostered.get(pid, (None, None))
         if my_team and owner_id == my_team["id"]:
             owner = "mine"
@@ -295,7 +305,10 @@ def main():
         clears = first_day.get(pid, today_et + timedelta(days=1)) if owner == "waivers" else None
         first_sp = today_sp + (clears - today_et).days if clears else 0
         week_games = [sp for sp in matchup_sps if sp in team["periods"] and sp >= first_sp]
-        rem_games = [sp for sp in remaining if sp in team["periods"] and sp >= first_sp]
+        # a game today that already started isn't left to play (findings 178)
+        today_start = team.get("starts", {}).get(today_sp) if today_sp in team["periods"] else None
+        rem_games = [sp for sp in remaining if sp in team["periods"] and sp >= first_sp
+                     and not (sp == today_sp and today_start and today_start <= run_utc)]
         players.append({
             "id": pid,
             "name": p.get("fullName"),
@@ -320,6 +333,7 @@ def main():
             "nights": week_games,
             "games_next2": len([sp for sp in next_sps if sp in team["periods"]]),
             "clears": clears.strftime("%a %-d") if clears else None,
+            "today_start": today_start,  # his team's game today, UTC; the page drops it once it starts
         })
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
@@ -388,6 +402,7 @@ def main():
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
         "updated_date": datetime.now(ET).date().isoformat(),
+        "updated_utc": run_utc,  # the page compares it with each player's today_start (findings 178)
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,
         "matchup_weeks": -(-len(matchup_sps) // 7),

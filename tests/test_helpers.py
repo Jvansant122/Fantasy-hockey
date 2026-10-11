@@ -148,8 +148,14 @@ def test_scoreboard_schedule_survives_a_failed_day(monkeypatch):
                 return Resp({"sports": [{"leagues": [{"teams": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
             if params["dates"].endswith(("1", "3", "5", "7", "9")):
                 raise ConnectionError("boom")
-            return Resp({"events": [{"competitions": [{"competitors": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
+            return Resp({"events": [{"date": "2026-10-10T23:00Z", "competitions": [{"competitors": [{"team": {"id": "10", "abbreviation": "TOR"}}]}]}]})
 
     teams, counts, dates = fetch.scoreboard_schedule(Session(), [1, 2], 1)
     assert len(counts) == 1 and list(counts.values()) == [1]
     assert teams[10]["periods"] == set(counts)
+    assert teams[10]["starts"] == {sp: "2026-10-10T23:00:00Z" for sp in counts}  # start times for games already started
+
+
+def test_utc_iso():
+    from datetime import datetime, timezone, timedelta
+    assert fetch.utc_iso(datetime(2026, 10, 10, 19, 0, tzinfo=timezone(timedelta(hours=-4)))) == "2026-10-10T23:00:00Z"

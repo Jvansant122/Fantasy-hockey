@@ -858,6 +858,14 @@ def utcnow():
     return datetime.now(timezone.utc)
 
 
+def game_started(p):
+    """His team's game today has already started (fetch.py's today_start, UTC): it isn't left to play (findings 178)."""
+    try:
+        return bool(p.get("today_start")) and datetime.fromisoformat(p["today_start"].replace("Z", "+00:00")) <= utcnow()
+    except ValueError:
+        return False
+
+
 def win_prob(home_ml, away_ml):
     """Home team's win probability from American moneylines, with the bookmaker's margin removed."""
     imp = lambda ml: -ml / (-ml + 100) if ml < 0 else 100 / (ml + 100)
@@ -1028,8 +1036,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if team in tonight and pid:
                 who, status = tonight[team]
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
+            # tonight's game already started: its start is no longer ahead (findings 178)
+            started = game_started(p)
+            if started:
+                starts = max(0.0, starts - goalie_today.get(pid, 0.0)) if pid else 0.0
             # on waivers he misses his team's games before he clears (findings 122): keep that share of the starts
-            team_left = len([d for d in sched.get(team, []) if d >= today.isoformat()])
+            team_left = len([d for d in sched.get(team, []) if d > today.isoformat() or (d == today.isoformat() and not started)])
             if p.get("owner") == "waivers" and team_left > p["games_left"]:
                 starts *= p["games_left"] / team_left
             if n.get("apply") and n.get("starts") is not None:
@@ -1037,7 +1049,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base
             season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
             # tonight's game priced by the betting line: 2.9 + 4.1 x (win probability - 0.5) per start
-            p_today = min(goalie_today.get(pid, 0.0), starts) if pid else 0.0
+            p_today = min(goalie_today.get(pid, 0.0), starts) if pid and not started else 0.0
             if team in lines and p_today > 0 and starts > 0:
                 line_pps = base + LINE_PPS_SLOPE * (lines[team] - 0.5)
                 why["line"] = {"win_prob": round(lines[team], 2), "pps": round(line_pps, 2)}
@@ -1045,13 +1057,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # the rest of the week's starts, with no line yet, priced by team strength and home ice (findings section 70)
             lined = team in lines and p_today > 0
             rest = [(d, opp, home) for d, opp, home in week_games.get(team, [])
-                    if d > today.isoformat() or (d == today.isoformat() and not lined)]
+                    if d > today.isoformat() or (d == today.isoformat() and not lined and not started)]
             if strength and team in strength and rest and starts > 0:
                 bonus = sum(SCHED_SLOPE * (model_win_prob(strength[team], strength.get(opp, 0.0), home) - 0.5) for _, opp, home in rest) / len(rest)
                 fpg += (starts - (p_today if lined else 0.0)) * bonus / starts
                 why["sched"] = round(bonus, 2)
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
-            why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid else 0.0  # chance he starts tonight (stream card)
+            why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid and not started else 0.0  # chance he starts tonight (stream card)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
             p_dress = None
         else:
