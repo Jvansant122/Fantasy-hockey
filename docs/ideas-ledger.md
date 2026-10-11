@@ -423,7 +423,7 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 355 | Oct 11 19:50 | thread "Seventh hunt" (agent) | IR stash cost with full roster | understated for 7/7 teams | Shipped (PR #99, handoff 131) | findings 231 |
 | 356 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Trade deadline check and settings logging | no deadline check | Shipped (PR #99, handoff 132) | findings 231 |
 | 357 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Goalie no. 1 back-to-back nights beyond next game / ordinary nights | Brier -0.53%, 5/5 seasons | Shipped (PR #100, handoff 133, kept A+B with ordinary +0.15) | findings 231 |
-| 358 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Goalie points per start double-counts team strength | per-start error -1.5% 5/5, rank flat; optional | Pending (handoff 134) | findings 231 |
+| 358 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Goalie points per start double-counts team strength | per-start error -1.5% 5/5, rank flat; optional | Shipped (PR #102, handoff 134) | findings 231 |
 | 359 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Scoring weights vs ESPN totals, settings, position limits, waiver order, goalie density/home-away/opponent/3-goalie/win model/pps shrink/b2b FP | all fine or already covered | No change | findings 231 |
 | 360 | Oct 11 20:15 | thread "Seventh hunt" (agent) | Zero-rating check false alarm on no-game days | see findings 232 (1) | Shipped (PR #97, handoff 135) | findings 232 |
 | 361 | Oct 11 20:15 | thread "Seventh hunt" (agent) | 'Day N' nights once schedule view fixed | see findings 232 (2) | Shipped (PR #97, handoff 136) | findings 232 |
