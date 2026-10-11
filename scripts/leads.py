@@ -138,10 +138,19 @@ def fetch_injuries(s):
             for t in r.json().get("injuries", []) for i in t.get("injuries", [])]
 
 
-def fetch_odds(s):
+def fetch_odds(s, today=None, team_map=None):
+    """Today's betting lines. The NHL partner feed only rolls to the new day around noon ET, so morning runs fall back to
+    ESPN's scoreboard, which posts lines a day ahead (findings 232)."""
     r = s.get("https://api-web.nhle.com/v1/partner-game/US/now", timeout=30)
     r.raise_for_status()
     d = r.json()
+    if today is not None and (d.get("currentOddsDate") or "") < today.isoformat():
+        try:
+            espn = espn_odds(s, today, team_map or {})
+            if espn["games"]:
+                return espn
+        except Exception:  # noqa: BLE001 - keep the NHL feed's games when ESPN fails
+            pass
     return {"odds_date": d.get("currentOddsDate"), "updated": d.get("lastUpdatedUTC"), "games": [
         {"game_id": g.get("gameId"), "start_utc": g.get("startTimeUTC"),
          **{side: {"team": g[f"{side}Team"]["abbrev"], **{o["description"] + (f' {o["qualifier"]}' if o.get("qualifier") and "LINE" not in o["description"] else ""): o["value"]
@@ -150,6 +159,29 @@ def fetch_odds(s):
             for side in ("home", "away")}}
         for g in d.get("games", [])]}
 
+
+
+def espn_odds(s, today, team_map):
+    """Today's games and DraftKings moneylines from ESPN's NHL scoreboard, shaped like fetch_odds' games."""
+    r = s.get("https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard",
+              params={"dates": today.strftime("%Y%m%d")}, timeout=30)
+    r.raise_for_status()
+    games = []
+    for e in r.json().get("events", []):
+        try:
+            c = e["competitions"][0]
+            ml = (c.get("odds") or [{}])[0].get("moneyline") or {}
+            sides = {t["homeAway"]: t["team"]["abbreviation"].upper() for t in c["competitors"]}
+            price = {side: float(str(ml[side]["close"]["odds"]).upper().replace("EVEN", "100")) for side in ("home", "away")}
+        except (KeyError, IndexError, TypeError, ValueError):
+            continue  # no line posted for this game yet
+        start = e.get("date", "")
+        if len(start) == 17:  # ESPN omits the seconds: 2026-10-12T23:00Z
+            start = start[:-1] + ":00Z"
+        games.append({"game_id": e.get("id"), "start_utc": start,
+                      **{side: {"team": team_map.get(sides[side], sides[side]), "MONEY_LINE_2_WAY": price[side]}
+                         for side in ("home", "away")}})
+    return {"odds_date": today.isoformat(), "updated": None, "source": "espn", "games": games}
 
 # League moves for the manager simulation (research ideas-batch3 item 71): league data only, never owner or account fields
 TX_KEYS = ("id", "type", "status", "teamId", "scoringPeriodId", "proposedDate", "processDate", "bidAmount", "executionType",

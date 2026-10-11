@@ -1,6 +1,6 @@
 """Pull roster, free agents and schedule from ESPN fantasy hockey and write data/players.json.
 
-Env: LEAGUE_ID (required), ESPN_S2 and SWID (private leagues), SEASON (default 2027 = 2026-27),
+Env: LEAGUE_ID (required), ESPN_S2 and SWID (private leagues), SEASON (default from the date: Aug-Dec 2026 is 2027 = 2026-27),
 TEAM_ID (optional; otherwise the team owned by SWID).
 
 Fantasy points come from ESPN's `appliedTotal`, which ESPN computes with the league's own
@@ -195,6 +195,22 @@ def utc_iso(dt):
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
+
+
+def default_season(day):
+    """ESPN's season for a date: August to December belong to the season that ends the next year (2026-27 is 2027)."""
+    return day.year + 1 if day.month >= 8 else day.year
+
+
+def season_over_published(path):
+    """True when the published data already says the fantasy season is over (findings 230)."""
+    try:
+        return bool(json.loads(path.read_text()).get("season_over"))
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def espn_today(night_dates, today_sp, clock_date):
     """The calendar date of ESPN's current scoring period. ESPN rolls its day at about 3:10-3:40 AM ET, so between
     midnight and then the ET clock is a day ahead of ESPN (findings 180). Read it off the schedule's dated periods."""
@@ -286,7 +302,8 @@ def main():
     league_id = os.environ.get("LEAGUE_ID")
     if not league_id:
         sys.exit("LEAGUE_ID is not set")
-    season = int(os.environ.get("SEASON", "2027"))
+    # the season from the date, so next October doesn't quietly publish last season (findings 230)
+    season = int(os.environ.get("SEASON") or default_season(datetime.now(ET).date()))
     base = BASE.format(season=season)
     league_url = f"{base}/segments/0/leagues/{league_id}"
     s = session()
@@ -309,6 +326,10 @@ def main():
     last_sp = season_last_day(sched_settings.get("matchupPeriods"))
     season_over = last_sp is not None and today_sp > last_sp
     season_end = (today_et + timedelta(days=last_sp - today_sp)).strftime("%a %b %-d") if last_sp is not None else None
+    # off-season: the first run after the final publishes "season over"; later ones change nothing, so skip them (no commit)
+    if season_over and season_over_published(DATA_PATH):
+        print(f"ESPN season {season} is over and the published data says so: nothing to update")
+        return
 
     # Which team is mine
     team_id = os.environ.get("TEAM_ID")
@@ -500,7 +521,7 @@ def main():
             lead_errors["injuries"] += " (used the last logged copy)"
     odds = None
     try:
-        odds = leads.fetch_odds(web)
+        odds = leads.fetch_odds(web, now, ESPN_TO_NHL)
     except Exception as e:  # noqa: BLE001
         lead_errors["odds"] = repr(e)
     try:
@@ -576,7 +597,7 @@ def main():
                    "waiver_rank": t.get("waiverRank")} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
     }
-    path = Path(__file__).resolve().parent.parent / "data" / "players.json"
+    path = DATA_PATH
     path.write_text(json.dumps(out, indent=1))
     print(f"Wrote {len(players)} players ({len(my_ids)} mine) for matchup {period} to {path}")
     try:

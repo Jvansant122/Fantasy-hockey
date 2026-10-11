@@ -163,3 +163,45 @@ def test_last_logged_reuses_a_recent_good_copy(tmp_path, monkeypatch):
     assert leads.last_logged("injuries", now) == {"new": 1}
     assert leads.last_logged("injuries", datetime(2026, 10, 12, 12, 0)) is None  # older than a day
     assert leads.last_logged("lineups", now) is None
+
+
+class JsonSession:
+    def __init__(self, by_url):
+        self.by_url, self.urls = by_url, []
+
+    def get(self, url, timeout=None, params=None, **kw):
+        self.urls.append(url)
+        body = next(v for k, v in self.by_url.items() if k in url)
+        r = Resp(json.dumps(body))
+        r.json = lambda: body
+        return r
+
+
+NHL_YESTERDAY = {"currentOddsDate": "2026-10-11", "lastUpdatedUTC": "2026-10-11T16:00:00Z", "games": [
+    {"gameId": 1, "startTimeUTC": "2026-10-11T23:00:00Z",
+     "homeTeam": {"abbrev": "TOR", "odds": [{"description": "MONEY_LINE_2_WAY", "value": -150.0}]},
+     "awayTeam": {"abbrev": "BOS", "odds": [{"description": "MONEY_LINE_2_WAY", "value": 130.0}]}}]}
+ESPN_TODAY = {"events": [
+    {"id": "9", "date": "2026-10-12T23:00Z", "competitions": [{
+        "competitors": [{"homeAway": "home", "team": {"abbreviation": "NJ"}}, {"homeAway": "away", "team": {"abbreviation": "OTT"}}],
+        "odds": [{"moneyline": {"home": {"close": {"odds": "-130"}}, "away": {"close": {"odds": "EVEN"}}}}]}]},
+    {"id": "10", "date": "2026-10-13T00:00Z", "competitions": [{  # no line posted yet: left out
+        "competitors": [{"homeAway": "home", "team": {"abbreviation": "MIN"}}, {"homeAway": "away", "team": {"abbreviation": "VGK"}}]}]}]}
+
+
+def test_morning_odds_come_from_espn_until_the_nhl_feed_rolls_over():
+    """The NHL partner feed shows yesterday's lines until about noon ET; morning runs take today's from ESPN (findings 232)."""
+    from datetime import date
+    s = JsonSession({"partner-game": NHL_YESTERDAY, "site.api.espn.com": ESPN_TODAY})
+    odds = leads.fetch_odds(s, date(2026, 10, 12), {"NJ": "NJD"})
+    assert odds["odds_date"] == "2026-10-12" and odds["source"] == "espn"
+    assert odds["games"] == [{"game_id": "9", "start_utc": "2026-10-12T23:00:00Z",
+                              "home": {"team": "NJD", "MONEY_LINE_2_WAY": -130.0}, "away": {"team": "OTT", "MONEY_LINE_2_WAY": 100.0}}]
+    # once the NHL feed is on today, it is used as before, and ESPN isn't asked
+    s = JsonSession({"partner-game": NHL_YESTERDAY, "site.api.espn.com": ESPN_TODAY})
+    odds = leads.fetch_odds(s, date(2026, 10, 11), {"NJ": "NJD"})
+    assert odds["odds_date"] == "2026-10-11" and odds["games"][0]["home"]["team"] == "TOR"
+    assert not any("espn" in u for u in s.urls)
+    # ESPN down: the NHL feed's games are kept
+    s = JsonSession({"partner-game": NHL_YESTERDAY})
+    assert leads.fetch_odds(s, date(2026, 10, 12))["odds_date"] == "2026-10-11"

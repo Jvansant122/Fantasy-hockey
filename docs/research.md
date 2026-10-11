@@ -809,6 +809,12 @@ The rating already rested a team's no. 1 goalie on the second night of a back-to
 
 The rule improved start predictions by 0.6% and the no. 1's weekly start count by 0.7%, in all five seasons. That beat each of the two proposals on its own. Daily Faceoff confirmations still override it.
 
+## 104. Morning betting lines, and next season
+
+**Morning lines.** The NHL's odds feed only switches to the new day around noon ET, so the 6 AM and 9 AM updates priced that night's goalie starts without a betting line. When a line arrived at 12:40, a goalie's per-start value moved by about 0.5 points on average. ESPN posts lines a day ahead, so morning updates now take that day's moneylines from ESPN's scoreboard until the NHL feed catches up.
+
+**Next season.** The update used to assume the 2026-27 season. It now works the season out from the date (August to December belong to the season ending the next year). After the fantasy final, the first update publishes "season over"; later updates find nothing to change and skip themselves, so the site doesn't commit the same data all summer.
+
 ## What the independent review changed
 
 | Review point | Outcome |

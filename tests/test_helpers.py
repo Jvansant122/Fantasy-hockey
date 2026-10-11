@@ -301,3 +301,20 @@ def test_season_last_day_ends_with_the_final():
     assert fetch.season_last_day(periods) == 188
     assert fetch.season_last_day({"1": [1]}) == 6
     assert fetch.season_last_day(None) is None
+
+
+def test_season_from_the_date_and_off_season_runs_skip(tmp_path):
+    """The ESPN season comes from the date, and once the published data says the season is over, runs change nothing
+    (findings 230)."""
+    from datetime import date
+    assert fetch.default_season(date(2026, 10, 11)) == 2027
+    assert fetch.default_season(date(2027, 3, 1)) == 2027
+    assert fetch.default_season(date(2027, 8, 1)) == 2028
+    p = tmp_path / "players.json"
+    assert not fetch.season_over_published(p)  # no data yet
+    p.write_text('{"season_over": false}')
+    assert not fetch.season_over_published(p)
+    p.write_text('{"season_over": true}')
+    assert fetch.season_over_published(p)
+    p.write_text("not json")
+    assert not fetch.season_over_published(p)
