@@ -69,8 +69,12 @@ BAD_START_LOGIT = -1.0  # next-game start logit for a starter who gave up 5+, or
 BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
-# a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163)
+# a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
+# and he stays out a median of 6 team games, so the cut lasts: games 2-4 read 0.51-0.59 against 0.19-0.22 actual
+# (findings 164). Games 2+ are fit after the later-game softening, so they are divided by LATER_GAME_TEMP here.
 NO_DECISION_LOGIT = -2.3
+NO_DECISION_LATER = (-2.0 / 0.8, -1.4 / 0.8)  # game after next, then every game after that
+NO_DECISION_GAMES = 16  # covers a two-week playoff round
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -93,7 +97,8 @@ def last_start_shift(g):
         return (WIN_LOGIT + (LOW_GA_WIN_LOGIT if g["ga"] <= 1 else 0.0), 0.0)
     if g.get("losses") or g.get("otl"):
         return (LOSS_LOGIT, 0.0)
-    return (NO_DECISION_LOGIT, 0.0)  # started, but another goalie got the decision
+    # started, but another goalie got the decision
+    return (NO_DECISION_LOGIT, NO_DECISION_LATER[0]) + (NO_DECISION_LATER[1],) * (NO_DECISION_GAMES - 2)
 
 
 # P(dresses) logit shift by game number from today (1, 2, 3, 4+), for a skater who dressed for his team's last game
@@ -636,8 +641,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     blended with last season's split over SEASON_SHARE_K games), for the Season rating.
     injury: {goalie id: ESPN injury factor}; scales his chance before each game is split among the team's goalies,
     so an injured starter's games go to his partner (findings section 48).
-    last_start: (goalie id, (shift next game, shift game after next)) for whoever started the team's last game:
-    his start logit drops after a bad start or a loss and rises after a win (findings 131-133).
+    last_start: (goalie id, (shift next game, shift game after next, ...)) for whoever started the team's last game:
+    his start logit drops after a bad start or a loss and rises after a win (findings 131-133); after he left without
+    a decision it stays down for every game in the window, until a Daily Faceoff confirmation names him (findings 164).
     movers: goalies who started for another NHL team this season; with 1-3 starts for this team their logit rises,
     and their season_share counts only this team's games since their first start for it."""
     confirmed, injury = confirmed or {}, injury or {}
@@ -711,6 +717,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             q = {gid: v / tot for gid, v in q.items()}
         if d in confirmed:
             p = q = {gid: float(gid == confirmed[d]) for gid in cands}
+            if confirmed[d] == shift_gid:  # confirmed back in net: his last result no longer says anything
+                shifts = ()
         if d >= today.isoformat():
             for gid in cands:
                 exp[gid] += q[gid]

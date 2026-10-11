@@ -458,6 +458,29 @@ def test_last_start_result_shifts_the_next_games():
     assert not rating.bad_start({"ga": 3, "toi": 3600}) and not rating.bad_start({"ga": 2, "toi": 1200})
 
 
+def test_goalie_who_left_without_a_decision_stays_out_all_week():
+    """The no-decision cut lasts past the next game, and ends once Daily Faceoff confirms him (findings 164)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24", "2026-10-26", "2026-10-28"]
+    hurt = rating.last_start_shift({"ga": 1, "toi": 1500, "wins": 0, "losses": 0, "otl": 0})
+    assert len(hurt) >= 7 and all(z < -1 for z in hurt)
+
+    def per_game(shift, confirmed=None):
+        out = []
+        for n in range(1, len(dates) + 1):
+            e = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates[:n], date(2026, 10, 22),
+                                     confirmed=confirmed, last_start=(1, shift) if shift else None)
+            out.append(e[1] - sum(out))
+        return out
+
+    ok, out, next_only = per_game(None), per_game(hurt), per_game((rating.NO_DECISION_LOGIT, 0.0))
+    assert all(o < k - 0.2 for o, k in zip(out, ok))
+    assert all(o < n - 0.15 for o, n in zip(out[1:], next_only[1:]))  # not just the next game
+    back = per_game(hurt, confirmed={"2026-10-24": 1})
+    assert back[1] == 1.0 and all(b > o + 0.1 for b, o in zip(back[2:], out[2:]))  # confirmed back in net: the cut ends
+
+
 def test_later_games_are_softened(monkeypatch):
     """Start chances two or more games ahead are pulled toward an even split; the next game is not (findings 134)."""
     model = rating.Model()
