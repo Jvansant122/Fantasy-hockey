@@ -57,6 +57,8 @@ TL_SKIP_PRE = re.compile(r"\b(?:ago|last|previous|past|first|final|after|since|o
 # ESPN often replaces the real note with a bare status word; the last real one is kept in INJURY_NOTES (findings 236)
 PLACEHOLDER_NOTE = re.compile(r"^\s*(ir|ir-nr|out|day-to-day|suspension)\s*$", re.I)
 STATUS_SEVERITY = {"DAY_TO_DAY": 0, "OUT": 1, "SUSPENSION": 1, "INJURY_RESERVE": 2}
+# ESPN injury feed's status words -> fantasy statuses, for notes on players outside the data (findings 241 (5))
+FEED_STATUS = {"Day-To-Day": "DAY_TO_DAY", "Out": "OUT", "Suspension": "SUSPENSION", "Injured Reserve": "INJURY_RESERVE"}
 INJURY_NOTES_DAYS = 60
 # a one-game OUT note ('won't play Thursday') is stale once his team has played after it: ESPN moves him to day-to-day
 # the next morning (findings 236)
@@ -546,9 +548,10 @@ def expected_fp(now, prev, is_d):
     return out
 
 
-def week_schedule(s, monday, games=None, weeks=1):
+def week_schedule(s, monday, games=None, weeks=1, starts=None):
     """NHL abbrev -> sorted list of game dates (ISO) in the Monday-Sunday week(s) from monday (2 in a playoff round).
-    games, if given, is filled with NHL abbrev -> [(date, opponent, home)]."""
+    games, if given, is filled with NHL abbrev -> [(date, opponent, home)]; starts with (NHL abbrev, date) -> the game's
+    start time (UTC ISO), when the schedule gives one (findings 241)."""
     out = {}
     days = [d for k in range(weeks) for d in nhl_get(s, f"{NHL_WEB}/schedule/{(monday + timedelta(days=7 * k)).isoformat()}").json().get("gameWeek", [])]
     for day in days:
@@ -558,6 +561,8 @@ def week_schedule(s, monday, games=None, weeks=1):
                     out.setdefault(g[side]["abbrev"], []).append(day["date"])
                     if games is not None:
                         games.setdefault(g[side]["abbrev"], []).append((day["date"], g[other]["abbrev"], side == "homeTeam"))
+                    if starts is not None and g.get("startTimeUTC"):
+                        starts[(g[side]["abbrev"], day["date"])] = g["startTimeUTC"]
     return out
 
 
@@ -788,20 +793,39 @@ def until_days(text, day):
     return best
 
 
-def one_game_out_over(note, team_game_dates):
+def parse_utc(text):
+    """An ISO time ('2026-10-11T21:37Z', '...+00:00', or naive meaning UTC) as an aware datetime, or None."""
+    try:
+        t = datetime.fromisoformat(str(text or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def game_after(when, day, game_day, start):
+    """A game on game_day (ET, ISO) came after a note at when (aware) whose ET date is day: a later date, or the same date
+    with a start after the note (findings 241); with no start time known, the note came before ONE_GAME_SAME_DAY_HOUR ET."""
+    if game_day > day:
+        return True
+    if game_day < day:
+        return False
+    st = parse_utc(start)
+    return st > when if st else when.astimezone(ET).hour < ONE_GAME_SAME_DAY_HOUR
+
+
+def one_game_out_over(note, team_game_dates, starts=None):
     """A one-game OUT note ('won't play Thursday') once his team has played a game after the note's time (findings 236).
-    team_game_dates: his team's played game dates (ET, ISO). Game dates carry no start time, so a game on the note's own
-    day counts when the note came before ONE_GAME_SAME_DAY_HOUR ET."""
+    team_game_dates: his team's played game dates (ET, ISO). starts: {date: that game's start, UTC ISO} where known
+    (findings 241): a game on the note's own day counts when it started after the note; with no start time, when the note
+    came before ONE_GAME_SAME_DAY_HOUR ET."""
     short = (note or {}).get("short") or ""
     if not ONE_GAME_OUT.search(short) or ONE_GAME_NOT.search(short):
         return False
-    try:
-        when = datetime.fromisoformat((note.get("date") or "").replace("Z", "+00:00"))
-    except ValueError:
+    when = parse_utc(note.get("date"))
+    if when is None:
         return False
-    when = (when if when.tzinfo else when.replace(tzinfo=timezone.utc)).astimezone(ET)
-    day = when.date().isoformat()
-    return any(d[:10] > day or (d[:10] == day and when.hour < ONE_GAME_SAME_DAY_HOUR) for d in team_game_dates)
+    day = when.astimezone(ET).date().isoformat()
+    return any(game_after(when, day, d[:10], (starts or {}).get(d[:10])) for d in team_game_dates)
 
 
 def load_injury_notes():
@@ -827,23 +851,27 @@ def carry_injury_notes(notes, stored, status, played_since, today):
     """Swap a bare status word ('ir', 'out') for the player's last real note, and remember each real note (findings 236).
 
     notes: {ESPN id: today's feed note}, changed in place. stored: load_injury_notes(), changed in place.
-    status: {ESPN id: his ESPN fantasy status now}. played_since(ESPN id, date): he dressed for an NHL game on or after it.
-    The stored note is used when it wasn't written under a day-to-day status, his status now is at least as severe
-    (day-to-day < out, suspension < IR), and he hasn't played since. Returns the ESPN ids whose note was swapped."""
+    status: {ESPN id: his ESPN fantasy status now}. played_since(ESPN id, note time): he dressed for an NHL game after the
+    note was posted. The stored note is used when it wasn't written under a day-to-day status, his status now is at least
+    as severe (day-to-day < out, suspension < IR), and he hasn't played since. Returns the ESPN ids whose note was swapped.
+    A note is stored with his fantasy status, or the feed's own when he isn't in the data (findings 241 (5)), and a note
+    still in use is marked seen today, so a season-out note shown as a bare 'ir' isn't pruned after 60 days."""
     swapped = set()
     for aid, note in list(notes.items()):
         if not PLACEHOLDER_NOTE.match(note.get("short") or ""):
             stored[str(aid)] = {"date": note.get("date"), "short": note.get("short"), "long": note.get("long"),
-                                "name": note.get("name"), "status": status.get(aid), "seen": today.isoformat()}
+                                "name": note.get("name"), "status": status.get(aid) or FEED_STATUS.get(note.get("status")),
+                                "seen": today.isoformat()}
             continue
         old = stored.get(str(aid))
         if not old or old.get("status") == "DAY_TO_DAY":
             continue
         if STATUS_SEVERITY.get(status.get(aid), -1) < STATUS_SEVERITY.get(old.get("status"), 9):
             continue
-        if played_since(aid, str(old.get("date") or "")[:10]):
+        if played_since(aid, str(old.get("date") or "")):
             continue
         notes[aid] = {**note, **{k: old.get(k) for k in ("date", "short", "long")}, "name": note.get("name") or old.get("name")}
+        old["seen"] = today.isoformat()
         swapped.add(aid)
     return swapped
 
@@ -1186,8 +1214,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     prev_goalies = load_prev_goalie_season(s, prev_season)
     prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
-    week_games = {}
-    sched = week_schedule(s, monday, week_games, weeks)
+    week_games, week_starts = {}, {}
+    sched = week_schedule(s, monday, week_games, weeks, week_starts)
     strength = team_strength(s, prev_season)
     news = load_news()
 
@@ -1264,7 +1292,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         label = f"{(prev_season - 10001) // 10000}-{str((prev_season - 10001) % 100).zfill(2)}"  # 20242025 -> 2024-25 (findings 234)
         prev.update({pid: dict(older[pid], season_label=label) for pid in missed if (older.get(pid) or {}).get("gp", 0) >= PREV_MIN_GP})
 
-    def match(p):
+    def name_match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
         cands = index.get(norm(p["name"]), {}) or nickname_cands(index, p["name"], team)
         if not cands:
@@ -1278,6 +1306,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         pos_ok = [pid for pid, (_, pos) in cands.items() if pos_group(pos) == grp] \
             or [pid for pid, (_, pos) in cands.items() if (pos == "G") == (grp == "G")]  # a forward ESPN lists at D, or the reverse
         return pos_ok[0] if len(pos_ok) == 1 else None
+
+    # an unsigned ESPN free agent with a rostered player's name (the other Matt Murray) isn't that player (findings 241 (4))
+    claimed = {name_match(q) for q in players if q.get("team") != "FA"} - {None}
+
+    def match(p):
+        pid = name_match(p)
+        return None if p.get("team") == "FA" and pid in claimed else pid
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
     confirmed, tonight = {}, {}
@@ -1310,12 +1345,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     pid_of = {p["id"]: match(p) for p in players}
     goalie_dates = {}
     for g in goalie_games:
-        goalie_dates.setdefault(g["id"], []).append(g["date"][:10])
+        goalie_dates.setdefault(g["id"], []).append((g["date"][:10], g["team"]))
 
-    def played_since(aid, day):
-        pid = pid_of.get(aid)
-        return bool(pid and day) and (any(g["date"][:10] >= day for g in by_player.get(pid, []))
-                                      or any(d >= day for d in goalie_dates.get(pid, [])))
+    def played_since(aid, when):
+        """He dressed for a game after the note at when: a later ET date, or that date with a start after the note
+        (findings 241 (5): a note posted during a game he played isn't thrown away)."""
+        pid, t = pid_of.get(aid), parse_utc(when)
+        if not (pid and t):
+            return False
+        day = t.astimezone(ET).date().isoformat()
+        return any(game_after(t, day, g["date"][:10], week_starts.get((g["team"], g["date"][:10])))
+                   for g in by_player.get(pid, [])) \
+            or any(game_after(t, day, d, week_starts.get((tm, d))) for d, tm in goalie_dates.get(pid, []))
     carried = carry_injury_notes(notes, stored_notes, {p["id"]: p.get("injury") for p in players}, played_since, today)
     if carried:
         print(f"Kept the last real injury note for {len(carried)} players whose note is now a bare status word")
@@ -1371,13 +1412,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             team_left = len([d for d in sched.get(team, []) if d > today.isoformat() or (d == today.isoformat() and not started)])
             if p.get("owner") == "waivers" and team_left > p["games_left"]:
                 starts *= p["games_left"] / team_left
+            # dropped after today's first puck: his team keeps him only until ESPN's overnight rollover (findings 241 (3))
+            if p.get("pending_drop"):
+                starts = min(starts, goalie_today.get(pid, 0.0) if pid and p["games_left"] else 0.0)
             if n.get("apply") and n.get("starts") is not None:
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base
             why["own_pps"] = round(fpg, 2)  # his own, before tonight's line and the schedule (findings 232)
             season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
             # start chance per game from today, for the page's open-slot count (findings 236)
-            p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())} if pid else {}
+            p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())
+                                if not p.get("pending_drop") or d <= today.isoformat()} if pid else {}
             # this week's starts: 0.4 of his gap to the league rate, then the line or the schedule (findings 231 (8))
             fpg = league_pps + WEEK_PPS_KEEP * (fpg - league_pps)
             # tonight's game priced by the betting line: that + 4.1 x (win probability - 0.5) per start
@@ -1503,7 +1548,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             inj = 0.0 if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
             # OUT for one named game that his team has since played: day-to-day, as ESPN has him by the next morning (findings 236)
             one_game_over = p.get("injury") == "OUT" and p["id"] in notes and not (note and note["long"]) \
-                and one_game_out_over(notes[p["id"]], team_dates.get(team, ()))
+                and one_game_out_over(notes[p["id"]], team_dates.get(team, ()),
+                                      {d: st for (tm, d), st in week_starts.items() if tm == team})
             if one_game_over:
                 inj = SKATER_INJURY_CAP["DAY_TO_DAY"]
             if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):

@@ -521,9 +521,9 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 449 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Stash budget vs Sunday list (PR #99) | see findings 240 (7) | Pending (handoff 216) | findings 240 |
 | 450 | Oct 11 22:40 | thread "Seventh hunt" (agent) | Reload wipes Trade check (PR #99) | see findings 240 (8) | Pending (handoff 217) | findings 240 |
 | 451 | Oct 11 22:40 | thread "Seventh hunt" (agent) | PR #99 page: roster_max, deadline, trade checks, nights strip, wording, details, search | fine | No change | findings 240 |
-| 452 | Oct 11 22:55 | thread "Seventh hunt" (agent) | check_data N1 on Mar 8 2027 (PR #97) | see findings 241 (1) | Pending (handoff 218) | findings 241 |
-| 453 | Oct 11 22:55 | thread "Seventh hunt" (agent) | One-game OUT rule start times (PR #99) | see findings 241 (2) | Pending (handoff 219) | findings 241 |
-| 454 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Post-puck drop still counted (PR #99) | see findings 241 (3) | Pending (handoff 220) | findings 241 |
-| 455 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Unsigned same-name goalie (PR #99) | see findings 241 (4) | Pending (handoff 221) | findings 241 |
-| 456 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Kept-note edge cases (PR #99) | see findings 241 (5) | Pending (handoff 222) | findings 241 |
+| 452 | Oct 11 22:55 | thread "Seventh hunt" (agent) | check_data N1 on Mar 8 2027 (PR #97) | see findings 241 (1) | Shipped (PR #104, handoff 218) | findings 241 |
+| 453 | Oct 11 22:55 | thread "Seventh hunt" (agent) | One-game OUT rule start times (PR #99) | see findings 241 (2) | Shipped (PR #104, handoff 219) | findings 241 |
+| 454 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Post-puck drop still counted (PR #99) | see findings 241 (3) | Shipped (PR #104, handoff 220) | findings 241 |
+| 455 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Unsigned same-name goalie (PR #99) | see findings 241 (4) | Shipped (PR #104, handoff 221) | findings 241 |
+| 456 | Oct 11 22:55 | thread "Seventh hunt" (agent) | Kept-note edge cases (PR #99) | see findings 241 (5) | Shipped (PR #104, handoff 222) | findings 241 |
 | 457 | Oct 11 22:55 | thread "Seventh hunt" (agent) | PR #99 rating replay (51 versions, 83 logs) and PR #100 | intended moves only | No change | findings 241 |

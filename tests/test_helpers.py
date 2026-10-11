@@ -351,3 +351,63 @@ def test_team_nights_run_from_today_to_the_last_week():
     teams = {1: {"abbrev": "Bos", "periods": {5, 13, 15, 20, 22}}, 2: {"abbrev": "", "periods": {13}}, 3: {"abbrev": "TB", "periods": set()}}
     assert fetch.team_nights(teams, 13, weeks) == {"BOS": [13, 15, 20], "TB": []}
     assert fetch.team_nights(teams, 13, []) == {"BOS": [], "TB": []}
+
+
+def test_drops_after_the_first_puck_stay_until_the_rollover():
+    """Today's executed drops whose player ESPN's roster still lists, for the team that dropped him (findings 241 (3))."""
+    tx = [{"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 3, "proposedDate": 2,
+           "items": [{"type": "ADD", "playerId": 1, "toTeamId": 3}, {"type": "DROP", "playerId": 2, "fromTeamId": 3}]},
+          {"type": "WAIVER", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 4, "proposedDate": 3,
+           "items": [{"type": "DROP", "playerId": 5, "fromTeamId": 4}]},
+          {"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 11, "teamId": 4, "proposedDate": 1,
+           "items": [{"type": "DROP", "playerId": 6, "fromTeamId": 4}]},  # yesterday: rolled over
+          {"type": "FREEAGENT", "status": "CANCELED", "scoringPeriodId": 12, "teamId": 4, "proposedDate": 4,
+           "items": [{"type": "DROP", "playerId": 7, "fromTeamId": 4}]},
+          {"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 5, "proposedDate": 5,
+           "items": [{"type": "DROP", "playerId": 8, "fromTeamId": 5}]},
+          {"type": "FREEAGENT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 6, "proposedDate": 6,
+           "items": [{"type": "ADD", "playerId": 8, "toTeamId": 6}]},  # dropped, then picked up again
+          {"type": "TRADE_ACCEPT", "status": "EXECUTED", "scoringPeriodId": 12, "teamId": 4, "proposedDate": 7,
+           "items": [{"type": "DROP", "playerId": 9, "fromTeamId": 4}]}]  # not a free-agent move
+    rostered = {2: (3, 7), 5: (4, 1), 6: (4, 7), 7: (4, 7), 8: (5, 7), 9: (4, 7), 10: (3, 7)}
+    assert fetch.pending_drops(tx, rostered, 12) == {2: 3, 5: 4}
+    assert fetch.pending_drops(tx, {2: (9, 7)}, 12) == {}  # listed on another team: not his old team's
+    assert fetch.pending_drops(None, rostered, 12) == {}
+
+
+def test_schedule_fields_stop_at_the_last_day_he_counts():
+    team = {"abbrev": "Tor", "periods": {7, 9, 11, 14}, "starts": {9: "2026-10-07T23:00:00Z"}}
+    sched = {"matchup_sps": list(range(7, 14)), "remaining": [9, 10, 11, 12, 13], "light": {11}, "next_sps": list(range(14, 28)),
+             "today_sp": 9}
+    f = fetch.schedule_fields(team, sched, 0, "2026-10-07T23:00:00Z", "2026-10-07T22:00:00Z", 9)  # dropped after the first puck
+    assert (f["games"], f["games_left"], f["light_left"], f["nights"], f["games_next2"]) == (2, 1, 0, [7, 9], 0)
+    assert fetch.schedule_fields(team, sched, 0, "2026-10-07T23:00:00Z", "2026-10-08T00:00:00Z", 9)["games_left"] == 0
+
+
+def test_week_schedule_records_start_times(monkeypatch):
+    class Resp:
+        def json(self):
+            return {"gameWeek": [{"date": "2026-10-07", "games": [
+                {"gameType": 2, "awayTeam": {"abbrev": "BOS"}, "homeTeam": {"abbrev": "TOR"}, "startTimeUTC": "2026-10-07T23:00:00Z"},
+                {"gameType": 2, "awayTeam": {"abbrev": "MTL"}, "homeTeam": {"abbrev": "OTT"}}]}]}
+    monkeypatch.setattr(rating, "nhl_get", lambda s, url: Resp())
+    starts = {}
+    rating.week_schedule(None, date(2026, 10, 5), starts=starts)
+    assert starts == {("BOS", "2026-10-07"): "2026-10-07T23:00:00Z", ("TOR", "2026-10-07"): "2026-10-07T23:00:00Z"}
+
+
+def test_carry_injury_notes_edge_cases():
+    """A swapped note is marked seen; a note on a player outside the data takes the feed's status (findings 241 (5))."""
+    today = date(2026, 12, 15)
+    stored = {}
+    notes = {5: {"short": "Smith will miss the rest of the season.", "date": "2026-10-01T12:00Z", "status": "Injured Reserve"}}
+    rating.carry_injury_notes(notes, stored, {}, lambda aid, when: False, today)
+    assert stored["5"]["status"] == "INJURY_RESERVE"
+    stored["5"]["seen"] = "2026-10-01"
+    notes = {5: {"short": "ir", "date": "2026-12-15T10:00Z"}}
+    seen = []
+    assert rating.carry_injury_notes(notes, stored, {5: "INJURY_RESERVE"}, lambda aid, when: seen.append(when) or False, today) == {5}
+    assert notes[5]["short"].startswith("Smith") and stored["5"]["seen"] == "2026-12-15"
+    assert seen == ["2026-10-01T12:00Z"]  # played_since gets the note's full time, not its UTC date
+    stored["5"]["status"] = None  # no fantasy status and an unknown feed word: never carried
+    assert rating.carry_injury_notes({5: {"short": "ir"}}, stored, {5: "INJURY_RESERVE"}, lambda aid, when: False, today) == set()
