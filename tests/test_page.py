@@ -377,6 +377,17 @@ def test_tonight_card_counts_started_players(browser, server, data):
     assert not any(p in started for p in benched)
     assert errors == []
     ctx.close()
+    # the same players sitting on ESPN's bench hold no slot: the rest get all 15 (findings 233)
+    for p in started:
+        p["bench"] = True
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    card = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.innerText).find(t => t.startsWith('Tonight')) || ''")
+    benched = [p for p in sk if p["name"] in card.split("bench these", 1)[-1]]
+    assert len(benched) == (len(sk) - 3 - 15 if card else 0)
+    assert not any(p in started for p in benched)
+    assert errors == []
+    ctx.close()
 
 
 def test_goalies_card_after_first_puck(browser, server, data):
@@ -432,8 +443,15 @@ def test_phone_table_fits_and_cards_fold(browser, server, data):
         page.select_option("#team", str(t["id"]))
         wrap = page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return [w.scrollWidth, w.clientWidth]; })()")
         assert wrap[0] <= wrap[1] + 1, (t["id"], wrap)
-        # no explainer left unfolded, and folded long cards start closed
-        assert page.locator("#upgrades .upg > .drop").count() == 0
+        # long explainers fold, the lines managers act on (stream deadline, bench these, your weakest) stay (findings 233)
+        assert page.evaluate("""[...document.querySelectorAll('#upgrades .upg')].every(c => {
+          const t = c.querySelector(':scope > b, :scope > details > summary > b')?.textContent || '';
+          return !!c.querySelector(':scope > .drop') !== /^(Mid-week swaps|Best|Drop list|Activate from IR|Two-week)/.test(t)
+            || c.classList.contains('fold') || !c.querySelector('.drop'); })""")
+        # tags wrap below the name instead of being cut off (findings 232)
+        cut = page.evaluate("""[...document.querySelectorAll('#rows td:first-child .tags')].filter(t => {
+          const td = t.closest('td').getBoundingClientRect(); return [...t.children].some(c => c.getBoundingClientRect().right > td.right + 1); }).length""")
+        assert cut == 0
         assert page.evaluate("[...document.querySelectorAll('#upgrades details.fold')].every(d => !d.open)")
     assert errors == []
     ctx.close()
@@ -517,3 +535,30 @@ def test_last_night_before_first_puck_uses_every_move(browser, server, data):
         assert (most > 2) == want_note, most
         assert errors == []
         ctx.close()
+
+
+def test_swaps_and_best_moves_share_the_moves_left(browser, server, data):
+    """Mid-week swaps and Best moves never drop the same player or offer more moves than are left (findings 233)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    d["move_limit"] = 7
+    for t in d["teams"]:
+        t["moves_used"] = 5  # 2 left
+    for t in d["teams"]:
+        sk = sorted((p for p in _mine(d, t) if p["pos"] != "G" and not p["ir"]), key=lambda p: p.get("cr_season") or 0)
+        for p in sk[:3]:  # the weakest three are out: Best moves would want to drop them too
+            p.update(injury="OUT", games_left=max(p["games_left"], 1))
+    ctx, page, errors = open_page(browser, server, data=d)
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        swaps = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].find(c => c.innerText.startsWith('Mid-week swaps'))?.innerText || ''")
+        best = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].find(c => /^Best/.test(c.innerText))?.innerText || ''")
+        n_sub = swaps.count("→")
+        n_best = len([l for l in best.split("\n")[1:] if " for " in l])
+        assert n_sub + n_best <= 2, (t["id"], swaps, best)
+        swapped = [l.split("→")[0] for l in swaps.split("\n") if "→" in l]
+        for line in best.split("\n")[1:]:
+            assert not any(name.split(" (")[0].strip()[:12] and line.split(" for ")[-1].startswith(name.strip()[:12]) for name in swapped), (line, swapped)
+    assert errors == []
+    ctx.close()

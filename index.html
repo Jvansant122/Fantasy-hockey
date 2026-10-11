@@ -96,6 +96,9 @@
     /* the name column takes whatever width is left and cuts long names, so the table fits any phone and font */
     td:first-child { width: 100%; max-width: 1px; overflow: hidden; text-overflow: ellipsis; }
     td:first-child .meta { overflow: hidden; text-overflow: ellipsis; }
+    /* tags go on their own line and wrap, so the narrow name column doesn't cut them off (findings 232) */
+    td:first-child .tags { display: block; white-space: normal; }
+    .tags .tag:first-child { margin-left: 0; }
     .pct { margin-left: 2px; padding: 1px 4px; }
     td:nth-child(5) .pct { display: none; }
     .night .open { font-size: 9px; }
@@ -338,7 +341,7 @@ function cells(p) {
     (p.cr_why?.tonight?.status === "Confirmed" ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
   const og = openGames(p);
   return {
-    name: `${esc(p.name)}${tags}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
+    name: `${esc(p.name)}${tags ? `<span class="tags">${tags}</span>` : ""}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
     cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "",
     cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: games(p),
     opengm: og == null ? "–" : og, light: light(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
@@ -421,11 +424,15 @@ function renderUpgrades() {
   const OUT = ["OUT", "INJURY_RESERVE", "SUSPENSION"];
   // the whole roster outside the IR slot: myPlayers() already leaves out the injured (findings 181)
   const outs = roster.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.dfo_out !== false && p.games_left > 0)));
-  const swapSubs = new Set();
+  const swapSubs = new Set(), swapDrops = new Set();
+  // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
+  const realLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : null;
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
     ${outs.map(p => {
-      const sub = fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (noMoves || reset || f.games_left > 0)).sort((a, b) => noMoves || reset ? addVal(b) - addVal(a) : score(b) - score(a))[0];
-      if (sub) swapSubs.add(sub.id);
+      // no more subs than moves left (findings 233)
+      const sub = realLeft != null && swapSubs.size >= realLeft ? null
+        : fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (noMoves || reset || f.games_left > 0)).sort((a, b) => noMoves || reset ? addVal(b) - addVal(a) : score(b) - score(a))[0];
+      if (sub) { swapSubs.add(sub.id); swapDrops.add(p.id); }
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
       const ir = irOpen > 0 && ["OUT", "INJURY_RESERVE"].includes(p.injury) ? " (IR-eligible: move him to IR)" : "";
       return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} <span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>` : ""}</div>`;
@@ -464,24 +471,27 @@ function renderUpgrades() {
     const playing = mine.filter(p => p.pos !== "G" && p.nights.includes(tonight.sp));
     const flagged = p => p.dfo_out === true || (p.dfo_out == null && p.sat_last);
     const val = p => flagged(p) ? -1 : p.cr_fpg * (p.dfo_out === false ? 1 : (p.cr_dress_next ?? p.cr_dress ?? 1));
-    const order = [...playing].sort((a, b) => started(b) - started(a) || val(b) - val(a));
+    // a started player on ESPN's bench holds no slot and can't be moved (findings 233): only started players in the lineup count
+    const holds = p => started(p) && p.bench !== true;
+    const order = [...playing].filter(p => !started(p) || holds(p)).sort((a, b) => holds(b) - holds(a) || val(b) - val(a));
     const room = { F: 9, D: 5, U: 1 };
     const bench = order.filter(p => {
       const g = group(p) === "D" ? "D" : "F";
-      if (room[g] > 0 && (started(p) || !flagged(p))) { room[g]--; return false; }
-      if (room.U > 0 && (started(p) || !flagged(p))) { room.U--; return false; }
+      if (room[g] > 0 && (holds(p) || !flagged(p))) { room[g]--; return false; }
+      if (room.U > 0 && (holds(p) || !flagged(p))) { room.U--; return false; }
       return !started(p);
     });
-    const nF = playing.filter(p => group(p) !== "D").length, nD = playing.length - nF;
+    const nF = order.filter(p => group(p) !== "D").length, nD = order.length - nF;
     const crowded = Math.max(0, nF - 9) + Math.max(0, nD - 5) > 1;  // more playing than 9 F + 5 D + 1 UTL can hold
-    if (crowded && bench.length) cards.push(`<div class="upg"><b>Tonight</b> <span class="drop">· ${playing.length} of your skaters play ${esc(tonight.date)} for 15 spots: start the best per-game ratings, bench these</span>
+    if (crowded && bench.length) cards.push(`<div class="upg"><b>Tonight</b> <span class="drop">· ${nF} forwards play ${esc(tonight.date)} for 9 F spots and ${nD} D for 5, plus the UTL: start the best per-game ratings, bench these</span>
       ${bench.map(p => `<div>${esc(p.name)}${flagged(p) ? `<span class="tag inj">${p.dfo_out ? "not in Daily Faceoff's lineup" : "sat last game"}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(p.slots.filter(s => s !== "F").join("/") || p.pos)}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game</span></div>`).join("")}</div>`);
   }
   // Best 2 moves (research findings 68): the biggest keep-value gains over your weakest player at the same position
   if (d.rated) {
     // no more moves than are left, and not a free agent Mid-week swaps already offered (findings 181)
-    const added = new Set(swapSubs), dropped = new Set(), best = [];
-    const movesLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : 2;
+    // and not dropping a player Mid-week swaps already drops, nor using the moves its subs take (findings 233)
+    const added = new Set(swapSubs), dropped = new Set(swapDrops), best = [];
+    const movesLeft = realLeft != null ? Math.max(0, realLeft - swapSubs.size) : 2;
     // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
     const lastCall = !noMoves && !reset && !locked && !d.final_matchup && tonight && tonight === d.nights[d.nights.length - 1] && movesLeft > 2;
     for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
@@ -496,7 +506,7 @@ function renderUpgrades() {
       if (!top || top.gain <= 0.5) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
-    const expire = lastCall ? ` You have ${movesLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
+    const expire = lastCall ? ` You have ${realLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
     if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}${expire}</span>
       ${best.map(m => `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(m.fa.slots.filter(s => s !== "F").join("/") || m.fa.pos)} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span></div>`).join("")}</div>`);
   }
@@ -565,6 +575,8 @@ function renderUpgrades() {
     const rank = myTeam?.waiver_rank;
     cards.unshift(`<div class="sub wvnote">Players tagged <span class="tag wv">waivers</span> need a claim: put one in on ESPN. A losing claim uses no move${rank ? `; you are #${rank} of ${d.teams.length} in waiver order` : ""}.</div>`);
   }
+  // once, at the top and never folded: no moves left means every add here is for next Monday (findings 233)
+  if (noMoves) cards.unshift('<div class="sub warn wvnote">No moves left this matchup: the adds below are next Monday\'s targets.</div>');
   $("upgrades").innerHTML = cards.join("");
   foldCards();
 }
@@ -580,7 +592,8 @@ function foldCards() {
       const det = document.createElement("details"), sum = document.createElement("summary");
       det.className = "fold"; sum.append(title);
       det.append(sum, ...c.childNodes); c.append(det);
-    } else if (drop) {
+    } else if (drop && /^(Mid-week swaps|Best|Drop list|Activate from IR|Two-week)/.test(title.textContent)) {
+      // the stream deadline, "bench these" and "your weakest" stay visible (findings 233)
       const det = document.createElement("details"), sum = document.createElement("summary");
       det.className = "more"; sum.textContent = "why";
       drop.textContent = drop.textContent.replace(/^\s*·\s*/, "");

@@ -354,6 +354,7 @@ def main():
             "owner": owner,
             "team_id": owner_id,
             "ir": slot == 8,
+            "bench": slot == 7,  # ESPN's bench: a started player there holds no lineup slot (findings 233)
             "injury": p.get("injuryStatus") if p.get("injured") or p.get("injuryStatus") not in (None, "ACTIVE") else None,
             "owned": round((p.get("ownership") or {}).get("percentOwned", 0), 1),
             "gp": gp,
