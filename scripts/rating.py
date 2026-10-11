@@ -1164,6 +1164,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 w = min(gs, 20) / 20 * 0.6
                 p["ppg"] = round(p["cur_ppg"] * w + prior_ppg * (1 - w), 2) if prior_ppg is not None else p["cur_ppg"]
             why["p_today"] = round(goalie_today.get(pid, 0.0), 2) if pid and not started else 0.0  # chance he starts tonight (stream card)
+            # ... and before his game started: the page's open-G count keeps using it once he's in net (findings 213)
+            why["p_today_pre"] = round(goalie_today.get(pid, 0.0), 2) if pid else 0.0
             why["exp_starts"] = round(starts, 2)  # after tonight's start, waivers and news (findings 182)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
             p_dress = None
@@ -1204,8 +1206,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
             # ESPN dropped his status within the week and he hasn't played since: a suspension served, an injury healed
             # flagged, and no game since: one who played through the flag and then sat isn't coming back (findings 183)
+            # flagged the day of his last game counts only if he left that game early, hurt in it (findings 213)
             cleared = bool(pid) and not p.get("injury") and p["id"] in flagged and (not gl or sat_last) \
-                and (not gl or gl[-1]["date"][:10] <= flagged[p["id"]])
+                and (not gl or gl[-1]["date"][:10] < flagged[p["id"]]
+                     or (gl[-1]["date"][:10] == flagged[p["id"]] and bool(left_early_shifts(gl[-1]["toi"], f.get("std_toi")))))
             cleared_new = cleared and not gl and bool(tg)  # yet to play this season (findings 172)
             cleared_out = cleared and bool(gl)  # in season, still out (findings 173)
             if cleared_new:

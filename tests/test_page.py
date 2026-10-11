@@ -269,7 +269,8 @@ def test_goalie_in_net_fills_his_slot_and_swaps_need_games(browser, server, data
         p.update(ir=False, injury=None)
         p["cr_why"] = dict(p.get("cr_why") or {}, p_today=0, tonight={"starting": False, "status": "Confirmed"})
     goalies[0].update(today_start=iso(now - timedelta(hours=1)))
-    goalies[0]["cr_why"]["tonight"] = {"starting": True, "status": "Likely"}  # in net, so his p_today is 0
+    goalies[0]["cr_why"]["tonight"] = {"starting": False, "status": "Likely"}  # in net, so his p_today is 0
+    goalies[0]["cr_why"]["p_today_pre"] = 0.8  # the site had him starting, whatever Daily Faceoff's unconfirmed guess says
     goalies[1]["cr_why"]["tonight"]["starting"] = True
     # someone sat, and no free agent has a game left
     sk = next(p for p in d["players"] if str(p.get("team_id")) == str(team["id"]) and p["pos"] != "G")

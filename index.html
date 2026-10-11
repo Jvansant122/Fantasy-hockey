@@ -196,7 +196,7 @@ function dropStarted(d) {
       p.cr_games = +(p.cr_games - gone).toFixed(2);
       if (p.games_left === 0) p.cr = p.cr_games = 0;  // no rounding leftovers once nothing is left to play
       if (p.cr_why?.exp_starts != null) p.cr_why.exp_starts = Math.max(0, +(p.cr_why.exp_starts - gone).toFixed(2));
-      if (p.cr_why) p.cr_why.p_today = 0;
+      if (p.cr_why) { p.cr_why.p_today_pre ??= p.cr_why.p_today; p.cr_why.p_today = 0; }
     }
   }
 }
@@ -417,9 +417,10 @@ function renderUpgrades() {
   // ESPN holds an add made after the day's first puck until tomorrow (findings 179)
   const puck = d.first_start ? new Date(d.first_start) : null;
   const locked = !!puck && puck <= new Date() && !stale(d);
-  // a goalie already in net still fills his slot: started() zeroes his p_today (findings 183)
-  const startsTonight = p => started(p) ? !!p.cr_why?.tonight?.starting
-    : p.cr_why?.tonight?.status === "Confirmed" ? p.cr_why.tonight.starting : (p.cr_why?.p_today ?? 0) > 0.5;
+  // a goalie already in net still fills his slot: started() zeroes his p_today, so use the one from before (findings 183, 213)
+  // after his game starts, the same sources as before it: a confirmed starter, else the site's own chance (findings 213)
+  const startsTonight = p => p.cr_why?.tonight?.status === "Confirmed" ? !!p.cr_why.tonight.starting
+    : ((started(p) ? p.cr_why?.p_today_pre : p.cr_why?.p_today) ?? 0) > 0.5;
   if (d.rated && tonight && !stale(d)) {
     const myG = mine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;

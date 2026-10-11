@@ -58,10 +58,11 @@ def goalie_row(pid, name, team, i):
 
 
 class FakeSession:
-    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None):
+    def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1]):
         self.calls = []
         self.missed = missed or {}  # player id: games he missed, replacing SKATERS' set
         self.short_last = short_last or {}  # player id: his ice time in seconds in the last game (left early)
+        self.short_date = short_date  # ... on this date (his last game when he sat the team's last)
         self.moved = moved or {}  # player id: his first n games this season were for the other team (a trade)
         self.scratched, self.rail_ok = set(scratched), rail_ok  # healthy scratches on each game page (McAvoy sat the last one)
 
@@ -124,7 +125,7 @@ class FakeSession:
         rows = [skater_row(pid, name, other(team) if i < self.moved.get(pid, 0) else team, pos, i)
                 for pid, name, team, pos, missed in SKATERS for i in days if i not in self.missed.get(pid, missed)]
         for r in rows:
-            if r["playerId"] in self.short_last and r["gameDate"] == PAST[-1]:
+            if r["playerId"] in self.short_last and r["gameDate"] == self.short_date:
                 r["timeOnIcePerGame"] = self.short_last[r["playerId"]]
         return Resp({"data": rows})
 
@@ -833,6 +834,7 @@ def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     gone = out["2026-10-09T23:00:00Z"]
     assert gone["Anthony Stolarz"]["cr_games"] == pytest.approx(out[None]["Anthony Stolarz"]["cr_games"] - 1, abs=0.01)
     assert gone["Anthony Stolarz"]["cr_why"]["p_today"] == 0
+    assert gone["Anthony Stolarz"]["cr_why"]["p_today_pre"] == out[None]["Anthony Stolarz"]["cr_why"]["p_today"] > 0.5
     assert gone["Joseph Woll"]["cr_games"] == pytest.approx(out[None]["Joseph Woll"]["cr_games"], abs=0.01)
     assert rating.game_started({"today_start": "not a date"}) is False and rating.game_started({}) is False
 
@@ -867,6 +869,18 @@ def test_cleared_boost_skips_a_player_who_played_since_the_flag(monkeypatch, tmp
     assert out[None]["sat_last"]
     assert out["2026-10-03"]["cr_dress"] == out[None]["cr_dress"]
     assert out["2026-10-06"]["cr_dress"] > out[None]["cr_dress"]
+    # flagged Oct 5, the day he played: played through it, unless he left that game early (findings 213)
+    for short, boosted in ((None, False), (200, True)):
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(short_last={4: short} if short else None, short_date="2026-10-05"))
+        res = {}
+        for day in (None, "2026-10-05"):
+            log = tmp_path / f"same{short}{day}.jsonl"
+            log.write_text(json.dumps({"date": day, "espn_id": 104, "status": "DAY_TO_DAY"}) + "\n" if day else "")
+            monkeypatch.setattr(rating, "INJURY_LOG", log)
+            players = [espn(104, "Charlie McAvoy", "BOS", "D")]
+            rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+            res[day] = players[0]["cr_dress"]
+        assert (res["2026-10-05"] > res[None]) is boosted
 
 
 def test_history_runs_to_last_night_in_an_overnight_run(monkeypatch):
