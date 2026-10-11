@@ -121,6 +121,15 @@ def utc_iso(dt):
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def espn_today(night_dates, today_sp, clock_date):
+    """The calendar date of ESPN's current scoring period. ESPN rolls its day at about 3:10-3:40 AM ET, so between
+    midnight and then the ET clock is a day ahead of ESPN (findings 180). Read it off the schedule's dated periods."""
+    if not night_dates:
+        return clock_date
+    sp = min(night_dates, key=lambda k: abs(k - today_sp))
+    return night_dates[sp].date() - timedelta(days=sp - today_sp)
+
+
 def pro_schedule(s, base, league_url, matchup_sps, today_sp):
     """Return ({proTeamId: {abbrev, periods, starts}}, {sp: game count}, {sp: date}). starts: {sp: UTC start, ISO}.
 
@@ -206,8 +215,13 @@ def main():
     status = league["status"]
     period = status.get("currentMatchupPeriod") or 1
     today_sp = league.get("scoringPeriodId") or status.get("latestScoringPeriod") or 1
+    # Pro team schedule: games per scoring period (one period = one day), from last week through the next three, so
+    # today's date comes from ESPN's scoring period rather than the clock (findings 180)
+    window = list(range(max(1, today_sp - 7), today_sp + 22))
+    teams, night_counts, night_dates = pro_schedule(s, base, league_url, window, today_sp)
+    today_et = espn_today(night_dates, today_sp, datetime.now(ET).date())
     # One scoring period is one day. A matchup is one or more Monday-Sunday weeks (playoff rounds are 2, findings 109).
-    weekday = datetime.now(ET).weekday()
+    weekday = today_et.weekday()
     sched_settings = (league.get("settings") or {}).get("scheduleSettings") or {}
     matchup_sps = matchup_days(sched_settings.get("matchupPeriods"), period, today_sp, weekday)
     final_matchup = is_final_matchup(sched_settings.get("matchupPeriods"), period)
@@ -222,10 +236,17 @@ def main():
             my_team = t
     team_names = {t["id"]: (t.get("name") or f"{t.get('location', '')} {t.get('nickname', '')}").strip() for t in league["teams"]}
 
-    # Pro team schedule: games per scoring period (one period = one day)
     # the two matchups after this one too, for keep value's games in weeks 2-3 (findings section 79)
     next_sps = list(range(matchup_sps[-1] + 1, matchup_sps[-1] + 15))
-    teams, night_counts, night_dates = pro_schedule(s, base, league_url, matchup_sps + next_sps, today_sp)
+    missing = [sp for sp in matchup_sps + next_sps if sp not in window]  # a two-week playoff round reaches past the window
+    if missing and not night_dates.keys() >= set(missing):
+        more = pro_schedule(s, base, league_url, missing, today_sp)
+        for tid, t in more[0].items():
+            old = teams.setdefault(tid, {"abbrev": t["abbrev"], "periods": set(), "starts": {}})
+            old["periods"] |= t["periods"]
+            old.setdefault("starts", {}).update(t.get("starts", {}))
+        night_counts = {**more[1], **night_counts}
+        night_dates = {**more[2], **night_dates}
     light = {sp for sp in matchup_sps if night_counts.get(sp, 0) <= LIGHT_NIGHT_MAX_GAMES}
     remaining = [sp for sp in matchup_sps if sp >= today_sp]
 
@@ -240,7 +261,6 @@ def main():
         print(f"Logged {len(league_moves['transactions'])} league transactions")
     except Exception as e:  # noqa: BLE001 - the log is best-effort
         tx_error = repr(e)
-    today_et = datetime.now(ET).date()
     run_utc = utc_iso(datetime.now(timezone.utc))
     first_day = waiver_first_days(tx, today_et)
 
@@ -337,7 +357,7 @@ def main():
         })
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
-    now = datetime.now(ET).date()
+    now = today_et  # ESPN's day, not the clock's, until its overnight rollover (findings 180)
     web = requests.Session()
     web.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
     starters, lead_errors = [], {}
@@ -401,7 +421,7 @@ def main():
 
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
-        "updated_date": datetime.now(ET).date().isoformat(),
+        "updated_date": today_et.isoformat(),
         "updated_utc": run_utc,  # the page compares it with each player's today_start (findings 178)
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,

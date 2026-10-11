@@ -48,3 +48,15 @@ def test_page_script_parses(tmp_path):
     js.write_text("\n;\n".join(scripts))
     out = subprocess.run(["node", "--check", str(js)], capture_output=True, text=True)
     assert out.returncode == 0, out.stderr
+
+
+def test_check_catches_a_shifted_week(data):
+    """An overnight run that mixed the clock's date with ESPN's period labelled the week a day off (findings 180)."""
+    shifted = json.loads(json.dumps(data))
+    for n, label in zip(shifted["nights"], ["Tue 6", "Wed 7", "Thu 8", "Fri 9", "Sat 10", "Sun 11", "Mon 12"]):
+        n["date"] = label
+    assert any("Monday to Sunday" in e for e in check_data.problems(shifted))
+    wrong_past = json.loads(json.dumps(data))
+    for n in wrong_past["nights"]:
+        n["past"] = True
+    assert any("past nights" in e for e in check_data.problems(wrong_past))
