@@ -640,6 +640,10 @@ The site counts only starts, so a goalie who came on in relief in his team's las
 
 Daily Faceoff and ESPN sometimes spell a name differently: Gabriel and Gabe Perreault, Nicholas and Nick Robertson, Jacob and Jake Middleton, Elias Nils and Elias N. Pettersson, Matthew and Matt Murray. The site matched names exactly, so those four skaters showed as "not in Daily Faceoff's lineup" on every run (and the Tonight card benched them) even though they played every game, and Matt Murray's confirmed start for Nashville on Oct 10 was ignored. **The site now accepts a Daily Faceoff name on the same team with the same last name and the same first two letters of the first name.** Vancouver has two Elias Petterssons, so a name another player matches exactly is never borrowed, and the line (forward or defense) decides between two.
 
+## 75. A status that cleared before the player is back
+
+When ESPN drops a player's injury or suspension status but he hasn't played yet, the site used to treat him like any idle player: 10% a game and a low Season rating. Charlie McAvoy's suspension cleared Sunday morning, and the Best moves card told New York Mess to drop him for Denton Mateychuk. In five seasons of ESPN notes, a player whose suspension ended dressed for 86-89% of his team's next seven games, and a regular activated before his first game dressed for 73% of the next game and about three quarters of the rest of the season. In season, a player whose status cleared while he was still out dressed in 35% of that week's games against the 18% the site showed. **Now a player whose ESPN status cleared within the last week and who hasn't played since gets a much higher chance to dress: 75% for the next game and 80% for later ones (with a Season rating of 72% of his points a game) if he hasn't played this season yet, and a clear boost to this week's and the Season's dress chance if he has.** The boost ends with his first game back.
+
 ## What the independent review changed
 
 | Review point | Outcome |
