@@ -495,6 +495,28 @@ def test_goalie_who_left_without_a_decision_stays_out_all_week():
     assert back[1] == 1.0 and all(b > o + 0.1 for b, o in zip(back[2:], out[2:]))  # confirmed back in net: the cut ends
 
 
+def test_goalie_who_came_on_in_relief_starts_more(monkeypatch):
+    """A goalie who relieved in the team's last game gets +1.2 next game, +0.9 later, +0.5 more with 0-3 of the last 20
+    starts (findings 170); a confirmation still overrides; with no roster he is still a candidate."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24", "2026-10-26"]
+
+    def run(goalies, relief=(), confirmed=None):
+        p = {}
+        e = rating.goalie_starts(model, "TOR", goalies, {"TOR": hist}, {1: 50, 2: 32, 3: 2}, dates, date(2026, 10, 22),
+                                 confirmed=confirmed, today_p=p, relief=relief)
+        return p, e
+    (p0, e0), (p1, e1) = run([1, 2]), run([1, 2], relief={2})
+    assert p1[2] > p0[2] + 0.1 and e1[2] > e0[2] + 0.3 and e1[1] + e1[2] == pytest.approx(e0[1] + e0[2])
+    (q0, f0), (q1, f1) = run([1, 2, 3]), run([1, 2, 3], relief={3})  # a third goalie with no starts relieved
+    assert q1[3] > 3 * q0[3] and f1[3] > 2.5 * f0[3]
+    monkeypatch.setattr(rating, "RELIEF_RARE_LOGIT", 0.0)
+    assert run([1, 2, 3], relief={3})[0][3] < q1[3]
+    assert run([1, 2, 3], relief={3}, confirmed={"2026-10-22": 1})[0][3] == 0.0
+    assert 3 in run([], relief={3})[1]  # no roster: the reliever is still a candidate
+
+
 def test_later_games_are_softened(monkeypatch):
     """Start chances two or more games ahead are pulled toward an even split; the next game is not (findings 134)."""
     model = rating.Model()

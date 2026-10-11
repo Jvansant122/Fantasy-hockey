@@ -77,6 +77,10 @@ NO_DECISION_LATER = (-2.0 / 0.8, -1.4 / 0.8)  # game after next, then every game
 NO_DECISION_GAMES = 16  # covers a two-week playoff round
 # ... and his Season start share runs high until he starts again: 0.48 against 0.33 of the next 20 starts (findings 167)
 NO_DECISION_SEASON = 0.68
+# a goalie who came on in relief in the team's last game looks like an idle backup, since only starts are counted, but
+# he starts next more often (0.47 against 0.58 after a pulled starter; third goalies and call-ups 0.23 against 0.47):
+# start-logit shifts for the next game and later games, plus more for one with 0-3 of the last 20 starts (findings 170)
+RELIEF_LOGITS, RELIEF_RARE_LOGIT, RELIEF_RARE_STARTS = (1.2, 0.9), 0.5, 3
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -682,7 +686,7 @@ def ux_features(f, pos, mu):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=()):
+                  injury=None, last_start=None, movers=(), relief=()):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -696,14 +700,15 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     his start logit drops after a bad start or a loss and rises after a win (findings 131-133); after he left without
     a decision it stays down for every game in the window, until a Daily Faceoff confirmation names him (findings 164).
     movers: goalies who started for another NHL team this season; with 1-3 starts for this team their logit rises,
-    and their season_share counts only this team's games since their first start for it."""
+    and their season_share counts only this team's games since their first start for it.
+    relief: goalies who came on in relief in the team's last game; their start logit rises (findings 170)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
     last_date = hist[-1][0] if hist else None
     # the roster, not the recent starters: a goalie traded or waived away kept ~40% of his old team's next start
     # (findings 160); recent starters only stand in when the roster is missing
-    cands = (set(goalies) if goalies else set(seq[-20:])) | set(confirmed.values())
+    cands = (set(goalies) if goalies else set(seq[-20:]) | set(relief)) | set(confirmed.values())
     if not cands:
         return {}
     # early season: pull each share toward his share of the team's starts last season, fading out by the team's
@@ -738,6 +743,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     ahead = 0  # unplayed team games so far: 0 is the next one
     shift_gid, shifts = last_start or (None, ())
     new_team = {gid for gid in cands if gid in movers and 1 <= seq.count(gid) <= NEW_TEAM_STARTS}
+    relieved = {gid: RELIEF_RARE_LOGIT if seq[-20:].count(gid) <= RELIEF_RARE_STARTS else 0.0 for gid in relief if gid in cands}
     for d in sorted(game_dates):
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
             continue
@@ -758,6 +764,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                                       "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
             z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0)
+            if gid in relieved:
+                z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if z and 0 < raw[gid] < 1:
                 raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + z)))
             raw[gid] *= injury.get(gid, 1.0)
@@ -863,6 +871,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if g["started"]:
             starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
             last_start[g["team"]] = (g["id"], last_start_shift(g))  # the latest start wins
+    # came on in relief in his team's latest game (findings 170)
+    relief = {}
+    for g in goalie_games:
+        if not g["started"] and g["toi"] > 0 and team_games.get(g["team"]) and g["game"] == team_games[g["team"]][-1]:
+            relief.setdefault(g["team"], set()).add(g["id"])
     start_teams = {}
     for g in goalie_games:
         if g["started"]:
@@ -948,7 +961,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
         tod, sea = {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
-                            last_start.get(team), movers)
+                            last_start.get(team), movers, relief.get(team, ()))
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         keep = (lambda gid: gid in mine) if roster_g else (lambda gid: gid not in goalie_exp)
