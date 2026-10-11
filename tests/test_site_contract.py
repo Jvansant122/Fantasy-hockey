@@ -139,3 +139,34 @@ def test_check_blocks_a_run_with_no_free_agents_or_injuries(data):
     for p in no_inj["players"]:
         p["injury"] = None
     assert any("injury status" in e for e in check_data.problems(no_inj))
+
+
+def test_check_rules_for_season_weeks(data):
+    """season_weeks and team_nights (handoff 204): both required, empty allowed (a failed week step), and broken ones caught."""
+    missing = copy.deepcopy(data)
+    del missing["team_nights"]
+    assert any("missing top-level fields" in e for e in check_data.problems(missing))
+    empty = copy.deepcopy(data)
+    empty["season_weeks"], empty["team_nights"] = [], {}
+    assert check_data.problems(empty) == []
+    w = data["season_weeks"][-1]
+    later = {**w, "week": w["week"] + 1, "sps": [sp + 7 for sp in w["sps"]], "games": {str(int(k) + 7): v for k, v in w["games"].items()},
+             "light": [sp + 7 for sp in w["light"]]}
+    ok = copy.deepcopy(data)
+    ok["season_weeks"].append(later)
+    ahead = {n["sp"] for n in data["nights"] if not n["past"]}
+    team = next(t for t, sps in ok["team_nights"].items() if ahead & set(sps))
+    ok["team_nights"][team] = ok["team_nights"][team] + [later["sps"][2]]
+    assert check_data.problems(ok) == []
+    shifted = copy.deepcopy(ok)
+    shifted["season_weeks"][-1]["sps"] = [sp + 1 for sp in later["sps"]]
+    assert any(e.startswith("S1") for e in check_data.problems(shifted))
+    twice = copy.deepcopy(ok)
+    twice["team_nights"][team].append(later["sps"][2])
+    assert any(e.startswith("S2") for e in check_data.problems(twice))
+    outside = copy.deepcopy(ok)
+    outside["team_nights"][team].append(later["sps"][-1] + 30)
+    assert any(e.startswith("S2") for e in check_data.problems(outside))
+    differ = copy.deepcopy(ok)
+    differ["team_nights"][team] = [sp for sp in differ["team_nights"][team] if sp not in ahead]
+    assert not check_data.problems(differ) and any(w.startswith("W2") for w in check_data.warnings(differ, None))

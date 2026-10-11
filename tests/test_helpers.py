@@ -318,3 +318,36 @@ def test_season_from_the_date_and_off_season_runs_skip(tmp_path):
     assert fetch.season_over_published(p)
     p.write_text("not json")
     assert not fetch.season_over_published(p)
+
+
+def test_season_weeks_cover_every_later_week_the_schedule_has():
+    """The Nights week picker's weeks (findings 300): Monday-Sunday, labelled by date, light nights 1-5 games, and only
+    weeks the schedule covers."""
+    from datetime import timedelta
+    today_sp, today_et = 13, date(2026, 10, 11)  # Sunday Oct 11 is period 13, the end of week 2
+    dates = {sp: today_et + timedelta(days=sp - today_sp) for sp in range(1, 60)}
+    counts = {sp: (3 if sp % 7 == 2 else 9) for sp in range(1, 60)}
+    counts[30] = 0  # a night with no NHL games isn't light
+    weeks = fetch.season_weeks(counts, dates, today_sp, today_et)
+    assert [w["week"] for w in weeks] == list(range(2, 9))  # week 9 (periods 56-62) runs past the schedule
+    assert weeks[0]["sps"] == list(range(7, 14)) and weeks[0]["label"] == "Oct 5-11" and weeks[0]["dates"][0] == "Mon 5"
+    assert weeks[1]["label"] == "Oct 12-18" and weeks[1]["dates"] == ["Mon 12", "Tue 13", "Wed 14", "Thu 15", "Fri 16", "Sat 17", "Sun 18"]
+    oct26 = next(w for w in weeks if w["sps"][0] == 28)
+    assert oct26["label"] == "Oct 26-Nov 1" and oct26["games"][30] == 0 and 30 not in oct26["light"]
+    assert all(set(w["light"]) == {sp for sp in w["sps"] if 0 < counts[sp] <= 5} for w in weeks)
+    # the season's last day ends the list; a scoreboard window only covers its own weeks
+    assert fetch.season_weeks(counts, dates, today_sp, today_et, last_sp=27)[-1]["sps"][-1] == 27
+    window = {sp: d for sp, d in dates.items() if 6 <= sp <= 33}  # week 5 (28-34) is cut short
+    assert [w["week"] for w in fetch.season_weeks(counts, window, today_sp, today_et)] == [2, 3, 4]
+    assert fetch.season_weeks(counts, {}, today_sp, today_et) == []
+    # the season's first games on a Tuesday (period 8): this week still counts from its Monday
+    opener = {sp: d for sp, d in dates.items() if sp >= 8}
+    assert fetch.season_weeks(counts, opener, 8, today_et - timedelta(days=5))[0]["sps"] == list(range(7, 14))
+    assert fetch.week_sps(1) == [1, 2, 3, 4, 5, 6] and fetch.week_sps(3) == list(range(14, 21))
+
+
+def test_team_nights_run_from_today_to_the_last_week():
+    weeks = [{"sps": list(range(7, 14))}, {"sps": list(range(14, 21))}]
+    teams = {1: {"abbrev": "Bos", "periods": {5, 13, 15, 20, 22}}, 2: {"abbrev": "", "periods": {13}}, 3: {"abbrev": "TB", "periods": set()}}
+    assert fetch.team_nights(teams, 13, weeks) == {"BOS": [13, 15, 20], "TB": []}
+    assert fetch.team_nights(teams, 13, []) == {"BOS": [], "TB": []}

@@ -819,6 +819,27 @@ The rule improved start predictions by 0.6% and the no. 1's weekly start count b
 
 A goalie's own points per start already carry his team's strength: good teams win more, so their starters score more. Adding the betting line or the schedule on top counted that strength twice. Over 13,120 starts from 2021-26, the top fifth of goalies by points per start scored 3.69 per start against 4.26 predicted, and the bottom fifth 2.93 against 2.38. For this week's starts only (Season is unchanged), the rating now keeps 0.4 of a goalie's gap to the league's rate this season, then adds 3.0 × (his team's win chance from team strength − 50%), or 4.1 × (the betting line's win chance − 50%) for tonight. Per-start error fell 1.5% (5 of 5 seasons) and weekly goalie error 0.3%; the ranking of goalies barely moves.
 
+## 106. Jack's page requests, and the page on phones and keyboards
+
+From the league chat:
+
+- The position filter now reads All positions, Skaters (D + F), G, D, Any F, C, LW, RW.
+- A "Nights week" menu shows the Nights dots, Games, Light and Open columns for any later week of the season, so you can plan pickups for a heavy week ahead. Week, Season and the advice cards stay on this matchup.
+- Proj/G and This yr/G sit right after Games.
+- On a computer, the page is now up to 1,600 px wide, so the whole table fits without scrolling sideways from a 1,366 px screen up. On a phone, an "All columns" switch shows every column, with the table scrolling sideways.
+
+From the seventh idea hunt's audit of the page:
+
+- The page no longer jumps around while the data loads.
+- Sorting, searching and opening a player's details no longer rebuild the advice cards each time, which roughly halves the wait on slow phones.
+- Rows and column headers work from the keyboard.
+- Tags, badges and night dots meet the 4.5:1 contrast guideline in light and dark mode, and open nights are shown by shape as well as colour.
+- On phones, text is at least 12 px, tap targets are at least 24 px, and long names wrap instead of being cut off.
+- Fixes to recent changes:
+  - Sunday's "unused moves expire tonight" line shows on phones too, including with only 1 or 2 moves left.
+  - "No moves left" appears once instead of on every card.
+  - A long tag no longer spills off a 320 px screen.
+
 ## What the independent review changed
 
 | Review point | Outcome |

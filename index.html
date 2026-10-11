@@ -7,18 +7,22 @@
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #16191d; --muted: #5d6673; --line: #e2e5ea;
-    --accent: #0a6cff; --mine: #eaf2ff; --good: #0f8a4a; --warn: #b25e00; --chip: #eef0f3; --dot: #c9ced6;
+    --accent: #0a62e8; --mine: #eaf2ff; --good: #0b7a41; --warn: #a35600; --chip: #eef0f3; --dot: #7d8590;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #101215; --card: #191c20; --text: #e8eaed; --muted: #9aa3ae; --line: #2a2f35;
-      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c; --dot: #3a4048;
+      --accent: #5b9dff; --mine: #1b2a40; --good: #4cc584; --warn: #f0a24a; --chip: #23272c; --dot: #737b86;
     }
   }
   * { box-sizing: border-box; }
+  /* nothing below the header shows until the data has drawn it, so the page doesn't jump as it fills in (findings 237) */
+  body:not(.ready) .card, body:not(.ready) main > p { display: none; }
   [hidden] { display: none !important; }  /* .controls' flex would otherwise show a hidden Trade check picker */
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  /* wide enough for every column of the table on a desktop (findings 300); text keeps a readable line length */
+  main { max-width: 1600px; margin: 0 auto; padding: 16px; }
+  .card > p, main > .sub { max-width: 75ch; }  /* written without the p tag: the contract test reads any p-dot name as a data field */
   h1 { font-size: 20px; margin: 0; }
   h2 { font-size: 15px; margin: 0 0 8px; }
   .sub { color: var(--muted); font-size: 12px; }
@@ -31,11 +35,15 @@
   .night { text-align: center; padding: 6px 2px; border-radius: 8px; background: var(--chip); font-size: 11px; min-width: 0; }
   .night b { display: block; font-size: 15px; }
   .night.light { box-shadow: inset 0 0 0 2px var(--good); }
-  .night.past { opacity: .45; }
+  /* muted text instead of faded opacity, so past nights stay readable (findings 237) */
+  .night.past { color: var(--muted); background: transparent; }
   .night .open { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; }
   .night .open em { font-style: normal; color: var(--good); font-weight: 600; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .controls label { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; min-height: 36px; }
+  /* a long team name mustn't push the page sideways on a narrow phone (CI's wider fonts showed it at 320 px) */
+  .controls label { max-width: 100%; min-width: 0; }
+  .controls select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
   input[type=checkbox] { width: 18px; height: 18px; }
   select, input[type=search], input[type=number] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); min-height: 36px; }
   input[type=search] { flex: 1 1 160px; }
@@ -63,13 +71,15 @@
   .tag.news { color: var(--accent); }
   .cr { font-weight: 700; }
   .pct { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 10px; margin-left: 4px; background: var(--chip); color: var(--muted); }
-  .pct.hi { background: var(--good); color: #fff; }
+  .pct.hi { background: var(--good); color: var(--card); }
   .pct.mid { color: var(--good); }
   .dots { display: inline-flex; gap: 3px; vertical-align: middle; }
   .dots i { width: 9px; height: 9px; border-radius: 2px; background: transparent; border: 1px solid var(--dot); }
   .dots i.play { background: var(--muted); border-color: var(--muted); }
   .dots i.play.open { background: var(--good); border-color: var(--good); }
-  .dots i.past { opacity: .35; }
+  .dots i.play.past { background: var(--dot); border-color: var(--dot); }
+  /* round as well as green, so an open night isn't told by colour alone (findings 237) */
+  .dots i.play.open { border-radius: 50%; }
   .up { color: var(--good); font-weight: 600; }
   .upgrades { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
   .upg { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 13px; }
@@ -87,6 +97,7 @@
   .tside button { font: inherit; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 4px; min-width: 28px; min-height: 28px; }
   #tpick select { flex: 1 1 200px; min-width: 0; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+  .controls label.phoneonly { display: none; }
   @media (max-width: 640px) {
     main { padding: 10px; }
     .card { padding: 10px; }
@@ -95,22 +106,35 @@
     th, td { padding: 6px 4px; }
     th { padding-top: 12px; padding-bottom: 12px; }
     /* the name column takes whatever width is left and cuts long names, so the table fits any phone and font */
-    td:first-child { width: 100%; max-width: 1px; overflow: hidden; text-overflow: ellipsis; }
+    /* long names wrap onto a second line rather than being cut (findings 237) */
+    td:first-child { width: 100%; max-width: 1px; overflow: hidden; text-overflow: ellipsis; white-space: normal; overflow-wrap: anywhere; }
     td:first-child .meta { overflow: hidden; text-overflow: ellipsis; }
     /* tags go on their own line and wrap, so the narrow name column doesn't cut them off (findings 232) */
     td:first-child .tags { display: block; white-space: normal; }
+    /* a single tag longer than the column ('suspension' at 320 px) ends in … instead of spilling out (findings 238) */
+    td:first-child .tags .tag:not(.own) { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
     .tags .tag:first-child { margin-left: 0; }
     .pct { margin-left: 2px; padding: 1px 4px; }
     td:nth-child(5) .pct { display: none; }
-    .night .open { font-size: 9px; }
+    .night .open { font-size: 12px; letter-spacing: -.02em; }
     .tag { margin-left: 2px; padding: 1px 4px; }
     select, input[type=search], input[type=number] { min-height: 44px; }
     .controls label { min-height: 44px; }
-    .night { font-size: 10px; padding: 4px 1px; }
+    .night { font-size: 12px; padding: 4px 1px; }
+    /* 12 px text at least, and 24 px tap targets (findings 237) */
+    .meta, .tag, .pct { font-size: 12px; }
+    details.more > summary { display: inline-block; padding: 5px 2px; }
+    details.fold > summary { padding: 4px 0; }
+    main > .sub a { display: inline-block; padding: 5px 0; }
     .night b { font-size: 13px; }
     .tag.own { display: none; }
     .dots { gap: 2px; }
     .dots i { width: 7px; height: 7px; }
+    /* All columns (findings 300): every column again, the table scrolls sideways under the pinned name column */
+    .controls label.phoneonly { display: flex; }
+    body.allcols th.wide, body.allcols td.wide { display: table-cell; }
+    body.allcols td:first-child { width: auto; min-width: 120px; max-width: 160px; }
+    body.allcols td:first-child .meta { display: none; }
   }
 </style>
 </head>
@@ -147,18 +171,20 @@
 
   <div class="card">
     <div class="controls">
-      <input type="search" id="q" placeholder="Search player or team">
+      <input type="search" id="q" placeholder="Search player or team" aria-label="Search player or team">
       <select id="who" aria-label="Which players">
         <option value="fa">Free agents</option><option value="every">Every player</option>
       </select>
       <label id="addfa-wrap"><input type="checkbox" id="addfa" checked> + free agents</label>
-      <select id="pos">
-        <option value="">All positions</option><option>C</option><option>LW</option><option>RW</option><option value="F">Any F</option><option>D</option><option>G</option>
+      <select id="pos" aria-label="Position">
+        <option value="">All positions</option><option value="S">Skaters (D + F)</option><option>G</option><option>D</option><option value="F">Any F</option><option>C</option><option>LW</option><option>RW</option>
       </select>
+      <select id="wk" aria-label="Nights week" hidden><option value="">This matchup</option></select>
       <label>Min games <input type="number" id="ming" min="0" max="7" value="0"></label>
       <label>Min rating <input type="number" id="minr" min="0" step="0.5" value="0"></label>
       <label><input type="checkbox" id="left" checked> Remaining games only</label>
       <label><input type="checkbox" id="healthy"> Hide injured</label>
+      <label class="phoneonly"><input type="checkbox" id="allcols"> All columns</label>
     </div>
     <div class="sub count" id="count"></div>
     <div class="tablewrap">
@@ -176,14 +202,16 @@
 // UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
 const SLOTS = { F: 9, D: 6, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
-const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa"];
-const CHECKS = ["left", "healthy", "addfa"];
-const state = { tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {} };
+const SAVED = ["team", "who", "sort", "dir", "pos", "left", "healthy", "addfa", "allcols"];
+const CHECKS = ["left", "healthy", "addfa", "allcols"];
+// wk: the table's Nights week, "" for this matchup (not saved); tw: that week's nights, schedule and open slots
+const state = { tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {}, wk: "", tw: null };
 // [key, label, align, shown on phones]
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
-  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["opengm", "Open", "r", true], ["light", "Light", "r", false],
-  ["ppg", "Proj/G", "r", false], ["week", "ESPN week", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  // Proj/G and This yr/G right after Games (findings 300)
+  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "Proj/G", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  ["opengm", "Open", "r", true], ["light", "Light", "r", false], ["week", "ESPN week", "r", false],
   ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
 ];
 const $ = id => document.getElementById(id);
@@ -247,6 +275,7 @@ function light(p) { return $("left").checked ? p.light_left : p.light; }
 function week(p) { return (p.ppg || 0) * games(p); }
 function fits(p, pos) {
   if (!pos) return true;
+  if (pos === "S") return p.pos !== "G";
   if (pos === "F") return ["C", "LW", "RW"].some(s => p.slots.includes(s));
   return p.slots.includes(pos);
 }
@@ -266,8 +295,18 @@ function hasRoom(sp, g) {
   const o = state.openSlots[sp];
   return o[g] > 0;
 }
+// The table's Games, Light and Open: this matchup, or the later week picked in Nights week (findings 300).
+// Week, Season, ESPN week and the cards stay on this matchup.
+function tGames(p) { const t = state.tw; return t ? t.nights.filter(n => t.plays(p, n.sp)).length : games(p); }
+function tLight(p) { const t = state.tw; return t ? t.nights.filter(n => n.light && t.plays(p, n.sp)).length : light(p); }
+function tOpen(p) {
+  const t = state.tw;
+  if (!t) return openGames(p);
+  if (!isFA(p) || !state.team) return null;
+  return t.nights.filter(n => t.plays(p, n.sp) && t.slots[n.sp]?.[group(p)] > 0).length;
+}
 function val(p, key) {
-  return { week: week(p), games: games(p), light: light(p), opengm: openGames(p), nights: games(p), pos: posTxt(p) }[key] ?? p[key];
+  return { week: week(p), games: tGames(p), light: tLight(p), opengm: tOpen(p), nights: tGames(p), pos: posTxt(p) }[key] ?? p[key];
 }
 // the positions shown in the table (no catch-all F), so the Pos sort matches what you see (findings 232)
 const posTxt = p => p.slots.filter(s => s !== "F").join("/") || p.pos;
@@ -311,10 +350,32 @@ function computeOpenSlots(d) {
     const goalies = playing.filter(p => group(p) === "G");
     // past nights, and data without the rating: every goalie whose team plays fills a slot, as before
     const g = n.past || !d.rated ? goalies.length : Math.round(goalies.reduce((s, p) => s + gStart(p, n, tonight), 0));
-    const f = count("F"), dd = count("D");
-    // D slots plus the UTL, which only counts as an open D when it isn't already holding a tenth forward (findings 146)
-    state.openSlots[n.sp] = { F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd) + (f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0), G: Math.max(0, SLOTS.G - g) };
+    state.openSlots[n.sp] = slotsLeft(count("F"), count("D"), g);
   }
+}
+// D slots plus the UTL, which only counts as an open D when it isn't already holding a tenth forward (findings 146)
+const slotsLeft = (f, dd, g) => ({ F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd) + (f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0), G: Math.max(0, SLOTS.G - g) });
+// A later week picked in Nights week (findings 300): its nights from season_weeks, each team's games from team_nights, and
+// my active, healthy players' open slots those nights. A goalie fills a slot by his recent share of his team's starts.
+function pickWeek(v) {
+  const d = state.data, w = v ? (d.season_weeks || []).find(x => String(x.week) === v) : null;
+  state.tw = null;
+  if (!w) return;
+  const sets = {};
+  const plays = (p, sp) => (sets[p.team] ??= new Set(d.team_nights?.[p.team] || [])).has(sp);
+  const nights = w.sps.map((sp, i) => ({ sp, date: w.dates?.[i] ?? "", games: w.games?.[sp] ?? 0, light: (w.light || []).includes(sp) }));
+  const slots = {};
+  if (state.team) {
+    const mine = myPlayers();
+    for (const n of nights) {
+      const playing = mine.filter(p => plays(p, n.sp));
+      const count = g => playing.filter(p => group(p) === g).length;
+      const goalies = playing.filter(p => group(p) === "G");
+      const g = d.rated ? Math.round(goalies.reduce((s, p) => s + (p.cr_why?.share10 ?? 1), 0)) : goalies.length;
+      slots[n.sp] = slotsLeft(count("F"), count("D"), g);
+    }
+  }
+  state.tw = { w, nights, plays, slots };
 }
 
 function pctBadge(p, key = "cr_pct") {
@@ -323,6 +384,11 @@ function pctBadge(p, key = "cr_pct") {
   return `<span class="pct ${v >= 90 ? "hi" : v >= 70 ? "mid" : ""}" title="Percentile among ${p.pos === "G" ? "goalies" : p.pos === "D" ? "defensemen" : "forwards"} in the league and on the wire">${v}</span>`;
 }
 function dots(p) {
+  const t = state.tw;
+  if (t) return `<span class="dots">${t.nights.map(n => {
+    const plays = t.plays(p, n.sp), open = plays && isFA(p) && state.team && t.slots[n.sp]?.[group(p)] > 0;
+    return `<i class="${plays ? "play" : ""} ${open ? "open" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
+  }).join("")}</span>`;
   return `<span class="dots">${state.data.nights.map(n => {
     const plays = p.nights.includes(n.sp);
     const gone = n.past || goneTonight(p, n);
@@ -371,11 +437,11 @@ function why(p) {
   return parts.join(" · ");
 }
 function details(p) {
-  const og = openGames(p);
+  const og = tOpen(p);
   const extra = [`${p.team} · ${p.slots.filter(s => s !== "F").join("/") || p.pos}`, `owned ${fmt(p.owned)}%`];
   // why a waiver player's games and starts look short (findings 232)
   if (p.owner === "waivers") extra.unshift(`on waivers: he can't play until he clears${p.clears ? ` ${p.clears}` : ""}, so only games from then count`);
-  if (og != null) extra.push(`${og} of ${games(p)} games on nights you have an open slot`);
+  if (og != null) extra.push(`${og} of ${tGames(p)} games${state.tw ? ` in the week of ${state.tw.w.label}` : ""} on nights you have an open slot`);
   return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join(" · ");
 }
 
@@ -386,12 +452,12 @@ function cells(p) {
   const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + wvTag(p) +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
     (p.cr_why?.tonight?.status === "Confirmed" && !started(p) ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
-  const og = openGames(p);
+  const og = tOpen(p);
   return {
     name: `${esc(p.name)}${tags ? `<span class="tags">${tags}</span>` : ""}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
     cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "",
-    cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: games(p),
-    opengm: og == null ? "–" : og, light: light(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
+    cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: tGames(p),
+    opengm: og == null ? "–" : og, light: tLight(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
     cur_ppg: fmt(p.cur_ppg), last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
   };
 }
@@ -408,14 +474,15 @@ function inRoster(p) {
   return w.startsWith("t:") && String(p.team_id) === w.slice(2);
 }
 
-function render() {
+// all = false for table-only changes (sort, details, search, filters): Upgrades and Trade check don't read them (findings 237)
+function render(all = true) {
   const d = state.data;
   const q = norm($("q").value), pos = $("pos").value, ming = +$("ming").value || 0;
   const list = d.players.filter(p =>
     inView(p) &&
     // unsigned free agents (team FA) only show up when searched for; one on a fantasy roster stays in its owner's views (findings 232)
     (p.team !== "FA" || q || !isFA(p)) &&
-    fits(p, pos) && games(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
+    fits(p, pos) && tGames(p) >= ming && (!d.rated || p.cr >= (+$("minr").value || 0)) &&
     (!$("healthy").checked || !p.injury) &&
     matches(p, q)
   );
@@ -430,15 +497,14 @@ function render() {
   $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
     (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
   $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
-    `<th data-k="${key}" tabindex="0" class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${label}</th>`).join("");
+    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights (${esc(state.tw.w.label)})` : label}</th>`).join("");
   $("rows").innerHTML = shown.map(p => {
     const c = cells(p);
-    return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}">` +
+    return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
       COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
       (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}">${esc(details(p))}</td></tr>` : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
-  renderUpgrades();
-  renderTrade();
+  if (all) { renderUpgrades(); renderTrade(); }
   store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "team" ? state.team : key === "pos" ? $("pos").value : state[key]])));
 }
 
@@ -481,8 +547,6 @@ function renderUpgrades() {
     ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
   // a gain in addVal units, labelled: with no moves left addVal is 7 x Season, so show the Season difference
   const gainTxt = v => noMoves ? `+${fmt(v / KEEP_GAMES)} Season` : `+${fmt(v)} ${d.rated && !d.final_matchup ? "keep" : "pts"}`;
-  const later = !noMoves ? "" : d.final_matchup ? " No moves left, and the season ends with this matchup."
-    : roundLeft ? " No moves left this round; these are targets for the next round." : " No moves left this matchup; these are next Monday's targets.";
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
   if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
@@ -495,7 +559,7 @@ function renderUpgrades() {
   // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
   const realLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : null;
   const nextWeek = noMoves || reset;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)
-  if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.${later}</span>
+  if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.</span>
     ${outs.map(p => {
       // no more subs than moves left (findings 233), and none after the season's last move
       const sub = seasonDone || (realLeft != null && swapSubs.size >= realLeft) ? null
@@ -594,7 +658,8 @@ function renderUpgrades() {
     // and not dropping a player Mid-week swaps already drops, nor using the moves its subs take (findings 233)
     const added = new Set(swapSubs), dropped = new Set(swapDrops), best = [];
     // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
-    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && lastNight && movesLeft > 2;
+    // with any move left, not only 3+: even one unused move is lost (findings 238)
+    const lastCall = !noMoves && !reset && !locked && !d.final_matchup && lastNight && realLeft > 0;
     for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, movesLeft)); i++) {
       let top = null;
       for (const g of ["F", "D"]) {
@@ -607,9 +672,10 @@ function renderUpgrades() {
       if (!top || top.gain <= 0.5) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
-    const expire = lastCall ? ` You have ${realLeft} moves left, and the ones you don't use expire tonight: add next week's targets before the first game${puck ? ` at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : ""}. Next Monday starts with a fresh set.` : "";
+    // its own line, so a phone doesn't fold it behind 'why' (findings 238); no game today means ESPN's rollover is the deadline
+    const expire = lastCall ? `You have ${realLeft} move${realLeft === 1 ? "" : "s"} left, and the ones you don't use expire tonight: add next week's targets ${puck ? `before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : "before ESPN's overnight rollover (about 3 AM ET)"}. Next Monday starts with a fresh set.` : "";
     // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same
-    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.${later}${expire}</span>
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position.</span>${expire ? `<div class="sub warn">${esc(expire)}</div>` : ""}
       ${best.map((m, i) => i < freeSpots
         ? `<div>Add ${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))} (open roster spot, no drop needed)</span> <span class="up">${gainTxt(m.gain)}</span></div>`
         : `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span>${chips.has(m.worst.id) ? '<span class="sub"> · try trading him first (Trade ideas)</span>' : ""}</div>`).join("")}</div>`);
@@ -623,7 +689,7 @@ function renderUpgrades() {
     const worst = mineG.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
     const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
     if (!better.length) continue;
-    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.${later}</span>
+    cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.</span>
       ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (${gainTxt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap && !seasonDone) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
@@ -643,7 +709,7 @@ function renderUpgrades() {
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   const stashHow = full && drops.length ? `Your roster is full: drop ${drops[0].name}, add him, move him to IR, then use the open spot on your next add (2 moves).`
     : "Stash in your open IR slot: costs one move, no lineup spot.";
-  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. ${esc(stashHow)} Worth it only for 1.5+ pts/game players.${later}</span>
+  if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irOpen} open IR slot${irOpen > 1 ? "s" : ""}. ${esc(stashHow)} Worth it only for 1.5+ pts/game players.</span>
     ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · Season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
   if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN's projection and this season's points so far are about the same for each pair, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
     ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
@@ -828,17 +894,18 @@ function setTeam(id) {
   if (id !== state.team) state.tgive = [], state.tget = [];
   state.team = id;
   computeOpenSlots(state.data);
+  pickWeek(state.wk);
   renderNights();
 }
 
 function sortBy(key) {
   if (state.sort === key) state.dir = -state.dir;
   else { state.sort = key; state.dir = ["name", "team", "pos"].includes(key) ? 1 : -1; }
-  render();
+  render(false);
 }
 
 function wire() {
-  $("who").addEventListener("input", () => { state.who = $("who").value; showAddFA(); render(); });
+  $("who").addEventListener("input", () => { state.who = $("who").value; showAddFA(); render(false); });
   $("team").addEventListener("input", () => {
     setTeam($("team").value);
     // show the newly picked team's roster with free agents
@@ -846,11 +913,16 @@ function wire() {
     render();
   });
   $("head").addEventListener("click", e => { const th = e.target.closest("th"); if (th) sortBy(th.dataset.k); });
-  $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sortBy(th.dataset.k); } });
+  // the header and rows are redrawn, so focus goes back to the same header or row (findings 237)
+  $("head").addEventListener("keydown", e => { const th = e.target.closest("th"); if (th && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); const k = th.dataset.k; sortBy(k); $("head").querySelector(`th[data-k="${k}"]`)?.focus(); } });
+  $("rows").addEventListener("keydown", e => {
+    const tr = e.target.closest("tr[data-id]"); if (!tr || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault(); const id = tr.dataset.id; tr.click(); $("rows").querySelector(`tr[data-id="${id}"]`)?.focus();
+  });
   $("rows").addEventListener("click", e => {
     const tr = e.target.closest("tr[data-id]"); if (!tr) return;
     state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
-    render();
+    render(false);
   });
   ["tgive", "tget"].forEach(id => $(id).addEventListener("input", e => {
     const v = +e.target.value; if (!v) return;
@@ -862,7 +934,16 @@ function wire() {
     state[key] = state[key].filter(x => x !== +pid); renderTrade();
   });
   // minr is removed when the data has no ratings
-  ["q", "pos", "ming", "minr", "left", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", render));
+  // a later week: the table's nights, games and open slots for it; Remaining games only doesn't apply (findings 300)
+  $("wk").addEventListener("input", () => {
+    state.wk = $("wk").value; pickWeek(state.wk);
+    $("left").disabled = !!state.tw;
+    render(false);
+  });
+  $("allcols").addEventListener("input", () => { document.body.classList.toggle("allcols", $("allcols").checked); render(false); });
+  // Remaining games only changes the games Upgrades counts, so it redraws everything
+  ["q", "pos", "ming", "minr", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", () => render(false)));
+  $("left").addEventListener("input", () => render());
 }
 
 function restore() {
@@ -878,6 +959,16 @@ function restore() {
   if (typeof s.pos === "string" && [...$("pos").options].some(o => o.value === s.pos)) $("pos").value = s.pos;
   if (typeof s.left === "boolean") $("left").checked = s.left;
   if (typeof s.healthy === "boolean") $("healthy").checked = s.healthy;
+  if (typeof s.allcols === "boolean") $("allcols").checked = s.allcols;
+  document.body.classList.toggle("allcols", $("allcols").checked);
+}
+
+// Nights week: one option per Monday-Sunday week after this matchup; old data without season_weeks has none (findings 300)
+function weekOptions(d) {
+  const end = d.nights?.[d.nights.length - 1]?.sp ?? 0;
+  const later = (d.season_weeks || []).filter(w => w.sps?.[0] > end);
+  $("wk").insertAdjacentHTML("beforeend", later.map(w => `<option value="${esc(w.week)}">Week of ${esc(String(w.label).split("-")[0])}</option>`).join(""));
+  $("wk").hidden = !later.length;
 }
 
 // An open tab reloads (findings 230): when it comes back after 10+ minutes, and when a game starts, so started games,
@@ -902,6 +993,7 @@ fetch("data/players.json", { cache: "no-store" })
       $("minr").parentElement.remove();
     }
     teamOptions(d);
+    weekOptions(d);
     restore();
     $("updated").textContent = `Matchup ${d.matchup_period} · updated ${d.updated}`;
     $("stale").hidden = !stale(d);
@@ -922,10 +1014,10 @@ fetch("data/players.json", { cache: "no-store" })
     // two-week playoff rounds have 14 nights (findings 232)
     $("ming").max = d.nights.length;
     setTeam(state.team);
-    wire(); render();
+    wire(); render(); document.body.classList.add("ready");
     setInterval(() => { if (reloadDue(Date.now())) location.reload(); }, 60e3);
   })
-  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; });
+  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; document.body.classList.add("ready"); });
 </script>
 </body>
 </html>
