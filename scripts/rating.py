@@ -67,6 +67,7 @@ SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
 BAD_START_LOGIT = -1.0  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131, 163)
 BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
+BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its last: last starter's next-game logit (findings 196)
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
 # a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
@@ -200,6 +201,8 @@ UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, 
 CLEARED_DAYS = 7
 CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no games yet this season (findings 172)
 CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the last one (findings 173)
+# DAY_TO_DAY and dressed for the team's last game: cap by that game's TOI over his season average (findings 176)
+DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.75))
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 NEWS_CAP = 25
@@ -765,6 +768,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
             continue
         day = date.fromisoformat(d)
+        # a team-wide break rests everyone: the last starter isn't benched just because days passed (findings 196)
+        gap = (day - date.fromisoformat(last_date)).days if ahead == 0 and last_date else 0
+        rested = next((v for days, v in BREAK_LOGITS if gap >= days), 0.0)
         b2b = float(bool(log) and (day - log[-1][0]).days == 1)
         week = [gid for gd, gid in log if (day - gd).days <= 7]
         raw = {}
@@ -780,7 +786,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             raw[gid] = model.p_start({**shares[gid], "started_prev": prev_p[gid], "b2b": b2b, "started_prev_and_b2b": prev_p[gid] * b2b,
                                       "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
-            z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0)
+            z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
+                + (rested if rested and gid == seq[-1] else 0.0)
             if gid in relieved:
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if z and 0 < raw[gid] < 1:
@@ -1128,6 +1135,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
             inj = 0.0 if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
+            if p.get("injury") == "DAY_TO_DAY" and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
+                inj = next(c for top, c in DTD_PLAYED_CAPS if gl[-1]["toi"] / f["std_toi"] < top)
             if p.get("injury") in SKATER_INJURY_CAP:
                 injury_log.append({"date": today.isoformat(), "espn_id": p["id"], "nhl_id": pid, "name": p["name"],
                                    "status": p["injury"], "long_note": bool(note and note["long"]),
