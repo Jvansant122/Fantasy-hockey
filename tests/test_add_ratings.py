@@ -782,6 +782,22 @@ def test_last_starter_after_a_long_team_break(monkeypatch):
     assert rating.goalie_starts(model, "TOR", [1, 2], {"TOR": []}, {1: 50, 2: 32}, ["2026-10-27"], date(2026, 10, 27))
 
 
+def test_second_night_of_a_back_to_back(monkeypatch):
+    """Night 2: the no. 1 who played night 1 rests more, a backup who played night 1 goes again more (findings 200)."""
+    model = rating.Model()
+
+    def p(last_gid, shifts):
+        monkeypatch.setattr(rating, "B2B_NIGHT2_NO1", shifts[0])
+        monkeypatch.setattr(rating, "B2B_NIGHT2_OTHER", shifts[1])
+        hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 19, 2))] + [("2026-10-19", last_gid)]
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, ["2026-10-20"], date(2026, 10, 20), today_p=out)
+        return out[last_gid]
+    on, off = (rating.B2B_NIGHT2_NO1, rating.B2B_NIGHT2_OTHER), (0.0, 0.0)
+    assert p(1, on) < p(1, off) - 0.01  # goalie 1 is the no. 1
+    assert p(2, on) > p(2, off) + 0.01  # goalie 2 is the backup
+
+
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     # tonight's game started before the run: its start is no longer ahead and the stream card's chance is 0 (findings 178)
     from datetime import datetime, timezone

@@ -68,6 +68,8 @@ PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-seaso
 BAD_START_LOGIT = -1.0  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131, 163)
 BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its last: last starter's next-game logit (findings 196)
+# second night of a back-to-back, night-1 starter's logit: the team's no. 1 rests more, a backup who played goes again (findings 200)
+B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
 # a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
@@ -783,6 +785,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         # a team-wide break rests everyone: the last starter isn't benched just because days passed (findings 196)
         gap = (day - date.fromisoformat(last_date)).days if ahead == 0 and last_date else 0
         rested = next((v for days, v in BREAK_LOGITS if gap >= days), 0.0)
+        if gap == 1 and seq:  # night 2 of a back-to-back: shift whoever started night 1, by role
+            top = max(seq[-20:].count(g) for g in set(seq[-20:]))
+            rested = B2B_NIGHT2_NO1 if seq[-20:].count(seq[-1]) == top else B2B_NIGHT2_OTHER
         b2b = float(bool(log) and (day - log[-1][0]).days == 1)
         week = [gid for gd, gid in log if (day - gd).days <= 7]
         raw = {}
