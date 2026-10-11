@@ -23,8 +23,8 @@ RATED_GOALIE_FIELDS = {"cr_g_nights"}  # goalies only: start chance by night, fo
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
 MIN_FREE_AGENTS, MIN_INJURED = 100, 10
 EPS = 0.02  # rounding slack: values are rounded to 2 decimals
-# ESPN scoring period 1 of the 2027 season (sp 7 = Mon Oct 5, 2026): the day-0 the nights' sp count from. Update each season;
-# the check is skipped once the data is more than 300 days past it
+# ESPN scoring period 1 of the 2027 season (sp 7 = Mon Oct 5, 2026): the day-0 the nights' sp count from, used only when
+# the data has no sp1_date (fetch.py publishes ESPN's own); the check is skipped once the data is 300+ days past it
 SP1 = date(2026, 9, 29)
 
 
@@ -102,8 +102,13 @@ def rules(data):
     if sps != list(range(sps[0], sps[0] + len(sps))):
         out.append(f"N1 night scoring periods not consecutive: {sps}")
     nd = _night_dates(data)
-    if nd and 0 <= (min(d for d in nd.values() if d) - SP1).days <= 300:
-        bad = [(sp, str(d)) for sp, d in nd.items() if d and (d - SP1).days + 1 != sp]
+    # ESPN's period 1 from the data (next season too), else this season's (findings 242)
+    try:
+        sp1 = date.fromisoformat(data["sp1_date"]) if data.get("sp1_date") else SP1
+    except (TypeError, ValueError):
+        sp1 = SP1
+    if nd and 0 <= (min(d for d in nd.values() if d) - sp1).days <= 300:
+        bad = [(sp, str(d)) for sp, d in nd.items() if d and (d - sp1).days + 1 != sp]
         if bad:
             out.append(f"N1 scoring period doesn't match its date (ESPN day not rolled over?): {bad[:3]}")
     # N2 no more teams playing a night than 2 per game

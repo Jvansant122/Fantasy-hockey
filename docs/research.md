@@ -871,6 +871,12 @@ When a team's no. 1 goalie starts night 1 of a back-to-back and rests night 2, t
 - The page's auto-reload keeps a half-built trade.
 - Players dropped after tonight's first game no longer count toward the roster.
 
+## 110. Follow-ups to the week menu and goalie pricing
+
+- Picking a later week no longer squeezes the phone table: the week's dates sit on their own line under "Nights" on a computer and are left off on phones, where the week menu already names the week. With All columns on, an opened player's explanation stays on screen while the table scrolls sideways.
+- A goalie's details now say that this week's price is pulled most of the way to the league's rate (section 105) before naming tonight's line or the schedule, so a soft schedule is no longer blamed for a lower price.
+- The update publishes ESPN's own first-day date, and the publish check reads it, so its day-shift rule keeps working next season.
+
 ## What the independent review changed
 
 | Review point | Outcome |

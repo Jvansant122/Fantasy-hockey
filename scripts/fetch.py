@@ -260,6 +260,18 @@ def utc_iso(dt):
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
 
 
+def sp1_date(night_dates):
+    """ESPN's scoring period 1 as a date, from the season schedule's game dates (each period is one day): the most common
+    date - (period - 1). None from a short window such as the scoreboard fallback (findings 242)."""
+    if len(night_dates) < 30:
+        return None
+    votes = {}
+    for sp, d in night_dates.items():
+        day = (d.date() if hasattr(d, "date") else d) - timedelta(days=sp - 1)
+        votes[day] = votes.get(day, 0) + 1
+    return max(votes, key=votes.get).isoformat()
+
+
 def default_season(day):
     """ESPN's season for a date: August to December belong to the season that ends the next year (2026-27 is 2027)."""
     return day.year + 1 if day.month >= 8 else day.year
@@ -676,6 +688,7 @@ def main():
         "trade_deadline": trade_deadline,  # ESPN's trade deadline, ms since 1970, or None
         "season_over": season_over,  # today is after the fantasy final's last day (findings 232)
         "season_end": season_end,  # the final's last day, e.g. "Sun Apr 4"
+        "sp1_date": sp1_date(night_dates),  # ESPN's period 1, for the publish check's day-shift rule (findings 242)
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
                    "moves_used": moves_used[t["id"]],
                    # ESPN waiver order, 1 = first claim (findings 212: losing claims cost no move)
