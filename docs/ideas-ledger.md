@@ -416,7 +416,7 @@ One row per idea that has been tested, proposed or queued for the Claude Rating,
 | 348 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Offseason skater movers x0.965 | ROS MSE/rank corr better 4/4 seasons, weekly 0 | Pending (handoff 125) | findings 230 |
 | 349 | Oct 11 19:40 | thread "Seventh hunt" (agent) | ESPN 'FA' but playing (Bunting) | 0 games 73/78 runs | Pending (handoff 126) | findings 230 |
 | 350 | Oct 11 19:40 | thread "Seventh hunt" (agent) | Unmatched players, names, positions, ESPN vs NHL team, mid-season mover residual, run history, caching, repo growth | all fine | No change | findings 230 |
-| 351 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Sunday leftover moves capped at 2 (idea 54 re-test: real leftovers 9/12 teams) | 40 moves left Sunday, +2.8 to +9.1 keep per team | Pending (handoff 127) | findings 231 |
+| 351 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Sunday leftover moves capped at 2 (idea 54 re-test: real leftovers 9/12 teams) | 40 moves left Sunday, +2.8 to +9.1 keep per team | Shipped (PR #95, handoff 127) | findings 231 |
 | 352 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Activate from IR with full roster | teams 5, 11 told a move ESPN refuses | Pending (handoff 128) | findings 231 |
 | 353 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Drop list vs open IR slot | Zuccarello offered as drop 61 snapshots | Pending (handoff 129) | findings 231 |
 | 354 | Oct 11 19:50 | thread "Seventh hunt" (agent) | Open roster spot unrecognized | team 7 told 2 needless drops | Pending (handoff 130) | findings 231 |
