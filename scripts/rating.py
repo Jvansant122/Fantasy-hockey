@@ -113,6 +113,10 @@ B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
 # shipped night-2 case above. 2021-26 replay of 12,960 team-game mornings: Brier -0.6%, no. 1 week-sum error -0.7%, better
 # in 5 of 5 seasons (findings 231, handoffs 133 and 190)
 B2B_AHEAD_NIGHT1, B2B_AHEAD_NIGHT2_NEXT, B2B_AHEAD_NIGHT2_LATER, NO1_ORDINARY_LOGIT = -0.4, -1.2, -0.6, 0.15
+# the no. 1 started night 1 and rests night 2: the chain logs his backup as night 2's starter, which carries him into the
+# game after it (no. 1 0.687 there vs 0.804 actual). Every other goalie's logit for that game; held-out Brier -4.4%,
+# 5 of 5 seasons, calibrated after (findings 222, handoff 223)
+AFTER_NO1_REST_OTHER_LOGIT = -1.0
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 # both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
@@ -1043,6 +1047,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
     dates_sorted = sorted(game_dates)
+    after_rest = False
     relieved = {gid: RELIEF_RARE_LOGIT if seq[-20:].count(gid) <= RELIEF_RARE_STARTS else 0.0 for gid in relief if gid in cands}
     for d in sorted(game_dates):
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
@@ -1058,6 +1063,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             top = max((recent.count(g) for g in set(recent)), default=0)
             night2_no1 = bool(recent) and recent.count(seq[-1]) == top
             rested = B2B_NIGHT2_NO1 if night2_no1 else B2B_NIGHT2_OTHER
+            after_rest = seq[-1] == no1  # the game after night 2 goes back to him (handoff 223)
         b2b = float(bool(log) and (day - log[-1][0]).days == 1)
         week = [gid for gd, gid in log if (day - gd).days <= 7]
         raw = {}
@@ -1076,6 +1082,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
                 + (rested if rested and gid == seq[-1] else 0.0) \
                 + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0)
+            if after_rest and ahead == 1 and gid != no1:
+                z += AFTER_NO1_REST_OTHER_LOGIT
             if gid == no1:  # back-to-backs still ahead, and his ordinary nights (findings 231)
                 nxt = next((x for x in dates_sorted if x > d), None)
                 prv = [x for x in dates_sorted if x < d and (last_date is None or x > last_date)]

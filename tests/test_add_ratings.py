@@ -342,6 +342,21 @@ def test_no1_rests_on_back_to_backs_still_ahead(monkeypatch):
     assert starts(spaced, True) > starts(spaced, False)
 
 
+def test_no1_back_in_net_after_resting_night_2(monkeypatch):
+    """The no. 1 started night 1 and the backup takes night 2: the game after goes back to the no. 1 (handoff 223)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))] + [("2026-10-21", 1)]
+    dates = ["2026-10-22", "2026-10-24"]  # night 2 tomorrow, then the game after it
+    def third(v):
+        monkeypatch.setattr(rating, "AFTER_NO1_REST_OTHER_LOGIT", v)
+        nights = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), by_date=nights)
+        return nights
+    on, off = third(-1.0), third(0.0)
+    assert on[1]["2026-10-24"] > off[1]["2026-10-24"]
+    assert on[1]["2026-10-22"] == pytest.approx(off[1]["2026-10-22"])  # night 2 itself is unchanged
+
+
 def test_rest_of_season_dress_share():
     """Season rating availability: a regular plays most of the rest of the season, a player out 10 games much less,
     but more than zero (findings section 56)."""

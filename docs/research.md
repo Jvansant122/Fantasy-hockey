@@ -853,6 +853,10 @@ The hunt's last audit found five problems in the data side of PRs #97, #99 and #
   - Games played on the note's own day count only after it was posted.
   - The stored status falls back to the feed's own word.
 
+## 108. The game after a rested no. 1
+
+When a team's no. 1 goalie starts night 1 of a back-to-back and rests night 2, the rating's chain of games logged his backup as night 2's starter, and that "started last game" carried the backup into the following game too. The no. 1 was given a 69% chance there, but he actually started 80% of those games over five seasons. Every other goalie's chance for that one game is now trimmed (-1.0 on the start logit). That lands on 80%, better in all 5 seasons, and adds about 0.4 to the no. 1's Week rating in those weeks. Rechecked on today's code over the same five seasons: start predictions improved in every season. Daily Faceoff confirmations still override.
+
 ## What the independent review changed
 
 | Review point | Outcome |
