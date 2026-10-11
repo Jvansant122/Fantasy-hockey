@@ -14,20 +14,9 @@ from conftest import ROOT
 import check_data
 
 
-# fields the code now writes that the committed data/players.json predates: filled in here until the next data run
-UNTIL_NEXT_DATA_RUN = {"cr_g_nights": lambda p: {} if p["pos"] == "G" else None}
-
-
 @pytest.fixture(scope="module")
 def data():
-    d = json.loads((ROOT / "data" / "players.json").read_text())
-    if d.get("rated"):
-        for field, fill in UNTIL_NEXT_DATA_RUN.items():  # until the next data run
-            if not any(field in p for p in d["players"]):
-                for p in d["players"]:
-                    if fill(p) is not None:
-                        p[field] = fill(p)
-    return d
+    return json.loads((ROOT / "data" / "players.json").read_text())
 
 
 def test_goalies_carry_the_goalie_fields(data):
@@ -58,7 +47,6 @@ def test_page_only_reads_fields_the_data_has(data):
     html = (ROOT / "index.html").read_text()
     used = set(re.findall(r"\bp\.([a-z_][a-z0-9_]*)", html))
     have = set().union(*(p.keys() for p in data["players"])) | {"cr_news"}
-    have |= set(UNTIL_NEXT_DATA_RUN)  # until the next data run: the page reads them with ?. and a fallback
     assert not used - have, used - have
 
 
