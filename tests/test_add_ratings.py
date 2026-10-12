@@ -326,7 +326,20 @@ def test_week_luck_and_role_inputs():
     assert x["j1_up"] == pytest.approx(3.0) and x["j1_dn"] == 0
     assert x["new_top"] == pytest.approx(0.75) and x["new_pp1"] == 0
     blank = rating.week_extras({"std_gp": 0})
-    assert all(v is None for v in blank.values())  # left to the ridge's training means
+    assert all(blank[k] is None for k in ("luck_neg", "luck_negp", "luck_sh", "j1_up", "new_top"))  # left to the training means
+    assert all(blank[k] == 0 for k in ("ag_y", "ag_o", "r_ml", "r_orun", "r_back_fp"))  # unknown age reads 27; no absence
+    back = rating.week_extras({"age_m": 21.5, "missed_last": 1.0, "out_run": 14.0, "std_fp": 2.0, "sx_fp": 1.5})
+    assert back["ag_y"] == pytest.approx(2.5) and back["ag_o"] == 0 and rating.week_extras({"age_m": 33})["ag_o"] == 4
+    assert back["r_orun"] == 10 and back["r_orun_fp"] == 20 and back["r_ml_fp"] == 2 and back["r_ml_sx"] == 1.5
+
+
+def test_lineup_context_missed_run():
+    team = ["g1", "g2", "g3", "g4", "g5"]
+    gl = lambda games: [{"game": x, "team": "TOR", "pos": "C", "toi": 15.0, "pptoi": 1.0} for x in games]
+    ctx = rating.lineup_context({1: gl(["g1", "g2"]), 2: gl(["g1", "g2", "g3", "g5"]), 3: gl(team)}, {"TOR": team})
+    assert (ctx[1]["out_run"], ctx[1]["back_last"], ctx[1]["missed_last"]) == (3, 0, 1)
+    assert (ctx[2]["out_run"], ctx[2]["back_last"]) == (0, 1)
+    assert (ctx[3]["out_run"], ctx[3]["back_last"]) == (0, 0)
 
 
 def test_no_game_yet_uses_last_seasons_role():

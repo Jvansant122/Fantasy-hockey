@@ -534,11 +534,15 @@ def lineup_context(by_player, team_games):
     """Per skater (findings 320 (1)): he missed his team's last game; how many same-position (F or D) teammates with 5+
     games and more TOI/G missed it; how many teammates with 5+ games and more PP TOI/G (over half a minute) missed it.
     The count is 0 for a skater with under 5 games. Same as model/train.py add_context."""
-    info = {}
+    info, runs = {}, {}
     for pid, gl in by_player.items():
         tg = team_games.get(gl[-1]["team"], [])
         info[pid] = (gl[-1]["team"], pos_group(gl[-1]["pos"]), len(gl), mean([g["toi"] for g in gl]),
                      mean([g["pptoi"] for g in gl]), float(bool(tg) and gl[-1]["game"] != tg[-1]))
+        # his run of missed team games back from the last one (to 10), and back after missing the one before (findings 320 (5))
+        mine, last10 = {g["game"] for g in gl if g["team"] == gl[-1]["team"]}, tg[-10:][::-1]
+        runs[pid] = (float(next((j for j, x in enumerate(last10) if x in mine), len(last10))),
+                     float(len(last10) >= 2 and last10[0] in mine and last10[1] not in mine))
     out_regs = {}
     for v in info.values():
         if v[2] >= 5 and v[5]:
@@ -546,7 +550,7 @@ def lineup_context(by_player, team_games):
     out = {}
     for pid, (team, grp, gp, toi, pp, missed) in info.items():
         mates = out_regs.get(team, []) if gp >= 5 else []
-        out[pid] = {"missed_last": missed,
+        out[pid] = {"missed_last": missed, "out_run": runs[pid][0], "back_last": runs[pid][1],
                     "out_above_toi": float(sum(v[1] == grp and v[3] > toi for v in mates)),
                     "out_above_pp": float(sum(v[4] > 0.5 and v[4] > pp for v in mates))}
     return out
@@ -768,12 +772,12 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
 
-def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=None, context=None):
+def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=None, context=None, age=None):
     """Inputs for one skater. games: his games this season, oldest first. team_games: his team's game ids, oldest first.
     p2: his per-game rates two seasons ago (findings 310 (4)), None if he didn't play then. context: his lineup_context
-    entry (None before his first game)."""
-    f = {"is_D": 1.0 if is_d else 0.0}
-    for k in ("missed_last", "out_above_toi", "out_above_pp"):
+    entry (None before his first game). age: his age in years on the matchup Monday, None if unknown."""
+    f = {"is_D": 1.0 if is_d else 0.0, "age_m": age}
+    for k in ("missed_last", "out_above_toi", "out_above_pp", "out_run", "back_last"):
         f[k] = (context or {}).get(k) if games else None
     # last game's and last 3 games' role (findings 320 (1))
     for c in ("pp_share", "pp_rank", "toi_rank", "pp1", "top_line"):
@@ -1127,10 +1131,11 @@ def context_gaps(f):
 
 
 def week_extras(f):
-    """The Week rating's finishing-luck and last-game role inputs (findings 320 (4), same as model/train.py week_extras):
-    goals below / above individual xG per game (this season x min(GP/20, 1), and last season), the shortfall x shots,
-    the last-game ice-time jump either way, and a top-line / PP1 spot in the last game he rarely had before. None when a
-    factor is missing (the ridge fills it with its training mean)."""
+    """The Week rating's finishing-luck, last-game role, age and return-from-absence inputs (findings 320 (4), (5); same as
+    model/train.py week_extras): goals below / above individual xG per game (this season x min(GP/20, 1), and last
+    season), the shortfall x shots, the last-game ice-time jump either way, a top-line / PP1 spot in the last game he
+    rarely had before (None when a factor is missing: the ridge fills it with its training mean); max(0, 24 - age),
+    max(0, age - 29); and missed the team's last game, his missed run, back after a miss, each also x FP/G (0 if missing)."""
     g = lambda k: f.get(k)
     sub = lambda a, b: None if g(a) is None or g(b) is None else g(a) - g(b)
     pos = lambda v: None if v is None else max(v, 0.0)
@@ -1143,6 +1148,12 @@ def week_extras(f):
     out["j1_up"], out["j1_dn"] = pos(sub("last_toi", "l10_toi")), neg(sub("last_toi", "l10_toi"))
     new = lambda a, b: None if g(a) is None or g(b) is None else g(a) * (1 - g(b))
     out["new_top"], out["new_pp1"] = new("r1_top_line", "std_top_line"), new("r1_pp1", "std_pp1")
+    age = 27.0 if g("age_m") is None else g("age_m")  # age bends (findings 320 (5)): unknown reads 27, no bend
+    out["ag_y"], out["ag_o"] = max(0.0, 24 - age), max(0.0, age - 29)
+    ml, orun, bk = g("missed_last") or 0.0, min(g("out_run") or 0.0, 10), g("back_last") or 0.0
+    fp, sx = g("std_fp") or 0.0, g("sx_fp") or 0.0
+    out |= {"r_ml": ml, "r_orun": orun, "r_ml_fp": ml * fp, "r_ml_sx": ml * sx, "r_orun_fp": orun * fp, "r_back": bk,
+            "r_back_fp": bk * fp}
     return out
 
 
@@ -1769,8 +1780,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 tg = tg[:tg.index(gl[-1]["game"]) + 1]
             # his "last season" is already the one before (missed last season): the season before that stands in (findings 291 (4))
             p2 = prev3.get(pid) if (prev.get(pid) or {}).get("season_label") else prev2.get(pid)
+            age = (monday - births[pid]).days / 365.25 if pid in births else None
             f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2,
-                                  context=context.get(pid))
+                                  context=context.get(pid), age=age)
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             fpg_s = model.fpg(f, season=True) if pid else fpg  # the Season rating's ridge (findings 320 (2))
@@ -1778,7 +1790,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             kept = short_opening(gl, prev.get(pid)) if pid else None
             if kept is not None:
                 f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg,
-                                     is_d=p["pos"] == "D", p2=p2, context=context.get(pid))
+                                     is_d=p["pos"] == "D", p2=p2, context=context.get(pid), age=age)
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
                 fpg_s = (fpg_s + model.fpg(f2, season=True)) / 2

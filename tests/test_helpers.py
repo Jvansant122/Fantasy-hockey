@@ -443,10 +443,10 @@ def test_lineup_context_counts_regulars_above_him_who_missed_the_last_game():
         4: [g(4, n, "D", 22, 2.0) for n in range(1, 11)],      # more PP time than 2 but not than 1
     }
     c = rating.lineup_context(by_player, tg)
-    assert c[1] == {"missed_last": 1.0, "out_above_toi": 0.0, "out_above_pp": 0.0}
-    assert c[2] == {"missed_last": 0.0, "out_above_toi": 1.0, "out_above_pp": 1.0}
-    assert c[3] == {"missed_last": 0.0, "out_above_toi": 0.0, "out_above_pp": 0.0}
-    assert c[4] == {"missed_last": 0.0, "out_above_toi": 0.0, "out_above_pp": 1.0}  # a forward: not above him in TOI
+    assert {k: c[1][k] for k in ("missed_last", "out_above_toi", "out_above_pp")} == {"missed_last": 1.0, "out_above_toi": 0.0, "out_above_pp": 0.0}
+    assert {k: c[2][k] for k in ("missed_last", "out_above_toi", "out_above_pp")} == {"missed_last": 0.0, "out_above_toi": 1.0, "out_above_pp": 1.0}
+    assert {k: c[3][k] for k in ("missed_last", "out_above_toi", "out_above_pp")} == {"missed_last": 0.0, "out_above_toi": 0.0, "out_above_pp": 0.0}
+    assert {k: c[4][k] for k in ("missed_last", "out_above_toi", "out_above_pp")} == {"missed_last": 0.0, "out_above_toi": 0.0, "out_above_pp": 1.0}  # a forward: not above him in TOI
     gaps = rating.context_gaps({"missed_last": 1.0, "l10_toi": 19, "last_toi": 12, "out_above_toi": 5.0, "out_above_pp": 0.0,
                                 "l10_pptoi": 3.0, "pp_l1": None})
     assert gaps == {"ml_gap": 7, "ml_ppgap": None, "oa_gap": 3 * (12 - 19), "oap_gap": None}

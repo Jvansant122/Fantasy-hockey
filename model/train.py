@@ -91,7 +91,10 @@ HINGE_FEATS = [f"h_{c}_{i}" for c in HINGE_IN for i in range(len(HINGE_Q))]
 LUCK_FEATS = ["luck_neg", "luck_pos", "luck_negp", "luck_posp", "luck_sh"]
 ROLE_FEATS = ["r1_top_line", "r3_top_line", "r1_pp1", "r3_pp1", "r1_toi_rank", "r1_pp_share", "r3_pp_share", "j1_up", "j1_dn",
               "new_top", "new_pp1"]
-WEEK_FEATS = FEATS + HINGE_FEATS + LUCK_FEATS + ROLE_FEATS
+# ... and age bends plus return-from-absence terms (findings 320 (5)): missed the team's last game, his run of missed team
+# games (to 10), back after missing the one before, each also x season FP/G
+AGE_RET_FEATS = ["ag_y", "ag_o", "r_ml", "r_orun", "r_ml_fp", "r_ml_sx", "r_orun_fp", "r_back", "r_back_fp"]
+WEEK_FEATS = FEATS + HINGE_FEATS + LUCK_FEATS + ROLE_FEATS + AGE_RET_FEATS
 GOAL_BLEND = 0.8  # the Week ridge's goals target: 0.8 x goals + 0.2 x individual xG per game (goals where xG is missing)
 # Season rating only: decomposed scoring forecasts (findings 320 (3)). Per-minute rate forecasts (small ridges on the
 # last 5/10/20, season, last season and two seasons ago per-minute rates) alone and times the TOI forecast; expected
@@ -218,8 +221,9 @@ def fc_design(df, ins):
     return X
 
 
-def week_extras(df):
-    """The Week ridge's luck and role inputs (same as scripts/rating.py week_extras); missing factors stay missing."""
+def week_extras(df, X):
+    """The Week ridge's luck, role, age and return inputs (same as scripts/rating.py week_extras); missing luck and role
+    factors stay missing, a missing age reads 27 and missing return flags or FP/G read 0."""
     gw = np.clip(df.std_gp / 20, 0, 1)
     lk, lkp = df.std_goals - df.std_ixg, df.prev_goals - df.prev_ixg
     out = pd.DataFrame({"luck_neg": (-lk).clip(lower=0) * gw, "luck_pos": lk.clip(lower=0) * gw,
@@ -229,7 +233,41 @@ def week_extras(df):
         out[c] = df[c]
     out["j1_up"], out["j1_dn"] = (df.last_toi - df.l10_toi).clip(lower=0), (df.l10_toi - df.last_toi).clip(lower=0)
     out["new_top"], out["new_pp1"] = df.r1_top_line * (1 - df.std_top_line), df.r1_pp1 * (1 - df.std_pp1)
+    age = df.age_m.fillna(27)
+    out["ag_y"], out["ag_o"] = np.maximum(0, 24 - age), np.maximum(0, age - 29)
+    ml, orun, bk = df.missed_last.fillna(0), df.out_run.fillna(0).clip(upper=10), df.back_last.fillna(0)
+    fp, sx = df.std_fp.fillna(0), X.sx_fp.fillna(0)
+    out["r_ml"], out["r_orun"], out["r_ml_fp"], out["r_ml_sx"] = ml, orun, ml * fp, ml * sx
+    out["r_orun_fp"], out["r_back"], out["r_back_fp"] = orun * fp, bk, bk * fp
     return out
+
+
+def add_age(df):
+    """Age on the Monday, from the NHL bios birth dates (research data/birthdates.json); NaN when unknown."""
+    with open(os.path.join(RESEARCH, "data", "birthdates.json")) as f:
+        bd = pd.Series(json.load(f))
+    bd.index = bd.index.astype(int)
+    return df.assign(age_m=(df.monday - df.playerId.map(pd.to_datetime(bd))).dt.days / 365.25)
+
+
+def add_returns(df, sk):
+    """His run of missed team games before each Monday (counting back from the team's last game, up to 10) and whether he
+    played the team's last game after missing the one before (same as scripts/rating.py lineup_context)."""
+    played = set(zip(sk.playerId, sk.teamAbbrev, sk.gameDate))
+    tl = sk.groupby(["teamAbbrev", "season"]).gameDate.apply(lambda x: np.sort(x.unique()))
+    keys = df[["team", "season", "monday"]].drop_duplicates()
+    last10 = {}
+    for r in keys.itertuples():
+        ds = tl.get((r.team, r.season), np.array([], dtype="datetime64[ns]"))
+        i = np.searchsorted(ds, np.datetime64(r.monday))
+        last10[(r.team, r.season, r.monday)] = [pd.Timestamp(d) for d in ds[max(0, i - 10):i][::-1]]
+    run, back = [], []
+    for r in df[["playerId", "team", "season", "monday"]].itertuples():
+        ds = last10[(r.team, r.season, r.monday)]
+        k = next((j for j, d in enumerate(ds) if (r.playerId, r.team, d) in played), len(ds))
+        run.append(k)
+        back.append(float(len(ds) >= 2 and (r.playerId, r.team, ds[0]) in played and (r.playerId, r.team, ds[1]) not in played))
+    return df.assign(out_run=run, back_last=back)
 
 
 def add_y_ixg(df, sk):
@@ -367,13 +405,17 @@ def snapshots():
         if "y_ixg" not in df:  # a cache from before the smoother goals target
             df = add_y_ixg(df, common.load_skaters())
             df.to_parquet(CACHE)
-        return df
+        if "out_run" not in df:  # ... and before the return-from-absence terms
+            df = add_returns(df, common.load_skaters())
+            df.to_parquet(CACHE)
+        return add_age(df)
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
     df = add_y_ixg(add_season_inputs(add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk), sk), sk)
+    df = add_returns(df, sk)
     df.to_parquet(CACHE)
-    return df
+    return add_age(df)
 
 
 def prep(df, feats=FEATS, mu=None, st=None):
@@ -395,8 +437,9 @@ def prep(df, feats=FEATS, mu=None, st=None):
         extra |= {f"p2_{r}": df[f"p2_{r}"] for r in P2_RATES} | {"p2_gp": df.p2_gp.fillna(0), "no_p2": df.p2_gp.isna().astype(float)}
         extra |= {f"p2_{r}_w": df[f"p2_{r}"].fillna(0) * w2 for r in ("fp", "toi", "pptoi")}
     X = pd.concat([X.drop(columns=[k for k in extra if k in X]), pd.DataFrame(extra, index=df.index)], axis=1)
-    if any(c in LUCK_FEATS + ROLE_FEATS for c in feats):
-        X = pd.concat([X.drop(columns=[c for c in LUCK_FEATS + ROLE_FEATS if c in X]), week_extras(df)], axis=1)
+    if any(c in LUCK_FEATS + ROLE_FEATS + AGE_RET_FEATS for c in feats):
+        E = week_extras(df, X)
+        X = pd.concat([X.drop(columns=[c for c in E if c in X]), E], axis=1)
     if st and "fc" in st:
         fc = forecast(df, st["fc"])
         u = ux_features(df, mu, fc["y_toi"], fc["y_pptoi"].clip(lower=0)).add_prefix("fc_")
