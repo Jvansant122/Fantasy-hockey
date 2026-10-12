@@ -1547,3 +1547,4 @@ def test_season_range_leans_up_for_rookies():
     assert exp == "rookie" and rookie[1] > vet[1]
     assert m.season_range(1.0, False, 70, 10)[1] == "year 2"
     assert m.season_range(0.1, True, 0, 0)[0][0] == 0  # the low end never goes below 0
+    assert m.season_range(1.0, False, 20, 0, age=33)[1] == "veteran"  # a veteran back from injury isn't a rookie
