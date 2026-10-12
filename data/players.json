@@ -1,8 +1,8 @@
 {
- "updated": "Mon Oct 12, 10:22 AM ET",
+ "updated": "Mon Oct 12, 10:26 AM ET",
  "updated_date": "2026-10-12",
  "first_start": "2026-10-12T17:00:00Z",
- "updated_utc": "2026-10-12T14:21:47Z",
+ "updated_utc": "2026-10-12T14:25:52Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -3535,7 +3535,7 @@
    "id": 12,
    "name": "New York Mess",
    "mine": true,
-   "moves_used": 4,
+   "moves_used": 5,
    "moves_used_next": 0,
    "waiver_rank": 9
   },
@@ -4309,7 +4309,7 @@
    "last_gp": 61,
    "proj_ppg": 2.58,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 8.8,
    "cr_fpg": 2.32,
    "cr_season": 2.15,
@@ -4907,7 +4907,7 @@
    "last_gp": 82,
    "proj_ppg": 2.07,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 7.97,
    "cr_fpg": 2.07,
    "cr_season": 1.88,
@@ -5491,7 +5491,7 @@
    "last_gp": 77,
    "proj_ppg": 1.86,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 7.36,
    "cr_fpg": 1.93,
    "cr_season": 1.65,
@@ -6208,7 +6208,7 @@
    "last_gp": 82,
    "proj_ppg": 1.88,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 7.04,
    "cr_fpg": 1.86,
    "cr_season": 1.69,
@@ -7515,7 +7515,7 @@
    "last_gp": 77,
    "proj_ppg": 1.67,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.48,
    "cr_fpg": 1.73,
    "cr_season": 1.5,
@@ -8233,7 +8233,7 @@
    "last_gp": 68,
    "proj_ppg": 1.35,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.26,
    "cr_fpg": 1.62,
    "cr_season": 1.45,
@@ -9205,7 +9205,7 @@
    "last_gp": 81,
    "proj_ppg": 1.57,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.07,
    "cr_fpg": 1.57,
    "cr_season": 1.44,
@@ -12334,7 +12334,7 @@
    "last_gp": 37,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.23,
    "cr_fpg": 1.36,
    "cr_season": 1.12,
@@ -13693,8 +13693,8 @@
     "F",
     "RW"
    ],
-   "owner": "freeagent",
-   "team_id": null,
+   "owner": "mine",
+   "team_id": 12,
    "ir": false,
    "bench": false,
    "injury": null,
@@ -15312,7 +15312,7 @@
    "last_gp": 82,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.67,
    "cr_fpg": 1.24,
    "cr_season": 1.04,
@@ -19564,7 +19564,7 @@
    "last_gp": 66,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.16,
    "cr_fpg": 1.13,
    "cr_season": 0.97,
@@ -20474,7 +20474,7 @@
    "last_gp": 69,
    "proj_ppg": 1.14,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.04,
    "cr_fpg": 1.09,
    "cr_season": 0.89,
@@ -21449,7 +21449,7 @@
    "last_gp": 81,
    "proj_ppg": 1.78,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.89,
    "cr_fpg": 1.15,
    "cr_season": 0.91,
@@ -21776,7 +21776,7 @@
    "last_gp": 82,
    "proj_ppg": 1.3,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.88,
    "cr_fpg": 1.04,
    "cr_season": 0.89,
@@ -22065,72 +22065,6 @@
    "cr_season_pct": 94
   },
   {
-   "id": 5833,
-   "name": "Chris Kreider",
-   "team": "MTL",
-   "games": 3,
-   "games_left": 3,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    15,
-    16,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "LW",
-   "slots": [
-    "F",
-    "LW"
-   ],
-   "owner": "mine",
-   "team_id": 12,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 40.2,
-   "gp": 5,
-   "ppg": 1.53,
-   "cur_ppg": 1.5,
-   "last_ppg": 1.48,
-   "last_gp": 75,
-   "proj_ppg": 1.54,
-   "clears": null,
-   "dfo_out": null,
-   "cr": 3.87,
-   "cr_fpg": 1.33,
-   "cr_season": 1.09,
-   "cr_games": 2.92,
-   "cr_dress": 0.97,
-   "cr_dress_next": 0.98,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475184,
-   "cr_why": {
-    "toi5": 15.23,
-    "toi": 15.23,
-    "pp5": 3.64,
-    "sog": 1.0,
-    "blk": 0.4,
-    "gp": 5,
-    "last_fpg": 1.48,
-    "xfp": {
-     "gp": 5,
-     "fpg": 1.5,
-     "xfpg": 1.5
-    },
-    "season_fpg": 1.31,
-    "age_adj": -0.06,
-    "season_range": [
-     0.63,
-     1.54
-    ]
-   },
-   "cr_pct": 60,
-   "cr_season_pct": 55
-  },
-  {
    "id": 3069836,
    "name": "Jaccob Slavin",
    "team": "CAR",
@@ -22256,7 +22190,7 @@
      2.31
     ]
    },
-   "cr_pct": 59,
+   "cr_pct": 60,
    "cr_season_pct": 87
   },
   {
@@ -23165,7 +23099,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 57,
+   "cr_pct": 58,
    "cr_season_pct": 60
   },
   {
@@ -23688,7 +23622,7 @@
      1.58
     ]
    },
-   "cr_pct": 56,
+   "cr_pct": 57,
    "cr_season_pct": 58
   },
   {
@@ -24887,7 +24821,7 @@
    "last_gp": 82,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.6,
    "cr_fpg": 0.98,
    "cr_season": 0.74,
@@ -25110,7 +25044,7 @@
      1.54
     ]
    },
-   "cr_pct": 53,
+   "cr_pct": 54,
    "cr_season_pct": 55
   },
   {
@@ -25313,7 +25247,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 53,
+   "cr_pct": 54,
    "cr_season_pct": 25
   },
   {
@@ -25443,7 +25377,7 @@
     ],
     "exp": "rookie"
    },
-   "cr_pct": 52,
+   "cr_pct": 53,
    "cr_season_pct": 48
   },
   {
@@ -25508,7 +25442,7 @@
      1.54
     ]
    },
-   "cr_pct": 52,
+   "cr_pct": 53,
    "cr_season_pct": 55
   },
   {
@@ -25574,7 +25508,7 @@
     ],
     "exp": "rookie"
    },
-   "cr_pct": 52,
+   "cr_pct": 53,
    "cr_season_pct": 36
   },
   {
@@ -25641,7 +25575,7 @@
      1.13
     ]
    },
-   "cr_pct": 52,
+   "cr_pct": 53,
    "cr_season_pct": 23
   },
   {
@@ -25940,7 +25874,7 @@
    "last_gp": 70,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.53,
    "cr_fpg": 0.94,
    "cr_season": 0.76,
@@ -26625,7 +26559,7 @@
      1.49
     ]
    },
-   "cr_pct": 49,
+   "cr_pct": 50,
    "cr_season_pct": 51
   },
   {
@@ -26949,7 +26883,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 48,
+   "cr_pct": 49,
    "cr_season_pct": 51
   },
   {
@@ -27013,7 +26947,7 @@
      2.15
     ]
    },
-   "cr_pct": 48,
+   "cr_pct": 49,
    "cr_season_pct": 83
   },
   {
@@ -27603,7 +27537,7 @@
      1.44
     ]
    },
-   "cr_pct": 46,
+   "cr_pct": 47,
    "cr_season_pct": 48
   },
   {
@@ -27669,7 +27603,7 @@
      1.45
     ]
    },
-   "cr_pct": 46,
+   "cr_pct": 47,
    "cr_season_pct": 48
   },
   {
@@ -27799,7 +27733,7 @@
      1.45
     ]
    },
-   "cr_pct": 46,
+   "cr_pct": 47,
    "cr_season_pct": 48
   },
   {
@@ -28506,7 +28440,7 @@
      1.43
     ]
    },
-   "cr_pct": 45,
+   "cr_pct": 46,
    "cr_season_pct": 47
   },
   {
@@ -28705,7 +28639,7 @@
      1.41
     ]
    },
-   "cr_pct": 44,
+   "cr_pct": 45,
    "cr_season_pct": 43
   },
   {
@@ -28837,7 +28771,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 44,
+   "cr_pct": 45,
    "cr_season_pct": 49
   },
   {
@@ -28904,7 +28838,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 43,
+   "cr_pct": 44,
    "cr_season_pct": 43
   },
   {
@@ -28969,7 +28903,7 @@
      1.39
     ]
    },
-   "cr_pct": 43,
+   "cr_pct": 44,
    "cr_season_pct": 40
   },
   {
@@ -29034,7 +28968,7 @@
      1.96
     ]
    },
-   "cr_pct": 43,
+   "cr_pct": 44,
    "cr_season_pct": 76
   },
   {
@@ -29551,7 +29485,7 @@
      1.41
     ]
    },
-   "cr_pct": 42,
+   "cr_pct": 43,
    "cr_season_pct": 43
   },
   {
@@ -30138,7 +30072,7 @@
      1.39
     ]
    },
-   "cr_pct": 40,
+   "cr_pct": 41,
    "cr_season_pct": 40
   },
   {
@@ -30204,7 +30138,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 40,
+   "cr_pct": 41,
    "cr_season_pct": 32
   },
   {
@@ -30732,7 +30666,7 @@
      1.39
     ]
    },
-   "cr_pct": 38,
+   "cr_pct": 39,
    "cr_season_pct": 40
   },
   {
@@ -30799,7 +30733,7 @@
      1.03
     ]
    },
-   "cr_pct": 38,
+   "cr_pct": 39,
    "cr_season_pct": 16
   },
   {
@@ -30864,7 +30798,7 @@
      1.36
     ]
    },
-   "cr_pct": 38,
+   "cr_pct": 39,
    "cr_season_pct": 36
   },
   {
@@ -31129,7 +31063,7 @@
      1.33
     ]
    },
-   "cr_pct": 37,
+   "cr_pct": 38,
    "cr_season_pct": 33
   },
   {
@@ -31580,7 +31514,7 @@
      1.32
     ]
    },
-   "cr_pct": 36,
+   "cr_pct": 37,
    "cr_season_pct": 32
   },
   {
@@ -31906,7 +31840,7 @@
     ],
     "exp": "year 2"
    },
-   "cr_pct": 35,
+   "cr_pct": 36,
    "cr_season_pct": 40
   },
   {
@@ -31972,7 +31906,7 @@
      1.34
     ]
    },
-   "cr_pct": 35,
+   "cr_pct": 36,
    "cr_season_pct": 34
   },
   {
@@ -32723,7 +32657,7 @@
    "last_gp": 73,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.93,
    "cr_fpg": 0.87,
    "cr_season": 0.65,
@@ -33008,7 +32942,7 @@
      1.31
     ]
    },
-   "cr_pct": 33,
+   "cr_pct": 34,
    "cr_season_pct": 32
   },
   {
@@ -33397,7 +33331,7 @@
      1.3
     ]
    },
-   "cr_pct": 32,
+   "cr_pct": 33,
    "cr_season_pct": 31
   },
   {
@@ -34629,7 +34563,7 @@
      1.24
     ]
    },
-   "cr_pct": 30,
+   "cr_pct": 31,
    "cr_season_pct": 27
   },
   {
@@ -34894,7 +34828,7 @@
      1.24
     ]
    },
-   "cr_pct": 29,
+   "cr_pct": 30,
    "cr_season_pct": 27
   },
   {
@@ -35283,7 +35217,7 @@
      1.22
     ]
    },
-   "cr_pct": 28,
+   "cr_pct": 29,
    "cr_season_pct": 25
   },
   {
@@ -35350,6 +35284,71 @@
    },
    "cr_pct": 28,
    "cr_season_pct": 22
+  },
+  {
+   "id": 5833,
+   "name": "Chris Kreider",
+   "team": "MTL",
+   "games": 2,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    16,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "LW",
+   "slots": [
+    "F",
+    "LW"
+   ],
+   "owner": "waivers",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 40.2,
+   "gp": 5,
+   "ppg": 1.53,
+   "cur_ppg": 1.5,
+   "last_ppg": 1.48,
+   "last_gp": 75,
+   "proj_ppg": 1.54,
+   "clears": "Wed 14",
+   "dfo_out": null,
+   "cr": 2.59,
+   "cr_fpg": 1.33,
+   "cr_season": 1.09,
+   "cr_games": 1.96,
+   "cr_dress": 0.98,
+   "cr_dress_next": 0.98,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8475184,
+   "cr_why": {
+    "toi5": 15.23,
+    "toi": 15.23,
+    "pp5": 3.64,
+    "sog": 1.0,
+    "blk": 0.4,
+    "gp": 5,
+    "last_fpg": 1.48,
+    "xfp": {
+     "gp": 5,
+     "fpg": 1.5,
+     "xfpg": 1.5
+    },
+    "season_fpg": 1.31,
+    "age_adj": -0.06,
+    "season_range": [
+     0.63,
+     1.54
+    ]
+   },
+   "cr_pct": 28,
+   "cr_season_pct": 55
   },
   {
    "id": 4996085,
@@ -40868,7 +40867,7 @@
    "last_gp": 75,
    "proj_ppg": 1.19,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.51,
    "cr_fpg": 1.27,
    "cr_season": 0.55,
