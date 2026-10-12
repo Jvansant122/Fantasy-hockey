@@ -486,9 +486,12 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
 
     bad = rating.last_start_shift({"ga": 5, "toi": 3600, "wins": 0, "losses": 1, "otl": 0})
     win = rating.last_start_shift({"ga": 2, "toi": 3600, "wins": 1, "losses": 0, "otl": 0})
-    loss = rating.last_start_shift({"ga": 3, "toi": 3600, "wins": 0, "losses": 0, "otl": 1})
+    loss = rating.last_start_shift({"ga": 2, "toi": 3600, "wins": 0, "losses": 0, "otl": 1})
     assert bad == (rating.BAD_START_LOGIT, rating.BAD_START_LOGIT_2)
     assert win == (rating.WIN_LOGIT, 0.0) and loss == (rating.LOSS_LOGIT, 0.0)
+    # a full-game loss is cut deeper the more he let in, short of a bad start (findings 225)
+    graded = [rating.last_start_shift({"ga": ga, "toi": 3600, "wins": 0, "losses": 1, "otl": 0})[0] for ga in (2, 3, 4)]
+    assert graded[0] > graded[1] > graded[2] > bad[0]
     shutout = rating.last_start_shift({"ga": 0, "toi": 3600, "wins": 1, "losses": 0, "otl": 0})
     hurt = rating.last_start_shift({"ga": 1, "toi": 1500, "wins": 0, "losses": 0, "otl": 0})
     assert shutout[0] > win[0] and hurt[0] < bad[0]
@@ -1309,3 +1312,23 @@ def test_kept_note_edge_cases(monkeypatch, tmp_path):
     rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")],
          injuries=[dict(real, athlete_id=555, name="Someone Else", status="Injured Reserve")])
     assert json.loads(notes_file.read_text())["555"]["status"] == "INJURY_RESERVE"
+
+
+def test_next_up_power_play_defenseman():
+    """The top PP D (1+ PP min/G) missed the last game or is OUT: the next healthy D who played it gets the boost (findings 310 (5))."""
+    tg = {"TOR": [1, 2, 3, 4, 5, 6]}
+    game = lambda pid, name, g, pp, pos="D": {"game": g, "team": "TOR", "pos": pos, "pptoi": pp, "name": name}
+    logs = {
+        1: [game(1, "Top D", g, 3.0) for g in (1, 2, 3, 4, 5)],  # missed game 6
+        2: [game(2, "Second D", g, 1.5) for g in (1, 2, 3, 4, 5, 6)],
+        3: [game(3, "Third D", g, 0.5) for g in (1, 2, 3, 4, 5, 6)],
+        4: [game(4, "PP forward", g, 4.0, "C") for g in (1, 2, 3, 4, 5, 6)],
+    }
+    assert rating.next_up_pp_d(logs, tg, set()) == {2: "Top D"}
+    logs[1].append(game(1, "Top D", 6, 3.0))
+    assert rating.next_up_pp_d(logs, tg, set()) == {}  # he played: nothing
+    assert rating.next_up_pp_d(logs, tg, {1}) == {2: "Top D"}  # ESPN has him out
+    assert rating.next_up_pp_d(logs, tg, {1, 2}) == {3: "Top D"}  # the second is out too: the third steps up
+    for g in logs[1]:
+        g["pptoi"] = 0.8
+    assert rating.next_up_pp_d(logs, tg, {1}) == {}  # under 1 PP min/G: no PP role to hand on
