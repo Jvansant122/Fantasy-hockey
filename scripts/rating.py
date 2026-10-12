@@ -122,6 +122,7 @@ B2B_AHEAD_NIGHT1, B2B_AHEAD_NIGHT2_NEXT, B2B_AHEAD_NIGHT2_LATER, NO1_ORDINARY_LO
 AFTER_NO1_REST_OTHER_LOGIT = -1.0
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
+ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
 # both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
 # with every rostered goalie, n=125, better in 5 of 5 seasons): an extra shift on his share after the split. The streak shift
 # already fits there (68% against 63%, and a larger one scores worse) (findings 213, handoff 105)
@@ -1047,6 +1048,13 @@ def forecast_features(f, sk):
     return out
 
 
+def strict_rotation(seq, cands, n=ROTATION_STARTS):
+    """The team's last n+ starts strictly alternate between two goalies who are both still here (A, B, A, B, ...):
+    coaches running such a rotation keep it going (findings 227)."""
+    last = seq[-n:]
+    return len(last) == n and len(set(last)) == 2 and set(last) <= set(cands) and all(a != b for a, b in zip(last, last[1:]))
+
+
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None):
     """Expected starts in the rest of this week for each goalie on the team.
@@ -1131,6 +1139,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     new_team = {gid for gid in cands if gid in movers and 1 <= seq.count(gid) <= NEW_TEAM_STARTS}
     run = next((i for i, x in enumerate(reversed(seq)) if x != seq[-1]), len(seq)) if seq else 0
     on_streak = STREAK_RANGE[0] <= run <= STREAK_RANGE[1]
+    rotating = strict_rotation(seq, cands)
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
     dates_sorted = sorted(game_dates)
@@ -1168,7 +1177,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
             z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
                 + (rested if rested and gid == seq[-1] else 0.0) \
-                + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0)
+                + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0) \
+                + (ROTATION_LOGIT if rotating and ahead == 0 and gid == seq[-1] else 0.0)
             if after_rest and ahead == 1 and gid != no1:
                 z += AFTER_NO1_REST_OTHER_LOGIT
             if gid == no1:  # back-to-backs still ahead, and his ordinary nights (findings 231)
