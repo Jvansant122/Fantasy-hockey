@@ -1748,3 +1748,25 @@ def test_update_now_opens_the_workflow_and_reloads_when_new_numbers_land(browser
     assert page.locator("#refresh").inner_text() == "Update now"
     assert errors == []
     ctx.close()
+
+
+def test_season_range_shows_upside(browser, server, data):
+    """Rookies and second-year skaters show their Season upside in the table, the details and the drop list (findings 345)."""
+    if not data["rated"]:
+        pytest.skip("unrated data")
+    d = json.loads(json.dumps(data))
+    for i, p in enumerate(q for q in d["players"] if q["pos"] != "G" and q.get("cr_season") is not None):
+        p["cr_why"]["season_range"] = [max(p["cr_season"] - 0.4, 0), p["cr_season"] + 0.5]
+        if i % 2 == 0:
+            p["cr_why"]["exp"] = "rookie"
+    ctx, page, errors = open_page(browser, server, d)
+    assert page.locator("#rows .upside").count() > 0
+    drops = ""
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        drops += page.locator("#upgrades").inner_text()
+    assert "rookie, upside" in drops
+    page.locator("#rows tr[data-id]:has(.upside)").first.click()
+    assert "80% range" in page.locator("#rows tr.why").inner_text()
+    assert errors == []
+    ctx.close()

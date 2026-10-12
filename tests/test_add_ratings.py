@@ -1525,3 +1525,25 @@ def test_season_games_left_for_a_traded_player_yet_to_play():
     cut = rating.season_dress_features(games, "TOR", [1, 2, 3], f, {}, None, 2.0, model.season_lr["markov"], played=8)
     full = rating.season_dress_features(games, "TOR", [1, 2, 3], f, {}, None, 2.0, model.season_lr["markov"])
     assert cut["games_left"] == rating.SEASON_GAMES - 8 and full["games_left"] == rating.SEASON_GAMES - 3
+
+
+def test_season_range_brackets_the_season_rating(run):
+    """Every matched skater gets an 80% Season range around his Season rating, never below 0 (findings 345)."""
+    by_name, _, _ = run
+    rated = [p for p in by_name.values() if p["pos"] != "G" and p["cr_matched"]]
+    assert rated
+    for p in rated:
+        lo, hi = p["cr_why"]["season_range"]
+        assert 0 <= lo <= p["cr_season"] + 0.01 and hi >= p["cr_season"] - 0.01, (p["name"], lo, hi, p["cr_season"])
+        assert p["cr_why"].get("exp") in (None, "rookie", "year 2")
+
+
+def test_season_range_leans_up_for_rookies():
+    """Rookies and second-year forwards finish further above their Season rating than veterans (findings 345)."""
+    m = rating.Model()
+    vet, exp = m.season_range(1.0, False, 80, 80)
+    assert exp == "veteran"
+    rookie, exp = m.season_range(1.0, False, 10, 0)
+    assert exp == "rookie" and rookie[1] > vet[1]
+    assert m.season_range(1.0, False, 70, 10)[1] == "year 2"
+    assert m.season_range(0.1, True, 0, 0)[0][0] == 0  # the low end never goes below 0
