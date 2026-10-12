@@ -1957,6 +1957,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 fpg_s = fpg
             raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
+            # Proj GP: NHL starts so far + his share of his team's starts still to play (the Season rating's share)
+            proj_gp = (own.get(pid, [0, 0])[1] if pid else 0) \
+                + (goalie_season.get(pid, 0.0) if pid else 0.0) * max(SEASON_GAMES - len(team_games.get(team, [])), 0)
             # start chance per game from today, for the page's open-slot count (findings 236)
             p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())
                                 if not p.get("pending_drop") or d <= today.isoformat()} if pid else {}
@@ -2064,10 +2067,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
             season_share = None
             if df_ and model.season_lr:
-                season = fpg_s * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
+                season = rest_share = model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
                                                                          played=len(team_games.get(team, []))),
                                                  NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                                  + CLEARED_SEASON_LOGIT * cleared_out)
+                season *= fpg_s
             elif cleared_new:
                 season_share = CLEARED_NEW_SEASON * UNPLAYED_NOTED_MULT[unplayed_cell(len(team_games.get(team, [])))]
             elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
@@ -2082,9 +2086,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 # his share falls the longer that lasts (findings 118, 350 (1), (4))
                 season_share = unplayed_share(prev[pid]["gp"], len(tg))
             else:
-                season = fpg_s * p_dress
+                season, rest_share = fpg_s * p_dress, p_dress
             if season_share is not None:
-                season = fpg_s * season_share
+                season, rest_share = fpg_s * season_share, season_share
+            # Proj GP: NHL games so far + the Season share of his ESPN team's games still to play
+            proj_gp = len(gl) + rest_share * max(SEASON_GAMES - len(team_games.get(espn_team, [])), 0)
             age_adj = season_age_adj(births.get(pid), today) if pid else 0.0
             if fpg_s > 0:
                 season *= max(fpg_s + age_adj, 0.0) / fpg_s
@@ -2153,6 +2159,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
         p["cr_season"] = round(season, 2)
+        p["proj_gp"] = round(proj_gp)
         p["cr_games"] = round(exp_games, 2)
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
         p["cr_dress_next"] = None if p_dress is None else round(dress_next, 2)  # his team's next game: tonight cards
