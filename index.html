@@ -455,6 +455,9 @@ function why(p) {
     const NEWS_TXT = {"sent down": "sent to the AHL since his last game", "called up": "called up recently and in the lineup",
       "season-ending": "latest injury news says season-ending", "surgery": "latest injury news mentions surgery"};
     if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(p.proj_ppg)}); the pull fades as he plays games`);
+    if (w.boost_dress != null || w.boost_fpg != null) parts.push(`A model trained on 16 seasons of game logs expects ` +
+      [w.boost_dress != null ? `him in about ${Math.round(w.boost_dress * 100)}% of the rest of the season` : "",
+       w.boost_fpg != null ? `${n(w.boost_fpg)} pts/game from here` : ""].filter(Boolean).join(" and ") + "; the Season rating moves part of the way toward it");
     if (w.season_news?.length) parts.push(`Season share uses Daily Faceoff news: ${w.season_news.map(k => NEWS_TXT[k] || k).join("; ")}`);
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");

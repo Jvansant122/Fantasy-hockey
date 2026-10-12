@@ -992,7 +992,17 @@ If the news can't be read for two days, these changes switch off. A player's det
 
 ## 133. ESPN's preseason projection early in the season
 
-Before the season ESPN projects each skater's stats, and the league's API keeps that projection. In past seasons its projected goals matched actual goals about as well as last season's goals did, so it adds information. **Early in the season the Season rating's points per game now moves part of the way toward ESPN's projection:** 36% of the gap at 0 games, 24% after 10, and 13-16% from 20 games on (fitted leaving one season out over 2023-26). Skaters without an ESPN projection are unchanged, and a player's details show the pull. Tested on the whole board, this ranks rest-of-season points 0.001 better in every test season, and free agents 0.0008 better.
+Before the season ESPN projects each skater's stats, and the league's API keeps that projection. In past seasons its projected goals matched actual goals about as well as last season's goals did, so it adds information. **Early in the season the Season rating's points per game now moves part of the way toward ESPN's projection:** 36% of the gap at 0 games, 24% after 10, and 13-16% from 20 games on (fitted leaving one season out over 2023-26; refitted to 29% at 0 games alongside section 134's models). Skaters without an ESPN projection are unchanged, and a player's details show the pull. Tested on the whole board, this ranks rest-of-season points 0.001 better in every test season, and free agents 0.0008 better.
+
+## 134. Models trained on 16 seasons of game logs
+
+The Season rating's models had learned from about three seasons. The research rebuilt the same simple inputs for every season since 2010-11 from NHL game logs: games played and missed, ice time, power-play time, scoring, absences, age, draft slot, NHL seasons, and who else at his position is out. It added MoneyPuck's last-season rates. With 16 seasons, flexible models (gradient-boosted trees) finally beat the hand-built ones. With 1-4 seasons they lost, and each doubling of history added about the same gain.
+
+Two such models now feed the Season rating:
+- **Share of the rest of the season he plays.** The Season share moves 56% of the way toward this model's answer.
+- **Points per game from here.** The Season points per game moves 60% of the way toward this model's answer at 0 games, fading to 23% by 40 games. ESPN's preseason projection (section 133) is weighed together with it, so its pull is now 29% at 0 games.
+
+Both models are fitted offline and saved as files the daily run reads, so the run needs nothing new. A player's details show both models' numbers. Together with sections 132 and 133, this ranks rest-of-season points 0.0049 better on the whole board and 0.0062 better among free agents, positive in every test season (2023-24, 2024-25, 2025-26), with the weights fitted leaving one season out.
 
 ## What the independent review changed
 

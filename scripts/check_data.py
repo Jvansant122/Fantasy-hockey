@@ -144,9 +144,11 @@ def rules(data):
         # P4 Week = points a game x expected games
         if abs(cr - fpg * g) > 0.006 + 0.005 * (g + abs(fpg)):
             bad["P4"].append(f"{nm} cr {cr} != {fpg} x {g}")
-        # P5 a skater's Season (per team game) never above his points a game
-        if p["pos"] != "G" and p.get("cr_season") is not None and p["cr_season"] > fpg + EPS:
-            bad["P5"].append(f"{nm} cr_season {p['cr_season']} > cr_fpg {fpg}")
+        # P5 a skater's Season (per team game) never above his points a game: the Season rating's own points a game when
+        # it has one (age, ESPN's projection and the boosted model move it off the Week's, findings 360), else the Week's
+        top = (p.get("cr_why") or {}).get("season_pts", fpg) if p["pos"] != "G" else fpg
+        if p["pos"] != "G" and p.get("cr_season") is not None and p["cr_season"] > top + EPS:
+            bad["P5"].append(f"{nm} cr_season {p['cr_season']} > {'season_pts' if top is not fpg else 'cr_fpg'} {top}")
         # P6 dress chances are probabilities
         for k in ("cr_dress", "cr_dress_next"):
             if p.get(k) is not None and not 0 <= p[k] <= 1:
