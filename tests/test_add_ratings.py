@@ -1569,3 +1569,14 @@ def test_season_share_follows_the_save_pct_gap(monkeypatch):
     assert on[1] == pytest.approx(off[1] + rating.SAVE_GAP_SEASON[0] + rating.SAVE_GAP_SEASON[1] * gap1)
     assert on[2] == pytest.approx(off[2] + rating.SAVE_GAP_SEASON[0] - rating.SAVE_GAP_SEASON[1] * gap1)
     assert e_on == e_off  # Season only
+
+
+def test_goalie_season_is_on_the_skaters_scale(run):
+    """A goalie with any share of his team's starts gets intercept + slope x (share x pts/start), so goalie Season values
+    sit on the skaters' scale (findings 330 (2), handoff 271)."""
+    players, _, _ = run
+    a, b = rating.GOALIE_SEASON_SCALE
+    for name in ("Joseph Woll", "Anthony Stolarz", "Jeremy Swayman"):
+        s = players[name]["cr_season"]
+        assert s == 0 or s >= a - 0.01, (name, s)
+    assert 0.2 < a < 0.5 and 0.5 < b < 1
