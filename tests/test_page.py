@@ -40,11 +40,14 @@ def data():
     return json.loads((ROOT / "data" / "players.json").read_text())
 
 
-def open_page(browser, url, data=None, phone=False, clock=None):
+def open_page(browser, url, data=None, phone=False, clock=None, all_rows=True):
     """A fresh page (empty localStorage) that records every JS error. data replaces players.json if given.
-    clock: a datetime the page's clock stands still at, or "install" for a fake clock the test moves on."""
+    clock: a datetime the page's clock stands still at, or "install" for a fake clock the test moves on.
+    all_rows: draw every table row at once (the page draws the first 60 and the rest on scroll), so tests can read them all."""
     ctx = browser.new_context(viewport={"width": 390, "height": 844} if phone else {"width": 1280, "height": 900})
     page = ctx.new_page()
+    if all_rows:
+        page.add_init_script("window.ALL_ROWS = true")
     if clock == "install":
         page.clock.install()
     elif clock is not None:
@@ -1769,4 +1772,20 @@ def test_season_range_shows_upside(browser, server, data):
     page.locator("#rows tr[data-id]:has(.upside)").first.click()
     assert "80% range" in page.locator("#rows tr.why").inner_text()
     assert errors == []
+    ctx.close()
+
+
+def test_table_draws_the_first_rows_then_the_rest_on_scroll(browser, server):
+    """The first 60 rows draw at once and the rest as the list scrolls near them (speed audit plan 1); details still open."""
+    ctx, page, errors = open_page(browser, server, phone=True, all_rows=False)
+    total = page.evaluate("state.data.players.length")
+    page.locator("#who").select_option("every")
+    assert rows(page) == 60 and page.locator("#rows tr.more").count() == 1 and total > 60
+    for _ in range(20):
+        page.locator("#rows tr.more").last.scroll_into_view_if_needed() if page.locator("#rows tr.more").count() else None
+        page.wait_for_timeout(100)
+    assert rows(page) == min(300, total) and page.locator("#rows tr.more").count() == 0
+    page.locator("#rows tr[data-id]").nth(200).click()
+    assert page.locator("#rows tr.why").count() == 1
+    assert not errors, errors
     ctx.close()
