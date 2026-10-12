@@ -543,8 +543,8 @@ def main():
     pts_per_start = float(g[(g.gamesStarted == 1) & (g.season == g.season.max())].fp.mean())
 
     model = {
-        "skater": {"features": WEEK_FEATS, "coef": [round(float(x), 6) for x in coef], "intercept": round(float(icpt), 6),
-                   "fill": {k: round(float(v), 4) for k, v in means.items()},
+        "skater": {"features": WEEK_FEATS, "coef": [round(float(x), 8) for x in coef], "intercept": round(float(icpt), 8),
+                   "fill": {k: round(float(v), 8) for k, v in means.items()},
                    "season": {"features": SEASON_FEATS, "coef": [round(float(x), 8) for x in s_coef], "intercept": round(float(s_icpt), 8),
                               "fill": {k: round(float(v), 8) for k, v in s_means.items()}, **decomposed_json(s_st["dec"])},
                    "hinges": {c: [round(float(q), 6) for q in k] for c, k in sk_st["knots"].items()},
