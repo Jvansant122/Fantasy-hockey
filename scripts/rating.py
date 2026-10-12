@@ -201,6 +201,10 @@ PULLED_SEASON, PULLED_TOI = 0.03, 2400
 # a high scorer slightly later than his rate suggests; logit += a x last season's dress rate + b x Season FP/G, fitted with
 # model/season_dress.json's logit as offset, 2023-26 (findings 330 (4), handoff 273)
 DURABLE_OUT = (0.31, -0.10)
+# a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
+# by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
+# (findings 330 (5), handoff 274)
+MOVER_PPS_BETA = 3.0
 
 
 def bad_start(g):
@@ -565,9 +569,22 @@ def goalie_fp(r):
 
 
 def load_prev_goalie_season(s, season):
-    """Last season per goalie: (games started, fantasy points, saves, shots against). The points include relief appearances."""
-    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r), r.get("saves") or 0, r.get("shotsAgainst") or 0)
-            for r in stats_report(s, "goalie/summary", season)}
+    """Last season per goalie: (games started, fantasy points, saves, shots against, last team). The points include
+    relief appearances; the teams are listed in the order he played for them."""
+    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r), r.get("saves") or 0, r.get("shotsAgainst") or 0,
+                            (r.get("teamAbbrevs") or "").split(",")[-1].strip() or None)
+            for r in stats_report(s, "goalie/summary", season, teams=True)}
+
+
+def prev_points_pct(s, prev_season):
+    """Each team's points% at the end of last season, (2W + OTL) / (2 x games). Empty if the standings can't be read."""
+    try:
+        end = next(x["standingsEnd"] for x in nhl_get(s, f"{NHL_WEB}/standings-season").json()["seasons"] if x["id"] == prev_season)
+        return {r["teamAbbrev"]["default"]: (2 * r["wins"] + r["otLosses"]) / (2 * max(r["gamesPlayed"], 1))
+                for r in nhl_get(s, f"{NHL_WEB}/standings/{end}").json().get("standings", [])}
+    except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
+        print(f"Last season's standings unavailable, goalie team changes not priced: {e!r}", file=sys.stderr)
+        return {}
 
 
 def shrunk_save_pcts(goalie_games, prev_goalies):
@@ -1645,7 +1662,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     model = Model()
     week_games, week_starts = {}, {}
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
-    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength = pmap(lambda f: f(), [
+    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct = pmap(lambda f: f(), [
         lambda: load_skater_games(s, season, today),
         lambda: load_goalie_games(s, season, today),
         lambda: load_prev_season(s, prev_season),
@@ -1656,6 +1673,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         lambda: load_birthdates(s, (season, prev_season)),
         lambda: week_schedule(s, monday, week_games, weeks, week_starts),
         lambda: team_strength(s, prev_season),
+        lambda: prev_points_pct(s, prev_season),
     ], workers=4)
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
@@ -1887,7 +1905,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base
             why["own_pps"] = round(fpg, 2)  # his own, before tonight's line and the schedule (findings 232)
-            raw_season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
+            # changed teams since last season: the last-season part of his Season pts/start moves by the teams' points% gap
+            # (findings 330 (5))
+            old_team = prev_goalies[pid][4] if pid in prior else None
+            if old_team and old_team != team and old_team in prev_pct and team in prev_pct:
+                fpg_s = fpg + MOVER_PPS_BETA * (prev_pct[team] - prev_pct[old_team]) * PPS_PRIOR / (own.get(pid, (0.0, 0))[1] + PPS_PRIOR)
+                why["mover_pps"] = round(fpg_s, 2)
+            else:
+                fpg_s = fpg
+            raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
             # start chance per game from today, for the page's open-slot count (findings 236)
             p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())

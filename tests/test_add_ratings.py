@@ -101,8 +101,10 @@ class FakeSession:
             return Resp({"seasons": [{"id": 20252026, "standingsEnd": "2026-04-17"}]})
         if "/standings/" in url:  # last season's final table, then this season's
             gp = 82 if url.endswith("2026-04-17") else 5
-            return Resp({"standings": [{"teamAbbrev": {"default": "TOR"}, "goalFor": 3 * gp, "goalAgainst": 2 * gp, "gamesPlayed": gp},
-                                       {"teamAbbrev": {"default": "BOS"}, "goalFor": 2 * gp, "goalAgainst": 3 * gp, "gamesPlayed": gp}]})
+            return Resp({"standings": [{"teamAbbrev": {"default": "TOR"}, "goalFor": 3 * gp, "goalAgainst": 2 * gp, "gamesPlayed": gp,
+                                        "wins": gp * 6 // 10, "otLosses": gp // 10},
+                                       {"teamAbbrev": {"default": "BOS"}, "goalFor": 2 * gp, "goalAgainst": 3 * gp, "gamesPlayed": gp,
+                                        "wins": gp * 4 // 10, "otLosses": gp // 10}]})
         m = re.search(r"/roster/(\w+)/current$", url)
         if m:
             team = m.group(1)
@@ -127,7 +129,7 @@ class FakeSession:
                 return Resp({"data": []})
             if report.startswith("goalie"):
                 return Resp({"data": [{"playerId": pid, "gamesStarted": 40, "wins": 22, "losses": 12, "otLosses": 6, "goalsAgainst": 110,
-                                  "saves": 1000, "shutouts": 3} for pid, *_ in GOALIES]})
+                                  "saves": 1000, "shutouts": 3, "teamAbbrevs": self.last_team.get(pid, team)} for pid, _, team in GOALIES]})
             return Resp({"data": [{**skater_row(pid, name, team, pos, 0), "teamAbbrevs": self.last_team.get(pid, team), "gamesPlayed": 80, "goals": 20, "assists": 30,
                                    "ppPoints": 15, "shots": 200, "hits": 60, "blockedShots": 50, "ppTimeOnIce": 12000}
                                   for pid, name, team, pos, _ in SKATERS if (pid in self.away_last) == (season == 20242025)]})
@@ -1644,3 +1646,14 @@ def test_durable_skater_out_long_comes_back_sooner():
     z = lambda p: math.log(p / (1 - p))
     assert x["os_long"] == 1.0 and z(on) - z(off) == pytest.approx(a * 1.0 + b * 2.0)
     assert share(team, 82)[0] == pytest.approx(healthy_off)
+
+
+def test_offseason_goalie_mover_carries_his_old_rate_adjusted_for_the_team_change(monkeypatch, tmp_path):
+    """Swayman played last season for TOR (points% 0.65) and now for BOS (0.45): his Season pts/start drops by
+    3 x 0.20 x 15 / (his starts + 15); the Week rating is unchanged (findings 330 (5), handoff 274)."""
+    def sway(**kw):
+        return rate(monkeypatch, tmp_path, [espn(113, "Jeremy Swayman", "BOS", "G")], fake=FakeSession(**kw))["Jeremy Swayman"]
+    moved, stay = sway(last_team={13: "TOR"}), sway()
+    assert moved["cr"] == stay["cr"] and moved["cr_season"] < stay["cr_season"]
+    assert "mover_pps" in moved["cr_why"] and "mover_pps" not in stay["cr_why"]
+    assert moved["cr_why"]["mover_pps"] < moved["cr_why"]["own_pps"]
