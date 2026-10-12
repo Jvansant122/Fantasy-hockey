@@ -1561,14 +1561,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             traded = bool(gl) and espn_team != team and espn_team in team_games and gl[-1]["game"] in tg
             if traded:
                 tg = tg[:tg.index(gl[-1]["game"]) + 1]
-            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=prev2.get(pid))
+            # his "last season" is already the one before (missed last season): no older season to add (findings 216)
+            p2 = None if (prev.get(pid) or {}).get("season_label") else prev2.get(pid)
+            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2)
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             # opening games cut short: average with his points a game leaving those games out (findings 171)
             kept = short_opening(gl, prev.get(pid)) if pid else None
             if kept is not None:
                 f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg,
-                                     is_d=p["pos"] == "D", p2=prev2.get(pid))
+                                     is_d=p["pos"] == "D", p2=p2)
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
             # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)
