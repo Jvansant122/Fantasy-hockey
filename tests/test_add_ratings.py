@@ -2,6 +2,7 @@
 
 fetch.py swallows rating errors so the site still publishes; this test is what catches a broken rating before merge."""
 import json
+import math
 import re
 from datetime import date, timedelta
 
@@ -1618,3 +1619,28 @@ def test_pulled_goalie_loses_a_little_season_share():
     nd = (1, rating.last_start_shift({"ga": 1, "sv": 20, "sa": 21, "toi": 2300, "wins": 0, "losses": 0, "otl": 0}))
     assert nd[1][0] == rating.NO_DECISION_LOGIT
     assert run({1}, nd)[0] == run((), nd)[0]
+
+
+def test_durable_skater_out_long_comes_back_sooner():
+    """Out 6+ team games: last season's dress rate raises the Season dress share, FP/G lowers it a little; players out
+    fewer games are unchanged (findings 330 (4), handoff 273)."""
+    model = rating.Model()
+    team = list(range(1, 21))
+    def share(played, gp):
+        gl = [{"game": g, "team": "TOR", "toi": 17.0, "date": f"2026-11-{g:02d}"} for g in played]
+        f = {"dressed3": sum(g in played for g in team[-3:]) / 3, "dressed10": sum(g in played for g in team[-10:]) / 10,
+             "std_toi": 17.0, "l5_toi": 17.0, "std_pptoi": 2.0, "is_D": 0.0}
+        df = rating.dress_features(gl, "TOR", team, f, date(2026, 11, 21))
+        x = rating.season_dress_features(gl, "TOR", team, f, df, {"gp": gp}, 2.0, model.season_lr["markov"])
+        return model.season_dress(x), x
+    (on, x), off = share(team[:10], 82), None
+    a, b = rating.DURABLE_OUT
+    rating.DURABLE_OUT = (0.0, 0.0)
+    try:
+        off = share(team[:10], 82)[0]
+        healthy_off = share(team, 82)[0]
+    finally:
+        rating.DURABLE_OUT = (a, b)
+    z = lambda p: math.log(p / (1 - p))
+    assert x["os_long"] == 1.0 and z(on) - z(off) == pytest.approx(a * 1.0 + b * 2.0)
+    assert share(team, 82)[0] == pytest.approx(healthy_off)

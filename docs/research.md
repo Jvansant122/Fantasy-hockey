@@ -955,6 +955,10 @@ Goalie Season values ran wider than what goalies went on to score: the top eight
 
 About one start in 25 ends with the goalie pulled before 40 minutes. When a goalie was pulled from his latest start, his share of the team's remaining starts has come in lower than the Season rating expected (0.33 against 0.36). **His Season share of future starts now drops by 0.03**, unless the existing "left without a decision" cut already applies to him. Refit on the site's own shares over 2023-26 Mondays, this ranks goalies' rest-of-season points slightly better in each of three test seasons. It is a small change: tonight's start chances and the Week rating are unchanged.
 
+## 127. Durable players coming back from long injuries
+
+For a skater who has missed his team's last 6 or more games, the Season rating's share of the rest of the season he plays now leans on how durable he was last season. Players who dressed for over 90% of last season's games have come back sooner than the lineup chain expected: they played 0.56 of the rest of the season against 0.48 predicted. **The odds he dresses now rise by 0.31 x last season's games-played rate and fall by 0.10 x his Season points a game**, so the heaviest scorers move a little less. This was fitted on top of the site's own Season dress model over 2023-26. It ranks players out 6+ games 0.007 better in each of three test seasons and leaves everyone else unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |
