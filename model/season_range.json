@@ -1,0 +1,93 @@
+{
+ "_doc": "80% range of the skater Season rating (findings 345): Season + low to Season + high, low floored at 0; held out, about 10% finish above and 10% below in every experience x position group. Key position (F/D) | tier | experience. Tier: Season rating below cuts[0] low, below cuts[1] mid, else top. Experience: rookie = under 25 NHL GP last season and two seasons ago together; year 2 = not a rookie, under 25 GP two seasons ago; else veteran. Refit: research/claude-rating/rookie-upside/r814_live_table.py --write.",
+ "keys": [
+  "pos",
+  "tier",
+  "exp"
+ ],
+ "rookie_gp": 25,
+ "cuts": {
+  "F": [
+   0.76,
+   1.35
+  ],
+  "D": [
+   0.83,
+   1.36
+  ]
+ },
+ "cells": {
+  "D|low|rookie": [
+   -0.43,
+   0.49
+  ],
+  "D|low|veteran": [
+   -0.38,
+   0.48
+  ],
+  "D|low|year 2": [
+   -0.4,
+   0.43
+  ],
+  "D|mid|rookie": [
+   -0.56,
+   0.46
+  ],
+  "D|mid|veteran": [
+   -0.47,
+   0.37
+  ],
+  "D|mid|year 2": [
+   -0.44,
+   0.43
+  ],
+  "D|top|rookie": [
+   -0.56,
+   0.4
+  ],
+  "D|top|veteran": [
+   -0.56,
+   0.4
+  ],
+  "D|top|year 2": [
+   -0.36,
+   0.46
+  ],
+  "F|low|rookie": [
+   -0.38,
+   0.47
+  ],
+  "F|low|veteran": [
+   -0.37,
+   0.4
+  ],
+  "F|low|year 2": [
+   -0.34,
+   0.41
+  ],
+  "F|mid|rookie": [
+   -0.43,
+   0.6
+  ],
+  "F|mid|veteran": [
+   -0.46,
+   0.45
+  ],
+  "F|mid|year 2": [
+   -0.47,
+   0.56
+  ],
+  "F|top|rookie": [
+   -0.3,
+   0.64
+  ],
+  "F|top|veteran": [
+   -0.57,
+   0.5
+  ],
+  "F|top|year 2": [
+   -0.49,
+   0.6
+  ]
+ }
+}

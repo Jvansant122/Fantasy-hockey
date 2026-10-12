@@ -739,6 +739,21 @@ class Model:
         self.dress_lr = m.get("dress_logit")
         sd = ROOT / "model" / "season_dress.json"
         self.season_lr = json.loads(sd.read_text()) if sd.exists() else None
+        sr = ROOT / "model" / "season_range.json"
+        self.season_range_table = json.loads(sr.read_text()) if sr.exists() else None
+
+    def season_range(self, season, is_d, gp_last, gp_before):
+        """80% range of the Season rating and his experience group (findings 345): rookies and second-year players finish
+        further above their Season rating than veterans do. gp_last / gp_before: NHL games last season / two seasons ago."""
+        t = self.season_range_table
+        if not t:
+            return None, None
+        exp = "rookie" if gp_last + gp_before < t["rookie_gp"] else "year 2" if gp_before < t["rookie_gp"] else "veteran"
+        pos = "D" if is_d else "F"
+        lo_cut, hi_cut = t["cuts"][pos]
+        tier = "low" if season < lo_cut else "mid" if season < hi_cut else "top"
+        lo, hi = t["cells"][f"{pos}|{tier}|{exp}"]
+        return [round(max(season + lo, 0.0), 2), round(season + hi, 2)], exp
 
     def season_dress(self, x, shift=0.0):
         """Share of the team's remaining games he dresses (rest-of-season logistic, findings section 56)."""
@@ -1944,6 +1959,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["season_share"] = round(season_share, 2)
             if abs(age_adj) >= 0.03:
                 why["age_adj"] = round(age_adj, 2)
+            gp_last = 0 if (prev.get(pid) or {}).get("season_label") else (prev.get(pid) or {}).get("gp", 0)
+            rng, exp = model.season_range(season, p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0)) if pid else (None, None)
+            if rng:
+                why["season_range"] = rng
+                if exp != "veteran":
+                    why["exp"] = exp
             if p.get("injury") in SKATER_INJURY_CAP and p["injury"] != "SUSPENSION":
                 why["back"] = usually_back(p["injury"], sat_last, note)
         p["cr"] = round(fpg * exp_games, 2)
