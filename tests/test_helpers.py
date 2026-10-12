@@ -171,6 +171,10 @@ def test_waiver_players_play_from_the_day_after_they_clear():
     assert days[1] == date(2026, 10, 11)  # Fri 8:17 PM drop: 24 h is Sat evening, clears the 3 AM Sunday run
     assert days[2] == date(2026, 10, 10)  # Fri 2:30 AM drop: 24 h is Sat 2:30 AM, before that night's run
     assert 3 not in days and 9 not in days
+    # a drop made by Sunday's 3:45 AM waiver run (a claim) clears at Monday's run (findings 290 (2))
+    claim = [{"status": "EXECUTED", "type": "WAIVER", "proposedDate": ms(2026, 10, 10, 21), "processDate": ms(2026, 10, 11, 3, 45),
+              "items": [{"type": "ADD", "playerId": 7}, {"type": "DROP", "playerId": 4}]}]
+    assert fetch.waiver_first_days(claim, date(2026, 10, 11))[4] == date(2026, 10, 12)
 
 
 def test_scoreboard_schedule_fails_on_a_lost_day(monkeypatch):
@@ -446,3 +450,10 @@ def test_lineup_context_counts_regulars_above_him_who_missed_the_last_game():
     gaps = rating.context_gaps({"missed_last": 1.0, "l10_toi": 19, "last_toi": 12, "out_above_toi": 5.0, "out_above_pp": 0.0,
                                 "l10_pptoi": 3.0, "pp_l1": None})
     assert gaps == {"ml_gap": 7, "ml_ppgap": None, "oa_gap": 3 * (12 - 19), "oap_gap": None}
+
+
+def test_next_matchup_length():
+    """Adds after Sunday's first puck use the next matchup's moves (findings 290 (1)): 14 before a two-week round."""
+    assert fetch.next_matchup_days({"21": [22, 23], "20": [21]}, 20) == 14
+    assert fetch.next_matchup_days({"2": [2], "1": [1]}, 1) == 7
+    assert fetch.next_matchup_days(None, 5) == 7

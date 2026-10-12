@@ -93,6 +93,14 @@ def matchup_days(matchup_periods, period, today_sp, weekday):
     return days if today_sp in days and monday_ok else week
 
 
+def next_matchup_days(matchup_periods, period):
+    """Days in the matchup after this one: 7 a week from ESPN's map (14 in a two-week playoff round), 7 without it."""
+    weeks = (matchup_periods or {}).get(str(period + 1))
+    if not weeks or not all(isinstance(w, int) and w >= 1 for w in weeks):
+        return 7
+    return sum(6 if w == 1 else 7 for w in weeks)
+
+
 def roster_limit(slot_counts):
     """Players a team can hold outside IR: every lineup and bench slot, not the IR slot '8' (22 here, findings 231).
     None when ESPN sends no slot counts."""
@@ -127,8 +135,11 @@ def waiver_first_days(transactions, today):
         when = t.get("proposedDate")
         if not when or t.get("status") not in (None, "EXECUTED"):
             continue
-        clear = datetime.fromtimestamp(when / 1000, ET) + timedelta(hours=WAIVER_HOURS)
-        day = clear.date() if clear.hour < WAIVER_RUN_HOUR else clear.date() + timedelta(days=1)
+        if t.get("type") == "WAIVER":  # a drop made by the overnight waiver run clears at the next night's run (findings 290 (2))
+            day = (datetime.fromtimestamp((t.get("processDate") or when) / 1000, ET) + timedelta(days=1)).date()
+        else:
+            clear = datetime.fromtimestamp(when / 1000, ET) + timedelta(hours=WAIVER_HOURS)
+            day = clear.date() if clear.hour < WAIVER_RUN_HOUR else clear.date() + timedelta(days=1)
         for item in t.get("items") or []:
             if item.get("type") == "DROP" and item.get("playerId") is not None:
                 out[item["playerId"]] = max(day, today + timedelta(days=1))  # on waivers now, so not tonight
@@ -650,6 +661,11 @@ def main():
                   if t.get("transactionCounter") else None for t in league["teams"]}
     acq = settings.get("acquisitionSettings") or {}
     move_limit = matchup_move_limit(acq, len(matchup_sps), moves_used.values())
+    # adds after Sunday's first puck are charged to the next matchup (findings 290 (1)): its counter and limit
+    moves_used_next = {t["id"]: (t["transactionCounter"].get("matchupAcquisitionTotals") or {}).get(str(period + 1), 0)
+                       if t.get("transactionCounter") else None for t in league["teams"]}
+    move_limit_next = None if final_matchup else matchup_move_limit(
+        acq, next_matchup_days(sched_settings.get("matchupPeriods"), period), moves_used_next.values())
     print("ESPN acquisitionSettings:", json.dumps(acq))
     print("ESPN lineupSlotCounts:", json.dumps((settings.get("rosterSettings") or {}).get("lineupSlotCounts")))
     print("ESPN lineupSlotStatLimits:", json.dumps(stat_limits))
@@ -683,6 +699,7 @@ def main():
         "rated": rated,
         "goalie_cap": goalie_cap,
         "move_limit": move_limit,
+        "move_limit_next": move_limit_next,  # the next matchup's, for adds after Sunday's first puck (findings 290 (1))
         "ir_slots": ir_slots,
         "roster_max": roster_max,  # players allowed outside IR (findings 231)
         "trade_deadline": trade_deadline,  # ESPN's trade deadline, ms since 1970, or None
@@ -691,6 +708,7 @@ def main():
         "sp1_date": sp1_date(night_dates),  # ESPN's period 1, for the publish check's day-shift rule (findings 242)
         "teams": [{"id": t["id"], "name": team_names[t["id"]], "mine": bool(my_team and t["id"] == my_team["id"]),
                    "moves_used": moves_used[t["id"]],
+                   "moves_used_next": moves_used_next[t["id"]],
                    # ESPN waiver order, 1 = first claim (findings 212: losing claims cost no move)
                    "waiver_rank": t.get("waiverRank")} for t in league["teams"]],
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
