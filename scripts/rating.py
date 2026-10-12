@@ -197,6 +197,10 @@ GOALIE_SEASON_SCALE = (0.32, 0.72)
 # pulled (under 40:00 of ice time) in his last start, without the no-decision cut: his rest-of-season share came in
 # 0.03 below (0.361 against 0.331); refit on this site's shares, 2023-26 Mondays (findings 330 (3), handoff 272)
 PULLED_SEASON, PULLED_TOI = 0.03, 2400
+# out 6+ team games: a skater who dressed for most of last season comes back sooner than the lineup chain expects,
+# a high scorer slightly later than his rate suggests; logit += a x last season's dress rate + b x Season FP/G, fitted with
+# model/season_dress.json's logit as offset, 2023-26 (findings 330 (4), handoff 273)
+DURABLE_OUT = (0.31, -0.10)
 
 
 def bad_start(g):
@@ -832,6 +836,8 @@ class Model:
         """Share of the team's remaining games he dresses (rest-of-season logistic, findings section 56)."""
         m = self.season_lr
         z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items()) + shift
+        if x.get("os_long"):
+            z += DURABLE_OUT[0] * x["prev_dress_rate"] + DURABLE_OUT[1] * x["fpg"]
         return 1 / (1 + math.exp(-z))
 
     def fpg(self, feats, season=False):
