@@ -742,13 +742,16 @@ class Model:
         sr = ROOT / "model" / "season_range.json"
         self.season_range_table = json.loads(sr.read_text()) if sr.exists() else None
 
-    def season_range(self, season, is_d, gp_last, gp_before):
+    def season_range(self, season, is_d, gp_last, gp_before, age=None):
         """80% range of the Season rating and his experience group (findings 345): rookies and second-year players finish
-        further above their Season rating than veterans do. gp_last / gp_before: NHL games last season / two seasons ago."""
+        further above their Season rating than veterans do. gp_last / gp_before: NHL games last season / two seasons ago; age in
+        years (28+ is a veteran whatever his recent games: back from the AHL, Europe or injury)."""
         t = self.season_range_table
         if not t:
             return None, None
         exp = "rookie" if gp_last + gp_before < t["rookie_gp"] else "year 2" if gp_before < t["rookie_gp"] else "veteran"
+        if age is not None and age >= t.get("veteran_age", 99):
+            exp = "veteran"
         pos = "D" if is_d else "F"
         lo_cut, hi_cut = t["cuts"][pos]
         tier = "low" if season < lo_cut else "mid" if season < hi_cut else "top"
@@ -1960,7 +1963,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if abs(age_adj) >= 0.03:
                 why["age_adj"] = round(age_adj, 2)
             gp_last = 0 if (prev.get(pid) or {}).get("season_label") else (prev.get(pid) or {}).get("gp", 0)
-            rng, exp = model.season_range(season, p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0)) if pid else (None, None)
+            rng, exp = model.season_range(season, p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
+                                          (today - births[pid]).days / 365.25 if pid in births else None) if pid else (None, None)
             if rng:
                 why["season_range"] = rng
                 if exp != "veteran":
