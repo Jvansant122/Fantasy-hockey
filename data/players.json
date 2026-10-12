@@ -1,8 +1,8 @@
 {
- "updated": "Mon Oct 12, 9:14 AM ET",
+ "updated": "Mon Oct 12, 10:12 AM ET",
  "updated_date": "2026-10-12",
  "first_start": "2026-10-12T17:00:00Z",
- "updated_utc": "2026-10-12T13:14:03Z",
+ "updated_utc": "2026-10-12T14:12:18Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -3606,7 +3606,11 @@
      "fpg": 3.67,
      "xfpg": 2.58
     },
-    "season_fpg": 2.65
+    "season_fpg": 2.65,
+    "season_range": [
+     1.9,
+     2.97
+    ]
    },
    "cr_pct": 100,
    "cr_season_pct": 99
@@ -3635,7 +3639,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 38.0,
+   "owned": 38.3,
    "gp": 2,
    "ppg": 6.1,
    "cur_ppg": 6.6,
@@ -3697,7 +3701,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 86.2,
+   "owned": 86.3,
    "gp": 5,
    "ppg": 3.76,
    "cur_ppg": 4.64,
@@ -3801,7 +3805,11 @@
      "fpg": 2.0,
      "xfpg": 3.44
     },
-    "season_fpg": 2.54
+    "season_fpg": 2.54,
+    "season_range": [
+     1.8,
+     2.87
+    ]
    },
    "cr_pct": 100,
    "cr_season_pct": 98
@@ -3864,7 +3872,11 @@
      "fpg": 3.36,
      "xfpg": 2.29
     },
-    "season_fpg": 2.39
+    "season_fpg": 2.39,
+    "season_range": [
+     1.69,
+     2.76
+    ]
    },
    "cr_pct": 99,
    "cr_season_pct": 97
@@ -3926,7 +3938,11 @@
      "fpg": 3.7,
      "xfpg": 2.72
     },
-    "season_fpg": 2.43
+    "season_fpg": 2.43,
+    "season_range": [
+     1.7,
+     2.77
+    ]
    },
    "cr_pct": 99,
    "cr_season_pct": 97
@@ -3964,7 +3980,7 @@
    "last_gp": 77,
    "proj_ppg": 2.22,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 9.23,
    "cr_fpg": 2.35,
    "cr_season": 2.23,
@@ -3987,7 +4003,11 @@
      "fpg": 2.66,
      "xfpg": 2.84
     },
-    "season_fpg": 2.4
+    "season_fpg": 2.4,
+    "season_range": [
+     1.67,
+     2.63
+    ]
    },
    "cr_pct": 100,
    "cr_season_pct": 99
@@ -4048,7 +4068,11 @@
      "fpg": 2.86,
      "xfpg": 2.89
     },
-    "season_fpg": 2.35
+    "season_fpg": 2.35,
+    "season_range": [
+     1.62,
+     2.58
+    ]
    },
    "cr_pct": 100,
    "cr_season_pct": 98
@@ -4088,7 +4112,7 @@
    "last_gp": 81,
    "proj_ppg": 2.31,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 9.17,
    "cr_fpg": 2.34,
    "cr_season": 2.2,
@@ -4111,7 +4135,11 @@
      "fpg": 2.64,
      "xfpg": 2.69
     },
-    "season_fpg": 2.37
+    "season_fpg": 2.37,
+    "season_range": [
+     1.63,
+     2.7
+    ]
    },
    "cr_pct": 99,
    "cr_season_pct": 97
@@ -4172,7 +4200,11 @@
      "fpg": 4.26,
      "xfpg": 3.07
     },
-    "season_fpg": 3.14
+    "season_fpg": 3.14,
+    "season_range": [
+     2.42,
+     3.49
+    ]
    },
    "cr_pct": 99,
    "cr_season_pct": 100
@@ -4233,7 +4265,11 @@
      "fpg": 2.66,
      "xfpg": 1.93
     },
-    "season_fpg": 2.3
+    "season_fpg": 2.3,
+    "season_range": [
+     1.58,
+     2.54
+    ]
    },
    "cr_pct": 99,
    "cr_season_pct": 98
@@ -4296,7 +4332,11 @@
      "fpg": 2.12,
      "xfpg": 2.69
     },
-    "season_fpg": 2.38
+    "season_fpg": 2.38,
+    "season_range": [
+     1.58,
+     2.65
+    ]
    },
    "cr_pct": 98,
    "cr_season_pct": 96
@@ -4327,7 +4367,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 86.0,
+   "owned": 86.1,
    "gp": 6,
    "ppg": 2.54,
    "cur_ppg": 2.98,
@@ -4359,7 +4399,11 @@
      "xfpg": 2.8
     },
     "season_fpg": 2.29,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     1.46,
+     2.53
+    ]
    },
    "cr_pct": 98,
    "cr_season_pct": 94
@@ -4421,7 +4465,11 @@
      "fpg": 1.96,
      "xfpg": 2.38
     },
-    "season_fpg": 2.11
+    "season_fpg": 2.11,
+    "season_range": [
+     1.29,
+     2.36
+    ]
    },
    "cr_pct": 98,
    "cr_season_pct": 89
@@ -4483,7 +4531,11 @@
      "fpg": 2.02,
      "xfpg": 2.24
     },
-    "season_fpg": 2.11
+    "season_fpg": 2.11,
+    "season_range": [
+     1.39,
+     2.46
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 93
@@ -4514,7 +4566,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 94.8,
+   "owned": 94.7,
    "gp": 5,
    "ppg": 2.15,
    "cur_ppg": 0.56,
@@ -4545,7 +4597,11 @@
      "fpg": 0.56,
      "xfpg": 2.16
     },
-    "season_fpg": 2.01
+    "season_fpg": 2.01,
+    "season_range": [
+     1.26,
+     2.33
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 88
@@ -4606,7 +4662,11 @@
      "fpg": 3.5,
      "xfpg": 2.33
     },
-    "season_fpg": 2.82
+    "season_fpg": 2.82,
+    "season_range": [
+     2.03,
+     3.1
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 100
@@ -4668,7 +4728,11 @@
      "fpg": 1.2,
      "xfpg": 1.93
     },
-    "season_fpg": 1.96
+    "season_fpg": 1.96,
+    "season_range": [
+     1.23,
+     2.3
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 87
@@ -4729,7 +4793,11 @@
      "fpg": 3.5,
      "xfpg": 2.71
     },
-    "season_fpg": 2.76
+    "season_fpg": 2.76,
+    "season_range": [
+     2.0,
+     3.07
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 99
@@ -4759,7 +4827,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 90.7,
+   "owned": 90.8,
    "gp": 4,
    "ppg": 3.47,
    "cur_ppg": 4.8,
@@ -4862,7 +4930,11 @@
      "fpg": 2.3,
      "xfpg": 2.34
     },
-    "season_fpg": 2.06
+    "season_fpg": 2.06,
+    "season_range": [
+     1.31,
+     2.38
+    ]
    },
    "cr_pct": 96,
    "cr_season_pct": 90
@@ -4923,7 +4995,11 @@
      "fpg": 3.1,
      "xfpg": 3.11
     },
-    "season_fpg": 2.69
+    "season_fpg": 2.69,
+    "season_range": [
+     1.91,
+     2.98
+    ]
    },
    "cr_pct": 96,
    "cr_season_pct": 99
@@ -4986,7 +5062,11 @@
      "fpg": 1.14,
      "xfpg": 1.9
     },
-    "season_fpg": 1.91
+    "season_fpg": 1.91,
+    "season_range": [
+     1.18,
+     2.25
+    ]
    },
    "cr_pct": 96,
    "cr_season_pct": 86
@@ -5046,7 +5126,11 @@
      "fpg": 2.48,
      "xfpg": 2.96
     },
-    "season_fpg": 2.51
+    "season_fpg": 2.51,
+    "season_range": [
+     1.77,
+     2.73
+    ]
    },
    "cr_pct": 99,
    "cr_season_pct": 99
@@ -5075,7 +5159,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 69.4,
+   "owned": 69.5,
    "gp": 4,
    "ppg": 3.2,
    "cur_ppg": 4.2,
@@ -5167,7 +5251,11 @@
      "fpg": 2.83,
      "xfpg": 3.04
     },
-    "season_fpg": 2.62
+    "season_fpg": 2.62,
+    "season_range": [
+     1.91,
+     2.87
+    ]
    },
    "cr_pct": 98,
    "cr_season_pct": 100
@@ -5228,7 +5316,11 @@
      "fpg": 2.72,
      "xfpg": 2.33
     },
-    "season_fpg": 2.55
+    "season_fpg": 2.55,
+    "season_range": [
+     1.84,
+     2.91
+    ]
    },
    "cr_pct": 96,
    "cr_season_pct": 98
@@ -5290,7 +5382,11 @@
      "xfpg": 2.72
     },
     "season_fpg": 2.77,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     1.92,
+     2.99
+    ]
    },
    "cr_pct": 95,
    "cr_season_pct": 99
@@ -5352,7 +5448,11 @@
      "xfpg": 2.33
     },
     "season_fpg": 2.61,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     1.81,
+     2.88
+    ]
    },
    "cr_pct": 95,
    "cr_season_pct": 98
@@ -5414,7 +5514,11 @@
      "fpg": 1.3,
      "xfpg": 2.12
     },
-    "season_fpg": 1.85
+    "season_fpg": 1.85,
+    "season_range": [
+     1.08,
+     2.15
+    ]
    },
    "cr_pct": 95,
    "cr_season_pct": 83
@@ -5474,7 +5578,11 @@
      "fpg": 4.42,
      "xfpg": 2.15
     },
-    "season_fpg": 2.54
+    "season_fpg": 2.54,
+    "season_range": [
+     1.77,
+     2.73
+    ]
    },
    "cr_pct": 98,
    "cr_season_pct": 99
@@ -5536,7 +5644,11 @@
      "fpg": 0.72,
      "xfpg": 1.97
     },
-    "season_fpg": 1.81
+    "season_fpg": 1.81,
+    "season_range": [
+     1.01,
+     2.08
+    ]
    },
    "cr_pct": 95,
    "cr_season_pct": 81
@@ -5599,7 +5711,11 @@
      "fpg": 2.08,
      "xfpg": 2.02
     },
-    "season_fpg": 1.83
+    "season_fpg": 1.83,
+    "season_range": [
+     1.08,
+     2.15
+    ]
    },
    "cr_pct": 94,
    "cr_season_pct": 83
@@ -5629,7 +5745,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 97.5,
+   "owned": 97.6,
    "gp": 5,
    "ppg": 2.48,
    "cur_ppg": 3.7,
@@ -5660,7 +5776,11 @@
      "fpg": 3.7,
      "xfpg": 3.87
     },
-    "season_fpg": 2.6
+    "season_fpg": 2.6,
+    "season_range": [
+     1.85,
+     2.92
+    ]
    },
    "cr_pct": 94,
    "cr_season_pct": 98
@@ -5722,7 +5842,11 @@
      "fpg": 0.96,
      "xfpg": 1.71
     },
-    "season_fpg": 1.87
+    "season_fpg": 1.87,
+    "season_range": [
+     1.13,
+     2.2
+    ]
    },
    "cr_pct": 94,
    "cr_season_pct": 85
@@ -5783,7 +5907,11 @@
      "fpg": 1.0,
      "xfpg": 1.73
     },
-    "season_fpg": 1.85
+    "season_fpg": 1.85,
+    "season_range": [
+     1.07,
+     2.03
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 90
@@ -5844,7 +5972,11 @@
      "fpg": 4.18,
      "xfpg": 3.13
     },
-    "season_fpg": 2.44
+    "season_fpg": 2.44,
+    "season_range": [
+     1.72,
+     2.79
+    ]
    },
    "cr_pct": 94,
    "cr_season_pct": 97
@@ -5996,7 +6128,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 72.4,
+   "owned": 72.5,
    "gp": 4,
    "ppg": 2.83,
    "cur_ppg": 3.8,
@@ -6068,7 +6200,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 83.7,
+   "owned": 83.8,
    "gp": 4,
    "ppg": 1.91,
    "cur_ppg": 2.17,
@@ -6099,7 +6231,11 @@
      "fpg": 2.05,
      "xfpg": 2.29
     },
-    "season_fpg": 1.89
+    "season_fpg": 1.89,
+    "season_range": [
+     1.12,
+     2.19
+    ]
    },
    "cr_pct": 93,
    "cr_season_pct": 85
@@ -6130,7 +6266,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 21.5,
+   "owned": 21.6,
    "gp": 5,
    "ppg": 1.31,
    "cur_ppg": 1.4,
@@ -6138,7 +6274,7 @@
    "last_gp": 82,
    "proj_ppg": 1.29,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 7.04,
    "cr_fpg": 1.8,
    "cr_season": 1.68,
@@ -6161,7 +6297,11 @@
      "fpg": 1.4,
      "xfpg": 1.94
     },
-    "season_fpg": 1.81
+    "season_fpg": 1.81,
+    "season_range": [
+     1.11,
+     2.18
+    ]
    },
    "cr_pct": 93,
    "cr_season_pct": 85
@@ -6254,7 +6394,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 16.7,
+   "owned": 16.9,
    "gp": 5,
    "ppg": 1.65,
    "cur_ppg": 1.46,
@@ -6285,7 +6425,11 @@
      "fpg": 1.46,
      "xfpg": 1.5
     },
-    "season_fpg": 1.75
+    "season_fpg": 1.75,
+    "season_range": [
+     1.05,
+     2.12
+    ]
    },
    "cr_pct": 93,
    "cr_season_pct": 83
@@ -6348,7 +6492,11 @@
      "xfpg": 2.64
     },
     "season_fpg": 1.78,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.98,
+     2.05
+    ]
    },
    "cr_pct": 93,
    "cr_season_pct": 80
@@ -6409,7 +6557,11 @@
      "fpg": 2.47,
      "xfpg": 1.98
     },
-    "season_fpg": 2.38
+    "season_fpg": 2.38,
+    "season_range": [
+     1.62,
+     2.69
+    ]
    },
    "cr_pct": 92,
    "cr_season_pct": 96
@@ -6439,7 +6591,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 71.7,
+   "owned": 71.9,
    "gp": 4,
    "ppg": 3.05,
    "cur_ppg": 3.55,
@@ -6541,7 +6693,11 @@
      "fpg": 2.18,
      "xfpg": 2.77
     },
-    "season_fpg": 2.27
+    "season_fpg": 2.27,
+    "season_range": [
+     1.53,
+     2.6
+    ]
    },
    "cr_pct": 92,
    "cr_season_pct": 96
@@ -6580,7 +6736,7 @@
    "last_gp": 65,
    "proj_ppg": 1.21,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.63,
    "cr_fpg": 1.69,
    "cr_season": 1.52,
@@ -6603,7 +6759,11 @@
      "fpg": 0.76,
      "xfpg": 1.93
     },
-    "season_fpg": 1.65
+    "season_fpg": 1.65,
+    "season_range": [
+     0.95,
+     2.02
+    ]
    },
    "cr_pct": 92,
    "cr_season_pct": 79
@@ -6663,7 +6823,11 @@
      "fpg": 2.86,
      "xfpg": 2.02
     },
-    "season_fpg": 2.27
+    "season_fpg": 2.27,
+    "season_range": [
+     1.43,
+     2.39
+    ]
    },
    "cr_pct": 97,
    "cr_season_pct": 95
@@ -6693,7 +6857,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 24.2,
+   "owned": 24.5,
    "gp": 3,
    "ppg": 3.52,
    "cur_ppg": 2.93,
@@ -6764,7 +6928,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 40.5,
+   "owned": 41.6,
    "gp": 5,
    "ppg": 1.65,
    "cur_ppg": 2.62,
@@ -6796,7 +6960,11 @@
      "xfpg": 1.79
     },
     "season_fpg": 1.74,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.95,
+     1.91
+    ]
    },
    "cr_pct": 96,
    "cr_season_pct": 85
@@ -6825,7 +6993,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 64.6,
+   "owned": 64.5,
    "gp": 4,
    "ppg": 2.72,
    "cur_ppg": 0.5,
@@ -6918,7 +7086,11 @@
      "fpg": 1.8,
      "xfpg": 2.01
     },
-    "season_fpg": 2.23
+    "season_fpg": 2.23,
+    "season_range": [
+     1.5,
+     2.57
+    ]
    },
    "cr_pct": 92,
    "cr_season_pct": 95
@@ -6980,7 +7152,11 @@
      "fpg": 0.86,
      "xfpg": 1.81
     },
-    "season_fpg": 1.63
+    "season_fpg": 1.63,
+    "season_range": [
+     0.9,
+     1.97
+    ]
    },
    "cr_pct": 91,
    "cr_season_pct": 76
@@ -7041,7 +7217,11 @@
      "fpg": 1.38,
      "xfpg": 1.92
     },
-    "season_fpg": 2.19
+    "season_fpg": 2.19,
+    "season_range": [
+     1.46,
+     2.53
+    ]
    },
    "cr_pct": 91,
    "cr_season_pct": 94
@@ -7102,7 +7282,11 @@
      "xfpg": 2.21
     },
     "season_fpg": 2.28,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     1.46,
+     2.42
+    ]
    },
    "cr_pct": 96,
    "cr_season_pct": 96
@@ -7131,7 +7315,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 98.8,
+   "owned": 98.7,
    "gp": 5,
    "ppg": 2.1,
    "cur_ppg": 1.68,
@@ -7139,7 +7323,7 @@
    "last_gp": 80,
    "proj_ppg": 2.17,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.51,
    "cr_fpg": 2.2,
    "cr_season": 2.04,
@@ -7162,7 +7346,11 @@
      "fpg": 1.68,
      "xfpg": 1.78
     },
-    "season_fpg": 2.2
+    "season_fpg": 2.2,
+    "season_range": [
+     1.48,
+     2.44
+    ]
    },
    "cr_pct": 95,
    "cr_season_pct": 96
@@ -7284,7 +7472,12 @@
      "xfpg": 1.83
     },
     "season_fpg": 2.17,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     1.69,
+     2.51
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 94,
    "cr_season_pct": 97
@@ -7346,7 +7539,11 @@
      "xfpg": 2.08
     },
     "season_fpg": 1.76,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.94,
+     1.9
+    ]
    },
    "cr_pct": 94,
    "cr_season_pct": 84
@@ -7408,7 +7605,11 @@
      "fpg": 2.34,
      "xfpg": 2.47
     },
-    "season_fpg": 2.21
+    "season_fpg": 2.21,
+    "season_range": [
+     1.46,
+     2.53
+    ]
    },
    "cr_pct": 91,
    "cr_season_pct": 94
@@ -7468,7 +7669,11 @@
      "fpg": 1.42,
      "xfpg": 1.79
     },
-    "season_fpg": 2.23
+    "season_fpg": 2.23,
+    "season_range": [
+     1.53,
+     2.49
+    ]
    },
    "cr_pct": 94,
    "cr_season_pct": 97
@@ -7529,7 +7734,11 @@
      "fpg": 2.56,
      "xfpg": 2.35
     },
-    "season_fpg": 2.23
+    "season_fpg": 2.23,
+    "season_range": [
+     1.47,
+     2.54
+    ]
    },
    "cr_pct": 91,
    "cr_season_pct": 95
@@ -7590,7 +7799,11 @@
      "fpg": 3.4,
      "xfpg": 2.31
     },
-    "season_fpg": 2.27
+    "season_fpg": 2.27,
+    "season_range": [
+     1.51,
+     2.58
+    ]
    },
    "cr_pct": 90,
    "cr_season_pct": 96
@@ -7651,7 +7864,11 @@
      "fpg": 1.75,
      "xfpg": 1.87
     },
-    "season_fpg": 1.69
+    "season_fpg": 1.69,
+    "season_range": [
+     0.92,
+     1.88
+    ]
    },
    "cr_pct": 93,
    "cr_season_pct": 82
@@ -7713,7 +7930,11 @@
      "fpg": 1.58,
      "xfpg": 2.31
     },
-    "season_fpg": 2.14
+    "season_fpg": 2.14,
+    "season_range": [
+     1.42,
+     2.49
+    ]
    },
    "cr_pct": 90,
    "cr_season_pct": 94
@@ -7774,7 +7995,11 @@
      "fpg": 1.4,
      "xfpg": 1.97
     },
-    "season_fpg": 2.16
+    "season_fpg": 2.16,
+    "season_range": [
+     1.41,
+     2.48
+    ]
    },
    "cr_pct": 90,
    "cr_season_pct": 93
@@ -7835,7 +8060,11 @@
      "fpg": 1.58,
      "xfpg": 1.97
     },
-    "season_fpg": 2.15
+    "season_fpg": 2.15,
+    "season_range": [
+     1.4,
+     2.47
+    ]
    },
    "cr_pct": 90,
    "cr_season_pct": 93
@@ -7865,7 +8094,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 88.3,
+   "owned": 88.2,
    "gp": 5,
    "ppg": 2.24,
    "cur_ppg": 2.54,
@@ -7873,7 +8102,7 @@
    "last_gp": 72,
    "proj_ppg": 2.19,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.34,
    "cr_fpg": 2.15,
    "cr_season": 1.97,
@@ -7897,7 +8126,11 @@
      "xfpg": 2.45
     },
     "season_fpg": 2.17,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     1.4,
+     2.47
+    ]
    },
    "cr_pct": 89,
    "cr_season_pct": 93
@@ -7958,7 +8191,11 @@
      "fpg": 3.51,
      "xfpg": 2.7
     },
-    "season_fpg": 2.16
+    "season_fpg": 2.16,
+    "season_range": [
+     1.41,
+     2.48
+    ]
    },
    "cr_pct": 89,
    "cr_season_pct": 93
@@ -8019,7 +8256,11 @@
      "fpg": 1.18,
      "xfpg": 1.47
     },
-    "season_fpg": 1.64
+    "season_fpg": 1.64,
+    "season_range": [
+     0.89,
+     1.85
+    ]
    },
    "cr_pct": 93,
    "cr_season_pct": 81
@@ -8081,7 +8322,11 @@
      "fpg": 1.0,
      "xfpg": 1.97
     },
-    "season_fpg": 2.06
+    "season_fpg": 2.06,
+    "season_range": [
+     1.34,
+     2.41
+    ]
    },
    "cr_pct": 89,
    "cr_season_pct": 91
@@ -8112,7 +8357,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 78.5,
+   "owned": 78.6,
    "gp": 5,
    "ppg": 1.72,
    "cur_ppg": 3.56,
@@ -8143,7 +8388,11 @@
      "fpg": 3.46,
      "xfpg": 2.83
     },
-    "season_fpg": 2.09
+    "season_fpg": 2.09,
+    "season_range": [
+     1.35,
+     2.42
+    ]
    },
    "cr_pct": 88,
    "cr_season_pct": 92
@@ -8181,7 +8430,7 @@
    "last_gp": 81,
    "proj_ppg": 2.28,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.22,
    "cr_fpg": 2.12,
    "cr_season": 1.95,
@@ -8205,7 +8454,11 @@
      "xfpg": 2.44
     },
     "season_fpg": 2.13,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     1.38,
+     2.45
+    ]
    },
    "cr_pct": 88,
    "cr_season_pct": 92
@@ -8235,7 +8488,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 42.0,
+   "owned": 42.1,
    "gp": 5,
    "ppg": 1.32,
    "cur_ppg": 1.62,
@@ -8243,7 +8496,7 @@
    "last_gp": 81,
    "proj_ppg": 1.27,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.19,
    "cr_fpg": 1.58,
    "cr_season": 1.49,
@@ -8266,7 +8519,11 @@
      "fpg": 1.62,
      "xfpg": 1.1
     },
-    "season_fpg": 1.59
+    "season_fpg": 1.59,
+    "season_range": [
+     0.93,
+     1.89
+    ]
    },
    "cr_pct": 92,
    "cr_season_pct": 83
@@ -8389,7 +8646,11 @@
      "xfpg": 2.01
     },
     "season_fpg": 2.12,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     1.38,
+     2.45
+    ]
    },
    "cr_pct": 88,
    "cr_season_pct": 92
@@ -8450,7 +8711,11 @@
      "fpg": 3.3,
      "xfpg": 2.49
     },
-    "season_fpg": 2.09
+    "season_fpg": 2.09,
+    "season_range": [
+     1.32,
+     2.39
+    ]
    },
    "cr_pct": 88,
    "cr_season_pct": 91
@@ -8488,7 +8753,7 @@
    "last_gp": 74,
    "proj_ppg": 2.12,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.15,
    "cr_fpg": 2.11,
    "cr_season": 1.92,
@@ -8511,7 +8776,11 @@
      "fpg": 2.69,
      "xfpg": 1.81
     },
-    "season_fpg": 2.08
+    "season_fpg": 2.08,
+    "season_range": [
+     1.35,
+     2.42
+    ]
    },
    "cr_pct": 87,
    "cr_season_pct": 92
@@ -8574,7 +8843,11 @@
      "xfpg": 1.79
     },
     "season_fpg": 2.04,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     1.27,
+     2.34
+    ]
    },
    "cr_pct": 87,
    "cr_season_pct": 88
@@ -8634,7 +8907,11 @@
      "fpg": 2.0,
      "xfpg": 2.07
     },
-    "season_fpg": 2.02
+    "season_fpg": 2.02,
+    "season_range": [
+     1.3,
+     2.26
+    ]
    },
    "cr_pct": 92,
    "cr_season_pct": 94
@@ -8694,7 +8971,11 @@
      "fpg": 2.85,
      "xfpg": 2.24
     },
-    "season_fpg": 2.07
+    "season_fpg": 2.07,
+    "season_range": [
+     1.29,
+     2.25
+    ]
    },
    "cr_pct": 91,
    "cr_season_pct": 93
@@ -8723,7 +9004,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 41.0,
+   "owned": 41.1,
    "gp": 3,
    "ppg": 3.58,
    "cur_ppg": 5.13,
@@ -8816,7 +9097,11 @@
      "fpg": 1.97,
      "xfpg": 2.38
     },
-    "season_fpg": 2.09
+    "season_fpg": 2.09,
+    "season_range": [
+     1.3,
+     2.37
+    ]
    },
    "cr_pct": 87,
    "cr_season_pct": 90
@@ -8854,7 +9139,7 @@
    "last_gp": 79,
    "proj_ppg": 2.4,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 6.1,
    "cr_fpg": 2.07,
    "cr_season": 1.91,
@@ -8877,7 +9162,11 @@
      "fpg": 2.0,
      "xfpg": 2.39
     },
-    "season_fpg": 2.07
+    "season_fpg": 2.07,
+    "season_range": [
+     1.34,
+     2.41
+    ]
    },
    "cr_pct": 87,
    "cr_season_pct": 91
@@ -8908,7 +9197,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 64.6,
+   "owned": 64.7,
    "gp": 4,
    "ppg": 1.63,
    "cur_ppg": 2.08,
@@ -8939,7 +9228,11 @@
      "fpg": 1.95,
      "xfpg": 2.24
     },
-    "season_fpg": 1.6
+    "season_fpg": 1.6,
+    "season_range": [
+     0.87,
+     1.94
+    ]
    },
    "cr_pct": 86,
    "cr_season_pct": 75
@@ -8970,7 +9263,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 92.5,
+   "owned": 92.6,
    "gp": 6,
    "ppg": 2.19,
    "cur_ppg": 3.37,
@@ -9001,7 +9294,11 @@
      "fpg": 3.37,
      "xfpg": 2.45
     },
-    "season_fpg": 2.05
+    "season_fpg": 2.05,
+    "season_range": [
+     1.29,
+     2.36
+    ]
    },
    "cr_pct": 86,
    "cr_season_pct": 89
@@ -9063,7 +9360,11 @@
      "fpg": 0.86,
      "xfpg": 1.42
     },
-    "season_fpg": 1.52
+    "season_fpg": 1.52,
+    "season_range": [
+     0.8,
+     1.87
+    ]
    },
    "cr_pct": 86,
    "cr_season_pct": 73
@@ -9154,7 +9455,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 97.7,
+   "owned": 97.6,
    "gp": 6,
    "ppg": 2.06,
    "cur_ppg": 0.93,
@@ -9186,7 +9487,11 @@
      "xfpg": 1.87
     },
     "season_fpg": 2.05,
-    "age_adj": -0.09
+    "age_adj": -0.09,
+    "season_range": [
+     1.24,
+     2.31
+    ]
    },
    "cr_pct": 86,
    "cr_season_pct": 87
@@ -9248,7 +9553,11 @@
      "fpg": 1.48,
      "xfpg": 2.2
     },
-    "season_fpg": 2.02
+    "season_fpg": 2.02,
+    "season_range": [
+     1.3,
+     2.37
+    ]
    },
    "cr_pct": 85,
    "cr_season_pct": 90
@@ -9338,7 +9647,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 50.8,
+   "owned": 51.0,
    "gp": 4,
    "ppg": 3.14,
    "cur_ppg": 4.0,
@@ -9432,7 +9741,11 @@
      "xfpg": 1.63
     },
     "season_fpg": 1.52,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.85,
+     1.69
+    ]
    },
    "cr_pct": 91,
    "cr_season_pct": 76
@@ -9564,7 +9877,11 @@
      "fpg": 2.58,
      "xfpg": 2.18
     },
-    "season_fpg": 2.02
+    "season_fpg": 2.02,
+    "season_range": [
+     1.27,
+     2.34
+    ]
    },
    "cr_pct": 85,
    "cr_season_pct": 88
@@ -9601,7 +9918,7 @@
    "last_gp": 82,
    "proj_ppg": 1.73,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.85,
    "cr_fpg": 1.97,
    "cr_season": 1.85,
@@ -9624,7 +9941,11 @@
      "fpg": 2.76,
      "xfpg": 2.51
     },
-    "season_fpg": 1.99
+    "season_fpg": 1.99,
+    "season_range": [
+     1.29,
+     2.25
+    ]
    },
    "cr_pct": 90,
    "cr_season_pct": 93
@@ -9654,7 +9975,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 22.6,
+   "owned": 22.7,
    "gp": 6,
    "ppg": 1.68,
    "cur_ppg": 1.57,
@@ -9686,7 +10007,11 @@
      "xfpg": 1.22
     },
     "season_fpg": 1.5,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.77,
+     1.61
+    ]
    },
    "cr_pct": 90,
    "cr_season_pct": 69
@@ -9725,7 +10050,7 @@
    "last_gp": 60,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.76,
    "cr_fpg": 1.48,
    "cr_season": 1.32,
@@ -9748,7 +10073,12 @@
      "fpg": 1.18,
      "xfpg": 1.79
     },
-    "season_fpg": 1.46
+    "season_fpg": 1.46,
+    "season_range": [
+     0.85,
+     1.88
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 85,
    "cr_season_pct": 69
@@ -9809,7 +10139,11 @@
      "fpg": 2.02,
      "xfpg": 2.23
     },
-    "season_fpg": 1.96
+    "season_fpg": 1.96,
+    "season_range": [
+     1.25,
+     2.32
+    ]
    },
    "cr_pct": 85,
    "cr_season_pct": 88
@@ -9846,7 +10180,7 @@
    "last_gp": 55,
    "proj_ppg": 2.21,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.74,
    "cr_fpg": 1.97,
    "cr_season": 1.68,
@@ -9869,7 +10203,11 @@
      "fpg": 1.83,
      "xfpg": 2.22
     },
-    "season_fpg": 1.93
+    "season_fpg": 1.93,
+    "season_range": [
+     1.12,
+     2.08
+    ]
    },
    "cr_pct": 89,
    "cr_season_pct": 92
@@ -9930,7 +10268,11 @@
      "fpg": 1.0,
      "xfpg": 1.57
     },
-    "season_fpg": 1.47
+    "season_fpg": 1.47,
+    "season_range": [
+     0.87,
+     1.71
+    ]
    },
    "cr_pct": 89,
    "cr_season_pct": 77
@@ -9959,7 +10301,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 96.2,
+   "owned": 96.1,
    "gp": 6,
    "ppg": 1.98,
    "cur_ppg": 1.58,
@@ -9990,7 +10332,11 @@
      "fpg": 1.58,
      "xfpg": 2.03
     },
-    "season_fpg": 1.98
+    "season_fpg": 1.98,
+    "season_range": [
+     1.2,
+     2.16
+    ]
    },
    "cr_pct": 88,
    "cr_season_pct": 93
@@ -10052,7 +10398,11 @@
      "fpg": 1.12,
      "xfpg": 1.16
     },
-    "season_fpg": 1.45
+    "season_fpg": 1.45,
+    "season_range": [
+     0.84,
+     1.75
+    ]
    },
    "cr_pct": 84,
    "cr_season_pct": 69
@@ -10116,7 +10466,11 @@
      "xfpg": 1.93
     },
     "season_fpg": 2.01,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     1.21,
+     2.28
+    ]
    },
    "cr_pct": 84,
    "cr_season_pct": 87
@@ -10177,7 +10531,11 @@
      "fpg": 2.73,
      "xfpg": 2.86
     },
-    "season_fpg": 1.95
+    "season_fpg": 1.95,
+    "season_range": [
+     1.17,
+     2.24
+    ]
    },
    "cr_pct": 84,
    "cr_season_pct": 86
@@ -10207,7 +10565,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 78.6,
+   "owned": 78.5,
    "gp": 5,
    "ppg": 1.92,
    "cur_ppg": 1.82,
@@ -10239,7 +10597,11 @@
      "xfpg": 1.7
     },
     "season_fpg": 1.99,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     1.24,
+     2.31
+    ]
    },
    "cr_pct": 84,
    "cr_season_pct": 87
@@ -10300,7 +10662,11 @@
      "fpg": 2.42,
      "xfpg": 2.04
     },
-    "season_fpg": 1.93
+    "season_fpg": 1.93,
+    "season_range": [
+     1.15,
+     2.22
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 86
@@ -10329,7 +10695,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 97.9,
+   "owned": 97.8,
    "gp": 6,
    "ppg": 2.35,
    "cur_ppg": 2.53,
@@ -10361,7 +10727,11 @@
      "xfpg": 2.79
     },
     "season_fpg": 1.92,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     1.12,
+     2.08
+    ]
    },
    "cr_pct": 88,
    "cr_season_pct": 92
@@ -10422,7 +10792,11 @@
      "fpg": 1.85,
      "xfpg": 1.69
     },
-    "season_fpg": 1.79
+    "season_fpg": 1.79,
+    "season_range": [
+     1.04,
+     2.11
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 82
@@ -10452,7 +10826,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.6,
+   "owned": 1.7,
    "gp": 5,
    "ppg": 1.38,
    "cur_ppg": 1.86,
@@ -10483,7 +10857,11 @@
      "fpg": 1.86,
      "xfpg": 1.82
     },
-    "season_fpg": 1.44
+    "season_fpg": 1.44,
+    "season_range": [
+     0.8,
+     1.64
+    ]
    },
    "cr_pct": 87,
    "cr_season_pct": 71
@@ -10513,7 +10891,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 78.9,
+   "owned": 78.8,
    "gp": 3,
    "ppg": 2.21,
    "cur_ppg": 2.07,
@@ -10545,7 +10923,11 @@
      "xfpg": 1.73
     },
     "season_fpg": 1.91,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     1.08,
+     2.15
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 83
@@ -10583,7 +10965,7 @@
    "last_gp": 78,
    "proj_ppg": 1.89,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.52,
    "cr_fpg": 1.45,
    "cr_season": 1.25,
@@ -10606,7 +10988,11 @@
      "fpg": 1.1,
      "xfpg": 0.84
     },
-    "season_fpg": 1.42
+    "season_fpg": 1.42,
+    "season_range": [
+     0.78,
+     1.62
+    ]
    },
    "cr_pct": 87,
    "cr_season_pct": 70
@@ -10637,7 +11023,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 95.5,
+   "owned": 95.4,
    "gp": 6,
    "ppg": 2.09,
    "cur_ppg": 1.82,
@@ -10668,7 +11054,11 @@
      "fpg": 1.82,
      "xfpg": 2.08
     },
-    "season_fpg": 1.92
+    "season_fpg": 1.92,
+    "season_range": [
+     1.18,
+     2.25
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 86
@@ -10729,7 +11119,11 @@
      "fpg": 0.77,
      "xfpg": 1.18
     },
-    "season_fpg": 1.38
+    "season_fpg": 1.38,
+    "season_range": [
+     0.71,
+     1.55
+    ]
    },
    "cr_pct": 86,
    "cr_season_pct": 64
@@ -10759,7 +11153,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 7.4,
+   "owned": 7.5,
    "gp": 2,
    "ppg": 2.38,
    "cur_ppg": 3.4,
@@ -10861,7 +11255,11 @@
      "fpg": 1.25,
      "xfpg": 1.4
     },
-    "season_fpg": 1.4
+    "season_fpg": 1.4,
+    "season_range": [
+     0.75,
+     1.59
+    ]
    },
    "cr_pct": 86,
    "cr_season_pct": 67
@@ -10890,7 +11288,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 79.3,
+   "owned": 79.2,
    "gp": 3,
    "ppg": 3.94,
    "cur_ppg": 4.4,
@@ -10952,7 +11350,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 67.1,
+   "owned": 67.2,
    "gp": 5,
    "ppg": 1.55,
    "cur_ppg": 2.82,
@@ -10983,7 +11381,11 @@
      "fpg": 2.8,
      "xfpg": 2.32
     },
-    "season_fpg": 1.81
+    "season_fpg": 1.81,
+    "season_range": [
+     1.09,
+     2.16
+    ]
    },
    "cr_pct": 82,
    "cr_season_pct": 84
@@ -11022,7 +11424,7 @@
    "last_gp": 44,
    "proj_ppg": 1.81,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.4,
    "cr_fpg": 1.4,
    "cr_season": 1.18,
@@ -11045,7 +11447,11 @@
      "fpg": 0.72,
      "xfpg": 1.13
     },
-    "season_fpg": 1.37
+    "season_fpg": 1.37,
+    "season_range": [
+     0.72,
+     1.63
+    ]
    },
    "cr_pct": 82,
    "cr_season_pct": 62
@@ -11074,7 +11480,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 29.4,
+   "owned": 29.3,
    "gp": 5,
    "ppg": 1.66,
    "cur_ppg": 1.8,
@@ -11082,7 +11488,7 @@
    "last_gp": 81,
    "proj_ppg": 1.64,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.36,
    "cr_fpg": 1.82,
    "cr_season": 1.64,
@@ -11105,7 +11511,11 @@
      "fpg": 1.78,
      "xfpg": 2.32
     },
-    "season_fpg": 1.81
+    "season_fpg": 1.81,
+    "season_range": [
+     1.08,
+     2.04
+    ]
    },
    "cr_pct": 85,
    "cr_season_pct": 91
@@ -11134,7 +11544,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 96.1,
+   "owned": 96.0,
    "gp": 5,
    "ppg": 2.16,
    "cur_ppg": 0.94,
@@ -11165,7 +11575,11 @@
      "fpg": 0.96,
      "xfpg": 1.53
     },
-    "season_fpg": 1.82
+    "season_fpg": 1.82,
+    "season_range": [
+     1.08,
+     2.04
+    ]
    },
    "cr_pct": 85,
    "cr_season_pct": 91
@@ -11204,7 +11618,7 @@
    "last_gp": 68,
    "proj_ppg": 2.01,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.33,
    "cr_fpg": 1.82,
    "cr_season": 1.61,
@@ -11228,7 +11642,11 @@
      "xfpg": 2.07
     },
     "season_fpg": 1.81,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     1.04,
+     2.11
+    ]
    },
    "cr_pct": 82,
    "cr_season_pct": 82
@@ -11349,7 +11767,11 @@
      "fpg": 1.26,
      "xfpg": 1.6
     },
-    "season_fpg": 1.78
+    "season_fpg": 1.78,
+    "season_range": [
+     1.07,
+     2.03
+    ]
    },
    "cr_pct": 84,
    "cr_season_pct": 90
@@ -11410,7 +11832,11 @@
      "xfpg": 2.24
     },
     "season_fpg": 1.86,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.95,
+     1.91
+    ]
    },
    "cr_pct": 84,
    "cr_season_pct": 85
@@ -11473,7 +11899,11 @@
      "fpg": 1.0,
      "xfpg": 1.19
     },
-    "season_fpg": 1.35
+    "season_fpg": 1.35,
+    "season_range": [
+     0.72,
+     1.63
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 62
@@ -11504,7 +11934,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 74.3,
+   "owned": 74.5,
    "gp": 7,
    "ppg": 1.79,
    "cur_ppg": 2.47,
@@ -11512,7 +11942,7 @@
    "last_gp": 82,
    "proj_ppg": 1.61,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.31,
    "cr_fpg": 1.81,
    "cr_season": 1.67,
@@ -11535,7 +11965,11 @@
      "fpg": 2.47,
      "xfpg": 2.16
     },
-    "season_fpg": 1.81
+    "season_fpg": 1.81,
+    "season_range": [
+     1.1,
+     2.17
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 85
@@ -11565,7 +11999,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 60.5,
+   "owned": 60.4,
    "gp": 5,
    "ppg": 1.85,
    "cur_ppg": 0.62,
@@ -11596,7 +12030,11 @@
      "fpg": 0.62,
      "xfpg": 1.4
     },
-    "season_fpg": 1.79
+    "season_fpg": 1.79,
+    "season_range": [
+     1.07,
+     2.14
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 83
@@ -11626,7 +12064,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 58.8,
+   "owned": 58.9,
    "gp": 7,
    "ppg": 1.55,
    "cur_ppg": 1.96,
@@ -11657,7 +12095,11 @@
      "fpg": 1.89,
      "xfpg": 2.45
     },
-    "season_fpg": 1.76
+    "season_fpg": 1.76,
+    "season_range": [
+     1.03,
+     2.1
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 82
@@ -11718,7 +12160,11 @@
      "fpg": 1.46,
      "xfpg": 1.98
     },
-    "season_fpg": 1.72
+    "season_fpg": 1.72,
+    "season_range": [
+     0.94,
+     2.01
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 79
@@ -11781,7 +12227,11 @@
      "xfpg": 1.29
     },
     "season_fpg": 1.41,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.73,
+     1.64
+    ]
    },
    "cr_pct": 80,
    "cr_season_pct": 63
@@ -11842,7 +12292,11 @@
      "xfpg": 1.44
     },
     "season_fpg": 1.79,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     1.01,
+     1.97
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 88
@@ -11903,7 +12357,11 @@
      "fpg": 0.53,
      "xfpg": 0.89
     },
-    "season_fpg": 1.36
+    "season_fpg": 1.36,
+    "season_range": [
+     0.65,
+     1.49
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 56
@@ -11965,7 +12423,11 @@
      "fpg": 1.6,
      "xfpg": 1.53
     },
-    "season_fpg": 1.74
+    "season_fpg": 1.74,
+    "season_range": [
+     1.01,
+     2.08
+    ]
    },
    "cr_pct": 80,
    "cr_season_pct": 81
@@ -12002,7 +12464,7 @@
    "last_gp": 64,
    "proj_ppg": 1.74,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.22,
    "cr_fpg": 1.77,
    "cr_season": 1.58,
@@ -12026,7 +12488,11 @@
      "xfpg": 1.99
     },
     "season_fpg": 1.78,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     1.02,
+     1.98
+    ]
    },
    "cr_pct": 83,
    "cr_season_pct": 88
@@ -12088,7 +12554,11 @@
      "fpg": 1.32,
      "xfpg": 1.58
     },
-    "season_fpg": 1.8
+    "season_fpg": 1.8,
+    "season_range": [
+     1.02,
+     2.09
+    ]
    },
    "cr_pct": 80,
    "cr_season_pct": 82
@@ -12128,7 +12598,7 @@
    "last_gp": 82,
    "proj_ppg": 1.45,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.2,
    "cr_fpg": 1.37,
    "cr_season": 1.2,
@@ -12151,7 +12621,11 @@
      "fpg": 0.78,
      "xfpg": 1.48
     },
-    "season_fpg": 1.35
+    "season_fpg": 1.35,
+    "season_range": [
+     0.74,
+     1.65
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 64
@@ -12215,7 +12689,11 @@
      "xfpg": 1.09
     },
     "season_fpg": 1.37,
-    "age_adj": -0.09
+    "age_adj": -0.09,
+    "season_range": [
+     0.7,
+     1.61
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 60
@@ -12245,7 +12723,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 26.4,
+   "owned": 26.6,
    "gp": 5,
    "ppg": 1.78,
    "cur_ppg": 2.42,
@@ -12277,7 +12755,11 @@
      "xfpg": 2.5
     },
     "season_fpg": 1.8,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     1.01,
+     2.08
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 81
@@ -12334,7 +12816,11 @@
     "last_fpg": 2.42,
     "xfp": null,
     "season_fpg": 2.22,
-    "season_share": 0.72
+    "season_share": 0.72,
+    "season_range": [
+     1.04,
+     2.0
+    ]
    },
    "cr_pct": 82,
    "cr_season_pct": 89
@@ -12373,7 +12859,7 @@
    "last_gp": 78,
    "proj_ppg": 1.6,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 5.16,
    "cr_fpg": 1.76,
    "cr_season": 1.54,
@@ -12396,7 +12882,11 @@
      "fpg": 2.02,
      "xfpg": 2.27
     },
-    "season_fpg": 1.71
+    "season_fpg": 1.71,
+    "season_range": [
+     0.97,
+     2.04
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 80
@@ -12457,7 +12947,11 @@
      "fpg": 1.17,
      "xfpg": 1.43
     },
-    "season_fpg": 1.36
+    "season_fpg": 1.36,
+    "season_range": [
+     0.64,
+     1.48
+    ]
    },
    "cr_pct": 82,
    "cr_season_pct": 53
@@ -12580,7 +13074,11 @@
      "fpg": 1.3,
      "xfpg": 1.81
     },
-    "season_fpg": 1.75
+    "season_fpg": 1.75,
+    "season_range": [
+     0.99,
+     2.06
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 81
@@ -12642,7 +13140,12 @@
      "xfpg": 1.41
     },
     "season_fpg": 1.74,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     1.23,
+     2.17
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 78,
    "cr_season_pct": 79
@@ -12672,7 +13175,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.1,
+   "owned": 1.2,
    "gp": 2,
    "ppg": 3.82,
    "cur_ppg": 1.9,
@@ -12834,7 +13337,11 @@
      "fpg": 1.44,
      "xfpg": 1.86
     },
-    "season_fpg": 1.74
+    "season_fpg": 1.74,
+    "season_range": [
+     0.96,
+     1.92
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 86
@@ -12895,7 +13402,11 @@
      "xfpg": 2.06
     },
     "season_fpg": 1.76,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.99,
+     1.95
+    ]
    },
    "cr_pct": 81,
    "cr_season_pct": 87
@@ -12926,7 +13437,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 57.1,
+   "owned": 57.2,
    "gp": 5,
    "ppg": 1.7,
    "cur_ppg": 1.88,
@@ -12958,7 +13469,11 @@
      "xfpg": 1.41
     },
     "season_fpg": 1.37,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.7,
+     1.61
+    ]
    },
    "cr_pct": 78,
    "cr_season_pct": 60
@@ -13021,7 +13536,11 @@
      "xfpg": 1.41
     },
     "season_fpg": 1.76,
-    "age_adj": -0.1
+    "age_adj": -0.1,
+    "season_range": [
+     0.92,
+     1.99
+    ]
    },
    "cr_pct": 78,
    "cr_season_pct": 77
@@ -13052,7 +13571,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.2,
+   "owned": 3.3,
    "gp": 5,
    "ppg": 1.33,
    "cur_ppg": 1.74,
@@ -13083,7 +13602,11 @@
      "fpg": 1.74,
      "xfpg": 1.82
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.68,
+     1.59
+    ]
    },
    "cr_pct": 77,
    "cr_season_pct": 59
@@ -13112,7 +13635,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 83.5,
+   "owned": 83.4,
    "gp": 4,
    "ppg": 3.36,
    "cur_ppg": 1.5,
@@ -13175,7 +13698,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 18.4,
+   "owned": 18.3,
    "gp": 5,
    "ppg": 1.42,
    "cur_ppg": 1.74,
@@ -13207,7 +13730,12 @@
      "xfpg": 1.65
     },
     "season_fpg": 1.68,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     1.06,
+     2.15
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 77,
    "cr_season_pct": 80
@@ -13236,7 +13764,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 44.2,
+   "owned": 44.3,
    "gp": 6,
    "ppg": 1.66,
    "cur_ppg": 2.17,
@@ -13244,7 +13772,7 @@
    "last_gp": 82,
    "proj_ppg": 1.55,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.97,
    "cr_fpg": 1.69,
    "cr_season": 1.51,
@@ -13268,7 +13796,11 @@
      "xfpg": 2.31
     },
     "season_fpg": 1.69,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.95,
+     1.91
+    ]
    },
    "cr_pct": 80,
    "cr_season_pct": 85
@@ -13331,7 +13863,11 @@
      "xfpg": 1.92
     },
     "season_fpg": 1.68,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.91,
+     1.98
+    ]
    },
    "cr_pct": 77,
    "cr_season_pct": 77
@@ -13392,7 +13928,11 @@
      "fpg": 1.7,
      "xfpg": 1.71
     },
-    "season_fpg": 1.62
+    "season_fpg": 1.62,
+    "season_range": [
+     0.93,
+     2.0
+    ]
    },
    "cr_pct": 77,
    "cr_season_pct": 78
@@ -13512,7 +14052,11 @@
      "xfpg": 1.71
     },
     "season_fpg": 1.7,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.93,
+     1.89
+    ]
    },
    "cr_pct": 80,
    "cr_season_pct": 83
@@ -13551,7 +14095,7 @@
    "last_gp": 82,
    "proj_ppg": 1.85,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.85,
    "cr_fpg": 1.66,
    "cr_season": 1.49,
@@ -13574,7 +14118,11 @@
      "fpg": 1.29,
      "xfpg": 1.87
     },
-    "season_fpg": 1.64
+    "season_fpg": 1.64,
+    "season_range": [
+     0.92,
+     1.99
+    ]
    },
    "cr_pct": 76,
    "cr_season_pct": 77
@@ -13603,7 +14151,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 77.5,
+   "owned": 77.4,
    "gp": 5,
    "ppg": 1.75,
    "cur_ppg": 1.72,
@@ -13634,7 +14182,11 @@
      "fpg": 1.72,
      "xfpg": 1.57
     },
-    "season_fpg": 1.66
+    "season_fpg": 1.66,
+    "season_range": [
+     0.91,
+     1.87
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 82
@@ -13694,7 +14246,11 @@
      "fpg": 1.35,
      "xfpg": 1.67
     },
-    "season_fpg": 1.65
+    "season_fpg": 1.65,
+    "season_range": [
+     0.96,
+     1.92
+    ]
    },
    "cr_pct": 79,
    "cr_season_pct": 86
@@ -13756,7 +14312,11 @@
      "fpg": 0.94,
      "xfpg": 1.42
     },
-    "season_fpg": 1.64
+    "season_fpg": 1.64,
+    "season_range": [
+     0.85,
+     1.92
+    ]
    },
    "cr_pct": 76,
    "cr_season_pct": 75
@@ -13785,7 +14345,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 55.7,
+   "owned": 55.5,
    "gp": 3,
    "ppg": 3.06,
    "cur_ppg": 1.13,
@@ -13854,7 +14414,7 @@
    "last_gp": 81,
    "proj_ppg": 1.64,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.82,
    "cr_fpg": 1.64,
    "cr_season": 1.45,
@@ -13877,7 +14437,11 @@
      "fpg": 2.18,
      "xfpg": 1.58
     },
-    "season_fpg": 1.61
+    "season_fpg": 1.61,
+    "season_range": [
+     0.89,
+     1.85
+    ]
    },
    "cr_pct": 78,
    "cr_season_pct": 81
@@ -13907,7 +14471,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 49.5,
+   "owned": 49.4,
    "gp": 6,
    "ppg": 1.6,
    "cur_ppg": 1.22,
@@ -13938,7 +14502,11 @@
      "fpg": 1.22,
      "xfpg": 1.54
     },
-    "season_fpg": 1.6
+    "season_fpg": 1.6,
+    "season_range": [
+     0.9,
+     1.97
+    ]
    },
    "cr_pct": 76,
    "cr_season_pct": 76
@@ -13999,7 +14567,11 @@
      "xfpg": 1.68
     },
     "season_fpg": 1.68,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.84,
+     1.68
+    ]
    },
    "cr_pct": 78,
    "cr_season_pct": 74
@@ -14060,7 +14632,12 @@
      "fpg": 1.96,
      "xfpg": 1.71
     },
-    "season_fpg": 1.69
+    "season_fpg": 1.69,
+    "season_range": [
+     1.04,
+     2.13
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 76,
    "cr_season_pct": 79
@@ -14121,7 +14698,11 @@
      "fpg": 0.66,
      "xfpg": 1.33
     },
-    "season_fpg": 1.63
+    "season_fpg": 1.63,
+    "season_range": [
+     0.91,
+     1.98
+    ]
    },
    "cr_pct": 75,
    "cr_season_pct": 77
@@ -14182,7 +14763,12 @@
      "fpg": 1.26,
      "xfpg": 0.97
     },
-    "season_fpg": 1.24
+    "season_fpg": 1.24,
+    "season_range": [
+     0.34,
+     1.36
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 77,
    "cr_season_pct": 34
@@ -14220,7 +14806,7 @@
    "last_gp": 82,
    "proj_ppg": 1.68,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.79,
    "cr_fpg": 1.65,
    "cr_season": 1.46,
@@ -14243,7 +14829,11 @@
      "fpg": 1.84,
      "xfpg": 2.01
     },
-    "season_fpg": 1.62
+    "season_fpg": 1.62,
+    "season_range": [
+     0.89,
+     1.96
+    ]
    },
    "cr_pct": 75,
    "cr_season_pct": 76
@@ -14305,7 +14895,11 @@
      "fpg": 1.42,
      "xfpg": 1.48
     },
-    "season_fpg": 1.57
+    "season_fpg": 1.57,
+    "season_range": [
+     0.8,
+     1.87
+    ]
    },
    "cr_pct": 75,
    "cr_season_pct": 73
@@ -14335,7 +14929,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 53.7,
+   "owned": 53.6,
    "gp": 4,
    "ppg": 1.68,
    "cur_ppg": 1.68,
@@ -14367,7 +14961,11 @@
      "xfpg": 2.07
     },
     "season_fpg": 1.7,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.93,
+     2.0
+    ]
    },
    "cr_pct": 75,
    "cr_season_pct": 78
@@ -14396,7 +14994,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 50.8,
+   "owned": 50.7,
    "gp": 4,
    "ppg": 3.11,
    "cur_ppg": 1.75,
@@ -14457,7 +15055,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 75.4,
+   "owned": 75.3,
    "gp": 3,
    "ppg": 3.28,
    "cur_ppg": 1.47,
@@ -14579,7 +15177,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 91.3,
+   "owned": 91.2,
    "gp": 5,
    "ppg": 1.94,
    "cur_ppg": 1.42,
@@ -14611,7 +15209,11 @@
      "xfpg": 1.71
     },
     "season_fpg": 1.65,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.93,
+     1.89
+    ]
    },
    "cr_pct": 77,
    "cr_season_pct": 83
@@ -14640,7 +15242,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 12.8,
+   "owned": 12.9,
    "gp": 3,
    "ppg": 2.87,
    "cur_ppg": 2.87,
@@ -14733,7 +15335,11 @@
      "fpg": 0.72,
      "xfpg": 1.12
     },
-    "season_fpg": 1.21
+    "season_fpg": 1.21,
+    "season_range": [
+     0.57,
+     1.41
+    ]
    },
    "cr_pct": 76,
    "cr_season_pct": 47
@@ -14793,7 +15399,11 @@
      "fpg": 1.64,
      "xfpg": 1.57
     },
-    "season_fpg": 1.62
+    "season_fpg": 1.62,
+    "season_range": [
+     0.93,
+     1.89
+    ]
    },
    "cr_pct": 76,
    "cr_season_pct": 83
@@ -14855,7 +15465,11 @@
      "xfpg": 1.45
     },
     "season_fpg": 1.67,
-    "age_adj": -0.08
+    "age_adj": -0.08,
+    "season_range": [
+     0.89,
+     1.96
+    ]
    },
    "cr_pct": 74,
    "cr_season_pct": 76
@@ -14884,7 +15498,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 69.5,
+   "owned": 69.6,
    "gp": 7,
    "ppg": 1.65,
    "cur_ppg": 1.81,
@@ -14915,7 +15529,11 @@
      "fpg": 1.81,
      "xfpg": 1.41
     },
-    "season_fpg": 1.6
+    "season_fpg": 1.6,
+    "season_range": [
+     0.86,
+     1.82
+    ]
    },
    "cr_pct": 75,
    "cr_season_pct": 80
@@ -14953,7 +15571,7 @@
    "last_gp": 80,
    "proj_ppg": 1.72,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.64,
    "cr_fpg": 1.58,
    "cr_season": 1.42,
@@ -14976,7 +15594,11 @@
      "fpg": 1.54,
      "xfpg": 1.76
     },
-    "season_fpg": 1.6
+    "season_fpg": 1.6,
+    "season_range": [
+     0.85,
+     1.92
+    ]
    },
    "cr_pct": 74,
    "cr_season_pct": 75
@@ -15037,7 +15659,11 @@
      "fpg": 1.36,
      "xfpg": 1.66
     },
-    "season_fpg": 1.6
+    "season_fpg": 1.6,
+    "season_range": [
+     0.88,
+     1.95
+    ]
    },
    "cr_pct": 74,
    "cr_season_pct": 75
@@ -15098,7 +15724,11 @@
      "xfpg": 1.96
     },
     "season_fpg": 1.56,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.81,
+     1.77
+    ]
    },
    "cr_pct": 75,
    "cr_season_pct": 78
@@ -15128,7 +15758,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 67.7,
+   "owned": 67.6,
    "gp": 5,
    "ppg": 1.7,
    "cur_ppg": 2.38,
@@ -15159,7 +15789,11 @@
      "fpg": 2.38,
      "xfpg": 1.71
     },
-    "season_fpg": 1.56
+    "season_fpg": 1.56,
+    "season_range": [
+     0.84,
+     1.91
+    ]
    },
    "cr_pct": 74,
    "cr_season_pct": 74
@@ -15188,7 +15822,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 38.2,
+   "owned": 38.1,
    "gp": 6,
    "ppg": 1.64,
    "cur_ppg": 1.27,
@@ -15220,7 +15854,11 @@
      "xfpg": 1.46
     },
     "season_fpg": 1.59,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.82,
+     1.78
+    ]
    },
    "cr_pct": 74,
    "cr_season_pct": 79
@@ -15282,7 +15920,11 @@
      "fpg": 1.48,
      "xfpg": 1.65
     },
-    "season_fpg": 1.54
+    "season_fpg": 1.54,
+    "season_range": [
+     0.84,
+     1.91
+    ]
    },
    "cr_pct": 73,
    "cr_season_pct": 74
@@ -15313,7 +15955,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.0,
+   "owned": 3.1,
    "gp": 5,
    "ppg": 1.03,
    "cur_ppg": 1.5,
@@ -15344,7 +15986,12 @@
      "fpg": 1.5,
      "xfpg": 1.45
     },
-    "season_fpg": 1.24
+    "season_fpg": 1.24,
+    "season_range": [
+     0.56,
+     1.59
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 73,
    "cr_season_pct": 50
@@ -15405,7 +16052,11 @@
      "fpg": 0.73,
      "xfpg": 0.77
     },
-    "season_fpg": 1.38
+    "season_fpg": 1.38,
+    "season_range": [
+     0.57,
+     1.41
+    ]
    },
    "cr_pct": 74,
    "cr_season_pct": 47
@@ -15436,7 +16087,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.4,
+   "owned": 3.7,
    "gp": 6,
    "ppg": 1.55,
    "cur_ppg": 1.55,
@@ -15468,7 +16119,12 @@
      "xfpg": 1.62
     },
     "season_fpg": 1.19,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.41,
+     1.44
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 73,
    "cr_season_pct": 30
@@ -15530,7 +16186,11 @@
      "fpg": 1.58,
      "xfpg": 1.1
     },
-    "season_fpg": 1.19
+    "season_fpg": 1.19,
+    "season_range": [
+     0.61,
+     1.52
+    ]
    },
    "cr_pct": 73,
    "cr_season_pct": 54
@@ -15560,7 +16220,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 83.6,
+   "owned": 83.5,
    "gp": 7,
    "ppg": 1.71,
    "cur_ppg": 1.13,
@@ -15591,7 +16251,11 @@
      "fpg": 1.13,
      "xfpg": 1.42
     },
-    "season_fpg": 1.56
+    "season_fpg": 1.56,
+    "season_range": [
+     0.83,
+     1.9
+    ]
    },
    "cr_pct": 72,
    "cr_season_pct": 74
@@ -15620,7 +16284,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.3,
+   "owned": 3.5,
    "gp": 7,
    "ppg": 1.49,
    "cur_ppg": 1.91,
@@ -15652,7 +16316,11 @@
      "xfpg": 1.76
     },
     "season_fpg": 1.57,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.89,
+     1.73
+    ]
    },
    "cr_pct": 73,
    "cr_season_pct": 78
@@ -15683,7 +16351,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 22.6,
+   "owned": 22.7,
    "gp": 5,
    "ppg": 1.67,
    "cur_ppg": 2.38,
@@ -15715,7 +16383,11 @@
      "xfpg": 2.07
     },
     "season_fpg": 1.6,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.8,
+     1.87
+    ]
    },
    "cr_pct": 72,
    "cr_season_pct": 73
@@ -15776,7 +16448,11 @@
      "fpg": 1.72,
      "xfpg": 2.06
     },
-    "season_fpg": 1.52
+    "season_fpg": 1.52,
+    "season_range": [
+     0.79,
+     1.86
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 72
@@ -15806,7 +16482,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 54.8,
+   "owned": 54.6,
    "gp": 7,
    "ppg": 1.62,
    "cur_ppg": 1.74,
@@ -15814,7 +16490,7 @@
    "last_gp": 50,
    "proj_ppg": 1.59,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.5,
    "cr_fpg": 1.55,
    "cr_season": 1.36,
@@ -15837,7 +16513,11 @@
      "fpg": 1.74,
      "xfpg": 1.4
     },
-    "season_fpg": 1.55
+    "season_fpg": 1.55,
+    "season_range": [
+     0.79,
+     1.86
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 72
@@ -15899,7 +16579,11 @@
      "xfpg": 1.82
     },
     "season_fpg": 1.51,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.86,
+     1.77
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 69
@@ -15962,7 +16646,11 @@
      "fpg": 1.05,
      "xfpg": 1.39
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.58,
+     1.49
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 52
@@ -16022,7 +16710,11 @@
      "fpg": 1.44,
      "xfpg": 1.53
     },
-    "season_fpg": 1.54
+    "season_fpg": 1.54,
+    "season_range": [
+     0.82,
+     1.78
+    ]
    },
    "cr_pct": 73,
    "cr_season_pct": 79
@@ -16082,7 +16774,11 @@
      "fpg": 1.26,
      "xfpg": 1.49
     },
-    "season_fpg": 1.54
+    "season_fpg": 1.54,
+    "season_range": [
+     0.84,
+     1.68
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 74
@@ -16143,7 +16839,11 @@
      "fpg": 0.78,
      "xfpg": 1.03
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.51,
+     1.35
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 42
@@ -16172,7 +16872,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 81.9,
+   "owned": 81.8,
    "gp": 5,
    "ppg": 1.68,
    "cur_ppg": 0.9,
@@ -16203,7 +16903,11 @@
      "fpg": 0.9,
      "xfpg": 1.44
     },
-    "season_fpg": 1.55
+    "season_fpg": 1.55,
+    "season_range": [
+     0.81,
+     1.77
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 78
@@ -16242,7 +16946,7 @@
    "last_gp": 82,
    "proj_ppg": 1.97,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.47,
    "cr_fpg": 1.53,
    "cr_season": 1.27,
@@ -16266,7 +16970,11 @@
      "xfpg": 1.28
     },
     "season_fpg": 1.57,
-    "age_adj": -0.11
+    "age_adj": -0.11,
+    "season_range": [
+     0.81,
+     1.72
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 68
@@ -16328,7 +17036,11 @@
      "fpg": 0.66,
      "xfpg": 0.83
     },
-    "season_fpg": 1.18
+    "season_fpg": 1.18,
+    "season_range": [
+     0.52,
+     1.43
+    ]
    },
    "cr_pct": 71,
    "cr_season_pct": 47
@@ -16358,7 +17070,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 63.7,
+   "owned": 63.6,
    "gp": 5,
    "ppg": 1.68,
    "cur_ppg": 0.9,
@@ -16389,7 +17101,11 @@
      "fpg": 0.9,
      "xfpg": 1.59
     },
-    "season_fpg": 1.51
+    "season_fpg": 1.51,
+    "season_range": [
+     0.78,
+     1.85
+    ]
    },
    "cr_pct": 70,
    "cr_season_pct": 71
@@ -16418,7 +17134,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 27.4,
+   "owned": 27.2,
    "gp": 5,
    "ppg": 0.9,
    "cur_ppg": 1.48,
@@ -16449,7 +17165,12 @@
      "fpg": 1.48,
      "xfpg": 1.38
     },
-    "season_fpg": 1.52
+    "season_fpg": 1.52,
+    "season_range": [
+     0.62,
+     1.64
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 71,
    "cr_season_pct": 64
@@ -16480,7 +17201,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 8.6,
+   "owned": 8.8,
    "gp": 5,
    "ppg": 1.88,
    "cur_ppg": 2.38,
@@ -16488,7 +17209,7 @@
    "last_gp": 67,
    "proj_ppg": 1.79,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.43,
    "cr_fpg": 1.53,
    "cr_season": 1.34,
@@ -16512,7 +17233,11 @@
      "xfpg": 2.28
     },
     "season_fpg": 1.54,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.88,
+     1.79
+    ]
    },
    "cr_pct": 70,
    "cr_season_pct": 71
@@ -16644,7 +17369,11 @@
      "fpg": 0.58,
      "xfpg": 0.91
     },
-    "season_fpg": 1.14
+    "season_fpg": 1.14,
+    "season_range": [
+     0.51,
+     1.35
+    ]
    },
    "cr_pct": 70,
    "cr_season_pct": 42
@@ -16681,7 +17410,7 @@
    "last_gp": 14,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.41,
    "cr_fpg": 1.52,
    "cr_season": 1.2,
@@ -16705,7 +17434,12 @@
      "xfpg": 1.96
     },
     "season_fpg": 1.51,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.64,
+     1.66
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 70,
    "cr_season_pct": 66
@@ -16765,7 +17499,12 @@
      "fpg": 1.93,
      "xfpg": 1.92
     },
-    "season_fpg": 1.58
+    "season_fpg": 1.58,
+    "season_range": [
+     0.38,
+     1.4
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 69,
    "cr_season_pct": 39
@@ -16825,7 +17564,11 @@
      "fpg": 1.53,
      "xfpg": 1.64
     },
-    "season_fpg": 1.47
+    "season_fpg": 1.47,
+    "season_range": [
+     0.82,
+     1.66
+    ]
    },
    "cr_pct": 69,
    "cr_season_pct": 73
@@ -16885,7 +17628,11 @@
      "fpg": 0.98,
      "xfpg": 1.06
     },
-    "season_fpg": 1.49
+    "season_fpg": 1.49,
+    "season_range": [
+     0.8,
+     1.64
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 71
@@ -16946,7 +17693,11 @@
      "fpg": 2.02,
      "xfpg": 1.49
     },
-    "season_fpg": 1.58
+    "season_fpg": 1.58,
+    "season_range": [
+     0.83,
+     1.9
+    ]
    },
    "cr_pct": 70,
    "cr_season_pct": 74
@@ -16976,7 +17727,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 71.4,
+   "owned": 71.5,
    "gp": 6,
    "ppg": 1.86,
    "cur_ppg": 2.07,
@@ -16984,7 +17735,7 @@
    "last_gp": 52,
    "proj_ppg": 1.81,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.38,
    "cr_fpg": 1.51,
    "cr_season": 1.3,
@@ -17007,7 +17758,11 @@
      "fpg": 2.07,
      "xfpg": 1.81
     },
-    "season_fpg": 1.53
+    "season_fpg": 1.53,
+    "season_range": [
+     0.84,
+     1.75
+    ]
    },
    "cr_pct": 69,
    "cr_season_pct": 69
@@ -17037,7 +17792,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 45.3,
+   "owned": 45.6,
    "gp": 6,
    "ppg": 1.77,
    "cur_ppg": 2.43,
@@ -17045,7 +17800,7 @@
    "last_gp": 80,
    "proj_ppg": 1.62,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.38,
    "cr_fpg": 1.49,
    "cr_season": 1.34,
@@ -17069,7 +17824,11 @@
      "xfpg": 1.94
     },
     "season_fpg": 1.55,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.88,
+     1.79
+    ]
    },
    "cr_pct": 69,
    "cr_season_pct": 71
@@ -17129,7 +17888,11 @@
      "fpg": 1.74,
      "xfpg": 1.61
     },
-    "season_fpg": 1.5
+    "season_fpg": 1.5,
+    "season_range": [
+     0.88,
+     1.72
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 77
@@ -17190,7 +17953,11 @@
      "fpg": 0.98,
      "xfpg": 1.64
     },
-    "season_fpg": 1.52
+    "season_fpg": 1.52,
+    "season_range": [
+     0.81,
+     1.88
+    ]
    },
    "cr_pct": 69,
    "cr_season_pct": 73
@@ -17219,7 +17986,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 10.8,
+   "owned": 10.9,
    "gp": 2,
    "ppg": 3.48,
    "cur_ppg": 5.0,
@@ -17280,7 +18047,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 9.2,
+   "owned": 9.1,
    "gp": 7,
    "ppg": 1.29,
    "cur_ppg": 1.16,
@@ -17311,7 +18078,11 @@
      "fpg": 1.16,
      "xfpg": 1.6
     },
-    "season_fpg": 1.45
+    "season_fpg": 1.45,
+    "season_range": [
+     0.84,
+     1.68
+    ]
    },
    "cr_pct": 67,
    "cr_season_pct": 74
@@ -17371,7 +18142,11 @@
      "fpg": 1.0,
      "xfpg": 1.39
     },
-    "season_fpg": 1.45
+    "season_fpg": 1.45,
+    "season_range": [
+     0.83,
+     1.67
+    ]
    },
    "cr_pct": 67,
    "cr_season_pct": 73
@@ -17400,7 +18175,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 58.3,
+   "owned": 58.2,
    "gp": 5,
    "ppg": 1.49,
    "cur_ppg": 0.98,
@@ -17432,7 +18207,11 @@
      "xfpg": 0.94
     },
     "season_fpg": 1.51,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.83,
+     1.67
+    ]
    },
    "cr_pct": 67,
    "cr_season_pct": 73
@@ -17493,7 +18272,11 @@
      "fpg": 1.9,
      "xfpg": 1.85
     },
-    "season_fpg": 1.48
+    "season_fpg": 1.48,
+    "season_range": [
+     0.82,
+     1.73
+    ]
    },
    "cr_pct": 69,
    "cr_season_pct": 68
@@ -17533,7 +18316,7 @@
    "last_gp": 82,
    "proj_ppg": 1.11,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.32,
    "cr_fpg": 1.15,
    "cr_season": 1.0,
@@ -17556,7 +18339,11 @@
      "fpg": 0.74,
      "xfpg": 1.05
     },
-    "season_fpg": 1.13
+    "season_fpg": 1.13,
+    "season_range": [
+     0.54,
+     1.45
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 48
@@ -17618,7 +18405,11 @@
      "fpg": 1.46,
      "xfpg": 1.29
     },
-    "season_fpg": 1.15
+    "season_fpg": 1.15,
+    "season_range": [
+     0.52,
+     1.43
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 47
@@ -17678,7 +18469,11 @@
      "fpg": 2.45,
      "xfpg": 1.81
     },
-    "season_fpg": 1.55
+    "season_fpg": 1.55,
+    "season_range": [
+     0.85,
+     1.69
+    ]
    },
    "cr_pct": 66,
    "cr_season_pct": 76
@@ -17707,7 +18502,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 10.9,
+   "owned": 10.8,
    "gp": 5,
    "ppg": 1.02,
    "cur_ppg": 1.06,
@@ -17739,7 +18534,12 @@
      "xfpg": 1.35
     },
     "season_fpg": 1.44,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.74,
+     1.61
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 66,
    "cr_season_pct": 64
@@ -17770,7 +18570,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 55.3,
+   "owned": 55.1,
    "gp": 7,
    "ppg": 1.43,
    "cur_ppg": 0.61,
@@ -17801,7 +18601,11 @@
      "fpg": 0.61,
      "xfpg": 1.09
     },
-    "season_fpg": 1.48
+    "season_fpg": 1.48,
+    "season_range": [
+     0.89,
+     1.8
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 71
@@ -17831,7 +18635,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 81.3,
+   "owned": 81.2,
    "gp": 7,
    "ppg": 1.62,
    "cur_ppg": 0.89,
@@ -17862,7 +18666,11 @@
      "fpg": 0.9,
      "xfpg": 1.3
     },
-    "season_fpg": 1.49
+    "season_fpg": 1.49,
+    "season_range": [
+     0.84,
+     1.75
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 69
@@ -17892,7 +18700,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 58.9,
+   "owned": 59.1,
    "gp": 7,
    "ppg": 1.43,
    "cur_ppg": 2.03,
@@ -17923,7 +18731,11 @@
      "fpg": 2.03,
      "xfpg": 2.01
     },
-    "season_fpg": 1.48
+    "season_fpg": 1.48,
+    "season_range": [
+     0.78,
+     1.85
+    ]
    },
    "cr_pct": 68,
    "cr_season_pct": 71
@@ -17953,7 +18765,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 66.3,
+   "owned": 66.2,
    "gp": 7,
    "ppg": 1.57,
    "cur_ppg": 1.21,
@@ -17961,7 +18773,7 @@
    "last_gp": 75,
    "proj_ppg": 1.67,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.28,
    "cr_fpg": 1.46,
    "cr_season": 1.32,
@@ -17984,7 +18796,11 @@
      "fpg": 1.21,
      "xfpg": 0.89
     },
-    "season_fpg": 1.46
+    "season_fpg": 1.46,
+    "season_range": [
+     0.86,
+     1.77
+    ]
    },
    "cr_pct": 67,
    "cr_season_pct": 69
@@ -18117,7 +18933,11 @@
      "xfpg": 1.18
     },
     "season_fpg": 1.5,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.86,
+     1.77
+    ]
    },
    "cr_pct": 67,
    "cr_season_pct": 69
@@ -18178,7 +18998,11 @@
      "fpg": 1.32,
      "xfpg": 1.02
     },
-    "season_fpg": 1.2
+    "season_fpg": 1.2,
+    "season_range": [
+     0.52,
+     1.36
+    ]
    },
    "cr_pct": 65,
    "cr_season_pct": 44
@@ -18239,7 +19063,11 @@
      "xfpg": 1.46
     },
     "season_fpg": 1.45,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.77,
+     1.61
+    ]
    },
    "cr_pct": 65,
    "cr_season_pct": 69
@@ -18301,7 +19129,11 @@
      "fpg": 0.66,
      "xfpg": 0.94
     },
-    "season_fpg": 1.11
+    "season_fpg": 1.11,
+    "season_range": [
+     0.5,
+     1.41
+    ]
    },
    "cr_pct": 67,
    "cr_season_pct": 43
@@ -18331,7 +19163,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 25.9,
+   "owned": 25.8,
    "gp": 5,
    "ppg": 1.32,
    "cur_ppg": 1.26,
@@ -18362,7 +19194,11 @@
      "fpg": 1.26,
      "xfpg": 1.04
     },
-    "season_fpg": 1.46
+    "season_fpg": 1.46,
+    "season_range": [
+     0.87,
+     1.78
+    ]
    },
    "cr_pct": 66,
    "cr_season_pct": 71
@@ -18423,7 +19259,11 @@
      "fpg": 1.56,
      "xfpg": 1.33
     },
-    "season_fpg": 1.44
+    "season_fpg": 1.44,
+    "season_range": [
+     0.83,
+     1.74
+    ]
    },
    "cr_pct": 66,
    "cr_season_pct": 68
@@ -18453,7 +19293,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 2.3,
+   "owned": 2.4,
    "gp": 5,
    "ppg": 1.44,
    "cur_ppg": 1.3,
@@ -18485,7 +19325,11 @@
      "xfpg": 1.49
     },
     "season_fpg": 1.2,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.37,
+     1.21
+    ]
    },
    "cr_pct": 64,
    "cr_season_pct": 31
@@ -18515,7 +19359,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 49.5,
+   "owned": 49.4,
    "gp": 6,
    "ppg": 1.47,
    "cur_ppg": 0.67,
@@ -18546,7 +19390,11 @@
      "fpg": 0.67,
      "xfpg": 0.78
     },
-    "season_fpg": 1.44
+    "season_fpg": 1.44,
+    "season_range": [
+     0.83,
+     1.74
+    ]
    },
    "cr_pct": 66,
    "cr_season_pct": 68
@@ -18607,7 +19455,11 @@
      "fpg": 0.8,
      "xfpg": 1.04
     },
-    "season_fpg": 1.12
+    "season_fpg": 1.12,
+    "season_range": [
+     0.49,
+     1.33
+    ]
    },
    "cr_pct": 64,
    "cr_season_pct": 41
@@ -18668,7 +19520,11 @@
      "fpg": 1.33,
      "xfpg": 1.24
     },
-    "season_fpg": 1.44
+    "season_fpg": 1.44,
+    "season_range": [
+     0.79,
+     1.7
+    ]
    },
    "cr_pct": 66,
    "cr_season_pct": 66
@@ -18731,7 +19587,12 @@
      "fpg": 1.02,
      "xfpg": 1.35
     },
-    "season_fpg": 1.15
+    "season_fpg": 1.15,
+    "season_range": [
+     0.5,
+     1.53
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 65,
    "cr_season_pct": 45
@@ -18791,7 +19652,11 @@
      "fpg": 2.08,
      "xfpg": 2.42
     },
-    "season_fpg": 2.16
+    "season_fpg": 2.16,
+    "season_range": [
+     1.42,
+     2.49
+    ]
    },
    "cr_pct": 65,
    "cr_season_pct": 94
@@ -18829,7 +19694,7 @@
    "last_gp": 78,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.15,
    "cr_fpg": 1.12,
    "cr_season": 0.91,
@@ -18852,7 +19717,11 @@
      "fpg": 1.22,
      "xfpg": 1.32
     },
-    "season_fpg": 1.13
+    "season_fpg": 1.13,
+    "season_range": [
+     0.44,
+     1.28
+    ]
    },
    "cr_pct": 63,
    "cr_season_pct": 35
@@ -18913,7 +19782,11 @@
      "fpg": 1.66,
      "xfpg": 1.49
     },
-    "season_fpg": 1.4
+    "season_fpg": 1.4,
+    "season_range": [
+     0.8,
+     1.71
+    ]
    },
    "cr_pct": 65,
    "cr_season_pct": 67
@@ -18951,7 +19824,7 @@
    "last_gp": 75,
    "proj_ppg": 1.46,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.13,
    "cr_fpg": 1.43,
    "cr_season": 1.22,
@@ -18974,7 +19847,12 @@
      "fpg": 1.92,
      "xfpg": 1.79
     },
-    "season_fpg": 1.39
+    "season_fpg": 1.39,
+    "season_range": [
+     0.75,
+     1.78
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 65,
    "cr_season_pct": 65
@@ -19064,7 +19942,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 61.8,
+   "owned": 61.9,
    "gp": 7,
    "ppg": 1.63,
    "cur_ppg": 2.17,
@@ -19072,7 +19950,7 @@
    "last_gp": 82,
    "proj_ppg": 1.49,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.11,
    "cr_fpg": 1.42,
    "cr_season": 1.25,
@@ -19083,8 +19961,8 @@
    "cr_matched": true,
    "nhl_id": 8478882,
    "cr_why": {
-    "toi5": 21.06,
-    "toi": 21.23,
+    "toi5": 21.05,
+    "toi": 21.22,
     "pp5": 0.04,
     "sog": 1.57,
     "blk": 2.14,
@@ -19095,7 +19973,11 @@
      "fpg": 2.17,
      "xfpg": 1.89
     },
-    "season_fpg": 1.4
+    "season_fpg": 1.4,
+    "season_range": [
+     0.78,
+     1.62
+    ]
    },
    "cr_pct": 63,
    "cr_season_pct": 70
@@ -19125,7 +20007,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 14.3,
+   "owned": 14.2,
    "gp": 5,
    "ppg": 1.43,
    "cur_ppg": 1.06,
@@ -19156,7 +20038,11 @@
      "fpg": 1.06,
      "xfpg": 1.28
     },
-    "season_fpg": 1.42
+    "season_fpg": 1.42,
+    "season_range": [
+     0.78,
+     1.69
+    ]
    },
    "cr_pct": 64,
    "cr_season_pct": 65
@@ -19218,7 +20104,11 @@
      "fpg": 1.04,
      "xfpg": 1.29
     },
-    "season_fpg": 1.15
+    "season_fpg": 1.15,
+    "season_range": [
+     0.47,
+     1.38
+    ]
    },
    "cr_pct": 64,
    "cr_season_pct": 39
@@ -19247,7 +20137,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 69.5,
+   "owned": 69.4,
    "gp": 5,
    "ppg": 1.72,
    "cur_ppg": 1.08,
@@ -19279,7 +20169,11 @@
      "xfpg": 0.93
     },
     "season_fpg": 1.44,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.72,
+     1.56
+    ]
    },
    "cr_pct": 62,
    "cr_season_pct": 65
@@ -19341,7 +20235,12 @@
      "fpg": 1.42,
      "xfpg": 1.07
     },
-    "season_fpg": 1.06
+    "season_fpg": 1.06,
+    "season_range": [
+     0.45,
+     1.48
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 64,
    "cr_season_pct": 38
@@ -19371,7 +20270,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 47.4,
+   "owned": 47.3,
    "gp": 6,
    "ppg": 1.5,
    "cur_ppg": 1.17,
@@ -19379,7 +20278,7 @@
    "last_gp": 82,
    "proj_ppg": 1.57,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.08,
    "cr_fpg": 1.4,
    "cr_season": 1.24,
@@ -19402,7 +20301,11 @@
      "fpg": 1.17,
      "xfpg": 1.1
     },
-    "season_fpg": 1.37
+    "season_fpg": 1.37,
+    "season_range": [
+     0.78,
+     1.69
+    ]
    },
    "cr_pct": 63,
    "cr_season_pct": 65
@@ -19432,7 +20335,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 22.0,
+   "owned": 21.9,
    "gp": 5,
    "ppg": 1.43,
    "cur_ppg": 1.28,
@@ -19464,7 +20367,12 @@
      "xfpg": 1.38
     },
     "season_fpg": 1.43,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.75,
+     1.78
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 63,
    "cr_season_pct": 65
@@ -19493,7 +20401,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 8.0,
+   "owned": 8.1,
    "gp": 5,
    "ppg": 1.41,
    "cur_ppg": 2.06,
@@ -19524,7 +20432,11 @@
      "fpg": 2.06,
      "xfpg": 1.55
     },
-    "season_fpg": 1.39
+    "season_fpg": 1.39,
+    "season_range": [
+     0.74,
+     1.58
+    ]
    },
    "cr_pct": 62,
    "cr_season_pct": 67
@@ -19587,7 +20499,11 @@
      "xfpg": 1.03
     },
     "season_fpg": 1.07,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.43,
+     1.34
+    ]
    },
    "cr_pct": 63,
    "cr_season_pct": 34
@@ -19616,7 +20532,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 56.9,
+   "owned": 56.8,
    "gp": 5,
    "ppg": 1.67,
    "cur_ppg": 1.2,
@@ -19648,7 +20564,11 @@
      "xfpg": 1.49
     },
     "season_fpg": 1.42,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.76,
+     1.6
+    ]
    },
    "cr_pct": 61,
    "cr_season_pct": 68
@@ -19709,7 +20629,11 @@
      "fpg": 0.9,
      "xfpg": 1.35
     },
-    "season_fpg": 1.39
+    "season_fpg": 1.39,
+    "season_range": [
+     0.78,
+     1.69
+    ]
    },
    "cr_pct": 63,
    "cr_season_pct": 65
@@ -19748,7 +20672,7 @@
    "last_gp": 81,
    "proj_ppg": 1.29,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 4.01,
    "cr_fpg": 1.05,
    "cr_season": 0.94,
@@ -19771,10 +20695,14 @@
      "fpg": 0.38,
      "xfpg": 0.79
     },
-    "season_fpg": 1.06
+    "season_fpg": 1.06,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 63,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 3539,
@@ -19800,7 +20728,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 62.4,
+   "owned": 62.3,
    "gp": 6,
    "ppg": 1.53,
    "cur_ppg": 1.52,
@@ -19832,7 +20760,11 @@
      "xfpg": 1.57
     },
     "season_fpg": 1.42,
-    "age_adj": -0.09
+    "age_adj": -0.09,
+    "season_range": [
+     0.69,
+     1.53
+    ]
    },
    "cr_pct": 61,
    "cr_season_pct": 63
@@ -19894,7 +20826,11 @@
      "fpg": 1.77,
      "xfpg": 1.37
     },
-    "season_fpg": 1.4
+    "season_fpg": 1.4,
+    "season_range": [
+     0.78,
+     1.69
+    ]
    },
    "cr_pct": 62,
    "cr_season_pct": 65
@@ -19924,7 +20860,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 65.0,
+   "owned": 65.1,
    "gp": 5,
    "ppg": 1.66,
    "cur_ppg": 2.22,
@@ -19932,7 +20868,7 @@
    "last_gp": 81,
    "proj_ppg": 1.56,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.99,
    "cr_fpg": 1.55,
    "cr_season": 1.26,
@@ -19955,7 +20891,11 @@
      "fpg": 2.22,
      "xfpg": 1.75
     },
-    "season_fpg": 1.54
+    "season_fpg": 1.54,
+    "season_range": [
+     0.8,
+     1.71
+    ]
    },
    "cr_pct": 62,
    "cr_season_pct": 67
@@ -20015,7 +20955,11 @@
      "fpg": 1.52,
      "xfpg": 1.27
     },
-    "season_fpg": 1.39
+    "season_fpg": 1.39,
+    "season_range": [
+     0.7,
+     1.54
+    ]
    },
    "cr_pct": 60,
    "cr_season_pct": 63
@@ -20076,7 +21020,11 @@
      "xfpg": 2.03
     },
     "season_fpg": 2.09,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     1.3,
+     2.37
+    ]
    },
    "cr_pct": 62,
    "cr_season_pct": 90
@@ -20136,7 +21084,11 @@
      "fpg": 1.12,
      "xfpg": 1.12
     },
-    "season_fpg": 1.38
+    "season_fpg": 1.38,
+    "season_range": [
+     0.79,
+     1.63
+    ]
    },
    "cr_pct": 59,
    "cr_season_pct": 71
@@ -20165,7 +21117,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 4.8,
+   "owned": 4.9,
    "gp": 7,
    "ppg": 1.21,
    "cur_ppg": 1.8,
@@ -20173,7 +21125,7 @@
    "last_gp": 70,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.96,
    "cr_fpg": 1.35,
    "cr_season": 1.12,
@@ -20196,7 +21148,11 @@
      "fpg": 1.8,
      "xfpg": 1.45
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.65,
+     1.49
+    ]
    },
    "cr_pct": 59,
    "cr_season_pct": 56
@@ -20258,7 +21214,11 @@
      "fpg": 1.34,
      "xfpg": 1.01
     },
-    "season_fpg": 1.39
+    "season_fpg": 1.39,
+    "season_range": [
+     0.79,
+     1.7
+    ]
    },
    "cr_pct": 62,
    "cr_season_pct": 66
@@ -20318,7 +21278,11 @@
      "fpg": 1.16,
      "xfpg": 0.86
     },
-    "season_fpg": 1.32
+    "season_fpg": 1.32,
+    "season_range": [
+     0.73,
+     1.57
+    ]
    },
    "cr_pct": 58,
    "cr_season_pct": 66
@@ -20379,7 +21343,11 @@
      "fpg": 1.55,
      "xfpg": 1.53
     },
-    "season_fpg": 1.41
+    "season_fpg": 1.41,
+    "season_range": [
+     0.74,
+     1.65
+    ]
    },
    "cr_pct": 61,
    "cr_season_pct": 64
@@ -20416,7 +21384,7 @@
    "last_gp": 47,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.9,
    "cr_fpg": 1.33,
    "cr_season": 1.09,
@@ -20439,7 +21407,11 @@
      "fpg": 1.3,
      "xfpg": 1.25
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.62,
+     1.46
+    ]
    },
    "cr_pct": 58,
    "cr_season_pct": 51
@@ -20501,7 +21473,12 @@
      "fpg": 0.17,
      "xfpg": 0.91
     },
-    "season_fpg": 1.15
+    "season_fpg": 1.15,
+    "season_range": [
+     0.44,
+     1.47
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 61,
    "cr_season_pct": 36
@@ -20561,7 +21538,11 @@
      "fpg": 1.6,
      "xfpg": 1.17
     },
-    "season_fpg": 1.31
+    "season_fpg": 1.31,
+    "season_range": [
+     0.66,
+     1.5
+    ]
    },
    "cr_pct": 57,
    "cr_season_pct": 58
@@ -20599,7 +21580,7 @@
    "last_gp": 76,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.89,
    "cr_fpg": 1.05,
    "cr_season": 0.8,
@@ -20622,7 +21603,11 @@
      "fpg": 0.17,
      "xfpg": 0.5
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.42,
+     1.28
+    ]
    },
    "cr_pct": 57,
    "cr_season_pct": 29
@@ -20651,7 +21636,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 83.3,
+   "owned": 83.4,
    "gp": 5,
    "ppg": 1.8,
    "cur_ppg": 2.94,
@@ -20683,7 +21668,12 @@
      "xfpg": 2.39
     },
     "season_fpg": 2.0,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     1.4,
+     2.49
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 61,
    "cr_season_pct": 91
@@ -20713,7 +21703,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 10.6,
+   "owned": 10.5,
    "gp": 6,
    "ppg": 1.3,
    "cur_ppg": 1.0,
@@ -20744,7 +21734,11 @@
      "fpg": 1.0,
      "xfpg": 1.35
     },
-    "season_fpg": 1.36
+    "season_fpg": 1.36,
+    "season_range": [
+     0.74,
+     1.65
+    ]
    },
    "cr_pct": 60,
    "cr_season_pct": 64
@@ -20807,7 +21801,11 @@
      "fpg": 0.55,
      "xfpg": 1.17
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.43,
+     1.34
+    ]
    },
    "cr_pct": 60,
    "cr_season_pct": 34
@@ -20836,7 +21834,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 21.1,
+   "owned": 21.4,
    "gp": 3,
    "ppg": 3.53,
    "cur_ppg": 3.8,
@@ -20906,7 +21904,7 @@
    "last_gp": 80,
    "proj_ppg": 1.38,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.87,
    "cr_fpg": 1.32,
    "cr_season": 1.16,
@@ -20930,7 +21928,11 @@
      "xfpg": 0.94
     },
     "season_fpg": 1.3,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.7,
+     1.61
+    ]
    },
    "cr_pct": 60,
    "cr_season_pct": 60
@@ -20992,7 +21994,11 @@
      "xfpg": 1.51
     },
     "season_fpg": 1.38,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.62,
+     1.53
+    ]
    },
    "cr_pct": 60,
    "cr_season_pct": 54
@@ -21051,7 +22057,11 @@
      "fpg": 2.46,
      "xfpg": 2.01
     },
-    "season_fpg": 2.02
+    "season_fpg": 2.02,
+    "season_range": [
+     1.3,
+     2.26
+    ]
    },
    "cr_pct": 56,
    "cr_season_pct": 94
@@ -21081,7 +22091,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 40.3,
+   "owned": 40.2,
    "gp": 5,
    "ppg": 1.53,
    "cur_ppg": 1.5,
@@ -21113,7 +22123,11 @@
      "xfpg": 1.5
     },
     "season_fpg": 1.31,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.63,
+     1.54
+    ]
    },
    "cr_pct": 60,
    "cr_season_pct": 55
@@ -21174,7 +22188,11 @@
      "xfpg": 1.7
     },
     "season_fpg": 1.34,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.65,
+     1.49
+    ]
    },
    "cr_pct": 56,
    "cr_season_pct": 56
@@ -21203,7 +22221,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 89.4,
+   "owned": 89.5,
    "gp": 5,
    "ppg": 2.01,
    "cur_ppg": 3.0,
@@ -21234,7 +22252,11 @@
      "fpg": 2.9,
      "xfpg": 1.74
     },
-    "season_fpg": 1.95
+    "season_fpg": 1.95,
+    "season_range": [
+     1.24,
+     2.31
+    ]
    },
    "cr_pct": 59,
    "cr_season_pct": 87
@@ -21294,7 +22316,11 @@
      "fpg": 1.46,
      "xfpg": 1.28
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.68,
+     1.52
+    ]
    },
    "cr_pct": 56,
    "cr_season_pct": 61
@@ -21331,7 +22357,7 @@
    "last_gp": 60,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.85,
    "cr_fpg": 1.33,
    "cr_season": 1.13,
@@ -21354,7 +22380,11 @@
      "fpg": 1.29,
      "xfpg": 1.27
     },
-    "season_fpg": 1.32
+    "season_fpg": 1.32,
+    "season_range": [
+     0.66,
+     1.5
+    ]
    },
    "cr_pct": 55,
    "cr_season_pct": 58
@@ -21415,7 +22445,12 @@
      "fpg": 0.67,
      "xfpg": 0.88
     },
-    "season_fpg": 1.35
+    "season_fpg": 1.35,
+    "season_range": [
+     0.66,
+     1.69
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 59,
    "cr_season_pct": 55
@@ -21476,7 +22511,11 @@
      "xfpg": 1.08
     },
     "season_fpg": 1.34,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.64,
+     1.48
+    ]
    },
    "cr_pct": 55,
    "cr_season_pct": 53
@@ -21538,7 +22577,11 @@
      "xfpg": 1.8
     },
     "season_fpg": 1.31,
-    "age_adj": -0.08
+    "age_adj": -0.08,
+    "season_range": [
+     0.68,
+     1.59
+    ]
    },
    "cr_pct": 59,
    "cr_season_pct": 59
@@ -21599,7 +22642,11 @@
      "xfpg": 1.39
     },
     "season_fpg": 1.38,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.64,
+     1.48
+    ]
    },
    "cr_pct": 54,
    "cr_season_pct": 53
@@ -21660,7 +22707,11 @@
      "fpg": 1.3,
      "xfpg": 1.1
     },
-    "season_fpg": 1.35
+    "season_fpg": 1.35,
+    "season_range": [
+     0.73,
+     1.64
+    ]
    },
    "cr_pct": 59,
    "cr_season_pct": 63
@@ -21690,7 +22741,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 26.3,
+   "owned": 26.7,
    "gp": 7,
    "ppg": 1.43,
    "cur_ppg": 1.99,
@@ -21698,7 +22749,7 @@
    "last_gp": 49,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.82,
    "cr_fpg": 1.3,
    "cr_season": 1.13,
@@ -21721,7 +22772,12 @@
      "fpg": 1.99,
      "xfpg": 1.44
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.66,
+     1.69
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 58,
    "cr_season_pct": 58
@@ -21782,7 +22838,11 @@
      "fpg": 1.58,
      "xfpg": 1.34
     },
-    "season_fpg": 1.33
+    "season_fpg": 1.33,
+    "season_range": [
+     0.7,
+     1.61
+    ]
    },
    "cr_pct": 58,
    "cr_season_pct": 60
@@ -21842,7 +22902,11 @@
      "fpg": 1.14,
      "xfpg": 1.38
     },
-    "season_fpg": 1.32
+    "season_fpg": 1.32,
+    "season_range": [
+     0.68,
+     1.52
+    ]
    },
    "cr_pct": 54,
    "cr_season_pct": 61
@@ -21871,7 +22935,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 18.2,
+   "owned": 18.1,
    "gp": 4,
    "ppg": 3.41,
    "cur_ppg": 3.4,
@@ -21964,7 +23028,11 @@
      "fpg": 1.28,
      "xfpg": 1.5
     },
-    "season_fpg": 1.31
+    "season_fpg": 1.31,
+    "season_range": [
+     0.71,
+     1.62
+    ]
    },
    "cr_pct": 58,
    "cr_season_pct": 62
@@ -22025,7 +23093,12 @@
      "fpg": 1.22,
      "xfpg": 1.39
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.69,
+     1.72
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 58,
    "cr_season_pct": 60
@@ -22087,7 +23160,12 @@
      "fpg": 0.82,
      "xfpg": 1.3
     },
-    "season_fpg": 1.25
+    "season_fpg": 1.25,
+    "season_range": [
+     0.68,
+     1.71
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 57,
    "cr_season_pct": 60
@@ -22148,7 +23226,11 @@
      "fpg": 1.03,
      "xfpg": 1.08
     },
-    "season_fpg": 1.29
+    "season_fpg": 1.29,
+    "season_range": [
+     0.7,
+     1.61
+    ]
    },
    "cr_pct": 57,
    "cr_season_pct": 60
@@ -22209,7 +23291,12 @@
      "xfpg": 1.16
     },
     "season_fpg": 1.29,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.71,
+     1.58
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 53,
    "cr_season_pct": 61
@@ -22246,7 +23333,7 @@
    "last_gp": 67,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.77,
    "cr_fpg": 1.3,
    "cr_season": 1.13,
@@ -22269,7 +23356,11 @@
      "fpg": 1.15,
      "xfpg": 0.9
     },
-    "season_fpg": 1.27
+    "season_fpg": 1.27,
+    "season_range": [
+     0.66,
+     1.5
+    ]
    },
    "cr_pct": 53,
    "cr_season_pct": 58
@@ -22306,7 +23397,7 @@
    "last_gp": 70,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.76,
    "cr_fpg": 1.28,
    "cr_season": 1.13,
@@ -22329,7 +23420,12 @@
      "fpg": 0.93,
      "xfpg": 0.84
     },
-    "season_fpg": 1.25
+    "season_fpg": 1.25,
+    "season_range": [
+     0.69,
+     1.56
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 52,
    "cr_season_pct": 58
@@ -22390,7 +23486,12 @@
      "xfpg": 1.01
     },
     "season_fpg": 1.34,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.69,
+     1.56
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 52,
    "cr_season_pct": 58
@@ -22452,7 +23553,12 @@
      "xfpg": 1.31
     },
     "season_fpg": 1.31,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.64,
+     1.67
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 57,
    "cr_season_pct": 57
@@ -22513,7 +23619,12 @@
      "fpg": 1.52,
      "xfpg": 2.15
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.61,
+     1.64
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 57,
    "cr_season_pct": 52
@@ -22574,7 +23685,11 @@
      "fpg": 1.1,
      "xfpg": 1.3
     },
-    "season_fpg": 1.27
+    "season_fpg": 1.27,
+    "season_range": [
+     0.67,
+     1.58
+    ]
    },
    "cr_pct": 56,
    "cr_season_pct": 58
@@ -22604,7 +23719,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 12.3,
+   "owned": 12.4,
    "gp": 6,
    "ppg": 1.33,
    "cur_ppg": 1.48,
@@ -22635,7 +23750,12 @@
      "fpg": 1.48,
      "xfpg": 1.08
     },
-    "season_fpg": 1.28
+    "season_fpg": 1.28,
+    "season_range": [
+     0.69,
+     1.72
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 56,
    "cr_season_pct": 60
@@ -22672,7 +23792,7 @@
    "last_gp": 82,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.72,
    "cr_fpg": 1.27,
    "cr_season": 1.11,
@@ -22695,7 +23815,11 @@
      "fpg": 1.07,
      "xfpg": 1.42
     },
-    "season_fpg": 1.25
+    "season_fpg": 1.25,
+    "season_range": [
+     0.64,
+     1.48
+    ]
    },
    "cr_pct": 51,
    "cr_season_pct": 53
@@ -22755,7 +23879,11 @@
      "fpg": 1.12,
      "xfpg": 0.92
     },
-    "season_fpg": 1.31
+    "season_fpg": 1.31,
+    "season_range": [
+     0.68,
+     1.52
+    ]
    },
    "cr_pct": 51,
    "cr_season_pct": 61
@@ -22795,7 +23923,7 @@
    "last_gp": 81,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.7,
    "cr_fpg": 0.98,
    "cr_season": 0.81,
@@ -22818,7 +23946,11 @@
      "fpg": 0.74,
      "xfpg": 0.84
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.35,
+     1.26
+    ]
    },
    "cr_pct": 56,
    "cr_season_pct": 29
@@ -22849,7 +23981,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 26.3,
+   "owned": 26.2,
    "gp": 6,
    "ppg": 1.35,
    "cur_ppg": 2.27,
@@ -22880,7 +24012,11 @@
      "fpg": 2.27,
      "xfpg": 1.97
     },
-    "season_fpg": 1.32
+    "season_fpg": 1.32,
+    "season_range": [
+     0.7,
+     1.61
+    ]
    },
    "cr_pct": 55,
    "cr_season_pct": 60
@@ -22942,7 +24078,11 @@
      "fpg": 1.32,
      "xfpg": 1.22
     },
-    "season_fpg": 1.23
+    "season_fpg": 1.23,
+    "season_range": [
+     0.61,
+     1.52
+    ]
    },
    "cr_pct": 55,
    "cr_season_pct": 54
@@ -22979,7 +24119,7 @@
    "last_gp": 53,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.67,
    "cr_fpg": 1.27,
    "cr_season": 1.08,
@@ -23002,7 +24142,11 @@
      "fpg": 1.28,
      "xfpg": 1.28
     },
-    "season_fpg": 1.28
+    "season_fpg": 1.28,
+    "season_range": [
+     0.61,
+     1.45
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 51
@@ -23101,7 +24245,7 @@
    "last_gp": 64,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.65,
    "cr_fpg": 1.26,
    "cr_season": 1.09,
@@ -23124,7 +24268,11 @@
      "fpg": 1.36,
      "xfpg": 1.06
     },
-    "season_fpg": 1.23
+    "season_fpg": 1.23,
+    "season_range": [
+     0.63,
+     1.54
+    ]
    },
    "cr_pct": 55,
    "cr_season_pct": 55
@@ -23153,7 +24301,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 48.3,
+   "owned": 48.1,
    "gp": 3,
    "ppg": 2.75,
    "cur_ppg": 0.0,
@@ -23245,7 +24393,11 @@
      "fpg": 1.04,
      "xfpg": 0.97
     },
-    "season_fpg": 1.24
+    "season_fpg": 1.24,
+    "season_range": [
+     0.64,
+     1.48
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 53
@@ -23305,7 +24457,11 @@
      "fpg": 0.9,
      "xfpg": 1.14
     },
-    "season_fpg": 1.28
+    "season_fpg": 1.28,
+    "season_range": [
+     0.6,
+     1.44
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 50
@@ -23366,7 +24522,11 @@
      "xfpg": 1.22
     },
     "season_fpg": 1.32,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.67,
+     1.51
+    ]
    },
    "cr_pct": 49,
    "cr_season_pct": 60
@@ -23427,7 +24587,11 @@
      "xfpg": 0.85
     },
     "season_fpg": 1.27,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.59,
+     1.43
+    ]
    },
    "cr_pct": 49,
    "cr_season_pct": 49
@@ -23488,7 +24652,11 @@
      "fpg": 1.02,
      "xfpg": 1.23
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.62,
+     1.53
+    ]
    },
    "cr_pct": 54,
    "cr_season_pct": 54
@@ -23550,7 +24718,11 @@
      "fpg": 2.1,
      "xfpg": 1.83
     },
-    "season_fpg": 1.25
+    "season_fpg": 1.25,
+    "season_range": [
+     0.65,
+     1.56
+    ]
    },
    "cr_pct": 54,
    "cr_season_pct": 57
@@ -23581,7 +24753,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 50.0,
+   "owned": 49.9,
    "gp": 7,
    "ppg": 1.72,
    "cur_ppg": 1.97,
@@ -23589,7 +24761,7 @@
    "last_gp": 78,
    "proj_ppg": 1.65,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.61,
    "cr_fpg": 1.27,
    "cr_season": 1.1,
@@ -23612,7 +24784,11 @@
      "fpg": 1.97,
      "xfpg": 1.88
     },
-    "season_fpg": 1.28
+    "season_fpg": 1.28,
+    "season_range": [
+     0.64,
+     1.55
+    ]
    },
    "cr_pct": 54,
    "cr_season_pct": 57
@@ -23641,7 +24817,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.9,
+   "owned": 1.8,
    "gp": 7,
    "ppg": 1.37,
    "cur_ppg": 1.19,
@@ -23649,7 +24825,7 @@
    "last_gp": 82,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.6,
    "cr_fpg": 1.26,
    "cr_season": 1.09,
@@ -23672,7 +24848,11 @@
      "fpg": 1.19,
      "xfpg": 1.26
     },
-    "season_fpg": 1.27
+    "season_fpg": 1.27,
+    "season_range": [
+     0.62,
+     1.46
+    ]
    },
    "cr_pct": 48,
    "cr_season_pct": 51
@@ -23734,7 +24914,11 @@
      "xfpg": 0.89
     },
     "season_fpg": 1.0,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.36,
+     1.22
+    ]
    },
    "cr_pct": 48,
    "cr_season_pct": 23
@@ -23857,7 +25041,11 @@
      "fpg": 1.52,
      "xfpg": 1.33
     },
-    "season_fpg": 1.25
+    "season_fpg": 1.25,
+    "season_range": [
+     0.64,
+     1.55
+    ]
    },
    "cr_pct": 54,
    "cr_season_pct": 57
@@ -23919,7 +25107,11 @@
      "fpg": 0.7,
      "xfpg": 0.75
     },
-    "season_fpg": 1.19
+    "season_fpg": 1.19,
+    "season_range": [
+     0.63,
+     1.54
+    ]
    },
    "cr_pct": 53,
    "cr_season_pct": 55
@@ -24051,7 +25243,12 @@
      "xfpg": 1.6
     },
     "season_fpg": 1.27,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.52,
+     1.39
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 47,
    "cr_season_pct": 41
@@ -24113,7 +25310,12 @@
      "fpg": 0.7,
      "xfpg": 0.84
     },
-    "season_fpg": 0.93
+    "season_fpg": 0.93,
+    "season_range": [
+     0.3,
+     1.33
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 53,
    "cr_season_pct": 25
@@ -24172,7 +25374,11 @@
      "fpg": 2.35,
      "xfpg": 2.07
     },
-    "season_fpg": 1.9
+    "season_fpg": 1.9,
+    "season_range": [
+     1.03,
+     1.99
+    ]
    },
    "cr_pct": 47,
    "cr_season_pct": 89
@@ -24202,7 +25408,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 37.2,
+   "owned": 37.1,
    "gp": 7,
    "ppg": 2.02,
    "cur_ppg": 0.51,
@@ -24234,7 +25440,12 @@
      "xfpg": 0.65
     },
     "season_fpg": 1.22,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.56,
+     1.59
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 52,
    "cr_season_pct": 48
@@ -24272,7 +25483,7 @@
    "last_gp": 77,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.56,
    "cr_fpg": 1.24,
    "cr_season": 1.09,
@@ -24295,7 +25506,11 @@
      "fpg": 1.68,
      "xfpg": 1.27
     },
-    "season_fpg": 1.25
+    "season_fpg": 1.25,
+    "season_range": [
+     0.63,
+     1.54
+    ]
    },
    "cr_pct": 52,
    "cr_season_pct": 55
@@ -24356,7 +25571,12 @@
      "fpg": 0.7,
      "xfpg": 1.45
     },
-    "season_fpg": 1.27
+    "season_fpg": 1.27,
+    "season_range": [
+     0.48,
+     1.51
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 52,
    "cr_season_pct": 36
@@ -24419,7 +25639,11 @@
      "xfpg": 1.03
     },
     "season_fpg": 0.93,
-    "age_adj": -0.08
+    "age_adj": -0.08,
+    "season_range": [
+     0.37,
+     1.14
+    ]
    },
    "cr_pct": 52,
    "cr_season_pct": 23
@@ -24480,7 +25704,11 @@
      "xfpg": 1.18
     },
     "season_fpg": 1.28,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.63,
+     1.47
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 52
@@ -24511,7 +25739,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 25.6,
+   "owned": 25.9,
    "gp": 6,
    "ppg": 1.29,
    "cur_ppg": 2.0,
@@ -24542,7 +25770,12 @@
      "fpg": 2.0,
      "xfpg": 1.35
     },
-    "season_fpg": 1.21
+    "season_fpg": 1.21,
+    "season_range": [
+     0.61,
+     1.64
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 52,
    "cr_season_pct": 54
@@ -24572,7 +25805,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 5.3,
+   "owned": 5.4,
    "gp": 5,
    "ppg": 1.31,
    "cur_ppg": 1.78,
@@ -24603,7 +25836,11 @@
      "fpg": 1.78,
      "xfpg": 1.33
     },
-    "season_fpg": 1.23
+    "season_fpg": 1.23,
+    "season_range": [
+     0.61,
+     1.52
+    ]
    },
    "cr_pct": 52,
    "cr_season_pct": 54
@@ -24633,7 +25870,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 62.5,
+   "owned": 62.4,
    "gp": 7,
    "ppg": 1.44,
    "cur_ppg": 1.11,
@@ -24664,7 +25901,11 @@
      "fpg": 1.11,
      "xfpg": 1.38
     },
-    "season_fpg": 1.23
+    "season_fpg": 1.23,
+    "season_range": [
+     0.64,
+     1.55
+    ]
    },
    "cr_pct": 52,
    "cr_season_pct": 57
@@ -24726,7 +25967,11 @@
      "fpg": 0.35,
      "xfpg": 0.8
     },
-    "season_fpg": 0.93
+    "season_fpg": 0.93,
+    "season_range": [
+     0.3,
+     1.21
+    ]
    },
    "cr_pct": 51,
    "cr_season_pct": 24
@@ -24787,7 +26032,11 @@
      "fpg": 1.38,
      "xfpg": 1.22
     },
-    "season_fpg": 1.24
+    "season_fpg": 1.24,
+    "season_range": [
+     0.66,
+     1.57
+    ]
    },
    "cr_pct": 51,
    "cr_season_pct": 58
@@ -24817,7 +26066,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 35.3,
+   "owned": 35.2,
    "gp": 5,
    "ppg": 1.36,
    "cur_ppg": 0.82,
@@ -24849,7 +26098,12 @@
      "xfpg": 0.9
     },
     "season_fpg": 1.15,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     0.49,
+     1.52
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 50,
    "cr_season_pct": 38
@@ -24879,7 +26133,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 34.9,
+   "owned": 34.8,
    "gp": 5,
    "ppg": 1.3,
    "cur_ppg": 0.8,
@@ -24911,7 +26165,11 @@
      "xfpg": 0.73
     },
     "season_fpg": 1.23,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.57,
+     1.48
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 50
@@ -24971,7 +26229,11 @@
      "fpg": 1.62,
      "xfpg": 1.29
     },
-    "season_fpg": 1.21
+    "season_fpg": 1.21,
+    "season_range": [
+     0.57,
+     1.41
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 47
@@ -25002,7 +26264,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.5,
+   "owned": 1.6,
    "gp": 5,
    "ppg": 1.2,
    "cur_ppg": 1.46,
@@ -25033,7 +26295,11 @@
      "fpg": 1.46,
      "xfpg": 1.17
     },
-    "season_fpg": 0.96
+    "season_fpg": 0.96,
+    "season_range": [
+     0.33,
+     1.24
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 27
@@ -25063,7 +26329,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 0.5,
+   "owned": 0.6,
    "gp": 6,
    "ppg": 1.07,
    "cur_ppg": 1.63,
@@ -25094,7 +26360,11 @@
      "fpg": 1.63,
      "xfpg": 1.47
     },
-    "season_fpg": 1.2
+    "season_fpg": 1.2,
+    "season_range": [
+     0.57,
+     1.48
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 50
@@ -25124,7 +26394,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 65.2,
+   "owned": 65.4,
    "gp": 5,
    "ppg": 1.98,
    "cur_ppg": 2.7,
@@ -25156,7 +26426,11 @@
      "xfpg": 1.75
     },
     "season_fpg": 1.87,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     1.08,
+     2.15
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 83
@@ -25185,7 +26459,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 14.8,
+   "owned": 14.7,
    "gp": 7,
    "ppg": 0.93,
    "cur_ppg": 0.67,
@@ -25193,7 +26467,7 @@
    "last_gp": 76,
    "proj_ppg": null,
    "clears": "Tue 13",
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.5,
    "cr_fpg": 1.2,
    "cr_season": 1.11,
@@ -25217,7 +26491,12 @@
      "xfpg": 0.88
     },
     "season_fpg": 1.2,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.67,
+     1.54
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 45,
    "cr_season_pct": 53
@@ -25247,7 +26526,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 21.7,
+   "owned": 21.8,
    "gp": 7,
    "ppg": 1.4,
    "cur_ppg": 1.64,
@@ -25279,7 +26558,11 @@
      "xfpg": 1.53
     },
     "season_fpg": 1.25,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.59,
+     1.5
+    ]
    },
    "cr_pct": 50,
    "cr_season_pct": 53
@@ -25340,7 +26623,11 @@
      "fpg": 1.17,
      "xfpg": 1.5
     },
-    "season_fpg": 1.21
+    "season_fpg": 1.21,
+    "season_range": [
+     0.58,
+     1.49
+    ]
    },
    "cr_pct": 49,
    "cr_season_pct": 52
@@ -25439,7 +26726,7 @@
    "last_gp": 82,
    "proj_ppg": 1.07,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.46,
    "cr_fpg": 1.19,
    "cr_season": 1.05,
@@ -25462,7 +26749,11 @@
      "fpg": 1.43,
      "xfpg": 1.33
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.59,
+     1.5
+    ]
    },
    "cr_pct": 49,
    "cr_season_pct": 53
@@ -25525,7 +26816,11 @@
      "fpg": 1.08,
      "xfpg": 1.0
     },
-    "season_fpg": 0.94
+    "season_fpg": 0.94,
+    "season_range": [
+     0.36,
+     1.13
+    ]
    },
    "cr_pct": 49,
    "cr_season_pct": 22
@@ -25586,7 +26881,11 @@
      "xfpg": 0.9
     },
     "season_fpg": 1.19,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.56,
+     1.4
+    ]
    },
    "cr_pct": 45,
    "cr_season_pct": 47
@@ -25624,7 +26923,7 @@
    "last_gp": 69,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.44,
    "cr_fpg": 1.19,
    "cr_season": 1.04,
@@ -25647,7 +26946,12 @@
      "fpg": 1.13,
      "xfpg": 1.02
     },
-    "season_fpg": 1.16
+    "season_fpg": 1.16,
+    "season_range": [
+     0.57,
+     1.6
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 48,
    "cr_season_pct": 52
@@ -25707,7 +27011,11 @@
      "fpg": 1.4,
      "xfpg": 1.65
     },
-    "season_fpg": 1.79
+    "season_fpg": 1.79,
+    "season_range": [
+     1.08,
+     2.15
+    ]
    },
    "cr_pct": 48,
    "cr_season_pct": 83
@@ -25767,7 +27075,12 @@
      "fpg": 1.3,
      "xfpg": 1.07
     },
-    "season_fpg": 1.24
+    "season_fpg": 1.24,
+    "season_range": [
+     0.51,
+     1.38
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 44,
    "cr_season_pct": 40
@@ -25797,7 +27110,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.8,
+   "owned": 1.7,
    "gp": 7,
    "ppg": 1.07,
    "cur_ppg": 0.64,
@@ -25829,7 +27142,11 @@
      "xfpg": 0.84
     },
     "season_fpg": 1.18,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.57,
+     1.48
+    ]
    },
    "cr_pct": 48,
    "cr_season_pct": 50
@@ -25860,7 +27177,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 8.6,
+   "owned": 8.5,
    "gp": 5,
    "ppg": 1.44,
    "cur_ppg": 1.92,
@@ -25891,7 +27208,11 @@
      "fpg": 1.92,
      "xfpg": 1.27
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.55,
+     1.46
+    ]
    },
    "cr_pct": 48,
    "cr_season_pct": 49
@@ -25951,7 +27272,11 @@
      "fpg": 1.3,
      "xfpg": 1.19
     },
-    "season_fpg": 1.15
+    "season_fpg": 1.15,
+    "season_range": [
+     0.52,
+     1.36
+    ]
    },
    "cr_pct": 44,
    "cr_season_pct": 44
@@ -26011,7 +27336,11 @@
      "fpg": 1.9,
      "xfpg": 1.61
     },
-    "season_fpg": 1.18
+    "season_fpg": 1.18,
+    "season_range": [
+     0.52,
+     1.36
+    ]
    },
    "cr_pct": 43,
    "cr_season_pct": 44
@@ -26041,7 +27370,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 9.5,
+   "owned": 9.6,
    "gp": 6,
    "ppg": 0.85,
    "cur_ppg": 1.77,
@@ -26073,7 +27402,12 @@
      "xfpg": 1.57
     },
     "season_fpg": 1.13,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.48,
+     1.51
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 47,
    "cr_season_pct": 36
@@ -26103,7 +27437,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 0.4,
+   "owned": 0.5,
    "gp": 5,
    "ppg": 1.68,
    "cur_ppg": 1.68,
@@ -26134,7 +27468,12 @@
      "fpg": 1.68,
      "xfpg": 1.27
     },
-    "season_fpg": 1.16
+    "season_fpg": 1.16,
+    "season_range": [
+     0.44,
+     1.47
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 47,
    "cr_season_pct": 32
@@ -26196,7 +27535,12 @@
      "xfpg": 0.95
     },
     "season_fpg": 1.14,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     0.44,
+     1.47
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 47,
    "cr_season_pct": 32
@@ -26226,7 +27570,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.2,
+   "owned": 3.3,
    "gp": 7,
    "ppg": 1.14,
    "cur_ppg": 1.79,
@@ -26257,7 +27601,11 @@
      "fpg": 1.8,
      "xfpg": 1.29
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.53,
+     1.44
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 48
@@ -26319,7 +27667,11 @@
      "xfpg": 1.09
     },
     "season_fpg": 1.18,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.54,
+     1.45
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 48
@@ -26379,7 +27731,11 @@
      "fpg": 0.72,
      "xfpg": 0.91
     },
-    "season_fpg": 1.14
+    "season_fpg": 1.14,
+    "season_range": [
+     0.46,
+     1.3
+    ]
    },
    "cr_pct": 43,
    "cr_season_pct": 37
@@ -26441,7 +27797,11 @@
      "fpg": 0.22,
      "xfpg": 0.78
     },
-    "season_fpg": 1.12
+    "season_fpg": 1.12,
+    "season_range": [
+     0.54,
+     1.45
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 48
@@ -26479,7 +27839,7 @@
    "last_gp": 74,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.34,
    "cr_fpg": 1.18,
    "cr_season": 1.02,
@@ -26502,7 +27862,11 @@
      "fpg": 1.37,
      "xfpg": 1.34
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.56,
+     1.47
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 50
@@ -26563,7 +27927,11 @@
      "xfpg": 0.72
     },
     "season_fpg": 1.15,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.53,
+     1.37
+    ]
    },
    "cr_pct": 42,
    "cr_season_pct": 46
@@ -26623,7 +27991,11 @@
      "fpg": 0.75,
      "xfpg": 1.27
     },
-    "season_fpg": 1.23
+    "season_fpg": 1.23,
+    "season_range": [
+     0.47,
+     1.31
+    ]
    },
    "cr_pct": 42,
    "cr_season_pct": 39
@@ -26685,7 +28057,12 @@
      "xfpg": 1.15
     },
     "season_fpg": 1.15,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.47,
+     1.5
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 46,
    "cr_season_pct": 36
@@ -26746,7 +28123,11 @@
      "fpg": 1.98,
      "xfpg": 2.17
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.49,
+     1.4
+    ]
    },
    "cr_pct": 46,
    "cr_season_pct": 43
@@ -26807,7 +28188,12 @@
      "xfpg": 1.12
     },
     "season_fpg": 1.17,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.34,
+     1.26
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 41,
    "cr_season_pct": 25
@@ -26867,7 +28253,11 @@
      "fpg": 1.14,
      "xfpg": 1.45
     },
-    "season_fpg": 1.2
+    "season_fpg": 1.2,
+    "season_range": [
+     0.51,
+     1.35
+    ]
    },
    "cr_pct": 41,
    "cr_season_pct": 42
@@ -26895,7 +28285,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 52.6,
+   "owned": 52.5,
    "gp": 3,
    "ppg": 2.84,
    "cur_ppg": 0.93,
@@ -27047,7 +28437,11 @@
      "fpg": 1.0,
      "xfpg": 1.01
     },
-    "season_fpg": 1.13
+    "season_fpg": 1.13,
+    "season_range": [
+     0.51,
+     1.35
+    ]
    },
    "cr_pct": 40,
    "cr_season_pct": 42
@@ -27110,7 +28504,11 @@
      "xfpg": 1.11
     },
     "season_fpg": 1.15,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.52,
+     1.43
+    ]
    },
    "cr_pct": 45,
    "cr_season_pct": 47
@@ -27173,7 +28571,11 @@
      "xfpg": 1.26
     },
     "season_fpg": 1.18,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.51,
+     1.42
+    ]
    },
    "cr_pct": 45,
    "cr_season_pct": 45
@@ -27235,7 +28637,11 @@
      "xfpg": 2.05
     },
     "season_fpg": 1.2,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.51,
+     1.42
+    ]
    },
    "cr_pct": 45,
    "cr_season_pct": 45
@@ -27297,7 +28703,11 @@
      "xfpg": 1.39
     },
     "season_fpg": 1.14,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.5,
+     1.41
+    ]
    },
    "cr_pct": 44,
    "cr_season_pct": 43
@@ -27358,7 +28768,11 @@
      "xfpg": 1.01
     },
     "season_fpg": 1.18,
-    "age_adj": -0.08
+    "age_adj": -0.08,
+    "season_range": [
+     0.46,
+     1.3
+    ]
    },
    "cr_pct": 40,
    "cr_season_pct": 37
@@ -27420,7 +28834,12 @@
      "fpg": 0.58,
      "xfpg": 0.84
     },
-    "season_fpg": 1.1
+    "season_fpg": 1.1,
+    "season_range": [
+     0.54,
+     1.57
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 44,
    "cr_season_pct": 49
@@ -27482,7 +28901,12 @@
      "xfpg": 0.88
     },
     "season_fpg": 1.15,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.48,
+     1.51
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 43,
    "cr_season_pct": 43
@@ -27543,10 +28967,14 @@
      "fpg": 1.32,
      "xfpg": 1.23
     },
-    "season_fpg": 1.1
+    "season_fpg": 1.1,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 43,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 4697725,
@@ -27604,7 +29032,11 @@
      "fpg": 2.05,
      "xfpg": 1.77
     },
-    "season_fpg": 1.62
+    "season_fpg": 1.62,
+    "season_range": [
+     0.89,
+     1.96
+    ]
    },
    "cr_pct": 43,
    "cr_season_pct": 76
@@ -27725,7 +29157,11 @@
      "fpg": 1.28,
      "xfpg": 1.4
     },
-    "season_fpg": 1.14
+    "season_fpg": 1.14,
+    "season_range": [
+     0.44,
+     1.28
+    ]
    },
    "cr_pct": 39,
    "cr_season_pct": 35
@@ -27785,7 +29221,11 @@
      "fpg": 1.32,
      "xfpg": 1.14
     },
-    "season_fpg": 1.13
+    "season_fpg": 1.13,
+    "season_range": [
+     0.44,
+     1.28
+    ]
    },
    "cr_pct": 39,
    "cr_season_pct": 35
@@ -27848,7 +29288,12 @@
      "xfpg": 1.04
     },
     "season_fpg": 1.18,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.46,
+     1.49
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 43,
    "cr_season_pct": 39
@@ -27909,10 +29354,14 @@
      "fpg": 0.95,
      "xfpg": 1.19
     },
-    "season_fpg": 1.15
+    "season_fpg": 1.15,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 43,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 5149210,
@@ -27971,7 +29420,12 @@
      "fpg": 1.26,
      "xfpg": 1.26
     },
-    "season_fpg": 1.1
+    "season_fpg": 1.1,
+    "season_range": [
+     0.49,
+     1.52
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 43,
    "cr_season_pct": 43
@@ -28031,7 +29485,11 @@
      "fpg": 0.83,
      "xfpg": 0.83
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.48,
+     1.32
+    ]
    },
    "cr_pct": 38,
    "cr_season_pct": 40
@@ -28061,7 +29519,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 66.1,
+   "owned": 66.0,
    "gp": 5,
    "ppg": 1.6,
    "cur_ppg": 0.9,
@@ -28069,7 +29527,7 @@
    "last_gp": 72,
    "proj_ppg": 1.72,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.19,
    "cr_fpg": 1.1,
    "cr_season": 0.96,
@@ -28092,7 +29550,11 @@
      "fpg": 0.9,
      "xfpg": 0.92
     },
-    "season_fpg": 1.12
+    "season_fpg": 1.12,
+    "season_range": [
+     0.5,
+     1.41
+    ]
    },
    "cr_pct": 42,
    "cr_season_pct": 43
@@ -28153,7 +29615,11 @@
      "fpg": 1.1,
      "xfpg": 1.11
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.51,
+     1.42
+    ]
    },
    "cr_pct": 41,
    "cr_season_pct": 45
@@ -28215,10 +29681,14 @@
      "xfpg": 0.99
     },
     "season_fpg": 1.11,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 41,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 4587713,
@@ -28253,7 +29723,7 @@
    "last_gp": 79,
    "proj_ppg": 1.05,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.18,
    "cr_fpg": 1.13,
    "cr_season": 0.99,
@@ -28276,7 +29746,12 @@
      "fpg": 1.21,
      "xfpg": 0.94
     },
-    "season_fpg": 1.13
+    "season_fpg": 1.13,
+    "season_range": [
+     0.52,
+     1.55
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 41,
    "cr_season_pct": 48
@@ -28338,10 +29813,14 @@
      "fpg": 1.14,
      "xfpg": 1.18
     },
-    "season_fpg": 1.05
+    "season_fpg": 1.05,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 41,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 2993474,
@@ -28400,7 +29879,11 @@
      "xfpg": 1.11
     },
     "season_fpg": 1.1,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.47,
+     1.38
+    ]
    },
    "cr_pct": 41,
    "cr_season_pct": 39
@@ -28461,7 +29944,11 @@
      "fpg": 0.96,
      "xfpg": 1.11
     },
-    "season_fpg": 1.05
+    "season_fpg": 1.05,
+    "season_range": [
+     0.49,
+     1.4
+    ]
    },
    "cr_pct": 41,
    "cr_season_pct": 43
@@ -28521,7 +30008,11 @@
      "fpg": 0.82,
      "xfpg": 1.35
     },
-    "season_fpg": 1.07
+    "season_fpg": 1.07,
+    "season_range": [
+     0.42,
+     1.26
+    ]
    },
    "cr_pct": 37,
    "cr_season_pct": 33
@@ -28581,7 +30072,11 @@
      "fpg": 0.96,
      "xfpg": 1.09
     },
-    "season_fpg": 1.08
+    "season_fpg": 1.08,
+    "season_range": [
+     0.48,
+     1.32
+    ]
    },
    "cr_pct": 37,
    "cr_season_pct": 40
@@ -28642,10 +30137,14 @@
      "fpg": 1.04,
      "xfpg": 1.11
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 40,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 5080159,
@@ -28680,7 +30179,7 @@
    "last_gp": 13,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.16,
    "cr_fpg": 1.09,
    "cr_season": 0.87,
@@ -28703,7 +30202,12 @@
      "fpg": 1.3,
      "xfpg": 0.78
     },
-    "season_fpg": 1.07
+    "season_fpg": 1.07,
+    "season_range": [
+     0.4,
+     1.43
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 40,
    "cr_season_pct": 32
@@ -28763,7 +30267,11 @@
      "fpg": 0.58,
      "xfpg": 0.71
     },
-    "season_fpg": 1.08
+    "season_fpg": 1.08,
+    "season_range": [
+     0.42,
+     1.26
+    ]
    },
    "cr_pct": 37,
    "cr_season_pct": 33
@@ -28824,7 +30332,11 @@
      "fpg": 0.98,
      "xfpg": 0.59
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.51,
+     1.42
+    ]
    },
    "cr_pct": 40,
    "cr_season_pct": 45
@@ -28885,7 +30397,11 @@
      "xfpg": 1.28
     },
     "season_fpg": 1.09,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.42,
+     1.26
+    ]
    },
    "cr_pct": 36,
    "cr_season_pct": 33
@@ -28948,7 +30464,11 @@
      "xfpg": 1.02
     },
     "season_fpg": 1.09,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.45,
+     1.36
+    ]
    },
    "cr_pct": 40,
    "cr_season_pct": 36
@@ -29010,7 +30530,12 @@
      "xfpg": 0.76
     },
     "season_fpg": 1.04,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.42,
+     1.45
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 39,
    "cr_season_pct": 34
@@ -29041,7 +30566,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.9,
+   "owned": 1.8,
    "gp": 6,
    "ppg": 0.84,
    "cur_ppg": 1.3,
@@ -29049,7 +30574,7 @@
    "last_gp": 66,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.09,
    "cr_fpg": 1.09,
    "cr_season": 0.97,
@@ -29073,7 +30598,12 @@
      "xfpg": 1.07
     },
     "season_fpg": 1.1,
-    "age_adj": 0.03
+    "age_adj": 0.03,
+    "season_range": [
+     0.5,
+     1.53
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 39,
    "cr_season_pct": 45
@@ -29136,7 +30666,11 @@
      "xfpg": 1.45
     },
     "season_fpg": 1.05,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.42,
+     1.33
+    ]
    },
    "cr_pct": 39,
    "cr_season_pct": 33
@@ -29197,10 +30731,14 @@
      "fpg": 0.98,
      "xfpg": 1.05
     },
-    "season_fpg": 1.12
+    "season_fpg": 1.12,
+    "season_range": [
+     0.48,
+     1.39
+    ]
    },
    "cr_pct": 38,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 3149633,
@@ -29260,7 +30798,11 @@
      "xfpg": 0.76
     },
     "season_fpg": 0.92,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.27,
+     1.04
+    ]
    },
    "cr_pct": 38,
    "cr_season_pct": 16
@@ -29298,7 +30840,7 @@
    "last_gp": 65,
    "proj_ppg": 1.13,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.08,
    "cr_fpg": 1.09,
    "cr_season": 0.91,
@@ -29321,7 +30863,11 @@
      "fpg": 1.82,
      "xfpg": 1.14
     },
-    "season_fpg": 1.07
+    "season_fpg": 1.07,
+    "season_range": [
+     0.45,
+     1.36
+    ]
    },
    "cr_pct": 38,
    "cr_season_pct": 36
@@ -29383,7 +30929,11 @@
      "fpg": 1.78,
      "xfpg": 1.46
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.46,
+     1.37
+    ]
    },
    "cr_pct": 38,
    "cr_season_pct": 38
@@ -29413,7 +30963,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.5,
+   "owned": 1.6,
    "gp": 6,
    "ppg": 1.21,
    "cur_ppg": 2.13,
@@ -29421,7 +30971,7 @@
    "last_gp": 68,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.06,
    "cr_fpg": 1.06,
    "cr_season": 0.89,
@@ -29445,7 +30995,11 @@
      "xfpg": 1.26
     },
     "season_fpg": 1.05,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.43,
+     1.34
+    ]
    },
    "cr_pct": 38,
    "cr_season_pct": 34
@@ -29508,7 +31062,12 @@
      "fpg": 0.58,
      "xfpg": 0.98
     },
-    "season_fpg": 1.07
+    "season_fpg": 1.07,
+    "season_range": [
+     0.46,
+     1.49
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 38,
    "cr_season_pct": 39
@@ -29569,7 +31128,11 @@
      "fpg": 1.28,
      "xfpg": 1.38
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.42,
+     1.33
+    ]
    },
    "cr_pct": 37,
    "cr_season_pct": 33
@@ -29597,7 +31160,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 4.5,
+   "owned": 4.4,
    "gp": 5,
    "ppg": 2.55,
    "cur_ppg": 1.14,
@@ -29628,7 +31191,12 @@
      "fpg": 1.14,
      "xfpg": 1.32
     },
-    "season_fpg": 1.5
+    "season_fpg": 1.5,
+    "season_range": [
+     0.71,
+     1.73
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 35,
    "cr_season_pct": 71
@@ -29689,7 +31257,11 @@
      "fpg": 0.97,
      "xfpg": 1.23
     },
-    "season_fpg": 1.07
+    "season_fpg": 1.07,
+    "season_range": [
+     0.47,
+     1.38
+    ]
    },
    "cr_pct": 37,
    "cr_season_pct": 39
@@ -29750,7 +31322,11 @@
      "xfpg": 1.26
     },
     "season_fpg": 1.08,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.43,
+     1.27
+    ]
    },
    "cr_pct": 35,
    "cr_season_pct": 34
@@ -29811,7 +31387,11 @@
      "fpg": 1.04,
      "xfpg": 1.26
     },
-    "season_fpg": 1.05
+    "season_fpg": 1.05,
+    "season_range": [
+     0.45,
+     1.36
+    ]
    },
    "cr_pct": 37,
    "cr_season_pct": 36
@@ -29849,7 +31429,7 @@
    "last_gp": 74,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 3.03,
    "cr_fpg": 1.06,
    "cr_season": 0.91,
@@ -29860,8 +31440,8 @@
    "cr_matched": true,
    "nhl_id": 8483690,
    "cr_why": {
-    "toi5": 14.26,
-    "toi": 14.35,
+    "toi5": 14.27,
+    "toi": 14.36,
     "pp5": 0.15,
     "sog": 0.71,
     "blk": 0.57,
@@ -29872,7 +31452,12 @@
      "fpg": 0.83,
      "xfpg": 0.95
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.44,
+     1.47
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 37,
    "cr_season_pct": 36
@@ -29994,7 +31579,11 @@
      "fpg": 1.21,
      "xfpg": 1.31
     },
-    "season_fpg": 1.05
+    "season_fpg": 1.05,
+    "season_range": [
+     0.41,
+     1.32
+    ]
    },
    "cr_pct": 36,
    "cr_season_pct": 32
@@ -30055,7 +31644,11 @@
      "xfpg": 1.04
     },
     "season_fpg": 1.12,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.43,
+     1.29
+    ]
    },
    "cr_pct": 35,
    "cr_season_pct": 29
@@ -30115,7 +31708,11 @@
      "fpg": 1.47,
      "xfpg": 1.2
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.41,
+     1.25
+    ]
    },
    "cr_pct": 34,
    "cr_season_pct": 32
@@ -30176,7 +31773,11 @@
      "fpg": 1.07,
      "xfpg": 1.05
     },
-    "season_fpg": 1.04
+    "season_fpg": 1.04,
+    "season_range": [
+     0.42,
+     1.33
+    ]
    },
    "cr_pct": 36,
    "cr_season_pct": 33
@@ -30238,7 +31839,11 @@
      "fpg": 0.9,
      "xfpg": 0.75
     },
-    "season_fpg": 1.01
+    "season_fpg": 1.01,
+    "season_range": [
+     0.39,
+     1.3
+    ]
    },
    "cr_pct": 36,
    "cr_season_pct": 31
@@ -30276,7 +31881,7 @@
    "last_gp": 78,
    "proj_ppg": 1.18,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.99,
    "cr_fpg": 1.06,
    "cr_season": 0.94,
@@ -30299,10 +31904,15 @@
      "fpg": 0.74,
      "xfpg": 0.72
     },
-    "season_fpg": 1.09
+    "season_fpg": 1.09,
+    "season_range": [
+     0.47,
+     1.5
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 35,
-   "cr_season_pct": 41
+   "cr_season_pct": 40
   },
   {
    "id": 2562602,
@@ -30361,7 +31971,11 @@
      "xfpg": 0.7
     },
     "season_fpg": 1.04,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.43,
+     1.34
+    ]
    },
    "cr_pct": 35,
    "cr_season_pct": 34
@@ -30424,7 +32038,11 @@
      "xfpg": 1.08
     },
     "season_fpg": 1.07,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.43,
+     1.34
+    ]
    },
    "cr_pct": 35,
    "cr_season_pct": 34
@@ -30484,7 +32102,11 @@
      "fpg": 1.25,
      "xfpg": 1.18
     },
-    "season_fpg": 1.05
+    "season_fpg": 1.05,
+    "season_range": [
+     0.44,
+     1.28
+    ]
    },
    "cr_pct": 34,
    "cr_season_pct": 35
@@ -30574,7 +32196,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 76.7,
+   "owned": 76.6,
    "gp": 5,
    "ppg": 2.07,
    "cur_ppg": 1.22,
@@ -30606,10 +32228,82 @@
      "xfpg": 1.51
     },
     "season_fpg": 1.13,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.36,
+     1.22
+    ]
    },
    "cr_pct": 33,
    "cr_season_pct": 23
+  },
+  {
+   "id": 5216882,
+   "name": "Konsta Helenius",
+   "team": "BUF",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 2.0,
+   "gp": 4,
+   "ppg": 0.99,
+   "cur_ppg": 0.88,
+   "last_ppg": 1.0,
+   "last_gp": 9,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 2.95,
+   "cr_fpg": 1.03,
+   "cr_season": 0.66,
+   "cr_games": 2.86,
+   "cr_dress": 0.72,
+   "cr_dress_next": 0.9,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8484797,
+   "cr_why": {
+    "toi5": 14.11,
+    "toi": 14.11,
+    "pp5": 2.05,
+    "sog": 1.5,
+    "blk": 0.25,
+    "gp": 4,
+    "last_fpg": 1.0,
+    "xfp": {
+     "gp": 4,
+     "fpg": 0.88,
+     "xfpg": 0.94
+    },
+    "season_fpg": 1.06,
+    "age_adj": 0.04,
+    "season_range": [
+     0.28,
+     1.13
+    ],
+    "exp": "rookie"
+   },
+   "cr_pct": 35,
+   "cr_season_pct": 17
   },
   {
    "id": 3900260,
@@ -30667,7 +32361,11 @@
      "fpg": 1.08,
      "xfpg": 1.39
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.41,
+     1.32
+    ]
    },
    "cr_pct": 35,
    "cr_season_pct": 32
@@ -30790,7 +32488,12 @@
      "xfpg": 0.56
     },
     "season_fpg": 0.99,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     0.35,
+     1.38
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 34,
    "cr_season_pct": 26
@@ -30850,7 +32553,11 @@
      "fpg": 0.4,
      "xfpg": 0.96
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.39,
+     1.25
+    ]
    },
    "cr_pct": 33,
    "cr_season_pct": 25
@@ -30911,7 +32618,12 @@
      "fpg": 0.85,
      "xfpg": 0.49
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.34,
+     1.37
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 34,
    "cr_season_pct": 29
@@ -30971,7 +32683,12 @@
      "fpg": 1.38,
      "xfpg": 1.39
     },
-    "season_fpg": 1.12
+    "season_fpg": 1.12,
+    "season_range": [
+     0.38,
+     1.21
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 33,
    "cr_season_pct": 28
@@ -31003,7 +32720,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 0.5,
+   "owned": 0.6,
    "gp": 2,
    "ppg": 0.85,
    "cur_ppg": 2.4,
@@ -31034,7 +32751,11 @@
      "fpg": 2.4,
      "xfpg": 1.24
     },
-    "season_fpg": 0.86
+    "season_fpg": 0.86,
+    "season_range": [
+     0.28,
+     1.05
+    ]
    },
    "cr_pct": 34,
    "cr_season_pct": 17
@@ -31095,7 +32816,11 @@
      "fpg": 0.94,
      "xfpg": 1.38
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.36,
+     1.27
+    ]
    },
    "cr_pct": 34,
    "cr_season_pct": 29
@@ -31156,7 +32881,11 @@
      "xfpg": 1.03
     },
     "season_fpg": 1.11,
-    "age_adj": -0.11
+    "age_adj": -0.11,
+    "season_range": [
+     0.36,
+     1.2
+    ]
    },
    "cr_pct": 32,
    "cr_season_pct": 31
@@ -31278,9 +33007,13 @@
      "fpg": 0.7,
      "xfpg": 1.35
     },
-    "season_fpg": 1.02
+    "season_fpg": 1.02,
+    "season_range": [
+     0.4,
+     1.31
+    ]
    },
-   "cr_pct": 34,
+   "cr_pct": 33,
    "cr_season_pct": 32
   },
   {
@@ -31339,7 +33072,11 @@
      "xfpg": 0.86
     },
     "season_fpg": 1.0,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.43,
+     1.29
+    ]
    },
    "cr_pct": 32,
    "cr_season_pct": 29
@@ -31369,7 +33106,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 13.1,
+   "owned": 13.2,
    "gp": 5,
    "ppg": 1.55,
    "cur_ppg": 2.26,
@@ -31401,7 +33138,11 @@
      "xfpg": 1.1
     },
     "season_fpg": 1.06,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.36,
+     1.27
+    ]
    },
    "cr_pct": 33,
    "cr_season_pct": 29
@@ -31465,7 +33206,11 @@
      "xfpg": 0.82
     },
     "season_fpg": 0.81,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.22,
+     0.99
+    ]
    },
    "cr_pct": 33,
    "cr_season_pct": 15
@@ -31586,7 +33331,12 @@
      "fpg": 1.14,
      "xfpg": 1.11
     },
-    "season_fpg": 1.07
+    "season_fpg": 1.07,
+    "season_range": [
+     0.42,
+     1.25
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 31,
    "cr_season_pct": 30
@@ -31647,9 +33397,13 @@
      "fpg": 1.0,
      "xfpg": 1.04
     },
-    "season_fpg": 0.98
+    "season_fpg": 0.98,
+    "season_range": [
+     0.39,
+     1.3
+    ]
    },
-   "cr_pct": 33,
+   "cr_pct": 32,
    "cr_season_pct": 31
   },
   {
@@ -31684,7 +33438,7 @@
    "last_gp": 0,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.82,
    "cr_fpg": 0.98,
    "cr_season": 0.63,
@@ -31708,7 +33462,12 @@
      "xfpg": 0.74
     },
     "season_fpg": 0.94,
-    "age_adj": 0.05
+    "age_adj": 0.05,
+    "season_range": [
+     0.2,
+     1.12
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 31,
    "cr_season_pct": 17
@@ -31769,7 +33528,12 @@
      "fpg": 3.5,
      "xfpg": 2.68
     },
-    "season_fpg": 1.19
+    "season_fpg": 1.19,
+    "season_range": [
+     0.34,
+     1.37
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 32,
    "cr_season_pct": 29
@@ -31829,7 +33593,12 @@
      "fpg": 0.3,
      "xfpg": 0.77
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.25,
+     1.17
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 30,
    "cr_season_pct": 21
@@ -31889,7 +33658,12 @@
      "fpg": 0.95,
      "xfpg": 0.99
     },
-    "season_fpg": 1.0
+    "season_fpg": 1.0,
+    "season_range": [
+     0.35,
+     1.18
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 30,
    "cr_season_pct": 25
@@ -31927,7 +33701,7 @@
    "last_gp": 66,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.79,
    "cr_fpg": 0.97,
    "cr_season": 0.85,
@@ -31950,7 +33724,11 @@
      "fpg": 1.2,
      "xfpg": 1.22
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.39,
+     1.3
+    ]
    },
    "cr_pct": 32,
    "cr_season_pct": 31
@@ -32143,7 +33921,12 @@
      "xfpg": 0.69
     },
     "season_fpg": 1.01,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.39,
+     1.22
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 29,
    "cr_season_pct": 28
@@ -32204,7 +33987,12 @@
      "fpg": 1.02,
      "xfpg": 0.97
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.38,
+     1.41
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 32,
    "cr_season_pct": 31
@@ -32264,7 +34052,11 @@
      "fpg": 0.63,
      "xfpg": 0.71
     },
-    "season_fpg": 1.01
+    "season_fpg": 1.01,
+    "season_range": [
+     0.36,
+     1.22
+    ]
    },
    "cr_pct": 29,
    "cr_season_pct": 23
@@ -32293,7 +34085,7 @@
    "ir": false,
    "bench": true,
    "injury": null,
-   "owned": 14.2,
+   "owned": 14.1,
    "gp": 2,
    "ppg": 2.64,
    "cur_ppg": 4.2,
@@ -32386,7 +34178,11 @@
      "fpg": 0.98,
      "xfpg": 0.92
     },
-    "season_fpg": 0.97
+    "season_fpg": 0.97,
+    "season_range": [
+     0.36,
+     1.27
+    ]
    },
    "cr_pct": 31,
    "cr_season_pct": 29
@@ -32447,7 +34243,11 @@
      "xfpg": 1.19
     },
     "season_fpg": 1.04,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.39,
+     1.25
+    ]
    },
    "cr_pct": 28,
    "cr_season_pct": 25
@@ -32508,7 +34308,11 @@
      "fpg": 1.52,
      "xfpg": 1.21
     },
-    "season_fpg": 1.03
+    "season_fpg": 1.03,
+    "season_range": [
+     0.36,
+     1.27
+    ]
    },
    "cr_pct": 31,
    "cr_season_pct": 29
@@ -32630,7 +34434,12 @@
      "fpg": 0.88,
      "xfpg": 0.84
     },
-    "season_fpg": 0.93
+    "season_fpg": 0.93,
+    "season_range": [
+     0.41,
+     1.16
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 31,
    "cr_season_pct": 24
@@ -32689,7 +34498,12 @@
      "fpg": 1.74,
      "xfpg": 1.55
     },
-    "season_fpg": 1.39
+    "season_fpg": 1.39,
+    "season_range": [
+     0.43,
+     1.45
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 28,
    "cr_season_pct": 44
@@ -32750,7 +34564,12 @@
      "fpg": 1.22,
      "xfpg": 0.68
     },
-    "season_fpg": 0.97
+    "season_fpg": 0.97,
+    "season_range": [
+     0.31,
+     1.16
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 31,
    "cr_season_pct": 20
@@ -32811,9 +34630,13 @@
      "fpg": 1.02,
      "xfpg": 1.31
     },
-    "season_fpg": 0.94
+    "season_fpg": 0.94,
+    "season_range": [
+     0.33,
+     1.24
+    ]
    },
-   "cr_pct": 31,
+   "cr_pct": 30,
    "cr_season_pct": 27
   },
   {
@@ -32873,7 +34696,11 @@
      "xfpg": 0.81
     },
     "season_fpg": 0.99,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.39,
+     1.16
+    ]
    },
    "cr_pct": 30,
    "cr_season_pct": 24
@@ -32935,7 +34762,12 @@
      "fpg": 1.9,
      "xfpg": 1.2
     },
-    "season_fpg": 0.98
+    "season_fpg": 0.98,
+    "season_range": [
+     0.27,
+     1.12
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 30,
    "cr_season_pct": 17
@@ -32974,7 +34806,7 @@
    "last_gp": 68,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.68,
    "cr_fpg": 0.96,
    "cr_season": 0.79,
@@ -32997,7 +34829,12 @@
      "fpg": 1.7,
      "xfpg": 1.31
     },
-    "season_fpg": 0.92
+    "season_fpg": 0.92,
+    "season_range": [
+     0.32,
+     1.35
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 30,
    "cr_season_pct": 27
@@ -33058,9 +34895,13 @@
      "fpg": 0.83,
      "xfpg": 0.77
     },
-    "season_fpg": 0.91
+    "season_fpg": 0.91,
+    "season_range": [
+     0.33,
+     1.24
+    ]
    },
-   "cr_pct": 30,
+   "cr_pct": 29,
    "cr_season_pct": 27
   },
   {
@@ -33119,73 +34960,14 @@
      "fpg": 0.31,
      "xfpg": 0.65
     },
-    "season_fpg": 0.9
+    "season_fpg": 0.9,
+    "season_range": [
+     0.32,
+     1.23
+    ]
    },
    "cr_pct": 29,
    "cr_season_pct": 26
-  },
-  {
-   "id": 5216882,
-   "name": "Konsta Helenius",
-   "team": "BUF",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": "2026-10-12T17:00:00Z",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 2.0,
-   "gp": 4,
-   "ppg": 0.99,
-   "cur_ppg": 0.88,
-   "last_ppg": 1.0,
-   "last_gp": 9,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr": 2.66,
-   "cr_fpg": 1.03,
-   "cr_season": 0.66,
-   "cr_games": 2.58,
-   "cr_dress": 0.64,
-   "cr_dress_next": 0.54,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8484797,
-   "cr_why": {
-    "toi5": 14.11,
-    "toi": 14.11,
-    "pp5": 2.05,
-    "sog": 1.5,
-    "blk": 0.25,
-    "gp": 4,
-    "last_fpg": 1.0,
-    "xfp": {
-     "gp": 4,
-     "fpg": 0.88,
-     "xfpg": 0.94
-    },
-    "season_fpg": 1.06,
-    "age_adj": 0.04
-   },
-   "cr_pct": 29,
-   "cr_season_pct": 17
   },
   {
    "id": 5262,
@@ -33244,7 +35026,11 @@
      "xfpg": 1.11
     },
     "season_fpg": 0.98,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.32,
+     1.23
+    ]
    },
    "cr_pct": 29,
    "cr_season_pct": 26
@@ -33303,7 +35089,11 @@
      "fpg": 1.32,
      "xfpg": 1.46
     },
-    "season_fpg": 1.36
+    "season_fpg": 1.36,
+    "season_range": [
+     0.73,
+     1.57
+    ]
    },
    "cr_pct": 27,
    "cr_season_pct": 66
@@ -33364,7 +35154,11 @@
      "fpg": 0.78,
      "xfpg": 0.84
     },
-    "season_fpg": 0.93
+    "season_fpg": 0.93,
+    "season_range": [
+     0.39,
+     1.16
+    ]
    },
    "cr_pct": 29,
    "cr_season_pct": 24
@@ -33424,7 +35218,11 @@
      "fpg": 0.88,
      "xfpg": 1.0
     },
-    "season_fpg": 0.96
+    "season_fpg": 0.96,
+    "season_range": [
+     0.27,
+     1.13
+    ]
    },
    "cr_pct": 27,
    "cr_season_pct": 18
@@ -33486,7 +35284,11 @@
      "fpg": 1.24,
      "xfpg": 0.93
     },
-    "season_fpg": 0.9
+    "season_fpg": 0.9,
+    "season_range": [
+     0.31,
+     1.22
+    ]
    },
    "cr_pct": 28,
    "cr_season_pct": 25
@@ -33547,7 +35349,11 @@
      "fpg": 0.17,
      "xfpg": 0.49
     },
-    "season_fpg": 0.89
+    "season_fpg": 0.89,
+    "season_range": [
+     0.36,
+     1.13
+    ]
    },
    "cr_pct": 28,
    "cr_season_pct": 22
@@ -33607,7 +35413,12 @@
      "fpg": 2.12,
      "xfpg": 1.81
     },
-    "season_fpg": 1.3
+    "season_fpg": 1.3,
+    "season_range": [
+     0.66,
+     1.69
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 28,
    "cr_season_pct": 58
@@ -33667,7 +35478,11 @@
      "fpg": 2.4,
      "xfpg": 0.77
     },
-    "season_fpg": 1.1
+    "season_fpg": 1.1,
+    "season_range": [
+     0.32,
+     1.18
+    ]
    },
    "cr_pct": 26,
    "cr_season_pct": 21
@@ -33728,7 +35543,11 @@
      "xfpg": 0.64
     },
     "season_fpg": 0.94,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.35,
+     1.21
+    ]
    },
    "cr_pct": 26,
    "cr_season_pct": 22
@@ -33789,7 +35608,11 @@
      "fpg": 1.43,
      "xfpg": 0.94
     },
-    "season_fpg": 0.93
+    "season_fpg": 0.93,
+    "season_range": [
+     0.33,
+     1.24
+    ]
    },
    "cr_pct": 28,
    "cr_season_pct": 27
@@ -33851,7 +35674,11 @@
      "fpg": 0.74,
      "xfpg": 0.91
     },
-    "season_fpg": 0.9
+    "season_fpg": 0.9,
+    "season_range": [
+     0.3,
+     1.07
+    ]
    },
    "cr_pct": 27,
    "cr_season_pct": 18
@@ -33913,7 +35740,11 @@
      "fpg": 0.89,
      "xfpg": 0.73
     },
-    "season_fpg": 0.91
+    "season_fpg": 0.91,
+    "season_range": [
+     0.39,
+     1.16
+    ]
    },
    "cr_pct": 27,
    "cr_season_pct": 24
@@ -33973,7 +35804,11 @@
      "xfpg": 1.08
     },
     "season_fpg": 1.29,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.6,
+     1.44
+    ]
    },
    "cr_pct": 25,
    "cr_season_pct": 50
@@ -34034,7 +35869,12 @@
      "fpg": 0.87,
      "xfpg": 1.05
     },
-    "season_fpg": 0.86
+    "season_fpg": 0.86,
+    "season_range": [
+     0.33,
+     1.08
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 27,
    "cr_season_pct": 18
@@ -34096,7 +35936,11 @@
      "fpg": 1.64,
      "xfpg": 1.44
     },
-    "season_fpg": 0.93
+    "season_fpg": 0.93,
+    "season_range": [
+     0.37,
+     1.14
+    ]
    },
    "cr_pct": 26,
    "cr_season_pct": 23
@@ -34133,7 +35977,7 @@
    "last_gp": 50,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.5,
    "cr_fpg": 1.02,
    "cr_season": 0.65,
@@ -34157,7 +36001,11 @@
      "xfpg": 1.16
     },
     "season_fpg": 1.08,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.27,
+     1.13
+    ]
    },
    "cr_pct": 25,
    "cr_season_pct": 18
@@ -34219,7 +36067,12 @@
      "fpg": 0.97,
      "xfpg": 0.73
     },
-    "season_fpg": 0.88
+    "season_fpg": 0.88,
+    "season_range": [
+     0.39,
+     1.14
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 26,
    "cr_season_pct": 22
@@ -34249,7 +36102,7 @@
    "ir": false,
    "bench": false,
    "injury": "DAY_TO_DAY",
-   "owned": 15.4,
+   "owned": 15.3,
    "gp": 4,
    "ppg": 1.62,
    "cur_ppg": 1.9,
@@ -34257,7 +36110,7 @@
    "last_gp": 29,
    "proj_ppg": 1.58,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 2.46,
    "cr_fpg": 1.64,
    "cr_season": 1.13,
@@ -34281,6 +36134,10 @@
      "xfpg": 2.09
     },
     "season_fpg": 1.63,
+    "season_range": [
+     0.67,
+     1.58
+    ],
     "back": {
      "games": "3"
     }
@@ -34342,7 +36199,11 @@
      "fpg": 1.77,
      "xfpg": 1.58
     },
-    "season_fpg": 1.24
+    "season_fpg": 1.24,
+    "season_range": [
+     0.6,
+     1.44
+    ]
    },
    "cr_pct": 24,
    "cr_season_pct": 50
@@ -34441,7 +36302,7 @@
    "last_gp": 52,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.42,
    "cr_fpg": 0.92,
    "cr_season": 0.67,
@@ -34464,7 +36325,12 @@
      "fpg": 2.3,
      "xfpg": 1.22
     },
-    "season_fpg": 0.92
+    "season_fpg": 0.92,
+    "season_range": [
+     0.33,
+     1.08
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 26,
    "cr_season_pct": 18
@@ -34525,7 +36391,11 @@
      "fpg": 1.1,
      "xfpg": 1.23
     },
-    "season_fpg": 0.91
+    "season_fpg": 0.91,
+    "season_range": [
+     0.32,
+     1.09
+    ]
    },
    "cr_pct": 26,
    "cr_season_pct": 20
@@ -34554,7 +36424,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 18.0,
+   "owned": 17.9,
    "gp": 5,
    "ppg": 1.42,
    "cur_ppg": 0.92,
@@ -34562,7 +36432,7 @@
    "last_gp": 76,
    "proj_ppg": 1.51,
    "clears": "Wed 14",
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.41,
    "cr_fpg": 1.24,
    "cr_season": 1.13,
@@ -34585,7 +36455,11 @@
      "fpg": 0.92,
      "xfpg": 1.13
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.67,
+     1.58
+    ]
    },
    "cr_pct": 25,
    "cr_season_pct": 58
@@ -34646,7 +36520,11 @@
      "fpg": 1.24,
      "xfpg": 0.91
     },
-    "season_fpg": 0.85
+    "season_fpg": 0.85,
+    "season_range": [
+     0.36,
+     1.13
+    ]
    },
    "cr_pct": 25,
    "cr_season_pct": 22
@@ -34768,7 +36646,11 @@
      "fpg": 0.9,
      "xfpg": 1.02
     },
-    "season_fpg": 0.85
+    "season_fpg": 0.85,
+    "season_range": [
+     0.35,
+     1.12
+    ]
    },
    "cr_pct": 25,
    "cr_season_pct": 21
@@ -34799,7 +36681,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 0.7,
+   "owned": 0.6,
    "gp": 4,
    "ppg": 1.37,
    "cur_ppg": 1.1,
@@ -34807,7 +36689,7 @@
    "last_gp": 12,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 2.38,
    "cr_fpg": 0.95,
    "cr_season": 0.59,
@@ -34830,73 +36712,14 @@
      "fpg": 1.1,
      "xfpg": 0.97
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.22,
+     0.99
+    ]
    },
-   "cr_pct": 24,
+   "cr_pct": 25,
    "cr_season_pct": 15
-  },
-  {
-   "id": 3939856,
-   "name": "Bokondji Imama",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": "2026-10-12T17:00:00Z",
-   "pos": "LW",
-   "slots": [
-    "F",
-    "LW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.2,
-   "gp": 5,
-   "ppg": 0.29,
-   "cur_ppg": 0.54,
-   "last_ppg": 0.25,
-   "last_gp": 2,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 2.38,
-   "cr_fpg": 0.69,
-   "cr_season": 0.4,
-   "cr_games": 3.44,
-   "cr_dress": 0.86,
-   "cr_dress_next": 0.91,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8478147,
-   "cr_why": {
-    "toi5": 6.58,
-    "toi": 6.58,
-    "pp5": 0.0,
-    "sog": 0.8,
-    "blk": 0.2,
-    "gp": 5,
-    "last_fpg": 0.69,
-    "xfp": {
-     "gp": 5,
-     "fpg": 0.54,
-     "xfpg": 0.63
-    },
-    "last_season": "2024-25",
-    "season_fpg": 0.7
-   },
-   "cr_pct": 24,
-   "cr_season_pct": 10
   },
   {
    "id": 3115033,
@@ -34956,7 +36779,11 @@
      "fpg": 0.85,
      "xfpg": 0.83
     },
-    "season_fpg": 0.83
+    "season_fpg": 0.83,
+    "season_range": [
+     0.31,
+     1.08
+    ]
    },
    "cr_pct": 24,
    "cr_season_pct": 19
@@ -34986,7 +36813,7 @@
    "ir": false,
    "bench": false,
    "injury": "DAY_TO_DAY",
-   "owned": 87.4,
+   "owned": 87.3,
    "gp": 5,
    "ppg": 1.87,
    "cur_ppg": 1.64,
@@ -35019,6 +36846,10 @@
     },
     "season_fpg": 1.73,
     "age_adj": -0.06,
+    "season_range": [
+     0.86,
+     1.77
+    ],
     "back": {
      "games": "3"
     }
@@ -35049,7 +36880,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 36.6,
+   "owned": 36.8,
    "gp": 6,
    "ppg": 1.06,
    "cur_ppg": 2.48,
@@ -35080,7 +36911,12 @@
      "fpg": 2.48,
      "xfpg": 1.87
     },
-    "season_fpg": 1.26
+    "season_fpg": 1.26,
+    "season_range": [
+     0.6,
+     1.47
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 24,
    "cr_season_pct": 47
@@ -35109,7 +36945,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 1.5,
+   "owned": 1.4,
    "gp": 2,
    "ppg": 3.76,
    "cur_ppg": 1.6,
@@ -35171,7 +37007,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 17.4,
+   "owned": 17.3,
    "gp": 7,
    "ppg": 1.34,
    "cur_ppg": 1.19,
@@ -35179,7 +37015,7 @@
    "last_gp": 80,
    "proj_ppg": 1.38,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.32,
    "cr_fpg": 0.83,
    "cr_season": 0.67,
@@ -35202,7 +37038,11 @@
      "fpg": 1.19,
      "xfpg": 0.88
     },
-    "season_fpg": 0.83
+    "season_fpg": 0.83,
+    "season_range": [
+     0.3,
+     1.07
+    ]
    },
    "cr_pct": 24,
    "cr_season_pct": 18
@@ -35324,9 +37164,13 @@
      "fpg": 1.76,
      "xfpg": 1.16
     },
-    "season_fpg": 0.84
+    "season_fpg": 0.84,
+    "season_range": [
+     0.29,
+     1.06
+    ]
    },
-   "cr_pct": 23,
+   "cr_pct": 24,
    "cr_season_pct": 17
   },
   {
@@ -35391,6 +37235,74 @@
    "cr_season_pct": 56
   },
   {
+   "id": 3939856,
+   "name": "Bokondji Imama",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "LW",
+   "slots": [
+    "F",
+    "LW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.2,
+   "gp": 5,
+   "ppg": 0.29,
+   "cur_ppg": 0.54,
+   "last_ppg": 0.25,
+   "last_gp": 2,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 2.29,
+   "cr_fpg": 0.67,
+   "cr_season": 0.4,
+   "cr_games": 3.44,
+   "cr_dress": 0.86,
+   "cr_dress_next": 0.91,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478147,
+   "cr_why": {
+    "toi5": 6.58,
+    "toi": 6.58,
+    "pp5": 0.0,
+    "sog": 0.8,
+    "blk": 0.2,
+    "gp": 5,
+    "last_fpg": 0.69,
+    "xfp": {
+     "gp": 5,
+     "fpg": 0.54,
+     "xfpg": 0.63
+    },
+    "last_season": "2024-25",
+    "season_fpg": 0.69,
+    "season_range": [
+     0.02,
+     0.87
+    ],
+    "exp": "rookie"
+   },
+   "cr_pct": 23,
+   "cr_season_pct": 10
+  },
+  {
    "id": 4331579,
    "name": "Paul Cotter",
    "team": "VAN",
@@ -35414,7 +37326,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 55.1,
+   "owned": 55.0,
    "gp": 7,
    "ppg": 1.04,
    "cur_ppg": 2.06,
@@ -35422,7 +37334,7 @@
    "last_gp": 79,
    "proj_ppg": null,
    "clears": "Wed 14",
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.27,
    "cr_fpg": 1.16,
    "cr_season": 1.05,
@@ -35445,7 +37357,11 @@
      "fpg": 2.07,
      "xfpg": 1.06
     },
-    "season_fpg": 1.17
+    "season_fpg": 1.17,
+    "season_range": [
+     0.59,
+     1.5
+    ]
    },
    "cr_pct": 22,
    "cr_season_pct": 53
@@ -35507,7 +37423,11 @@
      "fpg": 0.5,
      "xfpg": 0.89
     },
-    "season_fpg": 0.77
+    "season_fpg": 0.77,
+    "season_range": [
+     0.14,
+     0.91
+    ]
    },
    "cr_pct": 22,
    "cr_season_pct": 12
@@ -35545,7 +37465,7 @@
    "last_gp": 77,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.27,
    "cr_fpg": 0.85,
    "cr_season": 0.6,
@@ -35569,7 +37489,11 @@
      "xfpg": 0.93
     },
     "season_fpg": 0.84,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.23,
+     1.0
+    ]
    },
    "cr_pct": 22,
    "cr_season_pct": 16
@@ -35629,7 +37553,11 @@
      "fpg": 1.2,
      "xfpg": 1.03
     },
-    "season_fpg": 1.18
+    "season_fpg": 1.18,
+    "season_range": [
+     0.57,
+     1.48
+    ]
    },
    "cr_pct": 22,
    "cr_season_pct": 50
@@ -35690,7 +37618,11 @@
      "fpg": 1.07,
      "xfpg": 0.81
     },
-    "season_fpg": 0.81
+    "season_fpg": 0.81,
+    "season_range": [
+     0.3,
+     1.07
+    ]
    },
    "cr_pct": 22,
    "cr_season_pct": 18
@@ -35728,7 +37660,7 @@
    "last_gp": 82,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 2.25,
    "cr_fpg": 0.84,
    "cr_season": 0.68,
@@ -35751,7 +37683,11 @@
      "fpg": 0.78,
      "xfpg": 0.65
     },
-    "season_fpg": 0.85
+    "season_fpg": 0.85,
+    "season_range": [
+     0.31,
+     1.08
+    ]
    },
    "cr_pct": 22,
    "cr_season_pct": 19
@@ -35812,7 +37748,11 @@
      "xfpg": 1.26
     },
     "season_fpg": 1.19,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.55,
+     1.46
+    ]
    },
    "cr_pct": 21,
    "cr_season_pct": 49
@@ -35873,7 +37813,11 @@
      "fpg": 0.7,
      "xfpg": 0.58
     },
-    "season_fpg": 0.82
+    "season_fpg": 0.82,
+    "season_range": [
+     0.23,
+     1.0
+    ]
    },
    "cr_pct": 21,
    "cr_season_pct": 16
@@ -35935,7 +37879,11 @@
      "fpg": 0.78,
      "xfpg": 0.73
     },
-    "season_fpg": 0.8
+    "season_fpg": 0.8,
+    "season_range": [
+     0.18,
+     0.95
+    ]
    },
    "cr_pct": 21,
    "cr_season_pct": 14
@@ -35995,7 +37943,11 @@
      "xfpg": 0.97
     },
     "season_fpg": 1.12,
-    "age_adj": -0.03
+    "age_adj": -0.03,
+    "season_range": [
+     0.46,
+     1.3
+    ]
    },
    "cr_pct": 23,
    "cr_season_pct": 37
@@ -36056,7 +38008,11 @@
      "xfpg": 0.79
     },
     "season_fpg": 1.09,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.46,
+     1.37
+    ]
    },
    "cr_pct": 21,
    "cr_season_pct": 38
@@ -36117,7 +38073,11 @@
      "fpg": 0.38,
      "xfpg": 0.66
     },
-    "season_fpg": 0.81
+    "season_fpg": 0.81,
+    "season_range": [
+     0.2,
+     0.97
+    ]
    },
    "cr_pct": 20,
    "cr_season_pct": 15
@@ -36178,7 +38138,11 @@
      "fpg": 0.13,
      "xfpg": 0.33
     },
-    "season_fpg": 0.78
+    "season_fpg": 0.78,
+    "season_range": [
+     0.19,
+     0.96
+    ]
    },
    "cr_pct": 20,
    "cr_season_pct": 14
@@ -36239,7 +38203,12 @@
      "fpg": 0.54,
      "xfpg": 0.5
     },
-    "season_fpg": 0.67
+    "season_fpg": 0.67,
+    "season_range": [
+     0.12,
+     0.87
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 20,
    "cr_season_pct": 11
@@ -36276,7 +38245,7 @@
    "last_gp": 4,
    "proj_ppg": null,
    "clears": "Wed 14",
-   "dfo_out": null,
+   "dfo_out": false,
    "cr": 1.83,
    "cr_fpg": 0.95,
    "cr_season": 0.7,
@@ -36300,7 +38269,12 @@
      "xfpg": 0.6
     },
     "season_fpg": 0.93,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.32,
+     1.17
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 19,
    "cr_season_pct": 21
@@ -36361,6 +38335,10 @@
      "xfpg": 1.39
     },
     "season_fpg": 1.22,
+    "season_range": [
+     0.6,
+     1.51
+    ],
     "back": {
      "games": "0-1"
     }
@@ -36424,7 +38402,11 @@
      "xfpg": 1.39
     },
     "season_fpg": 0.98,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.33,
+     1.24
+    ]
    },
    "cr_pct": 19,
    "cr_season_pct": 27
@@ -36453,7 +38435,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.1,
+   "owned": 3.0,
    "gp": 5,
    "ppg": 0.7,
    "cur_ppg": 0.48,
@@ -36484,7 +38466,11 @@
      "fpg": 0.48,
      "xfpg": 0.65
     },
-    "season_fpg": 0.79
+    "season_fpg": 0.79,
+    "season_range": [
+     0.12,
+     0.98
+    ]
    },
    "cr_pct": 23,
    "cr_season_pct": 15
@@ -36516,7 +38502,7 @@
    "ir": false,
    "bench": false,
    "injury": "DAY_TO_DAY",
-   "owned": 0.7,
+   "owned": 0.6,
    "gp": 4,
    "ppg": 1.15,
    "cur_ppg": 0.42,
@@ -36549,6 +38535,10 @@
     },
     "season_fpg": 1.06,
     "age_adj": -0.06,
+    "season_range": [
+     0.32,
+     1.09
+    ],
     "back": {
      "games": "3"
     }
@@ -36611,7 +38601,12 @@
      "fpg": 1.6,
      "xfpg": 1.36
     },
-    "season_fpg": 0.91
+    "season_fpg": 0.91,
+    "season_range": [
+     0.37,
+     1.12
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 19,
    "cr_season_pct": 21
@@ -36700,7 +38695,7 @@
    "ir": false,
    "bench": false,
    "injury": "DAY_TO_DAY",
-   "owned": 7.3,
+   "owned": 7.2,
    "gp": 6,
    "ppg": 1.23,
    "cur_ppg": 0.67,
@@ -36733,6 +38728,10 @@
     },
     "season_fpg": 1.23,
     "age_adj": -0.08,
+    "season_range": [
+     0.43,
+     1.34
+    ],
     "back": {
      "games": "3"
     }
@@ -36796,7 +38795,12 @@
      "fpg": 1.1,
      "xfpg": 0.9
     },
-    "season_fpg": 0.98
+    "season_fpg": 0.98,
+    "season_range": [
+     0.25,
+     1.0
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 18,
    "cr_season_pct": 15
@@ -36917,7 +38921,12 @@
      "fpg": 0.57,
      "xfpg": 1.22
     },
-    "season_fpg": 0.87
+    "season_fpg": 0.87,
+    "season_range": [
+     0.1,
+     0.93
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 22,
    "cr_season_pct": 15
@@ -36980,6 +38989,10 @@
     },
     "season_fpg": 0.88,
     "age_adj": -0.07,
+    "season_range": [
+     0.1,
+     0.96
+    ],
     "back": {
      "games": "3"
     }
@@ -37103,7 +39116,11 @@
      "xfpg": 0.64
     },
     "season_fpg": 0.85,
-    "age_adj": -0.11
+    "age_adj": -0.11,
+    "season_range": [
+     0.22,
+     0.99
+    ]
    },
    "cr_pct": 18,
    "cr_season_pct": 15
@@ -37224,6 +39241,10 @@
     },
     "season_fpg": 1.12,
     "age_adj": -0.06,
+    "season_range": [
+     0.39,
+     1.25
+    ],
     "back": {
      "games": "3"
     }
@@ -37286,7 +39307,11 @@
      "fpg": 0.43,
      "xfpg": 0.52
     },
-    "season_fpg": 0.81
+    "season_fpg": 0.81,
+    "season_range": [
+     0.03,
+     0.89
+    ]
    },
    "cr_pct": 21,
    "cr_season_pct": 14
@@ -37347,6 +39372,10 @@
      "xfpg": 1.58
     },
     "season_fpg": 1.54,
+    "season_range": [
+     0.64,
+     1.48
+    ],
     "back": {
      "games": "3"
     }
@@ -37410,6 +39439,10 @@
      "xfpg": 1.28
     },
     "season_fpg": 1.2,
+    "season_range": [
+     0.29,
+     1.15
+    ],
     "back": {
      "games": "3"
     }
@@ -37475,6 +39508,10 @@
     },
     "season_fpg": 1.93,
     "age_adj": -0.05,
+    "season_range": [
+     0.75,
+     1.66
+    ],
     "back": {
      "games": "3"
     }
@@ -37505,7 +39542,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 9.3,
+   "owned": 9.2,
    "gp": 6,
    "ppg": 1.29,
    "cur_ppg": 1.8,
@@ -37513,7 +39550,7 @@
    "last_gp": 78,
    "proj_ppg": null,
    "clears": "Wed 14",
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 1.22,
    "cr_fpg": 1.2,
    "cr_season": 0.87,
@@ -37537,7 +39574,11 @@
      "xfpg": 1.32
     },
     "season_fpg": 1.21,
-    "age_adj": -0.04
+    "age_adj": -0.04,
+    "season_range": [
+     0.4,
+     1.24
+    ]
    },
    "cr_pct": 19,
    "cr_season_pct": 32
@@ -37598,6 +39639,10 @@
      "xfpg": 2.03
     },
     "season_fpg": 1.78,
+    "season_range": [
+     0.75,
+     1.59
+    ],
     "back": {
      "games": "3"
     }
@@ -37661,7 +39706,11 @@
      "fpg": 0.8,
      "xfpg": 1.22
     },
-    "season_fpg": 1.04
+    "season_fpg": 1.04,
+    "season_range": [
+     0.38,
+     1.15
+    ]
    },
    "cr_pct": 17,
    "cr_season_pct": 24
@@ -37724,7 +39773,11 @@
      "xfpg": 0.49
     },
     "season_fpg": 0.73,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.0,
+     0.69
+    ]
    },
    "cr_pct": 17,
    "cr_season_pct": 8
@@ -37787,6 +39840,10 @@
      "xfpg": 0.65
     },
     "season_fpg": 1.08,
+    "season_range": [
+     0.34,
+     1.25
+    ],
     "back": {
      "games": "3"
     }
@@ -37849,7 +39906,12 @@
      "fpg": 1.27,
      "xfpg": 1.55
     },
-    "season_fpg": 1.16
+    "season_fpg": 1.16,
+    "season_range": [
+     0.25,
+     1.08
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 18,
    "cr_season_pct": 18
@@ -37910,7 +39972,11 @@
      "fpg": 0.15,
      "xfpg": 0.31
     },
-    "season_fpg": 0.76
+    "season_fpg": 0.76,
+    "season_range": [
+     0.04,
+     0.81
+    ]
    },
    "cr_pct": 17,
    "cr_season_pct": 10
@@ -37942,7 +40008,7 @@
    "ir": false,
    "bench": false,
    "injury": "OUT",
-   "owned": 61.9,
+   "owned": 61.8,
    "gp": 2,
    "ppg": 1.92,
    "cur_ppg": 1.35,
@@ -37975,6 +40041,10 @@
     },
     "season_fpg": 1.15,
     "age_adj": -0.08,
+    "season_range": [
+     0.15,
+     0.92
+    ],
     "back": {
      "games": "4"
     }
@@ -38038,6 +40108,10 @@
      "xfpg": 1.72
     },
     "season_fpg": 1.35,
+    "season_range": [
+     0.27,
+     1.13
+    ],
     "back": {
      "games": "4"
     }
@@ -38100,7 +40174,12 @@
      "fpg": 0.53,
      "xfpg": 0.57
     },
-    "season_fpg": 0.71
+    "season_fpg": 0.71,
+    "season_range": [
+     0.0,
+     0.64
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 17,
    "cr_season_pct": 12
@@ -38161,7 +40240,12 @@
      "fpg": 0.37,
      "xfpg": 0.94
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.09,
+     0.94
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 16,
    "cr_season_pct": 12
@@ -38198,7 +40282,7 @@
    "last_gp": 79,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.67,
    "cr_fpg": 1.39,
    "cr_season": 0.88,
@@ -38222,6 +40306,10 @@
      "xfpg": 1.78
     },
     "season_fpg": 1.43,
+    "season_range": [
+     0.41,
+     1.25
+    ],
     "back": {
      "games": "3"
     }
@@ -38255,7 +40343,7 @@
    "ir": false,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 9.8,
+   "owned": 9.7,
    "gp": 4,
    "ppg": 1.19,
    "cur_ppg": 2.85,
@@ -38287,6 +40375,10 @@
      "xfpg": 1.52
     },
     "season_fpg": 1.05,
+    "season_range": [
+     0.3,
+     1.07
+    ],
     "back": {
      "games": "10"
     }
@@ -38349,6 +40441,10 @@
     "xfp": null,
     "season_fpg": 2.16,
     "season_share": 0.45,
+    "season_range": [
+     0.52,
+     1.43
+    ],
     "back": {
      "games": "10"
     }
@@ -38411,6 +40507,10 @@
     "xfp": null,
     "season_fpg": 1.99,
     "season_share": 0.45,
+    "season_range": [
+     0.43,
+     1.34
+    ],
     "back": {
      "games": "10"
     }
@@ -38470,7 +40570,12 @@
     "gp": 0,
     "last_fpg": 0.85,
     "xfp": null,
-    "season_fpg": 1.38
+    "season_fpg": 1.38,
+    "season_range": [
+     0.0,
+     0.63
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 17,
    "cr_season_pct": 11
@@ -38529,6 +40634,10 @@
     "xfp": null,
     "season_fpg": 1.41,
     "season_share": 0.45,
+    "season_range": [
+     0.24,
+     1.1
+    ],
     "back": {
      "games": "10"
     }
@@ -38560,7 +40669,7 @@
    "ir": false,
    "bench": false,
    "injury": "DAY_TO_DAY",
-   "owned": 97.3,
+   "owned": 97.2,
    "gp": 5,
    "ppg": 2.03,
    "cur_ppg": 2.24,
@@ -38592,6 +40701,10 @@
      "xfpg": 2.15
     },
     "season_fpg": 1.79,
+    "season_range": [
+     0.93,
+     2.0
+    ],
     "back": {
      "games": "0-1"
     }
@@ -38652,6 +40765,10 @@
     "xfp": null,
     "season_fpg": 1.71,
     "season_share": 0.45,
+    "season_range": [
+     0.39,
+     1.25
+    ],
     "back": {
      "games": "4"
     }
@@ -38715,6 +40832,10 @@
      "xfpg": 1.78
     },
     "season_fpg": 1.27,
+    "season_range": [
+     0.32,
+     1.18
+    ],
     "back": {
      "games": "10"
     }
@@ -38778,6 +40899,10 @@
     "season_fpg": 1.26,
     "season_share": 0.45,
     "age_adj": -0.03,
+    "season_range": [
+     0.18,
+     0.95
+    ],
     "back": {
      "games": "3"
     }
@@ -38841,6 +40966,10 @@
     "season_fpg": 1.65,
     "season_share": 0.45,
     "age_adj": -0.04,
+    "season_range": [
+     0.35,
+     1.12
+    ],
     "back": {
      "days": 3
     }
@@ -38907,6 +41036,10 @@
      "xfpg": 1.3
     },
     "season_fpg": 1.13,
+    "season_range": [
+     0.33,
+     1.1
+    ],
     "back": {
      "games": "10"
     }
@@ -38974,6 +41107,10 @@
     },
     "season_fpg": 0.9,
     "age_adj": -0.09,
+    "season_range": [
+     0.04,
+     0.81
+    ],
     "back": {
      "games": "10"
     }
@@ -39034,6 +41171,10 @@
     "xfp": null,
     "season_fpg": 1.63,
     "season_share": 0.45,
+    "season_range": [
+     0.35,
+     1.21
+    ],
     "back": {
      "games": "10"
     }
@@ -39098,6 +41239,11 @@
      "xfpg": 0.69
     },
     "season_fpg": 0.61,
+    "season_range": [
+     0.0,
+     0.68
+    ],
+    "exp": "rookie",
     "back": {
      "games": "3"
     }
@@ -39162,6 +41308,10 @@
     },
     "season_fpg": 1.05,
     "age_adj": -0.07,
+    "season_range": [
+     0.25,
+     1.11
+    ],
     "back": {
      "games": "10"
     }
@@ -39202,7 +41352,7 @@
    "last_gp": 0,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.47,
    "cr_fpg": 1.17,
    "cr_season": 0.12,
@@ -39316,7 +41466,7 @@
    "last_gp": 0,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.47,
    "cr_fpg": 1.17,
    "cr_season": 0.12,
@@ -39569,7 +41719,11 @@
     "last_fpg": 1.24,
     "xfp": null,
     "season_fpg": 1.15,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.0,
+     0.51
+    ]
    },
    "cr_pct": 13,
    "cr_season_pct": 6
@@ -39630,7 +41784,12 @@
      "xfpg": 0.64
     },
     "season_fpg": 0.84,
-    "age_adj": 0.06
+    "age_adj": 0.06,
+    "season_range": [
+     0.0,
+     0.71
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 13,
    "cr_season_pct": 8
@@ -39659,7 +41818,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 40.7,
+   "owned": 40.6,
    "gp": 0,
    "ppg": 1.49,
    "cur_ppg": null,
@@ -39686,7 +41845,12 @@
     "gp": 0,
     "last_fpg": 1.5,
     "xfp": null,
-    "season_fpg": 1.42
+    "season_fpg": 1.42,
+    "season_range": [
+     0.0,
+     0.57
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 11,
    "cr_season_pct": 11
@@ -39806,6 +41970,10 @@
      "xfpg": 0.6
     },
     "season_fpg": 1.47,
+    "season_range": [
+     0.0,
+     0.82
+    ],
     "back": {
      "games": "3"
     }
@@ -39838,7 +42006,7 @@
    "ir": true,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 17.1,
+   "owned": 17.0,
    "gp": 3,
    "ppg": 1.53,
    "cur_ppg": 0.53,
@@ -39871,6 +42039,10 @@
     },
     "season_fpg": 1.41,
     "age_adj": -0.09,
+    "season_range": [
+     0.5,
+     1.41
+    ],
     "back": {
      "games": "10"
     }
@@ -39932,6 +42104,11 @@
     "xfp": null,
     "season_fpg": 1.21,
     "season_share": 0.45,
+    "season_range": [
+     0.21,
+     0.96
+    ],
+    "exp": "year 2",
     "back": {
      "games": "10"
     }
@@ -39972,7 +42149,7 @@
    "last_gp": 26,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.37,
    "cr_fpg": 0.86,
    "cr_season": 0.3,
@@ -39995,7 +42172,11 @@
      "fpg": 0.7,
      "xfpg": 0.79
     },
-    "season_fpg": 0.84
+    "season_fpg": 0.84,
+    "season_range": [
+     0.0,
+     0.7
+    ]
    },
    "cr_pct": 12,
    "cr_season_pct": 8
@@ -40053,6 +42234,11 @@
     "xfp": null,
     "season_fpg": 1.19,
     "season_share": 0.45,
+    "season_range": [
+     0.14,
+     0.97
+    ],
+    "exp": "year 2",
     "back": {
      "games": "10"
     }
@@ -40092,7 +42278,7 @@
    "last_gp": 0,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.35,
    "cr_fpg": 1.17,
    "cr_season": 0.12,
@@ -40731,7 +42917,12 @@
      "fpg": 0.6,
      "xfpg": 0.9
     },
-    "season_fpg": 0.99
+    "season_fpg": 0.99,
+    "season_range": [
+     0.0,
+     0.84
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 3,
    "cr_season_pct": 13
@@ -40901,6 +43092,10 @@
     "xfp": null,
     "season_fpg": 1.75,
     "season_share": 0.45,
+    "season_range": [
+     0.32,
+     1.23
+    ],
     "back": {
      "games": "10"
     }
@@ -40965,6 +43160,10 @@
      "xfpg": 0.58
     },
     "season_fpg": 0.82,
+    "season_range": [
+     0.04,
+     0.81
+    ],
     "back": {
      "games": "10"
     }
@@ -41062,7 +43261,7 @@
    "last_gp": 0,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.31,
    "cr_fpg": 1.04,
    "cr_season": 0.1,
@@ -41195,7 +43394,11 @@
     "last_fpg": 1.49,
     "xfp": null,
     "season_fpg": 1.62,
-    "age_adj": -0.09
+    "age_adj": -0.09,
+    "season_range": [
+     0.0,
+     0.55
+    ]
    },
    "cr_pct": 9,
    "cr_season_pct": 7
@@ -41707,7 +43910,12 @@
     "gp": 0,
     "last_fpg": 1.2,
     "xfp": null,
-    "season_fpg": 0.97
+    "season_fpg": 0.97,
+    "season_range": [
+     0.0,
+     0.59
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 2,
    "cr_season_pct": 0
@@ -41767,7 +43975,12 @@
      "fpg": 0.2,
      "xfpg": 0.37
     },
-    "season_fpg": 0.7
+    "season_fpg": 0.7,
+    "season_range": [
+     0.0,
+     0.62
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 2,
    "cr_season_pct": 12
@@ -41825,7 +44038,12 @@
     "last_fpg": 0.89,
     "xfp": null,
     "season_fpg": 1.05,
-    "age_adj": -0.09
+    "age_adj": -0.09,
+    "season_range": [
+     0.0,
+     0.51
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 8,
    "cr_season_pct": 2
@@ -41882,7 +44100,12 @@
     "gp": 0,
     "last_fpg": 0.8,
     "xfp": null,
-    "season_fpg": 0.94
+    "season_fpg": 0.94,
+    "season_range": [
+     0.0,
+     0.5
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 8,
    "cr_season_pct": 1
@@ -41941,7 +44164,12 @@
     "last_fpg": 0.73,
     "xfp": null,
     "season_fpg": 0.84,
-    "age_adj": 0.04
+    "age_adj": 0.04,
+    "season_range": [
+     0.0,
+     0.56
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 8,
    "cr_season_pct": 1
@@ -42000,6 +44228,10 @@
     "xfp": null,
     "season_fpg": 0.79,
     "season_share": 0.45,
+    "season_range": [
+     0.0,
+     0.75
+    ],
     "back": {
      "games": "10"
     }
@@ -42171,7 +44403,12 @@
     "gp": 0,
     "last_fpg": 0.7,
     "xfp": null,
-    "season_fpg": 0.6
+    "season_fpg": 0.6,
+    "season_range": [
+     0.0,
+     0.53
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 7,
    "cr_season_pct": 0
@@ -42228,7 +44465,12 @@
     "gp": 0,
     "last_fpg": 0.24,
     "xfp": null,
-    "season_fpg": 0.56
+    "season_fpg": 0.56,
+    "season_range": [
+     0.0,
+     0.53
+    ],
+    "exp": "rookie"
    },
    "cr_pct": 7,
    "cr_season_pct": 0
@@ -42257,13 +44499,13 @@
    "ir": false,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 44.0,
+   "owned": 43.6,
    "gp": 5,
-   "ppg": 3.28,
+   "ppg": 3.41,
    "cur_ppg": 3.44,
    "last_ppg": 3.4,
    "last_gp": 51,
-   "proj_ppg": 3.25,
+   "proj_ppg": null,
    "clears": null,
    "dfo_out": null,
    "cr_g_nights": {
@@ -42349,7 +44591,11 @@
      "fpg": 1.52,
      "xfpg": 1.61
     },
-    "season_fpg": 1.53
+    "season_fpg": 1.53,
+    "season_range": [
+     0.77,
+     1.68
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 65
@@ -42408,6 +44654,10 @@
     "xfp": null,
     "season_fpg": 1.78,
     "season_share": 0.3,
+    "season_range": [
+     0.16,
+     0.93
+    ],
     "back": {
      "days": 34
     }
@@ -42464,7 +44714,11 @@
     "last_fpg": 1.52,
     "xfp": null,
     "season_fpg": 1.28,
-    "age_adj": -0.05
+    "age_adj": -0.05,
+    "season_range": [
+     0.0,
+     0.52
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 6
@@ -42503,7 +44757,7 @@
    "last_gp": 62,
    "proj_ppg": 1.65,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.53,
    "cr_season": 0.45,
@@ -42525,6 +44779,10 @@
     "season_fpg": 1.55,
     "season_share": 0.3,
     "age_adj": -0.05,
+    "season_range": [
+     0.08,
+     0.85
+    ],
     "back": {
      "days": 8
     }
@@ -42647,6 +44905,10 @@
     "season_fpg": 1.62,
     "season_share": 0.3,
     "age_adj": -0.04,
+    "season_range": [
+     0.1,
+     0.87
+    ],
     "back": {
      "games": "16"
     }
@@ -42708,6 +44970,11 @@
     "xfp": null,
     "season_fpg": 1.08,
     "season_share": 0.3,
+    "season_range": [
+     0.0,
+     0.74
+    ],
+    "exp": "year 2",
     "back": {
      "games": "16"
     }
@@ -42736,7 +45003,7 @@
    "ir": false,
    "bench": false,
    "injury": null,
-   "owned": 3.6,
+   "owned": 3.5,
    "gp": 0,
    "ppg": 1.32,
    "cur_ppg": null,
@@ -42764,7 +45031,12 @@
     "last_fpg": 1.26,
     "xfp": null,
     "season_fpg": 1.34,
-    "age_adj": -0.06
+    "age_adj": -0.06,
+    "season_range": [
+     0.0,
+     0.54
+    ],
+    "exp": "year 2"
    },
    "cr_pct": 0,
    "cr_season_pct": 7
@@ -42921,7 +45193,7 @@
    "last_gp": 73,
    "proj_ppg": 1.57,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 1.51,
    "cr_season": 0.44,
@@ -42942,6 +45214,10 @@
     "xfp": null,
     "season_fpg": 1.46,
     "season_share": 0.3,
+    "season_range": [
+     0.06,
+     0.92
+    ],
     "back": {
      "days": 61
     }
@@ -43178,6 +45454,10 @@
      "xfpg": 1.46
     },
     "season_fpg": 1.06,
+    "season_range": [
+     0.38,
+     1.15
+    ],
     "back": {
      "games": "16"
     }
@@ -43239,6 +45519,10 @@
     "xfp": null,
     "season_fpg": 1.18,
     "season_share": 0.3,
+    "season_range": [
+     0.0,
+     0.76
+    ],
     "back": {
      "games": "16"
     }
@@ -43353,6 +45637,10 @@
     "xfp": null,
     "season_fpg": 1.12,
     "season_share": 0.3,
+    "season_range": [
+     0.0,
+     0.73
+    ],
     "back": {
      "games": "16"
     }
@@ -43471,6 +45759,10 @@
     "season_fpg": 1.14,
     "season_share": 0.3,
     "age_adj": -0.05,
+    "season_range": [
+     0.0,
+     0.73
+    ],
     "back": {
      "days": 50
     }
@@ -43535,6 +45827,10 @@
      "xfpg": 1.23
     },
     "season_fpg": 0.99,
+    "season_range": [
+     0.17,
+     0.94
+    ],
     "back": {
      "games": "16"
     }
@@ -43647,7 +45943,11 @@
     "gp": 0,
     "last_fpg": 0.9,
     "xfp": null,
-    "season_fpg": 1.33
+    "season_fpg": 1.33,
+    "season_range": [
+     0.0,
+     0.53
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 7
@@ -43701,7 +46001,11 @@
     "last_fpg": 1.08,
     "xfp": null,
     "season_fpg": 1.06,
-    "age_adj": -0.07
+    "age_adj": -0.07,
+    "season_range": [
+     0.0,
+     0.5
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 2
@@ -43806,7 +46110,11 @@
     "gp": 0,
     "last_fpg": 0.36,
     "xfp": null,
-    "season_fpg": 0.91
+    "season_fpg": 0.91,
+    "season_range": [
+     0.0,
+     0.49
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 1
@@ -43860,7 +46168,11 @@
     "last_fpg": 1.07,
     "xfp": null,
     "season_fpg": 0.93,
-    "age_adj": -0.08
+    "age_adj": -0.08,
+    "season_range": [
+     0.0,
+     0.49
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 1
@@ -44030,7 +46342,11 @@
     "last_fpg": 0.64,
     "xfp": null,
     "season_fpg": 0.79,
-    "age_adj": -0.1
+    "age_adj": -0.1,
+    "season_range": [
+     0.0,
+     0.47
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 1
@@ -44178,7 +46494,7 @@
    "last_gp": 61,
    "proj_ppg": null,
    "clears": null,
-   "dfo_out": null,
+   "dfo_out": true,
    "cr": 0.0,
    "cr_fpg": 0.87,
    "cr_season": 0.49,
@@ -44202,6 +46518,10 @@
      "xfpg": 1.04
     },
     "season_fpg": 0.88,
+    "season_range": [
+     0.12,
+     0.89
+    ],
     "back": {
      "days": 88
     }
@@ -44318,7 +46638,11 @@
      "fpg": 0.65,
      "xfpg": 0.69
     },
-    "season_fpg": 0.89
+    "season_fpg": 0.89,
+    "season_range": [
+     0.14,
+     0.91
+    ]
    },
    "cr_pct": 0,
    "cr_season_pct": 12
@@ -47809,6 +50133,11 @@
     },
     "season_fpg": 1.5,
     "age_adj": 0.03,
+    "season_range": [
+     0.53,
+     1.56
+    ],
+    "exp": "year 2",
     "back": {
      "days": 15
     }
@@ -47841,7 +50170,7 @@
    "ir": false,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 76.8,
+   "owned": 76.7,
    "gp": 5,
    "ppg": 1.85,
    "cur_ppg": 1.48,
@@ -47873,6 +50202,10 @@
      "xfpg": 1.91
     },
     "season_fpg": 1.65,
+    "season_range": [
+     0.73,
+     1.64
+    ],
     "back": {
      "days": 6
     }
@@ -47934,6 +50267,10 @@
     "xfp": null,
     "season_fpg": 2.14,
     "season_share": 0.3,
+    "season_range": [
+     0.27,
+     1.04
+    ],
     "back": {
      "days": 135
     }
@@ -47995,6 +50332,10 @@
     "xfp": null,
     "season_fpg": 1.85,
     "season_share": 0.3,
+    "season_range": [
+     0.17,
+     1.03
+    ],
     "back": {
      "games": "16"
     }
@@ -48093,7 +50434,7 @@
    "ir": true,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 33.7,
+   "owned": 33.6,
    "gp": 0,
    "ppg": 3.41,
    "cur_ppg": null,
@@ -48220,7 +50561,7 @@
    "ir": true,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 42.0,
+   "owned": 41.8,
    "gp": 4,
    "ppg": 1.56,
    "cur_ppg": 1.25,
@@ -48252,6 +50593,10 @@
      "xfpg": 2.27
     },
     "season_fpg": 1.37,
+    "season_range": [
+     0.51,
+     1.42
+    ],
     "back": {
      "games": "16"
     }
@@ -48295,8 +50640,8 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.0,
-   "cr_fpg": 1.67,
-   "cr_season": 0.93,
+   "cr_fpg": 1.68,
+   "cr_season": 0.94,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "cr_dress_next": 0.0,
@@ -48314,16 +50659,20 @@
     "xfp": {
      "gp": 2,
      "fpg": 0.65,
-     "xfpg": 1.16
+     "xfpg": 1.28
     },
     "last_season": "2024-25",
-    "season_fpg": 1.74,
+    "season_fpg": 1.77,
+    "season_range": [
+     0.48,
+     1.39
+    ],
     "back": {
      "days": 43
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 39
+   "cr_season_pct": 40
   },
   {
    "id": 5161,
@@ -48351,7 +50700,7 @@
    "ir": true,
    "bench": false,
    "injury": "INJURY_RESERVE",
-   "owned": 61.6,
+   "owned": 61.5,
    "gp": 0,
    "ppg": 1.81,
    "cur_ppg": null,
@@ -48381,6 +50730,10 @@
     "season_fpg": 1.54,
     "season_share": 0.3,
     "age_adj": -0.06,
+    "season_range": [
+     0.07,
+     0.84
+    ],
     "back": {
      "games": "16"
     }
