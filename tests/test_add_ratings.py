@@ -1657,3 +1657,27 @@ def test_offseason_goalie_mover_carries_his_old_rate_adjusted_for_the_team_chang
     assert moved["cr"] == stay["cr"] and moved["cr_season"] < stay["cr_season"]
     assert "mover_pps" in moved["cr_why"] and "mover_pps" not in stay["cr_why"]
     assert moved["cr_why"]["mover_pps"] < moved["cr_why"]["own_pps"]
+
+
+def test_no1_next_game_sunday_after_a_day_off_and_on_the_road():
+    """The no. 1's next-game chance drops on a Sunday or Monday after one day off (findings 254, handoff 291), and
+    on the road otherwise (findings 257, handoff 292); later games and home games keep their rules."""
+    model = rating.Model()
+    # Fri Oct 16 2026 is the last game played; goalie 1 started most of the last 20
+    hist = [((date(2026, 10, 16) - timedelta(days=2 * (8 - i))).isoformat(), 2 if i % 4 == 0 else 1) for i in range(9)]
+    def p1(day, road=()):
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, [day], date(2026, 10, 17), by_date=out, road=road)
+        return out[1][day]
+    def without(fn):
+        old = rating.SUNMON_REST1_NO1_LOGIT, rating.ROAD_NO1_LOGIT
+        rating.SUNMON_REST1_NO1_LOGIT = rating.ROAD_NO1_LOGIT = 0.0
+        try:
+            return fn()
+        finally:
+            rating.SUNMON_REST1_NO1_LOGIT, rating.ROAD_NO1_LOGIT = old
+    sun, tue = "2026-10-18", "2026-10-20"
+    assert p1(sun) < without(lambda: p1(sun))  # Sunday after one day off
+    assert p1(sun, {sun}) == p1(sun)  # the road cut doesn't stack on it
+    assert p1(tue) == without(lambda: p1(tue))  # Tuesday at home: unchanged
+    assert p1(tue, {tue}) < p1(tue)  # Tuesday on the road

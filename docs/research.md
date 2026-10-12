@@ -963,6 +963,10 @@ For a skater who has missed his team's last 6 or more games, the Season rating's
 
 A goalie's Season points per start blends this season's starts with last season's rate, and last season's rate was earned on his old team. Wins are worth 3 more points than losses, so a goalie who moved from a strong team to a weak one should expect fewer points per start. **For a goalie whose last game last season was for another team, last season's rate now moves by 3 x (his new team's points% last season - his old team's).** A move from a 0.60 team to a 0.45 team takes about 0.45 off that rate before it is blended with this season's starts. Over 2023-26 Mondays, using the site's own shares, this ranks those goalies' rest-of-season points 0.014 better and all goalies 0.001 better, in each of three test seasons. The 3 comes from the scoring rules rather than from a fit; refits on prediction error chose 0.5-2.5, which also helped in every season but by less. The Week rating is unchanged.
 
+## 129. The no. 1 goalie on Sundays and Mondays after a day off, and on the road
+
+Replaying the site's own start chances over every team game from 2021 to 2026, the no. 1 goalie started less often than predicted in two situations. **On a Sunday or Monday game after exactly one day off, his next-game chance now drops** (by -0.6 on the log-odds scale): he started 57% of those games against 64% predicted. **On the road, outside back-to-backs and those Sunday/Monday games, it drops by -0.3**: 59% against 63%. Both cuts were picked in every left-out season and improve the start forecasts in every season. They apply to the team's next game only; home games and later games in the week keep their existing rules.
+
 ## What the independent review changed
 
 | Review point | Outcome |

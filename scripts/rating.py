@@ -139,6 +139,9 @@ THREE_GOALIE_IDLE_LOGIT = -1.0
 # season): a strict rotation's third game (0.48 against 0.37 actual) and, when no rotation, pattern, last-6 or
 # three-goalie rule fires, the game after next (0.56 against 0.51)
 ROTATION_THIRD_LOGIT, PLAIN_SECOND_LOGIT = -0.9, -0.45
+# the no. 1 in the next game: a Sunday or Monday game after one day off (findings 254-255, handoff 291), else a road game
+# that isn't night 2 of a back-to-back (findings 257, handoff 292); both picked in every fold, 2021-26
+SUNMON_REST1_NO1_LOGIT, ROAD_NO1_LOGIT = -0.6, -0.3
 
 
 def three_goalie_idle(seq):
@@ -1377,7 +1380,7 @@ def repeating_pattern(seq, cands):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=()):
+                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=()):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -1396,7 +1399,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     season_out: goalies ESPN says are out for the season: no season_share, and theirs goes to the others (findings 216, 234).
     by_date: if given, filled with {goalie id: {date: chance he starts}} for each game from today on (findings 236).
     pulled: goalies pulled from their latest start; their season_share drops PULLED_SEASON unless the no-decision cut
-    already applies (findings 330 (3))."""
+    already applies (findings 330 (3)).
+    road: dates of the team's road games this week (findings 257)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -1532,6 +1536,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     z += B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER
                 if not n1 and not n2 and not (ahead == 0 and gap == 1):
                     z += NO1_ORDINARY_LOGIT
+                if ahead == 0 and gap == 2 and day.weekday() in (6, 0):
+                    z += SUNMON_REST1_NO1_LOGIT
+                elif ahead == 0 and d in road and gap != 1:
+                    z += ROAD_NO1_LOGIT
             if ahead == 0 and gid in idle3:
                 z += THREE_GOALIE_IDLE_LOGIT
             if seq and gid == seq[-1] and (rotating and ahead == 2 or plain and ahead == 1):
@@ -1862,7 +1870,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
         tod, sea, nights = {}, {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
-                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled)
+                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
+                            {d for d, _, home in week_games.get(team, []) if not home})
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
