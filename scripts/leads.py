@@ -14,7 +14,7 @@ import sys
 import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "log"
@@ -138,6 +138,69 @@ def fetch_injuries(s):
              "athlete_id": athlete_id(i),
              "status": i.get("status"), "date": i.get("date"), "short": i.get("shortComment"), "long": i.get("longComment")}
             for t in r.json().get("injuries", []) for i in t.get("injuries", [])]
+
+
+# Daily Faceoff player news for the Season rating (findings 360 (1)): each player's latest injury item and latest roster move
+# (call-up / send-down), kept in NEWS_FILE so a run only reads the pages posted since the last one
+NEWS_FILE = Path(__file__).resolve().parent.parent / "data" / "dfo_news.json"
+NEWS_DAYS, NEWS_KEEP_DAYS, NEWS_MAX_PAGES = 60, 365, 60
+NEWS_SEASON = re.compile(r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year", re.I)
+NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
+NEWS_DOWN = re.compile(r"(assigned|sent|reassigned|loaned|returned) (down )?to (the )?[A-Za-z .]*\(AHL\)|sent down|assigned to (the )?AHL"
+                       r"|to the AHL|conditioning loan", re.I)
+NEWS_UP = re.compile(r"recalled|called up|call[- ]up|summoned", re.I)
+
+
+def news_flags(item):
+    """One news item as the research parsed it (hunt11b/news.py): season-ending / surgery for injuries, down / up for moves."""
+    text = re.sub(r"\s+", " ", f'{item.get("details") or ""} {item.get("fantasyDetails") or ""}')
+    cat = item.get("newsCategoryName")
+    return {"season": bool(NEWS_SEASON.search(text)), "surgery": bool(NEWS_SURGERY.search(text)),
+            "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text))}
+
+
+def load_news():
+    try:
+        data = json.loads(NEWS_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def fetch_news(s, now_utc, stored=None):
+    """Daily Faceoff's injury and roster-move news, newest page back to the newest item already stored (NEWS_DAYS on a
+    first run). Returns {"injuries": {nhl id: {ts, season, surgery}}, "roster-moves": {nhl id: {ts, down, up}}, "fetched"}
+    with each player's latest item, pruned to NEWS_KEEP_DAYS. Raises if a page can't be read."""
+    stored = stored if stored is not None else load_news()
+    out = {"fetched": now_utc.strftime("%Y-%m-%dT%H:%MZ")}
+    for slug, keys in (("injuries", ("season", "surgery")), ("roster-moves", ("down", "up"))):
+        have = dict(stored.get(slug) or {})
+        floor = (now_utc - timedelta(days=NEWS_DAYS)).strftime("%Y-%m-%dT%H:%M")
+        newest = max((v["ts"] for v in have.values()), default="")
+        stop = max(floor, newest[:16])  # an hour of overlap is enough: items are keyed by player and time
+        for page in range(1, NEWS_MAX_PAGES + 1):
+            data = page_data(s, f"{DF}/hockey-player-news/{slug}/{page}")["data"]
+            items = data.get("data") or []
+            for it in items:
+                pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
+                if not pid or not ts:
+                    continue
+                f = news_flags(it)
+                if ts > (have.get(str(int(pid))) or {}).get("ts", ""):
+                    have[str(int(pid))] = {"ts": ts, **{k: f[k] for k in keys}}
+            if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
+                break
+            time.sleep(0.2)
+        keep = (now_utc - timedelta(days=NEWS_KEEP_DAYS)).strftime("%Y-%m-%dT%H:%M")
+        out[slug] = {k: v for k, v in sorted(have.items()) if v["ts"] >= keep}
+    return out
+
+
+def save_news(news):
+    try:
+        NEWS_FILE.write_text(json.dumps(news, indent=0, sort_keys=True) + "\n")
+    except OSError as e:
+        print(f"Daily Faceoff news not saved: {e!r}", file=sys.stderr)
 
 
 def fetch_odds(s, today=None, team_map=None):

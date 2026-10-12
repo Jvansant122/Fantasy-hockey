@@ -617,6 +617,12 @@ def main():
         injuries = leads.last_logged("injuries", datetime.now(ET).replace(tzinfo=None))
         if injuries is not None:
             lead_errors["injuries"] += " (used the last logged copy)"
+    news = leads.load_news()
+    try:  # Daily Faceoff injury and roster-move news for the Season rating (findings 360 (1)); the stored copy if it fails
+        news = leads.fetch_news(web, datetime.now(timezone.utc), news)
+        leads.save_news(news)
+    except Exception as e:  # noqa: BLE001
+        lead_errors["news"] = repr(e)
     odds = None
     try:
         odds = leads.fetch_odds(web, now, ESPN_TO_NHL)
@@ -626,7 +632,7 @@ def main():
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
         add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left),
-                    reschedule=reschedule)
+                    reschedule=reschedule, dfo_news=news)
         for p in players:  # goalie start chances by night, keyed like nights (findings 236)
             if p["pos"] == "G" and "cr_g_nights" in p:
                 p["cr_g_nights"] = nights_by_sp(p["cr_g_nights"], today_et, today_sp)
