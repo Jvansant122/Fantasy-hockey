@@ -1580,3 +1580,23 @@ def test_goalie_season_is_on_the_skaters_scale(run):
         s = players[name]["cr_season"]
         assert s == 0 or s >= a - 0.01, (name, s)
     assert 0.2 < a < 0.5 and 0.5 < b < 1
+
+
+def test_finished_weeks_of_nhl_stats_are_cached(monkeypatch, tmp_path):
+    """With NHL_CACHE set, a week that ended 3+ days ago is read from disk after the first call; recent weeks and season
+    totals always ask the API (speed audit plan 3)."""
+    monkeypatch.setattr(rating, "NHL_CACHE", str(tmp_path))
+    monkeypatch.setattr(rating, "et_date", lambda: date(2026, 10, 20))
+    calls = []
+
+    class S:
+        def get(self, url, params=None, headers=None, timeout=None):
+            calls.append(params.get("cayenneExp"))
+            return Resp({"data": [{"playerId": len(calls)}]})
+    first = rating.stats_report(S(), "skater/summary", 20262027, "2026-10-06", "2026-10-12")
+    assert rating.stats_report(S(), "skater/summary", 20262027, "2026-10-06", "2026-10-12") == first and len(calls) == 1
+    rating.stats_report(S(), "skater/summary", 20262027, "2026-10-13", "2026-10-19")
+    rating.stats_report(S(), "skater/summary", 20262027, "2026-10-13", "2026-10-19")  # ended yesterday: not cached
+    rating.stats_report(S(), "skater/summary", 20262027)
+    rating.stats_report(S(), "skater/summary", 20262027)  # season totals: not cached
+    assert len(calls) == 5 and len(list(tmp_path.iterdir())) == 1

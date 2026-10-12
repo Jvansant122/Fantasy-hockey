@@ -13,6 +13,7 @@ or a capped FP/G multiplier, never the rating directly.
 """
 import json
 import math
+import os
 import re
 import sys
 import time
@@ -343,14 +344,34 @@ def nhl_get(s, url, **params):
             time.sleep(2 ** attempt)  # back off: ~100 calls a run, and an immediate retry hits the same blip (findings 230)
 
 
+# finished weeks of per-game reports never change once the NHL's stat corrections are in, so the update workflow keeps them
+# between runs (speed audit plan 3: 4 reports a week, ~110 calls by March). Off unless NHL_CACHE names a folder.
+NHL_CACHE = os.environ.get("NHL_CACHE")
+CACHE_SETTLED_DAYS = 3  # a week whose last day is at least this many days before today is cached
+
+
 def stats_report(s, report, season, start=None, end=None, teams=False):
     """One NHL stats API report. With dates: one row per player-game; without: season totals per player
     (teams=True keeps the teamAbbrevs column, which the aggregate view leaves empty)."""
     exp = f"seasonId={season} and gameTypeId=2"
     if start:
         exp += f' and gameDate>="{start}" and gameDate<="{end}"'
-    return nhl_get(s, f"{NHL_STATS}/{report}", isAggregate="false" if start or teams else "true", isGame="true" if start else "false",
+    path = None
+    if NHL_CACHE and start and date.fromisoformat(end) <= et_date() - timedelta(days=CACHE_SETTLED_DAYS):
+        path = Path(NHL_CACHE) / f"{report.replace('/', '-')}_{season}_{start}_{end}.json"
+        try:
+            return json.loads(path.read_text())
+        except (OSError, ValueError):
+            pass
+    data = nhl_get(s, f"{NHL_STATS}/{report}", isAggregate="false" if start or teams else "true", isGame="true" if start else "false",
                    start=0, limit=-1, cayenneExp=exp).json()["data"]
+    if path is not None:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(data))
+        except OSError as e:
+            print(f"NHL cache write failed: {e}", file=sys.stderr)
+    return data
 
 
 def weekly(first, last):
