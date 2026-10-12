@@ -188,6 +188,11 @@ SEASON_SHARE_SCALE = 0.88
 # this function's own shares, 2023-26 goalie-Mondays (findings 330 (1), handoff 270)
 SAVE_GAP_SEASON = (0.008, 0.0485)
 SAVE_SHRINK, LEAGUE_SAVE_PCT = (600, 1000), 0.902
+# goalie Season values ran wider than what goalies went on to score (top eighth 2.55 against 2.14, bottom 0.21 against 0.33),
+# while skaters' are calibrated: intercept + slope x (Season share x pts/start) for a goalie with any share puts them on the
+# skaters' scale for the pooled board, keep values and trades; refit on this site's Season values, 2023-26 Mondays
+# (findings 330 (2), handoff 271)
+GOALIE_SEASON_SCALE = (0.32, 0.72)
 
 
 def bad_start(g):
@@ -1843,7 +1848,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base
             why["own_pps"] = round(fpg, 2)  # his own, before tonight's line and the schedule (findings 232)
-            season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
+            raw_season = goalie_season.get(pid, 0.0) * fpg if pid else 0.0
+            season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
             # start chance per game from today, for the page's open-slot count (findings 236)
             p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())
                                 if not p.get("pending_drop") or d <= today.isoformat()} if pid else {}

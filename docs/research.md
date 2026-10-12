@@ -947,6 +947,10 @@ The goalie rules added today (rotations, repeating patterns, the last-six-starts
 
 The Season rating's share of a team's future starts now leans toward the goalie with the better save percentage. Each goalie's save percentage this season is blended with last season's (600 shots of weight), and last season's with the league average (1,000 shots). **His share then moves by about 0.05 for every point of save percentage he is ahead of, or behind, the team's other starters.** Refit on the site's own shares over 2023-26 Mondays, the Season rating ranks goalies' rest-of-season points 0.011 better, positive in each of three test seasons, and starters 0.015 better on average. The nightly start chances are unchanged.
 
+## 125. Goalie Season values on the skaters' scale
+
+Goalie Season values ran wider than what goalies went on to score: the top eighth of goalies averaged 2.55 points a game in the Season rating but scored 2.14, and the bottom eighth 0.21 against 0.33. Skaters' Season values were already in line with what they scored. **A goalie with any share of his team's starts now gets 0.32 + 0.72 x his old Season value**, so goalies and skaters can be compared on one board, in keep values and in trades. Refit on the site's own Season values over 2023-26 Mondays, the goalies' rest-of-season error fell in each of three test seasons (0.568 to 0.514, 0.388 to 0.373, 0.432 to 0.378). Goalies with no share of starts stay at 0.
+
 ## What the independent review changed
 
 | Review point | Outcome |
