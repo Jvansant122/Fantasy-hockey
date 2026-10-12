@@ -1761,7 +1761,7 @@ def test_daily_faceoff_news_reaches_the_season_rating(monkeypatch, tmp_path):
 
 
 def test_espn_preseason_projection_pulls_the_season_fpg(monkeypatch, tmp_path):
-    """Findings 360 (2), handoff 331: Season FP/G += (ESPN projected FP/G - FP/G) x (0.36 - 0.6 g + 0.4 g^2), g = min(GP, 40)/40;
+    """Findings 360 (2), handoff 331: Season FP/G += (ESPN projected FP/G - FP/G) x (0.29 - 0.57 g + 0.35 g^2), g = min(GP, 40)/40;
     skaters without a projection are unchanged."""
     def ratings(proj):
         fake = FakeSession()
@@ -1775,7 +1775,51 @@ def test_espn_preseason_projection_pulls_the_season_fpg(monkeypatch, tmp_path):
     base, hi = ratings(None), ratings(9.0)
     m0, m1 = base["Auston Matthews"], hi["Auston Matthews"]
     g = min(m1["cr_why"]["gp"], 40) / 40
-    w = 0.36 - 0.6 * g + 0.4 * g * g
+    w = 0.29 - 0.57 * g + 0.35 * g * g
     assert m1["cr_why"]["espn_blend"] == round(w, 2) and "espn_blend" not in m0["cr_why"]
     assert m1["cr_season"] > m0["cr_season"]
     assert hi["Charlie McAvoy"]["cr_season"] == base["Charlie McAvoy"]["cr_season"]
+
+
+def test_boosted_model_walks_its_trees_like_sklearn():
+    """season_boost.predict: left when x <= threshold (null = +inf), missing inputs to the node's missing side,
+    baseline + leaf values (handoff 332)."""
+    import season_boost
+    model = {"features": ["a", "b"], "baseline": 1.0,
+             "trees": [[[0, -1, 1, -1, -1], [2.0, 0.5, None, -0.25, 0.75], [1, 0, 3, 0, 0], [2, 0, 4, 0, 0], [0, 0, 0, 0, 0]],
+                       [[0, -1, -1], [None, 0.0, 0.125], [1, 0, 0], [2, 0, 0], [0, 0, 0]]]}
+    assert season_boost.predict(model, {"a": 2.0}) == 1.5  # a <= 2 -> leaf 0.5, then null threshold -> left 0.0
+    assert season_boost.predict(model, {"a": 3.0, "b": 1e9}) == 0.75  # null threshold: always left (-0.25)
+    assert season_boost.predict(model, {"a": 3.0, "b": None}) == 1.75  # missing b goes right at node 2 (m = 0)
+    assert season_boost.predict(model, {}) == 1.875  # a missing: right in both trees (m = 0)
+    for name, lo, hi in (("dress", 0.0, 1.2), ("fpg", 0.0, 6.0)):
+        m = season_boost.load(name)
+        assert m and len(m["trees"]) == 400
+        assert lo < season_boost.predict(m, {}) < hi
+
+
+def test_boosted_inputs_follow_the_research_panel():
+    """compact.py's inputs rebuilt from this season's games: games out, last 3/10, absences, lineup crunch."""
+    import season_boost
+    tg = {"TOR": ["g1", "g2", "g3", "g4", "g5", "g6"]}
+    def game(gid, toi, fp=1.0, pos="C"):
+        return {"game": gid, "date": f"2026-10-0{gid[1]}", "team": "TOR", "pos": pos, "toi": toi, "pptoi": 1.0, "fp": fp}
+    by = {1: [game(g, 20) for g in ("g1", "g2", "g3", "g4", "g5", "g6")],  # every game
+          2: [game(g, 22) for g in ("g1", "g2", "g3")],  # regular, out the last 3
+          3: [game(g, 12) for g in ("g1", "g4", "g5", "g6")],  # missed 2 then back
+          4: [game("g6", 15, pos="D")]}
+    x = season_boost.features(by, tg, {1: {"gp": 80, "fp": 2.0}}, {}, {1: (date(2000, 1, 1), 5, 20172018)}, {}, 20262027,
+                              date(2026, 10, 9), 84)
+    assert x[1]["out"] == 0 and x[2]["out"] == 3 and x[3]["d3"] == 3 and x[2]["d3"] == 0 and x[2]["d10"] == 0.5
+    assert (x[3]["n_abs"], x[3]["n_long"], x[3]["max_abs"]) == (1, 0, 2) and x[3]["dress_rate"] == 4 / 6
+    assert x[1]["out_above"] == 1 and x[3]["out_above"] == 1 and x[1]["toi_rank"] == 1 and x[3]["toi_rank"] == 2
+    assert x[2]["toi_rank"] is None and x[1]["n_reg"] == 3 and x[4]["isD"] == 1.0 and x[4]["n_reg"] == 0
+    assert x[1]["prev_fpg"] == 2.0 and x[1]["nhl_yrs"] == 9 and x[1]["exp"] == 5 and x[1]["draft"] == 5 and x[2]["draft"] == 250
+
+
+def test_boosted_models_reach_the_season_rating(run):
+    """Players with games this season get the boosted dress share and FP/G in their details (handoff 332)."""
+    by_name, _, _ = run
+    m = by_name["Auston Matthews"]["cr_why"]
+    assert 0.01 <= m["boost_dress"] <= 0.99 and m["boost_fpg"] >= 0
+    assert "boost_dress" not in by_name["Ryan Spooner"]["cr_why"]  # yet to play: no panel row

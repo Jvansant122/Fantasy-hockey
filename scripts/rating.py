@@ -25,6 +25,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+import season_boost
+
 ROOT = Path(__file__).resolve().parent.parent
 NHL_STATS = "https://api.nhle.com/stats/rest/en"
 NHL_WEB = "https://api-web.nhle.com/v1"
@@ -215,8 +217,13 @@ NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18),
 NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
 NEWS_STALE_DAYS = 2
 # ESPN's preseason projected FP/G blended into the Season FP/G (after the age term) with weight a + b g + c g^2,
-# g = min(GP, 40)/40: 0.36 at 0 games, about 0.1 by 40 (findings 360 (2), handoff 331, fitted leaving one season out)
-ESPN_PROJ_BLEND = (0.36, -0.60, 0.40)  # an older stored copy (the fetch has failed since) adds nothing
+# g = min(GP, 40)/40: 0.29 at 0 games, about 0.07-0.08 from 30 games on (findings 360 (2), handoffs 331-332)
+ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
+# boosted models trained on 16 seasons (model/train_boost.py, scripts/season_boost.py; findings 360 (3)-(4), handoff 332):
+# the Season dress logit moves BOOST_DRESS_W of the way to the boosted one, and the Season FP/G gains
+# (boosted - FP/G) x (a + b g). The ESPN weights above were refitted jointly with these, leaving one season out over 2021-26
+BOOST_DRESS_W = 0.56
+BOOST_FPG_BLEND = (0.60, -0.37)  # an older stored copy (the fetch has failed since) adds nothing
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
 # (findings 330 (5), handoff 274)
@@ -716,9 +723,10 @@ def next_up_pp_d(by_player, team_games, out):
     return boost
 
 
-def load_birthdates(s, seasons):
+def load_birthdates(s, seasons, bios=None):
     """NHL id: birth date, from the stats API's skater bios report for these seasons. Empty if it can't be read: the
-    Season rating then goes without its age adjustment."""
+    Season rating then goes without its age adjustment. bios, if given, is filled with {id: (birth date, draft overall,
+    first NHL season)} for the boosted Season models (findings 360 (3))."""
     out = {}
     for season in seasons:
         try:
@@ -731,6 +739,8 @@ def load_birthdates(s, seasons):
                 out.setdefault(r["playerId"], date.fromisoformat(r["birthDate"]))
             except (KeyError, TypeError, ValueError):
                 pass
+            if bios is not None and r.get("playerId") and r["playerId"] not in bios:
+                bios[r["playerId"]] = (out.get(r["playerId"]), r.get("draftOverall"), r.get("firstSeasonForGameType"))
     return out
 
 
@@ -772,6 +782,12 @@ def load_xg(s, year):
         if not pre:
             row.update(gp=num(f, "games_played"), onice_xgf=num(f, "OnIce_F_xGoals"), shots=num(f, "I_F_shotsOnGoal"),
                        hits=num(f, "I_F_hits"), blocks=num(f, "shotsBlockedByPlayer"), pos=f[ix["position"]] if "position" in ix else "")
+            # the boosted Season FP/G's MoneyPuck rates (season_boost.mp_rates, findings 360 (4))
+            row.update(icetime=num(f, "icetime"), hdxg=num(f, "I_F_highDangerxGoals"), gamescore=num(f, "gameScore"),
+                       a1=num(f, "I_F_primaryAssists"), takeaways=num(f, "I_F_takeaways"), oz=num(f, "I_F_oZoneShiftStarts"),
+                       dz=num(f, "I_F_dZoneShiftStarts"), oxg_pct=num(f, "onIce_xGoalsPercentage") if "onIce_xGoalsPercentage" in ix else None)
+        elif pre == "pp_":
+            row["pp_icetime"] = num(f, "icetime")
     out = {}
     for pid, r in raw.items():
         if r.get("gp"):
@@ -891,6 +907,9 @@ class Model:
 
     def season_dress(self, x, shift=0.0):
         """Share of the team's remaining games he dresses (rest-of-season logistic, findings section 56)."""
+        return 1 / (1 + math.exp(-self.season_dress_logit(x, shift)))
+
+    def season_dress_logit(self, x, shift=0.0):
         m = self.season_lr
         z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items()) + shift
         if x.get("os_long"):
@@ -900,7 +919,7 @@ class Model:
             z += NEW_PLAYER_SEASON * stuck + FEW_GAMES_SEASON * (x.get("gp_now", 0) <= 5)
         elif x.get("prev_dress_rate", 1.0) < 0.5:
             z += PART_TIMER_SEASON * stuck
-        return 1 / (1 + math.exp(-z))
+        return z
 
     def fpg(self, feats, season=False):
         """Points a game: the Week rating's ridge, or with season=True the Season rating's (no hinge curves, findings 320 (2);
@@ -1742,6 +1761,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     season, prev_season = season_ids(espn_season)
     model = Model()
     week_games, week_starts = {}, {}
+    bios = {}  # {id: (birth, draft, first season)}, filled by load_birthdates for the boosted models
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
     games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct = pmap(lambda f: f(), [
         lambda: load_skater_games(s, season, today),
@@ -1751,7 +1771,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         lambda: load_prev_goalie_season(s, prev_season),
         lambda: load_xg(s, season // 10000),
         lambda: load_xg(s, prev_season // 10000),
-        lambda: load_birthdates(s, (season, prev_season)),
+        lambda: load_birthdates(s, (season, prev_season), bios),
         lambda: week_schedule(s, monday, week_games, weeks, week_starts),
         lambda: team_strength(s, prev_season),
         lambda: prev_points_pct(s, prev_season),
@@ -1843,6 +1863,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     on_roster = {pid for r in rosters.values() for pid, _, _ in r}
     # missed all or most of last season (Barkov): the season before instead of a newcomer's prior, for players on a current
     # NHL roster or with games this season, so retired players don't come back (findings 216)
+    # the boosted Season models (findings 360 (3)-(4)) read last season as it was, before the stand-in below
+    boost_dress, boost_fpg = season_boost.load("dress"), season_boost.load("fpg")
+    boost_x = season_boost.features(by_player, team_games, prev, prev2, bios, xg_prev, season, today, SEASON_GAMES) \
+        if boost_dress or boost_fpg else {}
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     prev3 = {}
     if missed:
@@ -2105,13 +2129,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
-            season_share, news_why = None, []
+            season_share, news_why, boost_q = None, [], None
             if df_ and model.season_lr:
                 sx = season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
                                            played=len(team_games.get(team, [])))
                 news_z, news_why = news_season_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sx["os_k"], sx["gp_now"], now_utc)
-                season = rest_share = model.season_dress(sx, NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
-                                                         + CLEARED_SEASON_LOGIT * cleared_out + news_z)
+                z = model.season_dress_logit(sx, NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
+                                             + CLEARED_SEASON_LOGIT * cleared_out)
+                if boost_dress and pid in boost_x:  # part of the way to the 16-season boosted share (findings 360 (3))
+                    q = min(max(season_boost.predict(boost_dress, boost_x[pid]), 0.01), 0.99)
+                    z += BOOST_DRESS_W * (math.log(q / (1 - q)) - z)
+                    boost_q = q
+                season = rest_share = 1 / (1 + math.exp(-(z + news_z)))
                 season *= fpg_s
             elif cleared_new:
                 season_share = CLEARED_NEW_SEASON * UNPLAYED_NOTED_MULT[unplayed_cell(len(team_games.get(team, [])))]
@@ -2136,12 +2165,20 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if fpg_s > 0:
                 season *= max(fpg_s + age_adj, 0.0) / fpg_s
             # ESPN's preseason projection pulls the Season FP/G, most at 0 games and fading by 40 (findings 360 (2))
-            espn_w = None
-            if p.get("proj_ppg") is not None and rest_share > 0:
+            # ... and the 16-season boosted FP/G, most at 0 games and fading with GP (findings 360 (4)): both measured from
+            # the same Season FP/G
+            espn_w, boost_f = None, None
+            if rest_share > 0:
                 g = min(len(gl), 40) / 40
-                espn_w = ESPN_PROJ_BLEND[0] + ESPN_PROJ_BLEND[1] * g + ESPN_PROJ_BLEND[2] * g * g
                 fpg_t = season / rest_share
-                season = rest_share * max(fpg_t + (p["proj_ppg"] - fpg_t) * espn_w, 0.0)
+                shift = 0.0
+                if p.get("proj_ppg") is not None:
+                    espn_w = ESPN_PROJ_BLEND[0] + ESPN_PROJ_BLEND[1] * g + ESPN_PROJ_BLEND[2] * g * g
+                    shift += (p["proj_ppg"] - fpg_t) * espn_w
+                if boost_fpg and pid in boost_x:
+                    boost_f = season_boost.predict(boost_fpg, boost_x[pid])
+                    shift += (boost_f - fpg_t) * (BOOST_FPG_BLEND[0] + BOOST_FPG_BLEND[1] * g)
+                season = rest_share * max(fpg_t + shift, 0.0)
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -2191,6 +2228,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if boost_q is not None:
+                why["boost_dress"] = round(boost_q, 2)  # the 16-season boosted dress share (findings 360 (3))
+            if boost_f is not None:
+                why["boost_fpg"] = round(boost_f, 2)  # the 16-season boosted FP/G (findings 360 (4))
             if espn_w:
                 why["espn_blend"] = round(espn_w, 2)  # share of the gap to ESPN's preseason projection (findings 360 (2))
             if news_why:
