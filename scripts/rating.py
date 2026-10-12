@@ -1136,7 +1136,7 @@ def forecast_features(f, sk):
         val = {tgt: m["intercept"] + sum(c * (m["fill"][k] if x.get(k) is None else x[k]) for k, c in zip(m["inputs"], m["coef"]))
                for tgt, m in fc.items()}
         u = ux_features(dict(f, l5_toi=val["y_toi"], l5_pptoi=max(val["y_pptoi"], 0.0)), "D" if f.get("is_D") else "F", sk.get("ux_means"))
-        out = {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
+        out |= {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
     for c, knots in (sk.get("hinges") or {}).items():  # Week rating's bend points (findings 320 (2)); missing x: filled
         v = out.get(c, f.get(c))
         for i, q in enumerate(knots):
