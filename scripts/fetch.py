@@ -87,7 +87,7 @@ def matchup_days(matchup_periods, period, today_sp, weekday):
     weeks = (matchup_periods or {}).get(str(period))
     if not weeks or not all(isinstance(w, int) and w >= 1 for w in weeks):
         return week
-    days = sorted({sp for w in weeks for sp in (range(1, 7) if w == 1 else range(7 * w - 7, 7 * w))})
+    days = sorted({sp for w in weeks for sp in week_sps(w)})
     # a stretched week (an NHL break) would break the 7-day arithmetic: then trust this week only
     monday_ok = days[0] == 1 or (today_sp - days[0]) % 7 == weekday
     return days if today_sp in days and monday_ok else week
@@ -590,7 +590,7 @@ def main():
     if tx_error:
         lead_errors["league"] = tx_error
     for day in (now, now + timedelta(days=1)):
-        if day.weekday() >= now.weekday():  # stay inside this Monday-Sunday matchup
+        if today_sp + (day - now).days in matchup_sps:  # stay inside this matchup (two weeks in a playoff round)
             try:
                 starters.append(leads.fetch_starters(web, day))
             except Exception as e:  # noqa: BLE001 - starters are a bonus, never block the update

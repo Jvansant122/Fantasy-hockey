@@ -10,6 +10,7 @@ Daily Faceoff's robots.txt allows these pages (not its /api/), so we read the pa
 import gzip
 import json
 import re
+import sys
 import time
 import unicodedata
 from datetime import datetime
@@ -149,8 +150,8 @@ def fetch_odds(s, today=None, team_map=None):
             espn = espn_odds(s, today, team_map or {})
             if espn["games"]:
                 return espn
-        except Exception:  # noqa: BLE001 - keep the NHL feed's games when ESPN fails
-            pass
+        except Exception as e:  # noqa: BLE001 - keep the NHL feed's games when ESPN fails
+            print(f"ESPN odds fallback failed: {e!r}", file=sys.stderr)
     return {"odds_date": d.get("currentOddsDate"), "updated": d.get("lastUpdatedUTC"), "games": [
         {"game_id": g.get("gameId"), "start_utc": g.get("startTimeUTC"),
          **{side: {"team": g[f"{side}Team"]["abbrev"], **{o["description"] + (f' {o["qualifier"]}' if o.get("qualifier") and "LINE" not in o["description"] else ""): o["value"]

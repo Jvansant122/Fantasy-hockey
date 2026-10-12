@@ -278,11 +278,11 @@ def add_y_ixg(df, sk):
     return df.drop(columns="y_ixg", errors="ignore").merge(y, on=["playerId", "monday"], how="left")
 
 
-def fit_forecast(train, fc_in=None):
+def fit_forecast(train):
     """Two small ridges (alpha 1, weighted by games next week): next week's TOI/G and PP TOI/G (findings 310 (1))."""
     tr = train[train.y_gp > 0]
     st = {}
-    for tgt, ins in zip(("y_toi", "y_pptoi"), fc_in or (TOI_FC_IN, PP_FC_IN)):
+    for tgt, ins in zip(("y_toi", "y_pptoi"), (TOI_FC_IN, PP_FC_IN)):
         X = fc_design(tr, ins)
         fill = X.mean()
         m = Ridge(alpha=1.0).fit(X.fillna(fill), tr[tgt], sample_weight=tr.y_gp)
@@ -456,13 +456,13 @@ def prep(df, feats=FEATS, mu=None, st=None):
     return X[feats]
 
 
-def fit_state(train, feats, mu, fc_in=None):
+def fit_state(train, feats, mu):
     """What the forecast and product inputs need from the training rows: the two forecast ridges, and each product
     factor's training mean (a missing factor is filled with it before multiplying)."""
     tr = train[train.y_gp > 0]
     st = {}
     if any(c in FC_FEATS for c in feats):
-        st["fc"] = fit_forecast(tr, fc_in)
+        st["fc"] = fit_forecast(tr)
     if any(c in PAIR_FEATS for c in feats):
         st["pair_fill"] = prep(tr, UX_ERA_FEATS, mu)[PAIR_IN].mean()
     if any(c in DEC_FEATS for c in feats):
@@ -473,10 +473,10 @@ def fit_state(train, feats, mu, fc_in=None):
     return st
 
 
-def fit_linear(train, feats=FEATS, mu=None, fc_in=None):
+def fit_linear(train, feats=FEATS, mu=None):
     """One ridge per scoring stat, summed with league weights and folded back to raw-unit coefficients."""
     tr = train[train.y_gp > 0]
-    st = fit_state(tr, feats, mu, fc_in)
+    st = fit_state(tr, feats, mu)
     X = prep(tr, feats, mu, st)
     means = X.mean().fillna(0)
     X = X.fillna(means)
@@ -503,11 +503,6 @@ def dress_table(train):
     g = t.groupby(["d3", "d10"])
     rate = (g.y_gp.sum() / g.team_games.sum())[g.team_games.sum() >= 500]  # drop near-empty cells
     return {f"{a}_{b}": round(float(v), 3) for (a, b), v in rate.items()}
-
-
-def rho_by_week(d, col):
-    vals = [g[col].rank().corr(g.y_fp.rank()) for _, g in d.groupby("monday") if len(g) >= 20]
-    return float(np.nanmean(vals))
 
 
 def weekly_rho(d, col):

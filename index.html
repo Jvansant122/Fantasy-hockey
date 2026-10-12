@@ -611,7 +611,6 @@ function renderUpgrades() {
   if (d.rated && tonight && !stale(d)) {
     const myG = tonightMine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
-    const team = d.teams.find(t => String(t.id) === state.team);
     const limit = cnt.limit, used = cnt.used;  // null when ESPN gives no usable limit: show the card anyway
     if (open > 0 && !(limit && used >= limit)) {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
@@ -804,8 +803,10 @@ function renderUpgrades() {
 
 // On a phone, fold each card's explainer behind "why", and the long cards (trade ideas, IR stash, goalies note) behind
 // their title, so the actionable lines stay near the top (findings 214: Upgrades was 1564 px tall on a phone)
+const phoneWidth = matchMedia("(max-width: 640px)");
+phoneWidth.addEventListener?.("change", () => { if (state.data && state.team) renderUpgrades(); });  // refold when a window crosses the phone width
 function foldCards() {
-  if (!matchMedia("(max-width: 640px)").matches) return;
+  if (!phoneWidth.matches) return;
   for (const c of $("upgrades").querySelectorAll(".upg")) {
     const title = c.querySelector(":scope > b"), drop = c.querySelector(":scope > .drop");
     if (!title) continue;
