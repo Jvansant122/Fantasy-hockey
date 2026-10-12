@@ -13,7 +13,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "goalie_cap", "move_limit", "ir_slots", "matchup_weeks", "final_matchup", "updated_date", "updated_utc", "first_start",
+TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "goalie_cap", "move_limit", "move_limit_next", "ir_slots", "matchup_weeks", "final_matchup", "updated_date", "updated_utc", "first_start",
               "season_weeks", "team_nights"}  # the last two feed the table's Nights week picker (findings 300); empty is allowed
 NIGHT_FIELDS = {"sp", "date", "games", "light", "past"}
 PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
@@ -38,6 +38,9 @@ def problems(data):
     want = {7 * (data.get("matchup_weeks") or 1)} | ({6} if data.get("matchup_period") == 1 else set())
     if len(data["nights"]) not in want:
         out.append(f"{len(data['nights'])} nights, expected {sorted(want)}")
+    # the page counts next week's moves after Sunday's first puck (handoff 263)
+    if any("moves_used_next" not in t for t in data["teams"]):
+        out.append("teams missing moves_used_next")
     for n in data["nights"]:
         if NIGHT_FIELDS - set(n):
             out.append(f"night {n.get('date')} missing {sorted(NIGHT_FIELDS - set(n))}")
