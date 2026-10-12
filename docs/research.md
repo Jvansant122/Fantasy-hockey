@@ -951,6 +951,10 @@ The Season rating's share of a team's future starts now leans toward the goalie 
 
 Goalie Season values ran wider than what goalies went on to score: the top eighth of goalies averaged 2.55 points a game in the Season rating but scored 2.14, and the bottom eighth 0.21 against 0.33. Skaters' Season values were already in line with what they scored. **A goalie with any share of his team's starts now gets 0.32 + 0.72 x his old Season value**, so goalies and skaters can be compared on one board, in keep values and in trades. Refit on the site's own Season values over 2023-26 Mondays, the goalies' rest-of-season error fell in each of three test seasons (0.568 to 0.514, 0.388 to 0.373, 0.432 to 0.378). Goalies with no share of starts stay at 0.
 
+## 126. Goalies pulled in their last start
+
+About one start in 25 ends with the goalie pulled before 40 minutes. When a goalie was pulled from his latest start, his share of the team's remaining starts has come in lower than the Season rating expected (0.33 against 0.36). **His Season share of future starts now drops by 0.03**, unless the existing "left without a decision" cut already applies to him. Refit on the site's own shares over 2023-26 Mondays, this ranks goalies' rest-of-season points slightly better in each of three test seasons. It is a small change: tonight's start chances and the Week rating are unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |

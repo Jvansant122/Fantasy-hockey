@@ -194,6 +194,9 @@ SAVE_SHRINK, LEAGUE_SAVE_PCT = (600, 1000), 0.902
 # skaters' scale for the pooled board, keep values and trades; refit on this site's Season values, 2023-26 Mondays
 # (findings 330 (2), handoff 271)
 GOALIE_SEASON_SCALE = (0.32, 0.72)
+# pulled (under 40:00 of ice time) in his last start, without the no-decision cut: his rest-of-season share came in
+# 0.03 below (0.361 against 0.331); refit on this site's shares, 2023-26 Mondays (findings 330 (3), handoff 272)
+PULLED_SEASON, PULLED_TOI = 0.03, 2400
 
 
 def bad_start(g):
@@ -1351,7 +1354,7 @@ def repeating_pattern(seq, cands):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None):
+                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=()):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -1368,7 +1371,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     and their season_share counts only this team's games since their first start for it.
     relief: goalies who came on in relief in the team's last game; their start logit rises (findings 170).
     season_out: goalies ESPN says are out for the season: no season_share, and theirs goes to the others (findings 216, 234).
-    by_date: if given, filled with {goalie id: {date: chance he starts}} for each game from today on (findings 236)."""
+    by_date: if given, filled with {goalie id: {date: chance he starts}} for each game from today on (findings 236).
+    pulled: goalies pulled from their latest start; their season_share drops PULLED_SEASON unless the no-decision cut
+    already applies (findings 330 (3))."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -1416,6 +1421,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             cut = 1.0 if gid in season_out else (1 - NO_DECISION_SEASON) if (
                 last_start and last_start[0] == gid and last_start[1][:1] == (NO_DECISION_LOGIT,) and gid not in confirmed.values()
                 and injury.get(gid, 1.0) > 0) else 0.0
+            if not cut and gid in pulled:
+                season_share[gid] = max(season_share[gid] - PULLED_SEASON, 0.0)
             if cut:
                 moved += season_share[gid] * cut
                 season_share[gid] *= 1 - cut
@@ -1669,6 +1676,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if g["started"]:
             start_teams.setdefault(g["id"], set()).add(g["team"])
     movers = {gid for gid, teams in start_teams.items() if len(teams) > 1}  # started for two NHL teams this season
+    latest = {}  # each goalie's own latest start (findings 330 (3))
+    for g in sorted(goalie_games, key=lambda g: g["date"]):
+        if g["started"]:
+            latest[g["id"]] = g
+    pulled = {gid for gid, g in latest.items() if g["toi"] < PULLED_TOI}
     scratches = load_scratches(s, {tg[-1] for tg in team_games.values() if tg})
     tried = {tg[-1] for tg in team_games.values() if tg}
 
@@ -1826,7 +1838,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
         tod, sea, nights = {}, {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
-                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts)
+                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled)
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)

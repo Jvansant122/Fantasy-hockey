@@ -1600,3 +1600,21 @@ def test_finished_weeks_of_nhl_stats_are_cached(monkeypatch, tmp_path):
     rating.stats_report(S(), "skater/summary", 20262027)
     rating.stats_report(S(), "skater/summary", 20262027)  # season totals: not cached
     assert len(calls) == 5 and len(list(tmp_path.iterdir())) == 1
+
+
+def test_pulled_goalie_loses_a_little_season_share():
+    """A goalie pulled from his latest start loses PULLED_SEASON of his Season share; nightly starts don't change, and a
+    goalie the no-decision cut already covers loses nothing more (findings 330 (3), handoff 272)."""
+    model = rating.Model()
+    hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), 1 if i % 3 else 2) for i in range(9)]
+    def run(pulled, last_start=None):
+        sea = {}
+        e = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, ["2026-10-20"], date(2026, 10, 20),
+                                 today_p={}, season_share=sea, last_start=last_start, pulled=pulled)
+        return sea, e
+    (on, e_on), (off, e_off) = run({1}), run(())
+    assert on[1] == pytest.approx(off[1] - rating.PULLED_SEASON) and on[2] == pytest.approx(off[2])
+    assert e_on == e_off  # Season only
+    nd = (1, rating.last_start_shift({"ga": 1, "sv": 20, "sa": 21, "toi": 2300, "wins": 0, "losses": 0, "otl": 0}))
+    assert nd[1][0] == rating.NO_DECISION_LOGIT
+    assert run({1}, nd)[0] == run((), nd)[0]
