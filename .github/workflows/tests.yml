@@ -33,4 +33,5 @@ jobs:
           node-version: "22"
       - run: pip install -r requirements-dev.txt
       - run: python -m playwright install --with-deps chromium
-      - run: python -m pytest -q
+      # the page tests spend most of their time waiting on the browser: 4 workers take the run from about 2:10 to under 1:00
+      - run: python -m pytest -q -n auto

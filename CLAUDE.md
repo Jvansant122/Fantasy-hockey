@@ -20,8 +20,10 @@ A one-page site (GitHub Pages) that ranks free agents in Jack's ESPN fantasy hoc
 
 ```
 pip install -r requirements-dev.txt
-python -m pytest
+python -m pytest -n auto
 ```
+
+`-n auto` (pytest-xdist) runs the tests on every CPU, as the Tests workflow does: about 1 minute instead of 3. Plain `python -m pytest` still works.
 
 No network or secrets needed: every ESPN, NHL, MoneyPuck and Daily Faceoff call is faked.
 
