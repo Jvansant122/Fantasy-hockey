@@ -891,6 +891,12 @@ def test_strict_rotation_keeps_going(monkeypatch):
     for n in (6, 8):
         assert p(n, -1.2)[0] < p(n, 0.0)[0] - 0.1
     assert p(4, -1.2)[0] == pytest.approx(p(4, 0.0)[0])
+    # the game after next goes back to the last starter less than the chain alone says (findings 228): with the later cut,
+    # goalie 2 (due next) has fewer expected starts over the two games
+    monkeypatch.setattr(rating, "ROTATION_LATER_LOGIT", 0.0)
+    plain = p(6, -1.2)[1]
+    monkeypatch.setattr(rating, "ROTATION_LATER_LOGIT", -0.6)
+    assert p(6, -1.2)[1][2] < plain[2] - 0.02
 
 
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):

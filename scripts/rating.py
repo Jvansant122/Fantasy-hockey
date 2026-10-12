@@ -123,6 +123,7 @@ AFTER_NO1_REST_OTHER_LOGIT = -1.0
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
+ROTATION_LATER_LOGIT = -0.6  # ... and the goalie due next, in the game after next unless it's night 2 of a back-to-back (findings 228)
 # both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
 # with every rostered goalie, n=125, better in 5 of 5 seasons): an extra shift on his share after the split. The streak shift
 # already fits there (68% against 63%, and a larger one scores worse) (findings 213, handoff 105)
@@ -1140,6 +1141,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     run = next((i for i, x in enumerate(reversed(seq)) if x != seq[-1]), len(seq)) if seq else 0
     on_streak = STREAK_RANGE[0] <= run <= STREAK_RANGE[1]
     rotating = strict_rotation(seq, cands)
+    prev_d = None
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
     dates_sorted = sorted(game_dates)
@@ -1153,6 +1155,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         gap = (day - date.fromisoformat(last_date)).days if ahead == 0 and last_date else 0
         rested = next((v for days, v in BREAK_LOGITS if gap >= days), 0.0)
         night2_no1 = False
+        night_after = prev_d is not None and (day - prev_d).days == 1  # the night after the previous game still to play
         if gap == 1 and seq:  # night 2 of a back-to-back: shift whoever started night 1, by role
             # the no. 1 among the goalies still here: a departed no. 1's starts don't count (findings 234)
             recent = [g for g in seq[-20:] if g in cands]
@@ -1178,7 +1181,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
                 + (rested if rested and gid == seq[-1] else 0.0) \
                 + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0) \
-                + (ROTATION_LOGIT if rotating and ahead == 0 and gid == seq[-1] else 0.0)
+                + (ROTATION_LOGIT if rotating and ahead == 0 and gid == seq[-1] else 0.0) \
+                + (ROTATION_LATER_LOGIT if rotating and ahead == 1 and gid == seq[-2] and not night_after else 0.0)
             if after_rest and ahead == 1 and gid != no1:
                 z += AFTER_NO1_REST_OTHER_LOGIT
             if gid == no1:  # back-to-backs still ahead, and his ordinary nights (findings 231)
@@ -1205,6 +1209,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + early)))
             p = {gid: now if gid == seq[-1] else v * (1 - now) / (1 - was) for gid, v in p.items()}
         ahead += 1
+        prev_d = day
         q = p
         if ahead > 1:  # games after the next one are softened and split across the team's goalies again; the chain keeps p
             q = {gid: v if v <= 0 or v >= 1 else 1 / (1 + math.exp(-LATER_GAME_TEMP * math.log(v / (1 - v)))) for gid, v in p.items()}
