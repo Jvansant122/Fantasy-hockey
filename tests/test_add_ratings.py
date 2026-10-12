@@ -117,6 +117,9 @@ class FakeSession:
         assert m, f"unexpected URL {url}"
         report, exp = m.group(1), params["cayenneExp"]
         season = int(re.search(r"seasonId=(\d+)", exp).group(1))
+        if report == "skater/bios":  # birth dates: Matthews 29 on the run date, Bolduc 20, the D Pettersson 38
+            births = {1: "1997-09-17", 7: "2006-01-01", 6: "1988-05-11"}
+            return Resp({"data": [{"playerId": pid, "birthDate": births.get(pid)} for pid, *_ in SKATERS]})
         dates = re.findall(r'gameDate[<>]="([\d-]+)"', exp)
         if not dates:  # season totals: only last season has any (and the one before, for away_last players)
             if season != 20252026 and not (season == 20242025 and self.away_last):
@@ -1332,3 +1335,23 @@ def test_next_up_power_play_defenseman():
     for g in logs[1]:
         g["pptoi"] = 0.8
     assert rating.next_up_pp_d(logs, tg, {1}) == {}  # under 1 PP min/G: no PP role to hand on
+
+
+def test_season_age_adjustment():
+    """Season FP/G + 0.01 a year under 24, - 0.009 a year over 29; nothing without a birth date (findings 310 (3))."""
+    today = date(2026, 10, 12)
+    assert rating.season_age_adj(None, today) == 0.0
+    assert rating.season_age_adj(date(2000, 10, 12), today) == pytest.approx(0.0, abs=1e-3)  # 26
+    assert rating.season_age_adj(date(2006, 10, 12), today) == pytest.approx(0.04, abs=1e-3)  # 20
+    assert rating.season_age_adj(date(1991, 10, 12), today) == pytest.approx(-0.054, abs=1e-3)  # 35
+
+
+def test_season_rating_carries_age(run):
+    by_name, _, _ = run
+    old, young = by_name["Elias N. Pettersson"], by_name["Zack Bolduc"]
+    for p, sign in ((old, -1), (young, 1)):
+        w = p["cr_why"]
+        assert w.get("age_adj") is None or w["age_adj"] * sign > 0
+    assert young["cr_why"]["age_adj"] == pytest.approx(0.03, abs=0.005)
+    assert old["cr_why"]["age_adj"] == pytest.approx(-0.08, abs=0.005)
+    assert "age_adj" not in by_name["Auston Matthews"]["cr_why"]  # 29: no adjustment

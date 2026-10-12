@@ -427,7 +427,8 @@ function why(p) {
     // a player yet to play takes a fixed share of the rest, which isn't "no injury discount" when he was hurt (findings 232)
     if (p.cr_season != null) parts.push(`Season: ${n(p.cr_season)} pts per team game ` + (w.season_share != null
       ? `(expects him in about ${Math.round(w.season_share * 100)}% of the rest: ${p.injury ? "hurt before his first game" : "yet to play this season"})`
-      : "(no injury discount)"));
+      : "(no injury discount)") + (w.age_adj ? `; ${w.age_adj > 0 ? "+" : ""}${w.age_adj.toFixed(2)} pts/game for age: ${w.age_adj > 0
+      ? "young players tend to improve through the season" : "players over 30 tend to fade through the season"}` : ""));
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");
     if (w.last_fpg != null) parts.push(`${w.last_season || "last season"} ${n(w.last_fpg)} pts/game`);
