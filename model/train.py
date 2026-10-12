@@ -1,7 +1,8 @@
 """Fit the Claude Rating models and write model/rating_model.json for scripts/rating.py.
 
-Uses the research data (NHL stats API game logs plus MoneyPuck xG, 2021-22 to 2025-26) from the project's
-research folder: pass its path as the first argument (default /mnt/project-files/research/claude-rating).
+Uses the research data (NHL stats API game logs plus MoneyPuck xG, 2017-18 to 2025-26, in hunt8/all; the skater
+ridge trains on 2019-20 on, so every row has two seasons ago) from the project's research folder: pass its path as
+the first argument (default /mnt/project-files/research/claude-rating).
 
 Only inputs the daily workflow can rebuild cheaply are used: game-level NHL stats for this season
 (last 5/10/20 games and season to date), season totals for last season, and MoneyPuck season xG.
@@ -25,7 +26,11 @@ from goalies import START_FEATS, start_table  # noqa: E402
 OLD_START_FEATS = START_FEATS[:8]  # before rest and workload (findings section 11)
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rating_model.json")
-CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots.parquet")
+CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots_2017.parquet")
+# game logs and xG back to 2017-18 (research hunt 8), so every skater ridge training row from 2019-20 has two seasons
+# ago; the dress table and replacement level keep the 2021-26 rows they were fit on
+HISTORY_DATA = os.path.join(RESEARCH, "hunt8", "all")
+TRAIN_FROM, TABLES_FROM = 20192020, 20212022
 GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints", "points"]
 XG_RATES = ["ixg", "onice_xgf"]
 # where he ranks in his team-game's PP time and ice time (findings section 201): this season's windows only
@@ -63,7 +68,11 @@ FC_FEATS = [f"fc_{n}" for n in UX_FEATS] + ["fc_toi", "fc_pptoi"]
 # pairwise products of the 12 strongest inputs, a linear stand-in for the declined tree layer (findings 310 (2))
 PAIR_IN = ["sx_ux", "sx_fp", "sx_pp", "l5_toi", "l5_pptoi", "std_fp", "prev_fp", "std_gp", "std_shots", "prev_shots", "std_ixg", "l5_fp"]
 PAIR_FEATS = [f"{a}*{b}" for a, b in combinations(PAIR_IN, 2)]
-FEATS = UX_ERA_FEATS + FC_FEATS + PAIR_FEATS
+# two seasons ago, per game, and its games played (findings 310 (4); the career rates there added nothing on top)
+P2_RATES = ["fp", "toi", "pptoi", "shots", "hits", "blockedShots", "points"]
+P2_FEATS = [f"p2_{r}" for r in P2_RATES] + ["p2_gp", "no_p2"] + [f"p2_{r}_w" for r in ("fp", "toi", "pptoi")]
+PR110_FEATS = UX_ERA_FEATS + FC_FEATS + PAIR_FEATS
+FEATS = PR110_FEATS + P2_FEATS
 
 
 def ux_means(df):
@@ -151,13 +160,21 @@ def forecast(df, st):
             for tgt, m in st.items()}
 
 
+def add_p2(df, sk):
+    """Two seasons ago: per-game means of each P2_RATES stat and games played (NaN when he didn't play then)."""
+    p2 = sk.groupby(["playerId", "season"]).agg(**{f"p2_{r}": (r, "mean") for r in P2_RATES}, p2_gp=("fp", "size")).reset_index()
+    p2["season"] = p2.season + 20002
+    return df.drop(columns=[c for c in p2 if c.startswith("p2_")], errors="ignore").merge(p2, on=["playerId", "season"], how="left")
+
+
 def snapshots():
     if os.path.exists(CACHE):
         return pd.read_parquet(CACHE)
+    common.DATA = HISTORY_DATA
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
-    df = add_recent(common.skater_snapshots(sk), sk)
+    df = add_p2(add_recent(common.skater_snapshots(sk), sk), sk)
     df.to_parquet(CACHE)
     return df
 
@@ -176,7 +193,11 @@ def prep(df, feats=FEATS, mu=None, st=None):
     for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits"):
         X[f"std_{r}_w"] = df[f"std_{r}"] * w
     extra = {f"D_x_{n}": X.is_D * df[n].fillna(0) for n in D_X} | {f"{n}2": df[n] ** 2 for n in SQUARED}
-    X = pd.concat([X, pd.DataFrame(extra, index=df.index)], axis=1)
+    if "p2_fp" in df:
+        w2 = np.clip(df.p2_gp.fillna(0) / 82, 0, 1)
+        extra |= {f"p2_{r}": df[f"p2_{r}"] for r in P2_RATES} | {"p2_gp": df.p2_gp.fillna(0), "no_p2": df.p2_gp.isna().astype(float)}
+        extra |= {f"p2_{r}_w": df[f"p2_{r}"].fillna(0) * w2 for r in ("fp", "toi", "pptoi")}
+    X = pd.concat([X.drop(columns=[k for k in extra if k in X]), pd.DataFrame(extra, index=df.index)], axis=1)
     if st and "fc" in st:
         fc = forecast(df, st["fc"])
         u = ux_features(df, mu, fc["y_toi"], fc["y_pptoi"].clip(lower=0)).add_prefix("fc_")
@@ -245,7 +266,7 @@ def skater_backtest(df):
     for s in TEST_SEASONS:
         tr, te = df[df.season < s], df[(df.season == s) & (df.y_gp > 0) & (df.std_gp >= 3)].copy()
         mu = ux_means(tr)
-        te["before"] = predict(te, *fit_linear(tr, UX_ERA_FEATS, mu), UX_ERA_FEATS, mu)
+        te["before"] = predict(te, *fit_linear(tr, PR110_FEATS, mu), PR110_FEATS, mu)
         te["after"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
         parts.append(te)
     t = pd.concat(parts)
@@ -273,12 +294,13 @@ def goalie_backtest(st):
 
 def main():
     df = snapshots()
-    df = df[df.std_gp >= 1].copy()
+    df = df[(df.std_gp >= 1) & (df.season >= TRAIN_FROM)].copy()
     skater_backtest(df)
 
     mu = ux_means(df)
     coef, icpt, means, sk_st = fit_linear(df, FEATS, mu)
-    wire = df[df.wire]
+    tables = df[df.season >= TABLES_FROM]
+    wire = tables[tables.wire]
     repl = wire.groupby("pos").std_fp.mean()
 
     g = pd.read_parquet(os.path.join(RESEARCH, "data", "goalie_games.parquet"))
@@ -297,7 +319,7 @@ def main():
                                     for tgt, m in sk_st["fc"].items()},
                    "pairs": {"inputs": PAIR_IN, "fill": {k: round(float(v), 4) for k, v in sk_st["pair_fill"].items()}},
                    "replacement_fpg": {k: round(float(v), 3) for k, v in repl.items()}},
-        "dress": dress_table(df),
+        "dress": dress_table(tables),
         "goalie": {"features": START_FEATS, "coef": [round(float(x), 4) for x in lr.coef_[0]],
                    "intercept": round(float(lr.intercept_[0]), 4), "points_per_start": round(pts_per_start, 2)},
     }
@@ -317,7 +339,7 @@ def check_daily_arithmetic(df, coef, icpt, means, st, mu, n=2000):
     import rating
     rows = df.sample(min(n, len(df)), random_state=0)
     want = np.maximum(predict(rows, coef, icpt, means, st, FEATS, mu), 0)
-    base = prep(rows, UX_ERA_FEATS, mu)
+    base = prep(rows, UX_ERA_FEATS + P2_FEATS, mu)
     m = rating.Model()
     got = []
     for (_, r), (_, b) in zip(rows.iterrows(), base.iterrows()):
