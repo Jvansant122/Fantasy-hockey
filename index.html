@@ -27,6 +27,11 @@
   h2 { font-size: 15px; margin: 0 0 8px; }
   .sub { color: var(--muted); font-size: 12px; }
   .sub.warn { color: var(--warn); font-weight: 600; }
+  /* Update now (Jack's ask, Oct 12) */
+  .refresh { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+  .refresh button { font: inherit; font-size: 12px; min-height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); cursor: pointer; }
+  .refresh .sub { max-width: 75ch; }
+  .refresh a { color: var(--accent); }
   .myteam { font-size: 14px !important; color: var(--text) !important; font-weight: 600; }
   .prompt { color: var(--muted); padding: 4px 0; }
   a { color: var(--accent); }
@@ -149,6 +154,7 @@
 <main>
   <h1 id="title">Free Agent Finder</h1>
   <div class="sub" id="updated">Loading…</div>
+  <div class="refresh"><button id="refresh" type="button">Update now</button><span class="sub" id="refreshmsg"></span></div>
   <div class="sub warn" id="stale" hidden>These numbers are from yesterday evening and still count last night's games. The site refreshes at 6 AM ET.</div>
   <div class="controls" style="margin-top:8px">
     <label class="myteam">Your team <select id="team"><option value="">Pick your team…</option></select></label>
@@ -1052,6 +1058,72 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && Date.now() - loadedAt >= 10 * 60e3) location.reload();
 });
 
+// Update now (Jack's ask, Oct 12): opens the Update data workflow on GitHub, where the repo owner is signed in and presses
+// Run workflow. The page keeps no credentials (the repo is public); it watches GitHub's public run list and reloads itself
+// once the new numbers are published. A started update is remembered, so a reload keeps watching it.
+const RUN_PAGE = "https://github.com/Jvansant122/Fantasy-hockey/actions/workflows/update.yml";
+const RUNS_API = "https://api.github.com/repos/Jvansant122/Fantasy-hockey/actions/workflows/update.yml/runs?branch=main&per_page=5";
+const refreshAt = {
+  get() { try { return localStorage.getItem("faf_refresh") || ""; } catch { return ""; } },
+  set(v) { try { v ? localStorage.setItem("faf_refresh", v) : localStorage.removeItem("faf_refresh"); } catch { /* private mode */ } },
+};
+const etClock = t => new Date(t).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
+const refreshMsg = html => { $("refreshmsg").innerHTML = html; };
+const runLink = (href, text) => `<a target="_blank" rel="noopener" href="${esc(href)}">${text}</a>`;
+let refreshTimer = null;
+
+function refreshDone(html) {
+  clearInterval(refreshTimer); refreshTimer = null; refreshAt.set("");
+  $("refresh").textContent = "Update now";
+  refreshMsg(html);
+}
+
+// every 30 seconds for up to 20 minutes: are the new numbers published (then reload), and how is GitHub's run doing?
+function watchRefresh(at) {
+  const since = new Date(at).getTime();
+  $("refresh").textContent = "Watching for the update…";
+  refreshMsg(`On GitHub, press Run workflow, then the green Run workflow button. This page reloads itself when the new numbers are up. ${runLink(RUN_PAGE, "Open it again")}`);
+  const check = async () => {
+    if (Date.now() - since > 20 * 60e3) return refreshDone(`No new numbers 20 minutes after ${etClock(at)} ET. ${runLink(RUN_PAGE, "Check the runs on GitHub")}.`);
+    try {
+      const d = await (await fetch("data/players.json", { cache: "no-store" })).json();
+      if (d.updated_utc && d.updated_utc !== state.data?.updated_utc && new Date(d.updated_utc).getTime() >= since - 60e3) {
+        refreshAt.set(""); return location.reload();
+      }
+    } catch { /* try again next time */ }
+    try {
+      const r = await fetch(RUNS_API, { headers: { Accept: "application/vnd.github+json" } });
+      if (!r.ok) return;  // GitHub's public limit is 60 checks an hour per network; the numbers check above still reloads
+      const run = ((await r.json()).workflow_runs || []).find(x => new Date(x.created_at).getTime() >= since - 60e3);
+      if (!run) return;
+      if (run.status !== "completed")
+        refreshMsg(`Update started at ${etClock(run.created_at)} ET and is running. It usually takes 2 to 4 minutes; this page reloads itself when the new numbers are up.`);
+      else if (run.conclusion === "success")
+        refreshMsg(`Update finished at ${etClock(run.updated_at)} ET. Waiting for GitHub to publish the new numbers; this page reloads itself.`);
+      else refreshDone(`The update started at ${etClock(run.created_at)} ET didn't finish (${esc(run.conclusion)}), so the site keeps the last good numbers. ${runLink(run.html_url, "See what happened")}.`);
+    } catch { /* offline: try again next time */ }
+  };
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(check, 30e3);
+  check();
+}
+
+function wireRefresh() {
+  if ($("refresh").dataset.wired) return;
+  $("refresh").dataset.wired = "1";
+  $("refresh").addEventListener("click", () => {
+    window.open(RUN_PAGE, "_blank", "noopener");
+    const at = new Date().toISOString();
+    refreshAt.set(at); watchRefresh(at);
+  });
+  const at = refreshAt.get();
+  if (!at) return;
+  // the numbers on screen are already newer than the update that was started, or it's long gone
+  const t = new Date(at).getTime();
+  if ((state.data?.updated_utc && new Date(state.data.updated_utc).getTime() >= t - 60e3) || !(Date.now() - t < 20 * 60e3)) refreshAt.set("");
+  else watchRefresh(at);
+}
+
 fetch("data/players.json", { cache: "no-store" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => {
@@ -1084,10 +1156,10 @@ fetch("data/players.json", { cache: "no-store" })
     // two-week playoff rounds have 14 nights (findings 232)
     $("ming").max = d.nights.length;
     setTeam(state.team);
-    wire(); render(); document.body.classList.add("ready");
+    wire(); wireRefresh(); render(); document.body.classList.add("ready");
     setInterval(() => { if (reloadDue(Date.now())) location.reload(); }, 60e3);
   })
-  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Run the Update data workflow in GitHub Actions."; document.body.classList.add("ready"); });
+  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Press Update now to run the Update data workflow."; wireRefresh(); document.body.classList.add("ready"); });
 </script>
 </body>
 </html>
