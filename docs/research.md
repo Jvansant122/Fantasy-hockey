@@ -939,6 +939,10 @@ When a team has started three different goalies in its last 10 games, the model 
 
 The Week rating's model now bends for age and for absences. **Players 23 and under were still projected a little low and players 30 and over a little high, so it now sees how far a player is under 24 or over 29. It also sees whether he missed his team's last game, how many games in a row he has missed, and whether he just came back after missing one, each also scaled by his points a game.** Ranking each week's points improved by +0.0004 on top of the changes before it (+0.0002, +0.0004, +0.0005 over three test seasons) and among free agents by +0.0005, positive every season. With sections 116, 117 and 120, the Week rating now ranks next week's points about 0.002 better than it did this morning, and free agents about 0.003 better. The Season rating doesn't use these.
 
+## 123. Goalie starts later in the week
+
+The goalie rules added today (rotations, repeating patterns, the last-six-starts strings, three-goalie teams) only adjust the next game. Checking the rest of the week on 3,677 team-weeks from 2021-26 showed the team's no. 1 was projected right in every game, but the last starter was still projected too high in two places. **In a strict A-B-A-B rotation, he got 48% for the third game of the week but started 37% of the time. On teams where none of those rules apply, he got 56% for the game after next against 51% actual.** Both chances are now cut. Weekly start forecasts improved by 1.1% on rotating teams and by 0.4% on the rest, better in every season. The next game's chance is unchanged, and a Daily Faceoff confirmation still overrides.
+
 ## What the independent review changed
 
 | Review point | Outcome |
