@@ -980,6 +980,16 @@ Three more changes to how much of the rest of the season a skater is expected to
 
 Each ranks the board's rest-of-season points slightly better in every test season over 2023-26.
 
+## 132. Daily Faceoff news in the Season rating
+
+Daily Faceoff posts every injury update and every AHL call-up or send-down, tagged with the player's NHL id. Each data run now reads the items posted since the last run (60 days back on the first run) and keeps each player's latest injury item and latest roster move. Four kinds of news change how much of the rest of the season a skater is expected to play:
+- **Sent to the AHL since his last game.** His share drops a lot, and recovers a little the longer he has been down.
+- **Called up within the last 60 days and in the lineup.** He is a little more likely to go back down, until he has played a fair number of games this season.
+- **Latest injury news since his last game says season-ending.** Such players played 11% of the rest of the season, against 33% predicted before.
+- **Latest injury news since his last game mentions surgery.** A smaller cut.
+
+If the news can't be read for two days, these changes switch off. A player's details name the news used. Tested over 2023-26 on every player, this ranks rest-of-season points 0.0018 better in every season, and 0.003 better among free agents. Rest-of-season points for players out now improve by 0.017.
+
 ## What the independent review changed
 
 | Review point | Outcome |

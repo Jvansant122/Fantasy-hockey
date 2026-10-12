@@ -451,6 +451,10 @@ function why(p) {
       ? `(expects him in about ${Math.round(w.season_share * 100)}% of the rest: ${p.injury ? "hurt before his first game" : "yet to play this season"})`
       : "(no injury discount)") + (w.age_adj ? `; ${w.age_adj > 0 ? "+" : ""}${w.age_adj.toFixed(2)} pts/game for age: ${w.age_adj > 0
       ? "young players tend to improve through the season" : "players over 30 tend to fade through the season"}` : "") + seasonRange(w));
+    // Daily Faceoff news lowers or raises his Season share (findings 360 (1))
+    const NEWS_TXT = {"sent down": "sent to the AHL since his last game", "called up": "called up recently and in the lineup",
+      "season-ending": "latest injury news says season-ending", "surgery": "latest injury news mentions surgery"};
+    if (w.season_news?.length) parts.push(`Season share uses Daily Faceoff news: ${w.season_news.map(k => NEWS_TXT[k] || k).join("; ")}`);
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");
     if (w.last_fpg != null) parts.push(`${w.last_season || "last season"} ${n(w.last_fpg)} pts/game`);

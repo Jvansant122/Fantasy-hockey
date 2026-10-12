@@ -1716,3 +1716,45 @@ def test_proj_gp_adds_the_season_share_of_games_left(run):
     p = by_name["Ryan Spooner"]
     assert p["cr_why"]["gp"] == 0 and 0 < p["proj_gp"] < rating.SEASON_GAMES
     assert p["proj_gp"] == round(p["cr_why"]["season_share"] * (rating.SEASON_GAMES - 4))
+
+
+def test_daily_faceoff_news_moves_the_season_dress_logit():
+    """Findings 360 (1), handoff 330: sent down while out, called up while in the lineup, season-ending and surgery items
+    since his last game; older items and stale copies add nothing."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 20, 15, tzinfo=timezone.utc)
+    news = {"injuries": {"1": {"ts": "2026-11-18T20:00:00", "season": True, "surgery": True},
+                         "2": {"ts": "2026-11-10T20:00:00", "season": True, "surgery": False}},
+            "roster-moves": {"3": {"ts": "2026-11-19T18:00:00", "down": True, "up": False},
+                             "4": {"ts": "2026-11-01T18:00:00", "down": False, "up": True},
+                             "5": {"ts": "2026-08-01T18:00:00", "down": False, "up": True}}}
+    f = rating.news_season_logit
+    assert f(news, 1, "2026-11-18", 1, 20, now) == (pytest.approx(-1.5 - 0.33), ["season-ending", "surgery"])
+    assert f(news, 2, "2026-11-15", 2, 20, now) == (0.0, [])  # the item came before his last game
+    assert f(news, 3, "2026-11-17", 3, 10, now) == (pytest.approx(-0.82 + 0.18 * math.log(4)), ["sent down"])
+    assert f(news, 3, "2026-11-19", 0, 10, now) == (0.0, [])  # back in the lineup: no send-down term
+    assert f(news, 4, "2026-11-19", 0, 20, now) == (pytest.approx(-0.18 + 0.18 * 0.5), ["called up"])
+    assert f(news, 4, "2026-11-12", 2, 20, now) == (0.0, [])  # out now: the call-up term is for players in the lineup
+    assert f(news, 5, "2026-11-19", 0, 20, now) == (0.0, [])  # called up more than 60 days ago
+    assert f(None, 1, "2026-11-18", 1, 20, now) == (0.0, [])
+
+
+def test_daily_faceoff_news_reaches_the_season_rating(monkeypatch, tmp_path):
+    """A season-ending item after Rielly's last game lowers his Season rating and is named in the details; a stale copy
+    of the news (the fetch has failed for days) changes nothing."""
+    def ratings(news):
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(102, "Morgan Rielly", "TOR", "D", injury="OUT")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news=news)
+        return {p["name"]: p for p in players}
+    fresh = rating.utcnow().strftime("%Y-%m-%dT%H:%MZ")
+    item = {"injuries": {"2": {"ts": "2026-10-08T20:00:00", "season": True, "surgery": False}}, "roster-moves": {}}
+    base, hit = ratings(None), ratings({**item, "fetched": fresh})
+    assert hit["Morgan Rielly"]["cr_season"] < base["Morgan Rielly"]["cr_season"]
+    assert hit["Morgan Rielly"]["cr_why"]["season_news"] == ["season-ending"]
+    assert hit["Auston Matthews"]["cr_season"] == base["Auston Matthews"]["cr_season"]
+    stale = ratings({**item, "fetched": "2020-01-01T00:00Z"})
+    assert stale["Morgan Rielly"]["cr_season"] == base["Morgan Rielly"]["cr_season"]

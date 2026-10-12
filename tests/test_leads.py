@@ -205,3 +205,30 @@ def test_morning_odds_come_from_espn_until_the_nhl_feed_rolls_over():
     # ESPN down: the NHL feed's games are kept
     s = JsonSession({"partner-game": NHL_YESTERDAY})
     assert leads.fetch_odds(s, date(2026, 10, 12))["odds_date"] == "2026-10-11"
+
+
+def test_fetch_news_keeps_each_players_latest_item(monkeypatch, tmp_path):
+    """Daily Faceoff injury and roster-move news (findings 360 (1)): pages read until the stored items, flags parsed
+    as the research did, older items pruned."""
+    from datetime import datetime, timezone
+    def item(pid, ts, details, cat="Injury"):
+        return {"playerFiveVFiveId": pid, "createdAt": ts, "details": details, "fantasyDetails": "", "newsCategoryName": cat}
+    s = FakeSession({
+        "news/injuries/1": {"data": {"lastPage": 5, "data": [item(1, "2026-11-19T10:00:00.000Z", "Smith will miss the rest of the season after surgery."),
+                                                              item(2, "2026-11-18T10:00:00.000Z", "Jones is day-to-day.")]}},
+        "news/injuries/2": {"data": {"lastPage": 5, "data": [item(1, "2026-11-10T10:00:00.000Z", "Smith is day-to-day.")]}},
+        "news/roster-moves/1": {"data": {"lastPage": 1, "data": [item(3, "2026-11-19T09:00:00.000Z", "Doe has been assigned to Syracuse (AHL).", "Send Down"),
+                                                                   item(4, "2026-11-17T09:00:00.000Z", "Roe was recalled from Laval.", "Call Up")]}},
+    })
+    monkeypatch.setattr(leads.time, "sleep", lambda x: None)
+    stored = {"injuries": {"9": {"ts": "2026-11-10T11:00:00", "season": False, "surgery": False},
+                           "8": {"ts": "2025-01-01T09:00:00", "season": True, "surgery": False}}}
+    out = leads.fetch_news(s, datetime(2026, 11, 20, 12, tzinfo=timezone.utc), stored)
+    assert out["injuries"]["1"] == {"ts": "2026-11-19T10:00:00", "season": True, "surgery": True}  # newest item wins
+    assert out["injuries"]["2"]["season"] is False and "9" in out["injuries"] and "8" not in out["injuries"]  # a year old: pruned
+    assert out["roster-moves"]["3"]["down"] and not out["roster-moves"]["3"]["up"]
+    assert out["roster-moves"]["4"]["up"] and not out["roster-moves"]["4"]["down"]
+    assert out["fetched"] == "2026-11-20T12:00Z"
+    monkeypatch.setattr(leads, "NEWS_FILE", tmp_path / "dfo_news.json")
+    leads.save_news(out)
+    assert leads.load_news() == out

@@ -208,6 +208,12 @@ DURABLE_OUT = (0.31, -0.10)
 # keeps his spot and one with 5 or fewer goes back down (findings 350 (2), handoff 311); one who played 1-40 games last
 # season and has stuck this season keeps his too (findings 350 (3), handoff 312). Fitted with the live logit as offset
 NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
+# Daily Faceoff news in the same logit (findings 360 (1), handoff 330), fitted with the live chain as offset 2021-26:
+# out now and sent down since his last game: a + b x ln(1 + team games out); in the lineup and called up in the last
+# NEWS_RECALL_DAYS: a + b x min(GP, 40)/40; latest injury item since his last game says season-ending / surgery
+NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
+NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
+NEWS_STALE_DAYS = 2  # an older stored copy (the fetch has failed since) adds nothing
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
 # (findings 330 (5), handoff 274)
@@ -1237,6 +1243,32 @@ def lineup_chain_share(k, p_out, h, n):
     return tot / max(n, 1)
 
 
+def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
+    """Season dress logit shift from Daily Faceoff news (findings 360 (1)) and its labels for the why panel. An item counts
+    as since his last game when posted after 03:00 UTC on that game's date, as in the research's fit."""
+    if not news or not nhl_id:
+        return 0.0, []
+    since = f"{last_game[:10]}T03:00" if last_game else ""
+    inj, mv = (news.get("injuries") or {}).get(str(nhl_id)), (news.get("roster-moves") or {}).get(str(nhl_id))
+    z, why = 0.0, []
+    down = bool(mv and mv.get("down") and mv["ts"] > since and out_games >= 1)
+    if down:
+        z += NEWS_SENT_DOWN[0] + NEWS_SENT_DOWN[1] * math.log1p(out_games)
+        why.append("sent down")
+    elif mv and mv.get("up") and out_games == 0 \
+            and mv["ts"] >= (now_utc - timedelta(days=NEWS_RECALL_DAYS)).strftime("%Y-%m-%dT%H:%M"):
+        z += NEWS_CALLED_UP[0] + NEWS_CALLED_UP[1] * min(gp_now, 40) / 40
+        why.append("called up")
+    if inj and inj["ts"] > since:
+        if inj.get("season"):
+            z += NEWS_SEASON_OUT
+            why.append("season-ending")
+        if inj.get("surgery"):
+            z += NEWS_SURGERY
+            why.append("surgery")
+    return z, why
+
+
 def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov, played=None):
     """Inputs for the rest-of-season P(dresses) logistic: next week's lineup features plus last season's games, ice time,
     games left, and a lineup chain (drop-out rate since joining the team, league return curve by games missed).
@@ -1260,7 +1292,7 @@ def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov
     x = dict(dress_f)
     x.update(prev_dress_rate=min((prev or {}).get("gp", 0) / 82, 1.0), no_prev=0.0 if prev else 1.0,
              std_toi=f.get("std_toi") or 0, l5_toi=f.get("l5_toi") or 0, std_pptoi=f.get("std_pptoi") or 0, fpg=fpg,
-             gp_now=len(games), games_left=left, os_long=float(k >= 6), os_raw=min(k, 40), mk_logit=math.log(share / (1 - share)), mk_p_out=p_out)
+             gp_now=len(games), games_left=left, os_long=float(k >= 6), os_raw=min(k, 40), os_k=k, mk_logit=math.log(share / (1 - share)), mk_p_out=p_out)
     return x
 
 
@@ -1686,14 +1718,19 @@ def line_win_probs(odds, today, now=None):
     return out
 
 
-def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None):
+def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
+                dfo_news=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
 
     starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
     odds: today's betting lines (leads.fetch_odds); they price tonight's goalie starts (research section 30).
     injuries: ESPN's injury notes (leads.fetch_injuries); a long absence takes a skater's week to 0 (findings section 58).
-    reschedule(p, nhl team): fetch.py's, gives a player ESPN lists as 'FA' his NHL team's games (findings 230)."""
+    reschedule(p, nhl team): fetch.py's, gives a player ESPN lists as 'FA' his NHL team's games (findings 230).
+    dfo_news: Daily Faceoff injury and roster-move news (leads.fetch_news), for the Season rating (findings 360 (1))."""
     notes = {i["athlete_id"]: i for i in injuries or [] if i.get("athlete_id")}
+    now_utc = utcnow()
+    if dfo_news and (dfo_news.get("fetched") or "") < (now_utc - timedelta(days=NEWS_STALE_DAYS)).strftime("%Y-%m-%dT%H:%MZ"):
+        dfo_news = None
     flagged = recently_flagged(today)  # read before this run rewrites the log
     stored_notes = load_injury_notes()
     s = requests.Session()
@@ -2065,12 +2102,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
-            season_share = None
+            season_share, news_why = None, []
             if df_ and model.season_lr:
-                season = rest_share = model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
-                                                                         played=len(team_games.get(team, []))),
-                                                 NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
-                                                 + CLEARED_SEASON_LOGIT * cleared_out)
+                sx = season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
+                                           played=len(team_games.get(team, [])))
+                news_z, news_why = news_season_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sx["os_k"], sx["gp_now"], now_utc)
+                season = rest_share = model.season_dress(sx, NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
+                                                         + CLEARED_SEASON_LOGIT * cleared_out + news_z)
                 season *= fpg_s
             elif cleared_new:
                 season_share = CLEARED_NEW_SEASON * UNPLAYED_NOTED_MULT[unplayed_cell(len(team_games.get(team, [])))]
@@ -2143,6 +2181,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if news_why:
+                why["season_news"] = news_why  # Daily Faceoff news in the Season share (findings 360 (1))
             if season_share is not None:
                 why["season_share"] = round(season_share, 2)
             if abs(age_adj) >= 0.03:
