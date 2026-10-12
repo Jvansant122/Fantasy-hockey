@@ -45,7 +45,7 @@ points per game ──┬── × Σ P(dress) over games left ─► Week     e
 | 10 | Percentile badge | Display only | None by design | The rating and the sort |
 | 11 | Advice cards | Display only | 2 Monday moves + swaps + streams: +5.6 pts a week; drop list doubles each move's gain | The rating |
 
-How good is it overall? Ranking skaters on next week's points per game, the rating sits at about 92% of the best any model could do (the rest is game-to-game noise). On what actually gets scored, a whole week with scratches as zeros, its ranking correlation is 0.64-0.65. The remaining headroom is knowing who sits, not who scores more per game.
+How good is it overall? Ranking skaters on next week's points per game, the rating scored about 92% of an Oct 9 noise estimate. On what actually gets scored, a whole week with scratches as zeros, its ranking correlation is 0.64-0.65. Gains so far came mostly from knowing who sits. It is possible to find ways to boost performance rating predictions.
 
 ---
 
