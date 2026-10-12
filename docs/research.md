@@ -935,6 +935,10 @@ The Week rating's model now learns goals as 80% the goals a player actually scor
 
 When a team has started three different goalies in its last 10 games, the model spread the next start too evenly. **A goalie whose latest start was three or more games ago got about 20% for the next game but actually started 12% of the time, while the last starter got 34% against 41%.** Those goalies' next-game chance is now cut, which brings them to about 12%. Forecasts on those 2,117 games improved by 1.8%, better in every season, and by 6% when all three had started in the last five games. A Daily Faceoff confirmation still overrides.
 
+## 122. Age and coming back from missed games in the Week rating
+
+The Week rating's model now bends for age and for absences. **Players 23 and under were still projected a little low and players 30 and over a little high, so it now sees how far a player is under 24 or over 29. It also sees whether he missed his team's last game, how many games in a row he has missed, and whether he just came back after missing one, each also scaled by his points a game.** Ranking each week's points improved by +0.0004 on top of the changes before it (+0.0002, +0.0004, +0.0005 over three test seasons) and among free agents by +0.0005, positive every season. With sections 116, 117 and 120, the Week rating now ranks next week's points about 0.002 better than it did this morning, and free agents about 0.003 better. The Season rating doesn't use these.
+
 ## What the independent review changed
 
 | Review point | Outcome |
