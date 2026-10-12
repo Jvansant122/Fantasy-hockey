@@ -329,6 +329,19 @@ def test_week_luck_and_role_inputs():
     assert all(v is None for v in blank.values())  # left to the ridge's training means
 
 
+def test_no_game_yet_uses_last_seasons_role():
+    """A skater with no game yet this season takes his last-game inputs from last season, not the training means
+    (findings 291 (2), regression of findings 213)."""
+    prev = {r: 1.0 for r in rating.GAME_RATES} | {"gp": 80, "toi": 22.5, "pptoi": 3.1, "shtoi": 1.4, "pp_rank": 2,
+                                                  "toi_rank": 1, "pp1": 1.0, "top_line": 1.0, "pp_share": 0.95}
+    f = rating.skater_features([], prev, None, None, ["g1"])
+    assert (f["last_toi"], f["toi_l3"], f["pp_l1"], f["pp_l3"]) == (22.5, 22.5, 3.1, 3.1)
+    assert (f["r1_pp1"], f["r3_top_line"], f["r1_toi_rank"], f["r1_pp_share"], f["sh_l5"]) == (1.0, 1.0, 1, 0.95, 1.4)
+    rates = {1: {"pos": "C", "gp": 80, "toi": 20.0, "pptoi": 4.0}, 2: {"pos": "D", "gp": 82, "toi": 24.0, "pptoi": 2.0}}
+    rating.prev_ranks(rates, {1: "TOR", 2: "TOR"})
+    assert rates[1]["pp_share"] == 1.0 and rates[2]["pp_share"] == 0.5
+
+
 def test_injured_starter_hands_starts_to_backup():
     """An injured no. 1's games go to his partner (findings section 48)."""
     model = rating.Model()

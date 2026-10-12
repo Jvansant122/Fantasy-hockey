@@ -477,7 +477,7 @@ def load_prev_season(s, season):
 def prev_ranks(rates, team_of):
     """Last season's usage ranks, for skaters with no game yet this season (findings 213): his PP TOI/G rank among his last
     team's regulars (12 F and 6 D with the most games) and his TOI/G rank among its forwards or defensemen, with pp1 and
-    top_line from them as in add_ranks. Without a last team they stay unset and the model fills the training mean."""
+    top_line from them as in add_ranks, and his PP TOI/G over the team's highest (pp_share). Without a last team they stay unset and the model fills the training mean."""
     by_team = {}
     for pid, r in rates.items():
         if team_of.get(pid):
@@ -492,6 +492,9 @@ def prev_ranks(rates, team_of):
             r["toi_rank"] = 1 + sum(rates[q]["toi"] > r["toi"] for q in regs[grp] if q != pid)
             r["pp1"] = 1.0 if r["pp_rank"] <= 5 and r["pptoi"] > 0.5 else 0.0
             r["top_line"] = 1.0 if r["toi_rank"] <= (2 if grp == "D" else 3) else 0.0
+        top = max(rates[p]["pptoi"] for p in pids)  # his PP TOI over his team's top one, the last-game PP share's stand-in
+        for pid in pids:
+            rates[pid]["pp_share"] = rates[pid]["pptoi"] / top if top > 0 else 0.0
 
 
 def load_prev_goalie_season(s, season):
@@ -822,6 +825,14 @@ def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=Non
     sh = [g.get("shtoi", 0) for g in games]
     f["sh_l1"], f["sh_l5"], f["sh_l10"], f["sh_std"] = (sh[-1], mean(sh[-5:]), mean(sh[-10:]), mean(sh)) if sh else (None,) * 4
     f["sh_prev"] = prev.get("shtoi") if prev else None
+    if not games and prev:  # no game yet this season: last season stands in for the last-game inputs too (findings 213, 291 (2))
+        f["last_toi"] = f["toi_l3"] = prev.get("toi")
+        f["pp_l1"] = f["pp_l3"] = prev.get("pptoi")
+        for c in ("pp_rank", "toi_rank", "pp1", "top_line", "pp_share"):
+            if prev.get(c) is not None:
+                f[f"r1_{c}"] = f[f"r3_{c}"] = prev[c]
+        if prev.get("shtoi") is not None:
+            f["sh_l1"] = f["sh_l5"] = f["sh_l10"] = f["sh_std"] = prev["shtoi"]
     w = min(gp / 20, 1)
     for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits"):
         v = f.get(f"std_{r}")
