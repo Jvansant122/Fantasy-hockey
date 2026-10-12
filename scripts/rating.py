@@ -100,6 +100,7 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
+AGE_YOUNG, AGE_OLD = (24, 0.01), (29, 0.009)  # Season FP/G + 0.01 a year under 24, - 0.009 a year over 29 (findings 310 (3))
 NEXT_UP_PP_D_FPG, NEXT_UP_PP_D_MIN = 0.15, 1.0  # Week FP/G for the D next in line when the top PP D (1+ PP min/G) is out (findings 310 (5))
 SCHED_SHRINK, SCHED_WIN = 15, (-0.175, 0.594, 0.349)  # starts without a line priced by team strength (findings 70; slope WEEK_SCHED_SLOPE)
 SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
@@ -516,6 +517,32 @@ def next_up_pp_d(by_player, team_games, out):
     return boost
 
 
+def load_birthdates(s, seasons):
+    """NHL id: birth date, from the stats API's skater bios report for these seasons. Empty if it can't be read: the
+    Season rating then goes without its age adjustment."""
+    out = {}
+    for season in seasons:
+        try:
+            rows = stats_report(s, "skater/bios", season)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            print(f"NHL skater bios {season} unavailable: {e}", file=sys.stderr)
+            continue
+        for r in rows:
+            try:
+                out.setdefault(r["playerId"], date.fromisoformat(r["birthDate"]))
+            except (KeyError, TypeError, ValueError):
+                pass
+    return out
+
+
+def season_age_adj(birth, today):
+    """Season FP/G adjustment for age: young skaters improve through the season, 30+ fade (findings 310 (3))."""
+    if birth is None:
+        return 0.0
+    age = (today - birth).days / 365.25
+    return AGE_YOUNG[1] * max(0.0, AGE_YOUNG[0] - age) - AGE_OLD[1] * max(0.0, age - AGE_OLD[0])
+
+
 def load_xg(s, year):
     """MoneyPuck season file: xG per game (all situations) for the model, plus the season counts behind
     expected fantasy points (all situations, power play and short-handed). Empty if the file isn't there yet."""
@@ -651,6 +678,7 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
     def fpg(self, feats):
+        feats = {**feats, **forecast_features(feats, self.sk)}
         total = self.sk["intercept"]
         for name, c in zip(self.sk["features"], self.sk["coef"]):
             v = feats.get(name)
@@ -701,6 +729,10 @@ def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False):
             f[f"{w}_{r}"] = mean([g.get(r) for g in tail]) if tail else (prev or {}).get(r)
     if f.get("std_ixg") is None and not gp:
         f["std_ixg"], f["std_onice_xgf"] = f["prev_ixg"], f["prev_onice_xgf"]
+    # the ice-time forecast's inputs (findings 310 (1)): last game and last 3 games this season
+    f["last_toi"], f["pp_l1"] = (games[-1]["toi"], games[-1]["pptoi"]) if games else (None, None)
+    f["toi_l3"] = mean([g["toi"] for g in games[-3:]]) if games else None
+    f["pp_l3"] = mean([g["pptoi"] for g in games[-3:]]) if games else None
     w = min(gp / 20, 1)
     for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits"):
         v = f.get(f"std_{r}")
@@ -985,6 +1017,28 @@ def ux_features(f, pos, mu):
     return out
 
 
+def forecast_features(f, sk):
+    """Ridge inputs built on the others (same arithmetic as model/train.py): next week's TOI and PP TOI forecast, the
+    usage x efficiency inputs with the forecasts in place of last-5 ice time (findings 310 (1)), and the products of the
+    12 strongest inputs, each missing factor filled with its training mean (findings 310 (2))."""
+    out = {}
+    fc = sk.get("toi_forecast")
+    if fc:
+        x = dict(f, gpw=min((f.get("std_gp") or 0) / 20, 1))
+        val = {tgt: m["intercept"] + sum(c * (m["fill"][k] if x.get(k) is None else x[k]) for k, c in zip(m["inputs"], m["coef"]))
+               for tgt, m in fc.items()}
+        u = ux_features(dict(f, l5_toi=val["y_toi"], l5_pptoi=max(val["y_pptoi"], 0.0)), "D" if f.get("is_D") else "F", sk.get("ux_means"))
+        out = {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
+    pairs = sk.get("pairs")
+    if pairs:
+        fill = pairs["fill"]
+        v = {k: fill[k] if f.get(k) is None else f[k] for k in pairs["inputs"]}
+        for i, a in enumerate(pairs["inputs"]):
+            for b in pairs["inputs"][i + 1:]:
+                out[f"{a}*{b}"] = v[a] * v[b]
+    return out
+
+
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None):
     """Expected starts in the rest of this week for each goalie on the team.
@@ -1247,6 +1301,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     prev_goalies = load_prev_goalie_season(s, prev_season)
     prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
+    births = load_birthdates(s, (season, prev_season))
     week_games, week_starts = {}, {}
     sched = week_schedule(s, monday, week_games, weeks, week_starts)
     strength = team_strength(s, prev_season)
@@ -1571,6 +1626,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 season = fpg * p_dress
             if season_share is not None:
                 season = fpg * season_share
+            age_adj = season_age_adj(births.get(pid), today) if pid else 0.0
+            if fpg > 0:
+                season *= max(fpg + age_adj, 0.0) / fpg
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -1621,6 +1679,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["last_season"] = prev[pid]["season_label"]
             if season_share is not None:
                 why["season_share"] = round(season_share, 2)
+            if abs(age_adj) >= 0.03:
+                why["age_adj"] = round(age_adj, 2)
             if p.get("injury") in SKATER_INJURY_CAP and p["injury"] != "SUSPENSION":
                 why["back"] = usually_back(p["injury"], sat_last, note)
         p["cr"] = round(fpg * exp_games, 2)

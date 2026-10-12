@@ -22,7 +22,9 @@ def test_weights_line_up(model):
 def test_fpg_uses_fill_for_missing_and_is_never_negative(model):
     avg = model.fpg({})
     assert 0 <= avg < 5
-    assert model.fpg({n: -100.0 for n in model.sk["features"]}) == 0.0
+    low = rating.Model()
+    low.sk = dict(model.sk, intercept=-1e6)  # inputs far below anything real: clamped at 0, not negative
+    assert low.fpg({}) == 0.0
 
 
 def test_dress_is_a_probability(model):

@@ -12,7 +12,9 @@ import sys
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression, RidgeCV
+from itertools import combinations
+
+from sklearn.linear_model import LogisticRegression, Ridge, RidgeCV
 from sklearn.preprocessing import StandardScaler
 
 RESEARCH = sys.argv[1] if len(sys.argv) > 1 else "/mnt/project-files/research/claude-rating"
@@ -51,7 +53,17 @@ def feature_names():
 
 
 BASE_FEATS = feature_names()
-FEATS = BASE_FEATS + UX_FEATS
+UX_ERA_FEATS = BASE_FEATS + UX_FEATS
+# next week's ice time and PP time forecast from this season's windows (findings 310 (1)): the usage x efficiency
+# inputs again with the forecasts in place of last-5 TOI and PP TOI, plus the forecasts themselves
+TOI_FC_IN = ["last_toi", "toi_l3", "l5_toi", "l10_toi", "l20_toi", "std_toi", "prev_toi"]
+PP_FC_IN = ["pp_l1", "pp_l3", "l5_pptoi", "l10_pptoi", "l20_pptoi", "std_pptoi", "prev_pptoi", "l5_pp_rank", "std_pp_rank"]
+FC_EXTRA = ["no_prev", "is_D", "gpw"]
+FC_FEATS = [f"fc_{n}" for n in UX_FEATS] + ["fc_toi", "fc_pptoi"]
+# pairwise products of the 12 strongest inputs, a linear stand-in for the declined tree layer (findings 310 (2))
+PAIR_IN = ["sx_ux", "sx_fp", "sx_pp", "l5_toi", "l5_pptoi", "std_fp", "prev_fp", "std_gp", "std_shots", "prev_shots", "std_ixg", "l5_fp"]
+PAIR_FEATS = [f"{a}*{b}" for a, b in combinations(PAIR_IN, 2)]
+FEATS = UX_ERA_FEATS + FC_FEATS + PAIR_FEATS
 
 
 def ux_means(df):
@@ -66,8 +78,9 @@ def ux_means(df):
     return mu
 
 
-def ux_features(df, mu):
-    """Same arithmetic as scripts/rating.py ux_features, vectorised."""
+def ux_features(df, mu, t5=None, p5=None):
+    """Same arithmetic as scripts/rating.py ux_features, vectorised. t5, p5: ice time and PP time to use in place of
+    the last-5 averages (the forecasts)."""
     gp_s, gp_p = df.std_gp, df.prev_gp.fillna(0) * UX_PREV_W
     tot = lambda c: df[f"std_{c}"] * gp_s + df[f"prev_{c}"].fillna(0) * gp_p
     toi, pp = tot("toi"), tot("pptoi")
@@ -75,7 +88,8 @@ def ux_features(df, mu):
     r = {c: (tot(c) + UX_PRIOR_MIN * m(c)) / (toi + UX_PRIOR_MIN) for c in list(UX_STATS) + ["ixg", "fp"]}
     r_ev = (tot("points") - tot("ppPoints") + UX_PRIOR_MIN * m("evpts")) / ((toi - pp) + UX_PRIOR_MIN)
     r_pp = (tot("ppPoints") + UX_PRIOR_PP_MIN * m("pp")) / (pp + UX_PRIOR_PP_MIN)
-    t5, p5 = df.l5_toi, df.l5_pptoi
+    t5 = df.l5_toi if t5 is None else t5
+    p5 = df.l5_pptoi if p5 is None else p5
     out = pd.DataFrame(index=df.index)
     out["sx_ux"] = sum(w * r[c] for c, w in UX_STATS.items()) * t5 + 0.5 * r_pp * p5
     out["sx_ev"] = r_ev * (t5 - p5).clip(lower=0)
@@ -98,18 +112,57 @@ def add_ranks(sk):
     return sk
 
 
+def add_recent(df, sk):
+    """Last game's and the last 3 games' TOI and PP TOI this season before each Monday (the forecasts' inputs)."""
+    sk = sk.sort_values(["playerId", "gameDate"]).copy()
+    g = sk.groupby(["playerId", "season"])
+    sk["toi_l3"] = g.toi.transform(lambda x: x.rolling(3, min_periods=1).mean())
+    sk["pp_l3"] = g.pptoi.transform(lambda x: x.rolling(3, min_periods=1).mean())
+    sk = sk.rename(columns={"toi": "last_toi", "pptoi": "pp_l1", "gameDate": "asof"})
+    sk = sk[["playerId", "season", "asof", "last_toi", "toi_l3", "pp_l1", "pp_l3"]].sort_values("asof")
+    keys = df[["playerId", "monday", "season"]].assign(asof=df.monday - pd.Timedelta(days=1)).sort_values("asof")
+    m = pd.merge_asof(keys, sk, on="asof", by=["playerId", "season"], direction="backward")
+    return df.drop(columns=["last_toi", "toi_l3", "pp_l1", "pp_l3"], errors="ignore").merge(
+        m[["playerId", "monday", "last_toi", "toi_l3", "pp_l1", "pp_l3"]], on=["playerId", "monday"], how="left")
+
+
+def fc_design(df, ins):
+    X = df[ins].copy()
+    X["no_prev"] = df.prev_gp.isna().astype(float)
+    X["is_D"] = (df.pos == "D").astype(float)
+    X["gpw"] = np.clip(df.std_gp / 20, 0, 1)
+    return X
+
+
+def fit_forecast(train):
+    """Two small ridges (alpha 1, weighted by games next week): next week's TOI/G and PP TOI/G (findings 310 (1))."""
+    tr = train[train.y_gp > 0]
+    st = {}
+    for tgt, ins in (("y_toi", TOI_FC_IN), ("y_pptoi", PP_FC_IN)):
+        X = fc_design(tr, ins)
+        fill = X.mean()
+        m = Ridge(alpha=1.0).fit(X.fillna(fill), tr[tgt], sample_weight=tr.y_gp)
+        st[tgt] = {"inputs": ins, "coef": m.coef_, "intercept": float(m.intercept_), "fill": fill}
+    return st
+
+
+def forecast(df, st):
+    return {tgt: pd.Series(fc_design(df, m["inputs"]).fillna(m["fill"]).values @ m["coef"] + m["intercept"], index=df.index)
+            for tgt, m in st.items()}
+
+
 def snapshots():
     if os.path.exists(CACHE):
         return pd.read_parquet(CACHE)
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
-    df = common.skater_snapshots(sk)
+    df = add_recent(common.skater_snapshots(sk), sk)
     df.to_parquet(CACHE)
     return df
 
 
-def prep(df, feats=FEATS, mu=None):
+def prep(df, feats=FEATS, mu=None, st=None):
     X = pd.DataFrame(index=df.index)
     if mu is not None:
         X = ux_features(df, mu)
@@ -124,13 +177,34 @@ def prep(df, feats=FEATS, mu=None):
         X[f"std_{r}_w"] = df[f"std_{r}"] * w
     extra = {f"D_x_{n}": X.is_D * df[n].fillna(0) for n in D_X} | {f"{n}2": df[n] ** 2 for n in SQUARED}
     X = pd.concat([X, pd.DataFrame(extra, index=df.index)], axis=1)
+    if st and "fc" in st:
+        fc = forecast(df, st["fc"])
+        u = ux_features(df, mu, fc["y_toi"], fc["y_pptoi"].clip(lower=0)).add_prefix("fc_")
+        u["fc_toi"], u["fc_pptoi"] = fc["y_toi"], fc["y_pptoi"]
+        X = pd.concat([X, u], axis=1)
+    if st and "pair_fill" in st:
+        filled = X[PAIR_IN].fillna(st["pair_fill"])
+        X = pd.concat([X, pd.DataFrame({f"{a}*{b}": filled[a] * filled[b] for a, b in combinations(PAIR_IN, 2)}, index=df.index)], axis=1)
     return X[feats]
+
+
+def fit_state(train, feats, mu):
+    """What the forecast and product inputs need from the training rows: the two forecast ridges, and each product
+    factor's training mean (a missing factor is filled with it before multiplying)."""
+    tr = train[train.y_gp > 0]
+    st = {}
+    if any(c in FC_FEATS for c in feats):
+        st["fc"] = fit_forecast(tr)
+    if any(c in PAIR_FEATS for c in feats):
+        st["pair_fill"] = prep(tr, UX_ERA_FEATS, mu)[PAIR_IN].mean()
+    return st
 
 
 def fit_linear(train, feats=FEATS, mu=None):
     """One ridge per scoring stat, summed with league weights and folded back to raw-unit coefficients."""
     tr = train[train.y_gp > 0]
-    X = prep(tr, feats, mu)
+    st = fit_state(tr, feats, mu)
+    X = prep(tr, feats, mu, st)
     means = X.mean().fillna(0)
     X = X.fillna(means)
     sc = StandardScaler().fit(X)
@@ -140,11 +214,11 @@ def fit_linear(train, feats=FEATS, mu=None):
         m = RidgeCV(alphas=np.logspace(-1, 5, 13)).fit(Z, tr[f"y_{c}"], sample_weight=tr.y_gp)
         coef += wt * m.coef_ / sc.scale_
         icpt += wt * (m.intercept_ - (m.coef_ * sc.mean_ / sc.scale_).sum())
-    return coef, icpt, means
+    return coef, icpt, means, st
 
 
-def predict(df, coef, icpt, means, feats=FEATS, mu=None):
-    return prep(df, feats, mu).fillna(means).values @ coef + icpt
+def predict(df, coef, icpt, means, st, feats=FEATS, mu=None):
+    return prep(df, feats, mu, st).fillna(means).values @ coef + icpt
 
 
 def dress_table(train):
@@ -171,7 +245,7 @@ def skater_backtest(df):
     for s in TEST_SEASONS:
         tr, te = df[df.season < s], df[(df.season == s) & (df.y_gp > 0) & (df.std_gp >= 3)].copy()
         mu = ux_means(tr)
-        te["before"] = predict(te, *fit_linear(tr, BASE_FEATS), BASE_FEATS)
+        te["before"] = predict(te, *fit_linear(tr, UX_ERA_FEATS, mu), UX_ERA_FEATS, mu)
         te["after"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
         parts.append(te)
     t = pd.concat(parts)
@@ -203,7 +277,7 @@ def main():
     skater_backtest(df)
 
     mu = ux_means(df)
-    coef, icpt, means = fit_linear(df, FEATS, mu)
+    coef, icpt, means, sk_st = fit_linear(df, FEATS, mu)
     wire = df[df.wire]
     repl = wire.groupby("pos").std_fp.mean()
 
@@ -218,6 +292,10 @@ def main():
         "skater": {"features": FEATS, "coef": [round(float(x), 6) for x in coef], "intercept": round(float(icpt), 6),
                    "fill": {k: round(float(v), 4) for k, v in means.items()},
                    "ux_means": {p: {k: round(v, 6) for k, v in m.items()} for p, m in mu.items()},
+                   "toi_forecast": {tgt: {"inputs": m["inputs"] + FC_EXTRA, "coef": [round(float(x), 6) for x in m["coef"]],
+                                          "intercept": round(m["intercept"], 6), "fill": {k: round(float(v), 4) for k, v in m["fill"].items()}}
+                                    for tgt, m in sk_st["fc"].items()},
+                   "pairs": {"inputs": PAIR_IN, "fill": {k: round(float(v), 4) for k, v in sk_st["pair_fill"].items()}},
                    "replacement_fpg": {k: round(float(v), 3) for k, v in repl.items()}},
         "dress": dress_table(df),
         "goalie": {"features": START_FEATS, "coef": [round(float(x), 4) for x in lr.coef_[0]],
@@ -229,6 +307,26 @@ def main():
     with open(OUT, "w") as f:
         json.dump(model, f, indent=1)
     print("wrote", OUT, "pts/start", model["goalie"]["points_per_start"], "dress", model["dress"])
+    check_daily_arithmetic(df, coef, icpt, means, sk_st, mu)
+
+
+def check_daily_arithmetic(df, coef, icpt, means, st, mu, n=2000):
+    """scripts/rating.py rebuilds the forecast and product inputs itself: its FP/G must match this script's on the
+    training rows, or the daily ratings would silently differ from the fitted model."""
+    sys.path.insert(0, os.path.join(os.path.dirname(OUT), "..", "scripts"))
+    import rating
+    rows = df.sample(min(n, len(df)), random_state=0)
+    want = np.maximum(predict(rows, coef, icpt, means, st, FEATS, mu), 0)
+    base = prep(rows, UX_ERA_FEATS, mu)
+    m = rating.Model()
+    got = []
+    for (_, r), (_, b) in zip(rows.iterrows(), base.iterrows()):
+        f = {k: (None if pd.isna(v) else float(v)) for k, v in r.items() if isinstance(v, (int, float, np.number))}
+        f |= {k: (None if pd.isna(v) else float(v)) for k, v in b.items()}
+        got.append(m.fpg(f))
+    gap = np.abs(np.array(got) - want).max()
+    print(f"daily arithmetic check: largest FP/G gap {gap:.2e} over {len(rows)} rows")
+    assert gap < 1e-3, "scripts/rating.py and model/train.py disagree on the skater inputs"
 
 
 if __name__ == "__main__":
