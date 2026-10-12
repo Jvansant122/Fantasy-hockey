@@ -125,7 +125,11 @@ STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
 PATTERN_LOGITS = {(3, True): 0.8, (3, False): -0.4, (4, False): -0.8}  # last starter's next game in a repeating A A B or
 # A A B B pattern: (period, the pattern keeps him in) -> shift; a period-4 stay gets nothing (findings 243)
-ROTATION_LATER_LOGIT = -0.6  # ... and the goalie due next, in the game after next unless it's night 2 of a back-to-back (findings 228)
+ROTATION_LATER_LOGIT = -0.6
+# two goalies started the last 10: the last starter's next-game chance (logit, after normalising) by his last-5 start
+# string, oldest first (findings 245):
+# the no. 1 back after a single spot start, and a goalie answering the other's two starts with three straight
+LAST5_LOGITS = {"11101": 0.6, "00111": 1.0}  # ... and the goalie due next, in the game after next unless it's night 2 of a back-to-back (findings 228)
 # both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
 # with every rostered goalie, n=125, better in 5 of 5 seasons): an extra shift on his share after the split. The streak shift
 # already fits there (68% against 63%, and a larger one scores worse) (findings 213, handoff 105)
@@ -1266,6 +1270,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     on_streak = STREAK_RANGE[0] <= run <= STREAK_RANGE[1]
     rotating = strict_rotation(seq, cands)
     pattern = PATTERN_LOGITS.get(repeating_pattern(seq, cands), 0.0) if seq and not rotating else 0.0
+    last5 = LAST5_LOGITS.get("".join("1" if x == seq[-1] else "0" for x in seq[-5:]), 0.0) \
+        if len(seq) >= 10 and len(set(seq[-10:])) == 2 else 0.0
     prev_d = None
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
@@ -1330,6 +1336,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         early = B2B_NIGHT2_NO1_EARLY if night2_no1 and len(seq) <= EARLY_GAMES else 0.0
+        # the last-5 string shifts his chance after normalising, the other goalie taking the rest (findings 245)
+        early += last5 if ahead == 0 and gap != 1 else 0.0
         if early and 0 < p.get(seq[-1], 0) < 1:
             was = p[seq[-1]]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + early)))
