@@ -8,13 +8,13 @@ Live site: https://jvansant122.github.io/Fantasy-hockey/. The research behind th
 
 - `scripts/fetch.py` pulls your roster, free agents, waivers and the NHL schedule from ESPN and writes `data/players.json`.
 - `.github/workflows/update.yml` runs it four times a day (or on demand from the Actions tab) and commits the new data.
-- `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: projected points per game × games left × chance to dress (recent games played plus ESPN injury status). Goalies: expected starts × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). If the NHL or MoneyPuck calls fail, the update still publishes without the rating.
+- `scripts/rating.py` adds the **Claude Rating**: projected points for the rest of the matchup, from NHL stats API game logs and MoneyPuck xG. Skaters: a ridge model's points per game × games left × chance to dress in each game (lineup history plus ESPN injury status). Goalies: expected starts from a start model (with Daily Faceoff confirmations and tandem-pattern rules) × points per start (his own rate pulled toward the 2.9 league average, with tonight's betting line). A Season rating projects the rest of the year for keep-or-drop calls. If the NHL or MoneyPuck calls fail, the update still publishes without the rating. Piece by piece: [docs/rating-components.md](docs/rating-components.md).
 - `model/rating_model.json` holds the model weights; `model/train.py` refits them from the research data (2021-26 seasons).
 - `scripts/leads.py` reads Daily Faceoff's starting goalies (confirmed starters count as certain starts) and, on every run, logs Daily Faceoff starters and lineups, ESPN injury notes, NHL/DraftKings odds and a rating snapshot to `data/log/` for testing later. The workflow runs at about 6 AM, 9 AM, 12:40 PM and 5 PM ET.
 - `data/news.json` (optional, not used yet) is where up to 25 news flags can go later. A flag shows in the row's details, and only changes the numbers (games, starts, or a capped points-per-game multiplier) when its `apply` is true.
 - `index.html` reads that file. GitHub Pages serves it.
 
-Fantasy points use ESPN's own calculation with your league's scoring settings. Weekly projection is projected points per game times games this matchup. Points per game blends this season's average with ESPN's season projection.
+Fantasy points use ESPN's own calculation with your league's scoring settings. ESPN's own season projection is shown next to the Claude Rating for comparison.
 
 ## Setup
 
