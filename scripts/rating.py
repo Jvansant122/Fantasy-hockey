@@ -1105,18 +1105,38 @@ def context_gaps(f):
             "oa_gap": prod("out_above_toi", "last_toi", "l10_toi"), "oap_gap": prod("out_above_pp", "pp_l1", "l10_pptoi")}
 
 
+def week_extras(f):
+    """The Week rating's finishing-luck and last-game role inputs (findings 320 (4), same as model/train.py week_extras):
+    goals below / above individual xG per game (this season x min(GP/20, 1), and last season), the shortfall x shots,
+    the last-game ice-time jump either way, and a top-line / PP1 spot in the last game he rarely had before. None when a
+    factor is missing (the ridge fills it with its training mean)."""
+    g = lambda k: f.get(k)
+    sub = lambda a, b: None if g(a) is None or g(b) is None else g(a) - g(b)
+    pos = lambda v: None if v is None else max(v, 0.0)
+    neg = lambda v: None if v is None else max(-v, 0.0)
+    gw = min((g("std_gp") or 0) / 20, 1)
+    lk, lkp = sub("std_goals", "std_ixg"), sub("prev_goals", "prev_ixg")
+    out = {"luck_neg": None if lk is None else neg(lk) * gw, "luck_pos": None if lk is None else pos(lk) * gw,
+           "luck_negp": neg(lkp), "luck_posp": pos(lkp)}
+    out["luck_sh"] = None if out["luck_neg"] is None or g("std_shots") is None else out["luck_neg"] * g("std_shots")
+    out["j1_up"], out["j1_dn"] = pos(sub("last_toi", "l10_toi")), neg(sub("last_toi", "l10_toi"))
+    new = lambda a, b: None if g(a) is None or g(b) is None else g(a) * (1 - g(b))
+    out["new_top"], out["new_pp1"] = new("r1_top_line", "std_top_line"), new("r1_pp1", "std_pp1")
+    return out
+
+
 def forecast_features(f, sk):
     """Ridge inputs built on the others (same arithmetic as model/train.py): next week's TOI and PP TOI forecast, the
     usage x efficiency inputs with the forecasts in place of last-5 ice time (findings 310 (1)), and the products of the
     12 strongest inputs, each missing factor filled with its training mean (findings 310 (2))."""
-    out = {}
+    out = week_extras(f)
     fc = sk.get("toi_forecast")
     if fc:
         x = dict(f, gpw=min((f.get("std_gp") or 0) / 20, 1)) | context_gaps(f)
         val = {tgt: m["intercept"] + sum(c * (m["fill"][k] if x.get(k) is None else x[k]) for k, c in zip(m["inputs"], m["coef"]))
                for tgt, m in fc.items()}
         u = ux_features(dict(f, l5_toi=val["y_toi"], l5_pptoi=max(val["y_pptoi"], 0.0)), "D" if f.get("is_D") else "F", sk.get("ux_means"))
-        out = {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
+        out |= {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
     for c, knots in (sk.get("hinges") or {}).items():  # Week rating's bend points (findings 320 (2)); missing x: filled
         v = out.get(c, f.get(c))
         for i, q in enumerate(knots):

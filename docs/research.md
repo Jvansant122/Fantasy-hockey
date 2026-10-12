@@ -927,6 +927,10 @@ The Season rating's model now also builds a player's points from their parts. **
 
 On teams where only two goalies have started the last 10 games, three sequences were still mispriced. **When the no. 1 is back in net after his backup's single spot start (his last five: start, start, start, sit, start), the model gave him 65% for the next game and he actually started 77%. When a goalie answers the other's two starts with three straight, it gave him 52% and he started 67%: he has usually taken the job. And after a double followed by a strict rotation (start, start, sit, start, sit, start) it gave 52% against 61%.** In each case the other goalie's chance for the next game is now cut, which brings these close to what really happened, except on the second night of a back-to-back, where the back-to-back rules decide. Forecasts on those 1,191 games improved by 7%, every season agreeing. A Daily Faceoff confirmation still overrides.
 
+## 120. Shooting luck and fresh line promotions in the Week rating
+
+The Week rating's model now learns goals as 80% the goals a player actually scored next week and 20% the goals his shots were expected to produce (MoneyPuck's expected goals), so a lucky bounce teaches it less. **It also sees how far his goals this season (and last season) ran below or above his expected goals, so a shooter who has been unlucky gets credit for the goals likely still to come, and it sees his last game's role directly: top line, first power-play unit, his ice-time rank and power-play share, how far his last game's minutes jumped or fell against his last 10, and whether a top-line or PP1 spot is new for him.** Ranking each week's points improved by +0.0005 over three test seasons (+0.0003, +0.0006, +0.0005) and among free agents by +0.0007, every season positive. The Season rating doesn't use these, since they nudged its rest-of-season ranking down slightly.
+
 ## What the independent review changed
 
 | Review point | Outcome |
