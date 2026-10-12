@@ -26,7 +26,7 @@ from goalies import START_FEATS, start_table  # noqa: E402
 OLD_START_FEATS = START_FEATS[:8]  # before rest and workload (findings section 11)
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rating_model.json")
-CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots_2017_ctx.parquet")
+CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots_2017_dec.parquet")
 # game logs and xG back to 2017-18 (research hunt 8), so every skater ridge training row from 2019-20 has two seasons
 # ago; the dress table and replacement level keep the 2021-26 rows they were fit on
 HISTORY_DATA = os.path.join(RESEARCH, "hunt8", "all")
@@ -87,6 +87,18 @@ HINGE_IN = ["sx_ux", "sx_fp", "std_fp", "prev_fp", "l5_toi", "fc_toi", "fc_sx_ux
 HINGE_Q = [0.1, 0.3, 0.5, 0.7, 0.9]
 HINGE_FEATS = [f"h_{c}_{i}" for c in HINGE_IN for i in range(len(HINGE_Q))]
 WEEK_FEATS = FEATS + HINGE_FEATS
+# Season rating only: decomposed scoring forecasts (findings 320 (3)). Per-minute rate forecasts (small ridges on the
+# last 5/10/20, season, last season and two seasons ago per-minute rates) alone and times the TOI forecast; expected
+# points = his share of on-ice goals (IPP) x on-ice xGF per minute x forecast EV and PP minutes, each shrunk to the
+# position; a short-handed TOI forecast and blocks / hits x forecast PK and EV minutes
+RATE_STATS = ["shots", "hits", "blockedShots", "goals", "assists", "fp"]
+RATE_WIN = ["l5", "l10", "l20", "std", "prev", "p2"]
+SH_IN = ["sh_l1", "sh_l5", "sh_l10", "sh_std", "sh_prev"]
+IPP_K, IPP_EV_MIN, IPP_PP_MIN = 20.0, 300.0, 60.0
+ONICE = ["points", "ppPoints", "toi", "pptoi", "a_ogf", "a_oxgf", "pp_ogf", "pp_oxgf"]
+DEC_FEATS = [f"{p}_{c}" for c in RATE_STATS for p in ("rf", "rr")] + ["ipp_ev", "ipp_pp", "xev", "xpp", "xpts_ev", "xpts_pp", "xpts"] \
+    + ["fc_sh", "fc_ev", "blk_x_sh", "blk_x_ev", "hit_x_ev"]
+SEASON_FEATS = FEATS + DEC_FEATS
 
 
 def ux_means(df):
@@ -219,9 +231,105 @@ def forecast(df, st):
 
 def add_p2(df, sk):
     """Two seasons ago: per-game means of each P2_RATES stat and games played (NaN when he didn't play then)."""
-    p2 = sk.groupby(["playerId", "season"]).agg(**{f"p2_{r}": (r, "mean") for r in P2_RATES}, p2_gp=("fp", "size")).reset_index()
+    p2 = sk.groupby(["playerId", "season"]).agg(**{f"p2_{r}": (r, "mean") for r in P2_RATES + ["goals", "assists"]},
+                                                 p2_gp=("fp", "size")).reset_index()
     p2["season"] = p2.season + 20002
     return df.drop(columns=[c for c in p2 if c.startswith("p2_")], errors="ignore").merge(p2, on=["playerId", "season"], how="left")
+
+
+def add_season_inputs(df, sk):
+    """Raw inputs of the Season rating's decomposed forecasts before each Monday (findings 320 (3)): this season's and
+    last season's totals of points, PP points, TOI, PP TOI and MoneyPuck on-ice goals / xG for (all situations, 5 on 4);
+    short-handed TOI last game, last 5 and 10, season and last season per game; next week's SH TOI per game."""
+    mp = pd.read_parquet(os.path.join(RESEARCH, "ridge-inputs", "data", "mp_games.parquet"))[["playerId", "gameId", "a_ogf", "a_oxgf", "pp_ogf", "pp_oxgf"]]
+    mp["gameId"] = mp.gameId.astype(int)
+    g = sk[["playerId", "gameId", "gameDate", "season", "points", "ppPoints", "toi", "pptoi", "shTimeOnIce"]].merge(mp, on=["playerId", "gameId"], how="left")
+    g = g.sort_values(["playerId", "gameDate"])
+    g["sh"] = g.shTimeOnIce.fillna(0) / 60
+    by = g.groupby(["playerId", "season"])
+    r = pd.concat([g[["playerId", "season", "gameDate"]].rename(columns={"gameDate": "asof"}),
+                   by[ONICE].cumsum().add_prefix("c_")], axis=1)
+    r["sh_l1"] = g.sh
+    for n, w in ((5, "sh_l5"), (10, "sh_l10")):
+        r[w] = by.sh.transform(lambda x: x.rolling(n, min_periods=1).mean())
+    r["sh_std"] = by.sh.transform(lambda x: x.expanding().mean())
+    keys = df[["playerId", "monday", "season"]].assign(asof=df.monday - pd.Timedelta(days=1)).sort_values("asof")
+    m = pd.merge_asof(keys, r.sort_values("asof"), on="asof", by=["playerId", "season"], direction="backward")
+    prev = by[ONICE].sum().add_prefix("pv_").join(by.sh.mean().rename("sh_prev")).reset_index()
+    prev["season"] += 10001
+    m = m.merge(prev, on=["playerId", "season"], how="left").drop(columns=["asof", "season"])
+    bad = (m.pv_a_oxgf.fillna(0) == 0) & (m.pv_toi > 100)  # no MoneyPuck games that season
+    m.loc[bad, ["pv_a_ogf", "pv_a_oxgf", "pv_pp_ogf", "pv_pp_oxgf"]] = np.nan
+    g["monday"] = g.gameDate - pd.to_timedelta(g.gameDate.dt.weekday, unit="D")
+    y = g.groupby(["playerId", "monday"]).sh.mean().rename("y_sh").reset_index()
+    cols = [c for c in m if c not in ("playerId", "monday")] + ["y_sh"]
+    return df.drop(columns=cols, errors="ignore").merge(m, on=["playerId", "monday"], how="left").merge(y, on=["playerId", "monday"], how="left")
+
+
+def rate_design(df, c):
+    """Per-minute rate of stat c over each window, plus the forecast ridges' flags."""
+    X = pd.DataFrame({f"{w}_{c}_pm": df[f"{w}_{c}"] / df[f"{w}_toi"].where(df[f"{w}_toi"] > 3) for w in RATE_WIN}, index=df.index)
+    X["no_prev"] = df.prev_gp.isna().astype(float)
+    X["is_D"] = (df.pos == "D").astype(float)
+    X["gpw"] = np.clip(df.std_gp / 20, 0, 1)
+    X["no_p2"] = df.p2_gp.isna().astype(float)
+    return X
+
+
+def onice_parts(df):
+    """This season + half of last season, each counted only when MoneyPuck has that season for him."""
+    has_c, has_p = df.c_a_ogf.notna(), df.pv_a_ogf.notna()
+    t = lambda c: df[f"c_{c}"].where(has_c, 0).fillna(0) + 0.5 * df[f"pv_{c}"].where(has_p, 0).fillna(0)
+    return dict(ev_pts=t("points") - t("ppPoints"), pp_pts=t("ppPoints"), ev_ogf=t("a_ogf") - t("pp_ogf"), pp_ogf=t("pp_ogf"),
+                ev_oxgf=t("a_oxgf") - t("pp_oxgf"), pp_oxgf=t("pp_oxgf"), evt=t("toi") - t("pptoi"), ppt=t("pptoi"))
+
+
+def fit_decomposed(tr):
+    """What the decomposed inputs need from the training rows: one rate ridge per stat (inputs clipped to the training
+    0.5-99.5th percentiles, missing filled with the training mean), the position means IPP and on-ice xGF shrink to,
+    and the SH TOI forecast ridge."""
+    st = {"rates": {}, "ipp_mu": {}}
+    for c in RATE_STATS:
+        X = rate_design(tr, c)
+        fill, lo, hi = X.mean(), X.quantile(0.005), X.quantile(0.995)
+        y = tr[f"y_{c}"] / tr.y_toi.where(tr.y_toi > 3)
+        ok = y.notna()
+        m = Ridge(alpha=1.0).fit(X.clip(lo, hi, axis=1).fillna(fill)[ok], y[ok].clip(upper=y.quantile(0.995)), sample_weight=(tr.y_gp * tr.y_toi)[ok])
+        st["rates"][c] = {"inputs": list(X.columns), "coef": m.coef_, "intercept": float(m.intercept_), "fill": fill, "lo": lo, "hi": hi}
+    p = onice_parts(tr)
+    for pos in ("F", "D"):
+        s = {k: v[tr.pos == pos].sum() for k, v in p.items()}
+        st["ipp_mu"][pos] = {"ipp_ev": s["ev_pts"] / s["ev_ogf"], "ipp_pp": s["pp_pts"] / s["pp_ogf"], "xev": s["ev_oxgf"] / s["evt"], "xpp": s["pp_oxgf"] / s["ppt"]}
+    X = fc_design(tr, SH_IN)
+    fill, ok = X.mean(), tr.y_sh.notna()
+    m = Ridge(alpha=1.0).fit(X.fillna(fill)[ok], tr.y_sh[ok], sample_weight=tr.y_gp[ok])
+    st["sh"] = {"inputs": SH_IN, "coef": m.coef_, "intercept": float(m.intercept_), "fill": fill}
+    return st
+
+
+def decomposed(df, X, st):
+    """The Season rating's decomposed inputs (same arithmetic as scripts/rating.py season_features)."""
+    o = pd.DataFrame(index=df.index)
+    for c, m in st["rates"].items():
+        r = rate_design(df, c).clip(m["lo"], m["hi"], axis=1).fillna(m["fill"]).values @ m["coef"] + m["intercept"]
+        o[f"rf_{c}"], o[f"rr_{c}"] = r * X.fc_toi, r
+    p = onice_parts(df)
+    mu = lambda k: df.pos.map({q: v[k] for q, v in st["ipp_mu"].items()})
+    o["ipp_ev"] = (p["ev_pts"] + IPP_K * mu("ipp_ev")) / (p["ev_ogf"] + IPP_K)
+    o["ipp_pp"] = (p["pp_pts"] + IPP_K * mu("ipp_pp")) / (p["pp_ogf"] + IPP_K)
+    o["xev"] = (p["ev_oxgf"] + IPP_EV_MIN * mu("xev")) / (p["evt"] + IPP_EV_MIN)
+    o["xpp"] = (p["pp_oxgf"] + IPP_PP_MIN * mu("xpp")) / (p["ppt"] + IPP_PP_MIN)
+    pp = X.fc_pptoi.clip(lower=0)
+    o["xpts_ev"] = o.ipp_ev * o.xev * (X.fc_toi - pp).clip(lower=0)
+    o["xpts_pp"] = o.ipp_pp * o.xpp * pp
+    o["xpts"] = o.xpts_ev + o.xpts_pp
+    sh = pd.Series(fc_design(df, SH_IN).fillna(st["sh"]["fill"]).values @ st["sh"]["coef"] + st["sh"]["intercept"], index=df.index).clip(lower=0)
+    ev = (X.fc_toi - pp - sh).clip(lower=0)
+    tot = df.std_toi * df.std_gp + df.prev_toi.fillna(0) * df.prev_gp.fillna(0) * 0.5
+    rate = lambda c, prior: (df[f"std_{c}"] * df.std_gp + df[f"prev_{c}"].fillna(0) * df.prev_gp.fillna(0) * 0.5 + 300 * prior) / (tot + 300)
+    blk, hit = rate("blockedShots", 0.06), rate("hits", 0.08)
+    o["fc_sh"], o["fc_ev"], o["blk_x_sh"], o["blk_x_ev"], o["hit_x_ev"] = sh, ev, blk * sh, blk * ev, hit * ev
+    return o
 
 
 def snapshots():
@@ -231,7 +339,7 @@ def snapshots():
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
-    df = add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk)
+    df = add_season_inputs(add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk), sk)
     df.to_parquet(CACHE)
     return df
 
@@ -263,6 +371,8 @@ def prep(df, feats=FEATS, mu=None, st=None):
     if st and "pair_fill" in st:
         filled = X[PAIR_IN].fillna(st["pair_fill"])
         X = pd.concat([X, pd.DataFrame({f"{a}*{b}": filled[a] * filled[b] for a, b in combinations(PAIR_IN, 2)}, index=df.index)], axis=1)
+    if st and "dec" in st:
+        X = pd.concat([X, decomposed(df, X, st["dec"])], axis=1)
     if st and "knots" in st:  # a missing x leaves its hinges missing, filled with their training means like any input
         X = pd.concat([X, pd.DataFrame({f"h_{c}_{i}": np.maximum(X[c] - q, 0) for c, k in st["knots"].items() for i, q in enumerate(k)},
                                        index=df.index)], axis=1)
@@ -278,6 +388,8 @@ def fit_state(train, feats, mu, fc_in=None):
         st["fc"] = fit_forecast(tr, fc_in)
     if any(c in PAIR_FEATS for c in feats):
         st["pair_fill"] = prep(tr, UX_ERA_FEATS, mu)[PAIR_IN].mean()
+    if any(c in DEC_FEATS for c in feats):
+        st["dec"] = fit_decomposed(tr)
     if any(c in HINGE_FEATS for c in feats):
         X = prep(tr, [c for c in feats if c not in HINGE_FEATS], mu, st)
         st["knots"] = {c: X[c].quantile(HINGE_Q).values for c in HINGE_IN}
@@ -324,21 +436,39 @@ def weekly_rho(d, col):
 
 
 def skater_backtest(df):
-    """Rolling origin: each test season predicted by models fit on earlier seasons, with and without the new inputs."""
+    """Rolling origin: each test season predicted by models fit on earlier seasons. Week: the shipped ridge without and
+    with the hinge curves, weekly rank correlation. Season: without and with the decomposed inputs, rest-of-season rank
+    correlation of max(FP/G + age adjustment, 0) x the shipped Season dress share (research season-rating panel)."""
     parts = []
     for s in TEST_SEASONS:
-        tr, te = df[df.season < s], df[(df.season == s) & (df.y_gp > 0) & (df.std_gp >= 3)].copy()
+        tr, te = df[df.season < s], df[df.season == s].copy()
         mu = ux_means(tr)
         te["before"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
         te["after"] = predict(te, *fit_linear(tr, WEEK_FEATS, mu), WEEK_FEATS, mu)
+        te["season_fpg"] = predict(te, *fit_linear(tr, SEASON_FEATS, mu), SEASON_FEATS, mu)
         parts.append(te)
     t = pd.concat(parts)
-    first = t.groupby("season").monday.min()
-    t["early"] = (t.monday - t.season.map(first)).dt.days // 7 < 6
-    for pool, d in (("all", t), ("waiver", t[t.wire]), ("first 6 weeks", t[t.early]), ("first 6 weeks waiver", t[t.early & t.wire])):
+    w = t[(t.y_gp > 0) & (t.std_gp >= 3)].copy()
+    first = w.groupby("season").monday.min()
+    w["early"] = (w.monday - w.season.map(first)).dt.days // 7 < 6
+    for pool, d in (("all", w), ("waiver", w[w.wire]), ("first 6 weeks", w[w.early]), ("first 6 weeks waiver", w[w.early & w.wire])):
         b, a = weekly_rho(d, "before"), weekly_rho(d, "after")
         gain = (a - b).dropna()
         print(f"skaters {pool:21s} rho {b.mean():.4f} -> {a.mean():.4f}  gain {gain.mean():+.4f} ± {gain.std() / len(gain) ** .5:.4f}")
+    panel = os.path.join(os.path.dirname(RESEARCH.rstrip("/")), "season-rating", "data", "ablate_now.parquet")
+    if not os.path.exists(panel):
+        return
+    ab = pd.read_parquet(panel)[["playerId", "monday", "d_site_friendly+mk", "y_ros_tg", "r_team_games", "age"]]
+    r = t.merge(ab.rename(columns={"d_site_friendly+mk": "dress"}), on=["playerId", "monday"])
+    r = r[(r.r_team_games >= 10) & r.dress.notna() & r.y_ros_tg.notna()]
+    adj = 0.01 * np.maximum(0, 24 - r.age.fillna(27)) - 0.009 * np.maximum(0, r.age.fillna(27) - 29)
+    def ros(col):
+        v = r.assign(v=np.maximum(r[col] + adj, 0) * r.dress)
+        return v.groupby(["season", "monday"]).apply(lambda g: g.v.rank().corr(g.y_ros_tg.rank()), include_groups=False)
+    b, a = ros("before"), ros("season_fpg")
+    gain = (a - b).dropna()
+    by = gain.groupby(level=0).mean().round(4).tolist()
+    print(f"Season rest-of-season rho {b.mean():.4f} -> {a.mean():.4f}  gain {gain.mean():+.4f} ± {gain.std() / len(gain) ** .5:.4f} by season {by}")
 
 
 def goalie_backtest(st):
@@ -362,7 +492,7 @@ def main():
 
     mu = ux_means(df)
     coef, icpt, means, sk_st = fit_linear(df, WEEK_FEATS, mu)
-    s_coef, s_icpt, s_means, s_st = fit_linear(df, FEATS, mu)  # the Season rating's ridge, without the hinges
+    s_coef, s_icpt, s_means, s_st = fit_linear(df, SEASON_FEATS, mu)  # the Season rating's ridge: no hinges, decomposed inputs
     tables = df[df.season >= TABLES_FROM]
     wire = tables[tables.wire]
     repl = wire.groupby("pos").std_fp.mean()
@@ -377,8 +507,8 @@ def main():
     model = {
         "skater": {"features": WEEK_FEATS, "coef": [round(float(x), 6) for x in coef], "intercept": round(float(icpt), 6),
                    "fill": {k: round(float(v), 4) for k, v in means.items()},
-                   "season": {"features": FEATS, "coef": [round(float(x), 6) for x in s_coef], "intercept": round(float(s_icpt), 6),
-                              "fill": {k: round(float(v), 4) for k, v in s_means.items()}},
+                   "season": {"features": SEASON_FEATS, "coef": [round(float(x), 8) for x in s_coef], "intercept": round(float(s_icpt), 8),
+                              "fill": {k: round(float(v), 8) for k, v in s_means.items()}, **decomposed_json(s_st["dec"])},
                    "hinges": {c: [round(float(q), 6) for q in k] for c, k in sk_st["knots"].items()},
                    "ux_means": {p: {k: round(v, 6) for k, v in m.items()} for p, m in mu.items()},
                    "toi_forecast": {tgt: {"inputs": m["inputs"] + FC_EXTRA, "coef": [round(float(x), 6) for x in m["coef"]],
@@ -397,7 +527,17 @@ def main():
         json.dump(model, f, indent=1)
     print("wrote", OUT, "pts/start", model["goalie"]["points_per_start"], "dress", model["dress"])
     check_daily_arithmetic(df, coef, icpt, means, sk_st, mu, WEEK_FEATS)
-    check_daily_arithmetic(df, s_coef, s_icpt, s_means, s_st, mu, FEATS, season=True)
+    check_daily_arithmetic(df, s_coef, s_icpt, s_means, s_st, mu, SEASON_FEATS, season=True)
+
+
+def decomposed_json(st):
+    r6 = lambda v: round(float(v), 8)
+    lin = lambda m: {"inputs": list(m["inputs"]), "coef": [r6(x) for x in m["coef"]], "intercept": r6(m["intercept"]),
+                     "fill": {k: r6(v) for k, v in m["fill"].items()}}
+    return {"rates": {c: lin(m) | {"lo": {k: r6(v) for k, v in m["lo"].items()}, "hi": {k: r6(v) for k, v in m["hi"].items()}}
+                      for c, m in st["rates"].items()},
+            "ipp_mu": {p: {k: r6(v) for k, v in m.items()} for p, m in st["ipp_mu"].items()},
+            "sh_forecast": lin(st["sh"]) | {"inputs": st["sh"]["inputs"] + FC_EXTRA}}
 
 
 def check_daily_arithmetic(df, coef, icpt, means, st, mu, feats, season=False, n=2000):

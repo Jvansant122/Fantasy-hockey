@@ -919,6 +919,10 @@ The ice-time and power-play-time forecasts behind the skater rating (section 112
 
 A straight-line model treats the step from an average scorer to a good one the same as from a good one to a star. **The ridge behind the Week rating now gets bend points: for 12 of its strongest inputs (points per game this season and last, the usage x efficiency rates, ice time and power-play time and their forecasts, two seasons ago, shots), how far a player sits above each of five levels (the 10th to 90th percentile of past players).** That lets the rating curve where the data curves. Ranking next week's points improved by +0.0005 among all skaters and +0.0010 among free agents, positive in all three test seasons. These bends slightly hurt rest-of-season ranking, so the Season rating keeps its own ridge without them.
 
+## 118. A Season rating built from its parts
+
+The Season rating's model now also builds a player's points from their parts. **For shots, hits, blocks, goals, assists and fantasy points it forecasts his per-minute rate (from his last 5, 10 and 20 games, this season, last season and two seasons ago) and multiplies by his forecast ice time. It estimates his points as his share of the goals scored while he's on the ice, times how many expected goals his team creates per minute with him out there (MoneyPuck), times his forecast even-strength and power-play minutes. And it forecasts his penalty-kill minutes, which drive blocked shots.** Each piece is pulled toward the position average when there's little data. Ranking points for the rest of the season improved by +0.0003 over three test seasons (+0.0000, +0.0005, +0.0004), with free agents up too. These pieces didn't help the Week rating, so it doesn't use them.
+
 ## What the independent review changed
 
 | Review point | Outcome |
