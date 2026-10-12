@@ -76,7 +76,7 @@ class FakeSession:
         self.calls.append(url)
         params = params or {}
         if "moneypuck" in url:
-            if "/2025/" in url:
+            if "/2025/" in url or "/2024/" in url:
                 return Resp(status=404)  # last season's file missing: rating should carry on without it
             lines = ["playerId,situation,games_played,I_F_xGoals,OnIce_F_xGoals"]
             lines += [f"{pid},all,4,1.2,3.0" for pid, *_ in SKATERS] + ["1,5on5,4,0.8,2.0"]
@@ -1140,8 +1140,8 @@ def test_player_who_missed_last_season_uses_the_one_before(monkeypatch, tmp_path
     # no games last season (Barkov): the season before, not a newcomer's prior (findings 216)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "load_news", lambda: {})
-    out = {}
-    for name, fake in (("plain", FakeSession()), ("away", FakeSession(away_last={1}))):
+    out, fakes = {}, {"plain": FakeSession(), "away": FakeSession(away_last={1})}
+    for name, fake in fakes.items():
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         players = [espn(101, "Auston Matthews", "TOR", "C")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
@@ -1149,6 +1149,9 @@ def test_player_who_missed_last_season_uses_the_one_before(monkeypatch, tmp_path
     assert out["away"]["cr_fpg"] == pytest.approx(out["plain"]["cr_fpg"], abs=0.01)
     # the details say which season that line is from (Barkov, findings 234)
     assert out["away"]["cr_why"]["last_season"] == "2024-25" and "last_season" not in out["plain"]["cr_why"]
+    # his MoneyPuck inputs come from that same season, so the luck terms don't mix two seasons
+    older = lambda f: any("moneypuck" in u and "/2024/" in u for u in f.calls)
+    assert older(fakes["away"]) and not older(fakes["plain"])
 
 
 def test_goalie_out_for_the_season(monkeypatch):
@@ -1512,3 +1515,13 @@ def test_season_rating_carries_age(run):
     assert young["cr_why"]["age_adj"] == pytest.approx(0.03, abs=0.005)
     assert old["cr_why"]["age_adj"] == pytest.approx(-0.08, abs=0.005)
     assert "age_adj" not in by_name["Auston Matthews"]["cr_why"]  # 29: no adjustment
+
+
+def test_season_games_left_for_a_traded_player_yet_to_play():
+    """His old team's schedule is cut at his last game, but games left counts the team's games so far (review item 2)."""
+    model = rating.Model()
+    games = [{"game": g, "team": "TOR"} for g in (1, 2, 3)]
+    f = {"is_D": False}
+    cut = rating.season_dress_features(games, "TOR", [1, 2, 3], f, {}, None, 2.0, model.season_lr["markov"], played=8)
+    full = rating.season_dress_features(games, "TOR", [1, 2, 3], f, {}, None, 2.0, model.season_lr["markov"])
+    assert cut["games_left"] == rating.SEASON_GAMES - 8 and full["games_left"] == rating.SEASON_GAMES - 3

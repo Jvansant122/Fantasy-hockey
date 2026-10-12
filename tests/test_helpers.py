@@ -205,6 +205,13 @@ def test_scoreboard_schedule_fails_on_a_lost_day(monkeypatch):
     teams, counts, dates = fetch.scoreboard_schedule(ok, [1, 2], 1)
     assert counts == {1: 1, 2: 1} and teams[10]["periods"] == {1, 2}
     assert set(teams[10]["starts"].values()) == {"2026-10-10T23:00:00Z"}
+    # a run between midnight and ESPN's ~3:25 AM rollover: today's period is still yesterday's date
+    class Clock(fetch.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fetch.datetime(2026, 10, 13, 1, 30, tzinfo=tz)
+    monkeypatch.setattr(fetch, "datetime", Clock)
+    assert fetch.scoreboard_schedule(ok, [1, 2], 1)[2][1].date().isoformat() == "2026-10-12"
 
 
 def test_pro_schedule_asks_for_the_right_view_and_dates_empty_nights(monkeypatch):

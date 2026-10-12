@@ -1090,9 +1090,10 @@ def lineup_chain_share(k, p_out, h, n):
     return tot / max(n, 1)
 
 
-def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov):
+def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov, played=None):
     """Inputs for the rest-of-season P(dresses) logistic: next week's lineup features plus last season's games, ice time,
-    games left, and a lineup chain (drop-out rate since joining the team, league return curve by games missed)."""
+    games left, and a lineup chain (drop-out rate since joining the team, league return curve by games missed).
+    played: the team's games so far when team_games is cut short (a traded player yet to play for his new team)."""
     mine = {g["game"] for g in games if g["team"] == team}
     since = team_games[team_games.index(next(g["game"] for g in games if g["team"] == team)):]
     seq = [gid in mine for gid in since]
@@ -1106,7 +1107,7 @@ def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov
     pos = "D" if f["is_D"] else "F"
     prior = markov["prior_games"]
     p_out = (n_drop + prior * markov["p_out_mean"][pos]) / (n_in + prior)
-    left = max(SEASON_GAMES - len(team_games), 0)
+    left = max(SEASON_GAMES - (len(team_games) if played is None else played), 0)
     share = lineup_chain_share(k, p_out, markov["return_curve"][pos], max(left, 1))
     share = min(max(share, 0.01), 0.99)
     x = dict(dress_f)
@@ -1626,6 +1627,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         # a player whose "last season" is the one before (missed last season): his two-seasons-ago input is three seasons back,
         # as in training (findings 291 (4))
         prev3 = load_prev_season(s, prev_season - 20002) if any(v.get("season_label") for v in prev.values()) else {}
+        # ... and his MoneyPuck inputs come from that same season, so goals and xG describe one season as in training
+        swapped = [pid for pid in missed if (prev.get(pid) or {}).get("season_label")]
+        if swapped:
+            xg_older = load_xg(s, prev_season // 10000 - 1)
+            for pid in swapped:
+                xg_prev[pid] = xg_older.get(pid)
 
     def name_match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
@@ -1862,7 +1869,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
             season_share = None
             if df_ and model.season_lr:
-                season = fpg_s * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"]),
+                season = fpg_s * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
+                                                                         played=len(team_games.get(team, []))),
                                                  NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                                  + CLEARED_SEASON_LOGIT * cleared_out)
             elif cleared_new:

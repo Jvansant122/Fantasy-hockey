@@ -24,6 +24,7 @@ ET = ZoneInfo("America/New_York")
 POSITIONS = {1: "C", 2: "LW", 3: "RW", 4: "D", 5: "G"}
 # Lineup slot ids in ESPN hockey: 0 C, 1 LW, 2 RW, 3 F, 4 D, 5 G, 6 UTL, 7 bench, 8 IR
 SLOT_NAMES = {0: "C", 1: "LW", 2: "RW", 3: "F", 4: "D", 5: "G"}
+ESPN_ROLLOVER = timedelta(hours=3, minutes=25)  # ESPN rolls its day at about 3:10-3:40 AM ET (findings 180)
 LIGHT_NIGHT_MAX_GAMES = 5  # nights with this many NHL games or fewer count as light
 FREE_AGENT_LIMIT = 400
 FREE_AGENT_GOALIE_LIMIT = 100
@@ -357,7 +358,8 @@ def scoreboard_schedule(s, matchup_sps, today_sp):
             for t in league.get("teams", []):
                 t = t.get("team", t)
                 teams[int(t["id"])] = {"abbrev": t.get("abbreviation", ""), "periods": set(), "starts": {}}
-    today = datetime.now(ET).replace(hour=12, minute=0, second=0, microsecond=0)
+    # today's period is ESPN's day, which lags the ET clock from midnight until its overnight rollover
+    today = (datetime.now(ET) - ESPN_ROLLOVER).replace(hour=12, minute=0, second=0, microsecond=0)
     night_counts, night_dates = {}, {}
     for sp in matchup_sps:
         day = today + timedelta(days=sp - today_sp)

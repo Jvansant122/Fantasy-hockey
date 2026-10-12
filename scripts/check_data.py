@@ -17,7 +17,7 @@ TOP_FIELDS = {"updated", "nights", "rated", "teams", "players", "goalie_cap", "m
               "season_weeks", "team_nights"}  # the last two feed the table's Nights week picker (findings 300); empty is allowed
 NIGHT_FIELDS = {"sp", "date", "games", "light", "past"}
 PLAYER_FIELDS = {"id", "name", "team", "pos", "slots", "owner", "team_id", "ir", "injury", "owned", "ppg", "cur_ppg", "last_ppg",
-                 "games", "games_left", "light", "light_left", "nights", "dfo_out", "games_next2", "last_gp", "clears", "today_start"}
+                 "games", "games_left", "light", "light_left", "nights", "dfo_out", "last_gp", "clears", "today_start"}
 RATED_FIELDS = {"cr", "cr_fpg", "cr_games", "cr_dress", "cr_dress_next", "cr_matched", "cr_why", "cr_pct", "cr_season", "cr_season_pct", "sat_last"}
 RATED_GOALIE_FIELDS = {"cr_g_nights"}  # goalies only: start chance by night, for the open G slots (findings 236)
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
