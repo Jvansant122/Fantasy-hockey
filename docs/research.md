@@ -907,6 +907,10 @@ On top of section 112's model, ranking next week's points improves by about anot
 
 Some coaches run two goalies in a strict A, B, A, B rotation. The start model treated a long rotation like a 50/50 split, giving the goalie whose turn it was about 54%. Over five seasons he actually started 65% of the time after 6-7 alternating starts and 74% after 8 or more, every season. **When a team's last 6+ starts strictly alternate between two goalies who are both still with the team, the last starter's chance for the next game is now cut.** That takes the goalie whose turn it is to about 70%, and it cut forecast error on those games by 11%, better in all five seasons. The game after next goes back to the last starter, and there the chain alone gave him 55% against 63% actual. So the goalie due next also gets a smaller cut for that game, unless it's the second night of a back-to-back, where the night-2 rules already alternate. That brings the last starter to about 61% and improves those forecasts by another 2.5%, with no season worse. About 6% of team games qualify. A Daily Faceoff confirmation still overrides.
 
+## 115. Goalie tandems in a repeating pattern
+
+Some tandems repeat a longer pattern instead of a strict A, B rotation: A, A, B (the starter plays two of every three) or A, A, B, B. **When a team's last starts repeat one of these patterns for at least two full cycles, between two goalies who are both still with the team, the last starter's chance for the next game now follows the pattern.** In an A, A, B pattern he gets a boost when the pattern keeps him in and a smaller cut when it switches; in A, A, B, B he gets a cut when it switches and no change when he stays. Over 2,307 such games this cut forecast error on them by about 2%, better in every season. A Daily Faceoff confirmation still overrides.
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -899,6 +899,29 @@ def test_strict_rotation_keeps_going(monkeypatch):
     assert p(6, -1.2)[1][2] < plain[2] - 0.02
 
 
+def test_repeating_goalie_pattern(monkeypatch):
+    """A A B and A A B B patterns over 2+ cycles shift the last starter's next game (findings 243)."""
+    model = rating.Model()
+    assert rating.repeating_pattern([1, 1, 2, 1, 1, 2], [1, 2]) == (3, False)
+    assert rating.repeating_pattern([1, 2, 1, 1, 2, 1], [1, 2]) == (3, True)
+    assert rating.repeating_pattern([1, 1, 2, 2, 1, 1, 2, 2], [1, 2]) == (4, False)
+    assert rating.repeating_pattern([2, 1, 1, 2, 2, 1, 1, 2], [1, 2]) == (4, True)
+    assert rating.repeating_pattern([1, 1, 2, 1, 1, 2], [1, 3]) is None  # one of the pair is gone
+    assert rating.repeating_pattern([1, 1, 2, 1, 2], [1, 2]) is None  # under two cycles
+
+    def today(seq):
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
+        return out[1]
+    for seq, sign in (([1, 2, 1, 1, 2, 1], 1), ([2, 1, 1, 2, 1, 1], -1), ([2, 2, 1, 1, 2, 2, 1, 1], -1)):
+        monkeypatch.setattr(rating, "PATTERN_LOGITS", {})
+        plain = today(seq)
+        monkeypatch.setattr(rating, "PATTERN_LOGITS", {(3, True): 0.8, (3, False): -0.4, (4, False): -0.8})
+        assert sign * (today(seq) - plain) > 0.03
+
+
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     # tonight's game started before the run: its start is no longer ahead and the stream card's chance is 0 (findings 178)
     from datetime import datetime, timezone
