@@ -57,7 +57,8 @@
   /* the table scrolls inside its box so the header and name column can stay pinned */
   .tablewrap { overflow: auto; max-height: 78vh; margin-top: 6px; border-top: 1px solid var(--line); }
   table { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
-  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; background: var(--card); }
+  /* 6px sides: the 16 columns fit a 1366 px laptop without sideways scrolling (findings 300) */
+  th, td { padding: 6px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; background: var(--card); }
   th.l, td.l { text-align: left; }
   th { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2; }
   th:first-child, td:first-child { position: sticky; left: 0; z-index: 1; }
