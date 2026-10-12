@@ -943,6 +943,10 @@ The Week rating's model now bends for age and for absences. **Players 23 and und
 
 The goalie rules added today (rotations, repeating patterns, the last-six-starts strings, three-goalie teams) only adjust the next game. Checking the rest of the week on 3,677 team-weeks from 2021-26 showed the team's no. 1 was projected right in every game, but the last starter was still projected too high in two places. **In a strict A-B-A-B rotation, he got 48% for the third game of the week but started 37% of the time. On teams where none of those rules apply, he got 56% for the game after next against 51% actual.** Both chances are now cut. Weekly start forecasts improved by 1.1% on rotating teams and by 0.4% on the rest, better in every season. The next game's chance is unchanged, and a Daily Faceoff confirmation still overrides.
 
+## 124. Goalies who stop more pucks than their partners
+
+The Season rating's share of a team's future starts now leans toward the goalie with the better save percentage. Each goalie's save percentage this season is blended with last season's (600 shots of weight), and last season's with the league average (1,000 shots). **His share then moves by about 0.05 for every point of save percentage he is ahead of, or behind, the team's other starters.** Refit on the site's own shares over 2023-26 Mondays, the Season rating ranks goalies' rest-of-season points 0.011 better, positive in each of three test seasons, and starters 0.015 better on average. The nightly start chances are unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |
