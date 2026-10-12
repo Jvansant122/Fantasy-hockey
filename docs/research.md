@@ -923,6 +923,10 @@ A straight-line model treats the step from an average scorer to a good one the s
 
 The Season rating's model now also builds a player's points from their parts. **For shots, hits, blocks, goals, assists and fantasy points it forecasts his per-minute rate (from his last 5, 10 and 20 games, this season, last season and two seasons ago) and multiplies by his forecast ice time. It estimates his points as his share of the goals scored while he's on the ice, times how many expected goals his team creates per minute with him out there (MoneyPuck), times his forecast even-strength and power-play minutes. And it forecasts his penalty-kill minutes, which drive blocked shots.** Each piece is pulled toward the position average when there's little data. Ranking points for the rest of the season improved by +0.0003 over three test seasons (+0.0000, +0.0005, +0.0004), with free agents up too. These pieces didn't help the Week rating, so it doesn't use them.
 
+## 119. Three more goalie start sequences
+
+On teams where only two goalies have started the last 10 games, three sequences were still mispriced. **When the no. 1 is back in net after his backup's single spot start (his last five: start, start, start, sit, start), the model gave him 65% for the next game and he actually started 77%. When a goalie answers the other's two starts with three straight, it gave him 52% and he started 67%: he has usually taken the job. And after a double followed by a strict rotation (start, start, sit, start, sit, start) it gave 52% against 61%.** In each case the other goalie's chance for the next game is now cut, which brings these close to what really happened, except on the second night of a back-to-back, where the back-to-back rules decide. Forecasts on those 1,191 games improved by 7%, every season agreeing. A Daily Faceoff confirmation still overrides.
+
 ## What the independent review changed
 
 | Review point | Outcome |
