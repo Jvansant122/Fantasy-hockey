@@ -49,6 +49,7 @@ No network or secrets needed: every ESPN, NHL, MoneyPuck and Daily Faceoff call 
 
 `/mnt/project-files/research/claude-rating/ideas-ledger.md` lists every research idea tried or queued: ID, date, who ran it, what was tested, the measured result, the verdict (shipped with PR number, no change, pending, waiting until a date) and the source section.
 
+- It is possible to find ways to boost performance rating predictions. A no-gain row records what one test measured, not a limit on the rating; never describe the rating as at a ceiling or impossible to improve.
 - **Before testing an idea, check the ledger.** If a row covers it, only re-run it with a stated reason (new data, a new season, a different population or horizon, a bug in the old test).
 - **Every research run appends its row(s) before finishing**, including "no change" and abandoned runs. Re-tests get a new row naming the old one.
 - When the build thread ships or declines a handoff item, it updates that row's Verdict, and it copies the working ledger into `docs/ideas-ledger.md` in its PRs.
