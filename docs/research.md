@@ -931,6 +931,10 @@ On teams where only two goalies have started the last 10 games, three sequences 
 
 The Week rating's model now learns goals as 80% the goals a player actually scored next week and 20% the goals his shots were expected to produce (MoneyPuck's expected goals), so a lucky bounce teaches it less. **It also sees how far his goals this season (and last season) ran below or above his expected goals, so a shooter who has been unlucky gets credit for the goals likely still to come, and it sees his last game's role directly: top line, first power-play unit, his ice-time rank and power-play share, how far his last game's minutes jumped or fell against his last 10, and whether a top-line or PP1 spot is new for him.** Ranking each week's points improved by +0.0005 over three test seasons (+0.0003, +0.0006, +0.0005) and among free agents by +0.0007, every season positive. The Season rating doesn't use these, since they nudged its rest-of-season ranking down slightly.
 
+## 121. Teams using three goalies
+
+When a team has started three different goalies in its last 10 games, the model spread the next start too evenly. **A goalie whose latest start was three or more games ago got about 20% for the next game but actually started 12% of the time, while the last starter got 34% against 41%.** Those goalies' next-game chance is now cut, which brings them to about 12%. Forecasts on those 2,117 games improved by 1.8%, better in every season, and by 6% when all three had started in the last five games. A Daily Faceoff confirmation still overrides.
+
 ## What the independent review changed
 
 | Review point | Outcome |

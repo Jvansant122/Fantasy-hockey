@@ -130,6 +130,16 @@ ROTATION_LATER_LOGIT = -0.6
 # the other goalie's next game (findings 246): the no. 1 back after a single spot start (ends 1 1 1 0 1), a goalie
 # answering the other's two starts with three straight (ends 0 0 1 1 1), a rotation after a double (1 1 0 1 0 1)
 LAST6_OTHER_LOGITS = {"110101": -0.6, "11101": -1.0, "00111": -1.2}
+# three goalies started the last 10: the next start goes to the recent ones more than the model sees; a cut to each of
+# the three whose latest start was 3+ team games ago (findings 247: 0.20 against 0.12 actual, Brier -1.8%, every season)
+THREE_GOALIE_IDLE_LOGIT = -1.0
+
+
+def three_goalie_idle(seq):
+    """The goalies to cut next game when exactly three started the team's last 10: those not among the last 3 starters."""
+    if len(set(seq[-10:])) != 3:
+        return set()
+    return set(seq[-10:]) - set(seq[-3:])
 
 
 def last_six_cut(seq):
@@ -1301,6 +1311,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     rotating = strict_rotation(seq, cands)
     pattern = PATTERN_LOGITS.get(repeating_pattern(seq, cands), 0.0) if seq and not rotating else 0.0
     other_cut = last_six_cut(seq)
+    idle3 = three_goalie_idle(seq)
     prev_d = None
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
@@ -1358,6 +1369,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     z += B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER
                 if not n1 and not n2 and not (ahead == 0 and gap == 1):
                     z += NO1_ORDINARY_LOGIT
+            if ahead == 0 and gid in idle3:
+                z += THREE_GOALIE_IDLE_LOGIT
             if gid in relieved:
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if z and 0 < raw[gid] < 1:
