@@ -903,6 +903,10 @@ The model saw this season and last season, but not the one before. Players whose
 
 On top of section 112's model, ranking next week's points improves by about another 0.001, among all skaters and among free agents alike, and the gain is positive in all three test seasons. Career finishing and playmaking rates over four seasons were tested too. They added nothing on top, so they were left out. The daily update reads the season-before-last totals it already fetched for players who missed most of last season.
 
+## 114. Goalie tandems in a strict rotation
+
+Some coaches run two goalies in a strict A, B, A, B rotation. The start model treated a long rotation like a 50/50 split, giving the goalie whose turn it was about 54%. Over five seasons he actually started 65% of the time after 6-7 alternating starts and 74% after 8 or more, every season. **When a team's last 6+ starts strictly alternate between two goalies who are both still with the team, the last starter's chance for the next game is now cut.** That takes the goalie whose turn it is to about 70%, and it cut forecast error on those games by 11%, better in all five seasons. The game after next goes back to the last starter, and there the chain alone gave him 55% against 63% actual. So the goalie due next also gets a smaller cut for that game, unless it's the second night of a back-to-back, where the night-2 rules already alternate. That brings the last starter to about 61% and improves those forecasts by another 2.5%, with no season worse. About 6% of team games qualify. A Daily Faceoff confirmation still overrides.
+
 ## What the independent review changed
 
 | Review point | Outcome |

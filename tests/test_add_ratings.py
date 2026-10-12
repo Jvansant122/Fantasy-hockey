@@ -873,6 +873,32 @@ def test_starter_five_to_seven_straight_is_due_a_rest(monkeypatch):
         assert p1(run, -1.0) == pytest.approx(p1(run, 0.0))
 
 
+def test_strict_rotation_keeps_going(monkeypatch):
+    """The last 6+ starts strictly alternate: the last starter gets -1.2 next game only; 4-5 alternating, nothing (findings 227)."""
+    model = rating.Model()
+    assert rating.strict_rotation([1, 1, 2, 1, 2, 1, 2], [1, 2]) and not rating.strict_rotation([1, 1, 2, 1, 2, 1], [1, 2])
+    assert not rating.strict_rotation([1, 2, 1, 2, 1, 2], [1, 3])  # one of the pair is gone
+
+    def p(alternating, logit):
+        monkeypatch.setattr(rating, "ROTATION_LOGIT", logit)
+        seq = [1] * 6 + [2, 1] * (alternating // 2)  # ends on goalie 1
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        later = nxt + timedelta(days=2)
+        out = {}
+        exp = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat(), later.isoformat()], nxt, today_p=out)
+        return out[1], exp
+    for n in (6, 8):
+        assert p(n, -1.2)[0] < p(n, 0.0)[0] - 0.1
+    assert p(4, -1.2)[0] == pytest.approx(p(4, 0.0)[0])
+    # the game after next goes back to the last starter less than the chain alone says (findings 228): with the later cut,
+    # goalie 2 (due next) has fewer expected starts over the two games
+    monkeypatch.setattr(rating, "ROTATION_LATER_LOGIT", 0.0)
+    plain = p(6, -1.2)[1]
+    monkeypatch.setattr(rating, "ROTATION_LATER_LOGIT", -0.6)
+    assert p(6, -1.2)[1][2] < plain[2] - 0.02
+
+
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     # tonight's game started before the run: its start is no longer ahead and the stream card's chance is 0 (findings 178)
     from datetime import datetime, timezone
