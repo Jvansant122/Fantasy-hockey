@@ -1758,3 +1758,24 @@ def test_daily_faceoff_news_reaches_the_season_rating(monkeypatch, tmp_path):
     assert hit["Auston Matthews"]["cr_season"] == base["Auston Matthews"]["cr_season"]
     stale = ratings({**item, "fetched": "2020-01-01T00:00Z"})
     assert stale["Morgan Rielly"]["cr_season"] == base["Morgan Rielly"]["cr_season"]
+
+
+def test_espn_preseason_projection_pulls_the_season_fpg(monkeypatch, tmp_path):
+    """Findings 360 (2), handoff 331: Season FP/G += (ESPN projected FP/G - FP/G) x (0.36 - 0.6 g + 0.4 g^2), g = min(GP, 40)/40;
+    skaters without a projection are unchanged."""
+    def ratings(proj):
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")]
+        players[0]["proj_ppg"] = proj
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p for p in players}
+    base, hi = ratings(None), ratings(9.0)
+    m0, m1 = base["Auston Matthews"], hi["Auston Matthews"]
+    g = min(m1["cr_why"]["gp"], 40) / 40
+    w = 0.36 - 0.6 * g + 0.4 * g * g
+    assert m1["cr_why"]["espn_blend"] == round(w, 2) and "espn_blend" not in m0["cr_why"]
+    assert m1["cr_season"] > m0["cr_season"]
+    assert hi["Charlie McAvoy"]["cr_season"] == base["Charlie McAvoy"]["cr_season"]

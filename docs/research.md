@@ -990,6 +990,10 @@ Daily Faceoff posts every injury update and every AHL call-up or send-down, tagg
 
 If the news can't be read for two days, these changes switch off. A player's details name the news used. Tested over 2023-26 on every player, this ranks rest-of-season points 0.0018 better in every season, and 0.003 better among free agents. Rest-of-season points for players out now improve by 0.017.
 
+## 133. ESPN's preseason projection early in the season
+
+Before the season ESPN projects each skater's stats, and the league's API keeps that projection. In past seasons its projected goals matched actual goals about as well as last season's goals did, so it adds information. **Early in the season the Season rating's points per game now moves part of the way toward ESPN's projection:** 36% of the gap at 0 games, 24% after 10, and 13-16% from 20 games on (fitted leaving one season out over 2023-26). Skaters without an ESPN projection are unchanged, and a player's details show the pull. Tested on the whole board, this ranks rest-of-season points 0.001 better in every test season, and free agents 0.0008 better.
+
 ## What the independent review changed
 
 | Review point | Outcome |

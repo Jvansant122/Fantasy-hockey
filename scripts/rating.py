@@ -213,7 +213,10 @@ NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 # NEWS_RECALL_DAYS: a + b x min(GP, 40)/40; latest injury item since his last game says season-ending / surgery
 NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
 NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
-NEWS_STALE_DAYS = 2  # an older stored copy (the fetch has failed since) adds nothing
+NEWS_STALE_DAYS = 2
+# ESPN's preseason projected FP/G blended into the Season FP/G (after the age term) with weight a + b g + c g^2,
+# g = min(GP, 40)/40: 0.36 at 0 games, about 0.1 by 40 (findings 360 (2), handoff 331, fitted leaving one season out)
+ESPN_PROJ_BLEND = (0.36, -0.60, 0.40)  # an older stored copy (the fetch has failed since) adds nothing
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
 # (findings 330 (5), handoff 274)
@@ -2132,6 +2135,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             age_adj = season_age_adj(births.get(pid), today) if pid else 0.0
             if fpg_s > 0:
                 season *= max(fpg_s + age_adj, 0.0) / fpg_s
+            # ESPN's preseason projection pulls the Season FP/G, most at 0 games and fading by 40 (findings 360 (2))
+            espn_w = None
+            if p.get("proj_ppg") is not None and rest_share > 0:
+                g = min(len(gl), 40) / 40
+                espn_w = ESPN_PROJ_BLEND[0] + ESPN_PROJ_BLEND[1] * g + ESPN_PROJ_BLEND[2] * g * g
+                fpg_t = season / rest_share
+                season = rest_share * max(fpg_t + (p["proj_ppg"] - fpg_t) * espn_w, 0.0)
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -2181,6 +2191,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if espn_w:
+                why["espn_blend"] = round(espn_w, 2)  # share of the gap to ESPN's preseason projection (findings 360 (2))
             if news_why:
                 why["season_news"] = news_why  # Daily Faceoff news in the Season share (findings 360 (1))
             if season_share is not None:
