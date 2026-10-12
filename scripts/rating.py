@@ -32,6 +32,7 @@ WEIGHTS = {"goals": 2, "assists": 1, "ppPoints": 0.5, "shPoints": 0.5, "shots": 
 GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints", "points"]
 # where he ranks in his team-game's PP time and ice time, this season's windows only (findings section 201)
 RANK_RATES = ["pp_rank", "toi_rank", "pp1", "top_line"]
+P2_RATES = ["fp", "toi", "pptoi", "shots", "hits", "blockedShots", "points"]  # two seasons ago (model/train.py P2_RATES)
 # position x usage and squared ice time inputs (findings section 201); same as model/train.py
 D_X = ["std_toi", "std_pptoi", "l5_toi", "l5_pptoi", "std_blockedShots", "std_hits"]
 SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
@@ -704,9 +705,16 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
 
-def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False):
-    """Inputs for one skater. games: his games this season, oldest first. team_games: his team's game ids, oldest first."""
+def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=None):
+    """Inputs for one skater. games: his games this season, oldest first. team_games: his team's game ids, oldest first.
+    p2: his per-game rates two seasons ago (findings 310 (4)), None if he didn't play then."""
     f = {"is_D": 1.0 if is_d else 0.0}
+    w2 = min(p2["gp"] / 82, 1) if p2 else 0.0
+    for r in P2_RATES:
+        f[f"p2_{r}"] = p2.get(r) if p2 else None
+    f["p2_gp"], f["no_p2"] = (p2["gp"], 0.0) if p2 else (0, 1.0)
+    for r in ("fp", "toi", "pptoi"):
+        f[f"p2_{r}_w"] = (p2.get(r) or 0) * w2 if p2 else 0.0
     if prev:
         for r in GAME_RATES:
             f[f"prev_{r}"] = prev.get(r)
@@ -1298,6 +1306,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     games = load_skater_games(s, season, today)
     goalie_games = load_goalie_games(s, season, today)
     prev = load_prev_season(s, prev_season)
+    prev2 = load_prev_season(s, prev_season - 10001)  # two seasons ago, a ridge input (findings 310 (4))
     prev_goalies = load_prev_goalie_season(s, prev_season)
     prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
@@ -1376,7 +1385,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # NHL roster or with games this season, so retired players don't come back (findings 216)
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     if missed:
-        older = load_prev_season(s, prev_season - 10001)
+        older = prev2
         label = f"{(prev_season - 10001) // 10000}-{str((prev_season - 10001) % 100).zfill(2)}"  # 20242025 -> 2024-25 (findings 234)
         prev.update({pid: dict(older[pid], season_label=label) for pid in missed if (older.get(pid) or {}).get("gp", 0) >= PREV_MIN_GP})
 
@@ -1552,14 +1561,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             traded = bool(gl) and espn_team != team and espn_team in team_games and gl[-1]["game"] in tg
             if traded:
                 tg = tg[:tg.index(gl[-1]["game"]) + 1]
-            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D")
+            # his "last season" is already the one before (missed last season): no older season to add (findings 216)
+            p2 = None if (prev.get(pid) or {}).get("season_label") else prev2.get(pid)
+            f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2)
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             # opening games cut short: average with his points a game leaving those games out (findings 171)
             kept = short_opening(gl, prev.get(pid)) if pid else None
             if kept is not None:
                 f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg,
-                                     is_d=p["pos"] == "D")
+                                     is_d=p["pos"] == "D", p2=p2)
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
             # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)

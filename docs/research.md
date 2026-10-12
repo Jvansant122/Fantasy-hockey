@@ -897,6 +897,12 @@ Together, the forecasts and the products improve how well the rating ranks next 
 
 **Age in the Season number.** Out of sample, the Season number under-projected young skaters' rest of the season and over-projected skaters over 30, in every season. The Season number's points per game now gets +0.01 for each year under 24 and -0.009 for each year over 29. That's +0.04 for a 20-year-old and -0.05 for a 35-year-old. It ranks the rest of the season better by 0.0014, in every season. The Week rating is unchanged, because age added nothing a week out. Details name the adjustment when it is 0.03 or more. Ages come from the NHL's player bios. A player with no birth date gets no adjustment.
 
+## 113. Two seasons ago
+
+The model saw this season and last season, but not the one before. Players whose season before last was much better than last season beat the rating the next week, and those whose season before last was much worse fell short. That held in every season. The model now also sees each skater's per-game numbers from two seasons ago (points, ice time, PP time, shots, hits, blocks), his games then, and a flag when he didn't play then. It now trains on 2019-20 to 2025-26, so every training season has two seasons ago. That needed NHL game logs back to 2017-18.
+
+On top of section 112's model, ranking next week's points improves by about another 0.001, among all skaters and among free agents alike, and the gain is positive in all three test seasons. Career finishing and playmaking rates over four seasons were tested too. They added nothing on top, so they were left out. The daily update reads the season-before-last totals it already fetched for players who missed most of last season.
+
 ## What the independent review changed
 
 | Review point | Outcome |

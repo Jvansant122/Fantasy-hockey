@@ -82,7 +82,12 @@ def test_skater_features_ranks_and_usage_terms():
     prev = {r: 1.0 for r in rating.GAME_RATES} | {"gp": 70}
     assert rating.skater_features([], prev, None, None, team_games=[])["std_toi_rank"] is None  # no last-season window
     names = rating.Model().sk["features"]
-    assert all(n in names for n in ("l5_pp_rank", "std_top_line", "D_x_l5_pptoi", "l5_toi2"))
+    assert all(n in names for n in ("l5_pp_rank", "std_top_line", "D_x_l5_pptoi", "l5_toi2", "p2_fp", "no_p2", "p2_toi_w"))
+    # two seasons ago (findings 310 (4)): his rates and games, weighted by games over 82; none -> the "no" flag
+    p2 = {r: 2.0 for r in rating.P2_RATES} | {"gp": 41}
+    with_p2 = rating.skater_features(games, None, None, None, team_games=[1, 2], p2=p2)
+    assert with_p2["p2_fp"] == 2.0 and with_p2["p2_gp"] == 41 and with_p2["no_p2"] == 0.0 and with_p2["p2_toi_w"] == 1.0
+    assert fwd["p2_fp"] is None and fwd["p2_gp"] == 0 and fwd["no_p2"] == 1.0 and fwd["p2_fp_w"] == 0.0
 
 
 def test_stat_split_and_per_game():

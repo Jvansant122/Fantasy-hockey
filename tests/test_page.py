@@ -429,7 +429,7 @@ def test_monday_before_first_run_resets_moves(browser, server, data):
     if not data.get("rated"):
         pytest.skip("needs rated data")
     now, et = _now_et()
-    yday = (et - timedelta(days=1)).date()
+    yday = (et - timedelta(days=1, hours=4)).date()  # until 4 AM ET the page still counts the old matchup (findings 233)
     d = json.loads(json.dumps(data))
     d["updated_date"] = yday.isoformat()
     d["nights"][-1]["date"] = f"Sun {yday.day}"
