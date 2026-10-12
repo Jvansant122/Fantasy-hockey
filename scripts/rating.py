@@ -444,8 +444,7 @@ def load_goalie_games(s, season, today):
                  "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0,
                  "ga": r.get("goalsAgainst") or 0, "toi": r.get("timeOnIce") or 0,
                  "wins": r.get("wins") or 0, "losses": r.get("losses") or 0, "otl": r.get("otLosses") or 0,
-                 "fp": 2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
-                       + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0)}
+                 "fp": goalie_fp(r)}
                 for r in stats_report(s, "goalie/summary", season, a, b)]
     return out
 
@@ -501,12 +500,15 @@ def prev_ranks(rates, team_of):
             rates[pid]["pp_share"] = rates[pid]["pptoi"] / top if top > 0 else 0.0
 
 
+def goalie_fp(r):
+    """League fantasy points of an NHL goalie/summary row: W 2, L -1, OTL +1, GA -1, SV 0.2, SO 3."""
+    return (2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
+            + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0))
+
+
 def load_prev_goalie_season(s, season):
     """Last season per goalie: (games started, fantasy points). The points include relief appearances."""
-    return {r["playerId"]: (r.get("gamesStarted") or 0,
-                            2 * (r.get("wins") or 0) - (r.get("losses") or 0) + (r.get("otLosses") or 0) - (r.get("goalsAgainst") or 0)
-                            + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0))
-            for r in stats_report(s, "goalie/summary", season)}
+    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r)) for r in stats_report(s, "goalie/summary", season)}
 
 
 def displaced_skaters(by_player, team_games, healthy):
@@ -932,10 +934,7 @@ def injury_note(note, today):
     own = " ".join(x for x in sentences if last and last[0].lower() in x.lower())
     mine = " ".join(x for x in sentences if last and (last[0].lower() in x.lower() or not re.search(r"[A-Z][\w'.-]+ \([a-z -]+\)", x)))
     days = timeline_days(short + " " + long_)
-    try:
-        nd = date.fromisoformat((note.get("date") or "")[:10])
-    except ValueError:
-        nd = None
+    nd = note_date(note.get("date"))
     gone = (today - nd).days if nd else 0
     left = None if days is None else days - gone
     u = until_days(short + " " + own, nd or today)
@@ -944,6 +943,19 @@ def injury_note(note, today):
     season = bool(SEASON_OUT.search(short) or SEASON_OUT.search(own))
     long_abs = season or bool(LONG_ABSENCE.search(short)) or bool(LONG_OWN.search(mine)) or (left is not None and left >= 14)
     return {"long": long_abs, "season": season, "days_left": left}
+
+
+def note_date(text):
+    """The ET calendar date of an ESPN note's timestamp (a note posted after 8 PM ET carries the next UTC date), a plain
+    date as written, or None."""
+    text = str(text or "")
+    if len(text) <= 10:
+        try:
+            return date.fromisoformat(text)
+        except ValueError:
+            return None
+    t = parse_utc(text)
+    return t.astimezone(ET).date() if t else None
 
 
 def until_days(text, day):
@@ -957,6 +969,8 @@ def until_days(text, day):
             mo = MONTHS[m.group(2).lower()]
             dom = {"early": 5, "mid": 15, "the middle of": 15, "late": 25, "the end of": 28}.get((m.group(1) or "").lower(), 1)
             d = date(day.year + (mo < day.month - 1), mo, dom)
+            if (d - day).days > 200:  # 'until December' read in January is last December's stale note, not next year's
+                d = d.replace(year=d.year - 1)
         v = (d - day).days
         best = v if best is None else max(best, v)
     return best

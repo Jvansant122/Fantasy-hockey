@@ -46,6 +46,9 @@ def problems(data):
             out.append(f"night {n.get('date')} missing {sorted(NIGHT_FIELDS - set(n))}")
     # nights run on consecutive days and end on a Sunday, and today isn't already marked past (findings 180)
     labels = [n.get("date", "") for n in data["nights"]]
+    if not labels:
+        out.append("no nights")
+        return out
     days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     if all(l[:3] in days for l in labels) and [l[:3] for l in labels] != (days * 3)[days.index(labels[0][:3]):][:len(labels)] \
             or labels and labels[-1][:3] != "Sun":
