@@ -133,6 +133,10 @@ LAST6_OTHER_LOGITS = {"110101": -0.6, "11101": -1.0, "00111": -1.2}
 # three goalies started the last 10: the next start goes to the recent ones more than the model sees; a cut to each of
 # the three whose latest start was 3+ team games ago (findings 247: 0.20 against 0.12 actual, Brier -1.8%, every season)
 THREE_GOALIE_IDLE_LOGIT = -1.0
+# the rest of the week after those next-game rules: the last starter read high in two later games (findings 249, every
+# season): a strict rotation's third game (0.48 against 0.37 actual) and, when no rotation, pattern, last-6 or
+# three-goalie rule fires, the game after next (0.56 against 0.51)
+ROTATION_THIRD_LOGIT, PLAIN_SECOND_LOGIT = -0.9, -0.45
 
 
 def three_goalie_idle(seq):
@@ -1334,6 +1338,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     pattern = PATTERN_LOGITS.get(repeating_pattern(seq, cands), 0.0) if seq and not rotating else 0.0
     other_cut = last_six_cut(seq)
     idle3 = three_goalie_idle(seq)
+    plain = bool(seq) and not rotating and not pattern and not other_cut and not idle3
     prev_d = None
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
@@ -1393,6 +1398,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     z += NO1_ORDINARY_LOGIT
             if ahead == 0 and gid in idle3:
                 z += THREE_GOALIE_IDLE_LOGIT
+            if seq and gid == seq[-1] and (rotating and ahead == 2 or plain and ahead == 1):
+                z += ROTATION_THIRD_LOGIT if rotating else PLAIN_SECOND_LOGIT
             if gid in relieved:
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if z and 0 < raw[gid] < 1:

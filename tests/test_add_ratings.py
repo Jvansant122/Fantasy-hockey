@@ -517,6 +517,7 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
     the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""
     monkeypatch.setattr(rating, "NO1_ORDINARY_LOGIT", 0.0)  # this test is about the last-start shifts alone
     monkeypatch.setattr(rating, "LAST6_OTHER_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 246)
+    monkeypatch.setattr(rating, "PLAIN_SECOND_LOGIT", 0.0)  # its game-after-next cut is tested on its own (findings 249)
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26"]
@@ -558,6 +559,7 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
 
 def test_goalie_who_left_without_a_decision_stays_out_all_week(monkeypatch):
     """The no-decision cut lasts past the next game, and ends once Daily Faceoff confirms him (findings 164)."""
+    monkeypatch.setattr(rating, "PLAIN_SECOND_LOGIT", 0.0)  # its game-after-next cut is tested on its own (findings 249)
     monkeypatch.setattr(rating, "LAST6_OTHER_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 246)
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
@@ -1003,6 +1005,29 @@ def test_three_goalie_teams_cut_the_idle_goalie(monkeypatch):
         return out
     on, off = p(-1.0), p(0.0)
     assert on[2] < off[2] and on[3] < off[3] and on[1] > off[1]
+
+
+def test_later_game_shifts_on_the_last_starter(monkeypatch):
+    """A strict rotation's third game -0.9, and the game after next -0.45 when no new next-game rule fires, both on the
+    last starter; the next game is unchanged (findings 249, handoff 290)."""
+    model = rating.Model()
+
+    def by_date(seq, n, rot, plain):
+        monkeypatch.setattr(rating, "ROTATION_THIRD_LOGIT", rot)
+        monkeypatch.setattr(rating, "PLAIN_SECOND_LOGIT", plain)
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        first = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        days = [(first + timedelta(days=2 * i)).isoformat() for i in range(n)]
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, days, first, by_date=out)
+        return [out[seq[-1]][d] for d in days]
+    rot = [1, 2, 1, 2, 1, 2, 1]
+    on, off = by_date(rot, 3, -0.9, -0.45), by_date(rot, 3, 0.0, -0.45)
+    assert on[:2] == pytest.approx(off[:2]) and on[2] < off[2] - 0.03
+    plain = [2, 1, 1, 2, 1, 1, 1, 2, 1, 1]
+    on, off = by_date(plain, 2, -0.9, -0.45), by_date(plain, 2, -0.9, 0.0)
+    assert on[0] == pytest.approx(off[0]) and on[1] < off[1] - 0.01
+    assert by_date(rot, 2, -0.9, -0.45) == pytest.approx(by_date(rot, 2, -0.9, 0.0))  # rotating: not the plain shift
 
 
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
