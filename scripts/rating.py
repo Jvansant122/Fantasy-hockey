@@ -123,6 +123,8 @@ AFTER_NO1_REST_OTHER_LOGIT = -1.0
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
+PATTERN_LOGITS = {(3, True): 0.8, (3, False): -0.4, (4, False): -0.8}  # last starter's next game in a repeating A A B or
+# A A B B pattern: (period, the pattern keeps him in) -> shift; a period-4 stay gets nothing (findings 243)
 ROTATION_LATER_LOGIT = -0.6  # ... and the goalie due next, in the game after next unless it's night 2 of a back-to-back (findings 228)
 # both were fit from a team's 11th game. Through its 10th a no. 1 on night 2 still shows about 7% against 3% real (2021-26 replay
 # with every rostered goalie, n=125, better in 5 of 5 seasons): an extra shift on his share after the split. The streak shift
@@ -1056,6 +1058,22 @@ def strict_rotation(seq, cands, n=ROTATION_STARTS):
     return len(last) == n and len(set(last)) == 2 and set(last) <= set(cands) and all(a != b for a, b in zip(last, last[1:]))
 
 
+def repeating_pattern(seq, cands):
+    """(period, the pattern keeps the last starter in) when the last starts repeat a period-3 or period-4 pattern
+    between two goalies who are both still here over 2+ full cycles (A A B A A B, A A B B A A B B), not a strict A/B
+    rotation; the longest repeat wins. None otherwise (findings 243)."""
+    best = None
+    for per in (3, 4):
+        n = 0
+        while n < len(seq) - per and seq[-1 - n] == seq[-1 - n - per]:
+            n += 1
+        tail = seq[-(n + per):]
+        if n + per >= 2 * per and len(set(tail)) == 2 and set(tail) <= set(cands) \
+                and not all(a != b for a, b in zip(tail, tail[1:])) and (best is None or n + per > best[2]):
+            best = (per, seq[-per] == seq[-1], n + per)
+    return best[:2] if best else None
+
+
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None):
     """Expected starts in the rest of this week for each goalie on the team.
@@ -1141,6 +1159,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     run = next((i for i, x in enumerate(reversed(seq)) if x != seq[-1]), len(seq)) if seq else 0
     on_streak = STREAK_RANGE[0] <= run <= STREAK_RANGE[1]
     rotating = strict_rotation(seq, cands)
+    pattern = PATTERN_LOGITS.get(repeating_pattern(seq, cands), 0.0) if seq and not rotating else 0.0
     prev_d = None
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
@@ -1182,6 +1201,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 + (rested if rested and gid == seq[-1] else 0.0) \
                 + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0) \
                 + (ROTATION_LOGIT if rotating and ahead == 0 and gid == seq[-1] else 0.0) \
+                + (pattern if pattern and ahead == 0 and gid == seq[-1] else 0.0) \
                 + (ROTATION_LATER_LOGIT if rotating and ahead == 1 and gid == seq[-2] and not night_after else 0.0)
             if after_rest and ahead == 1 and gid != no1:
                 z += AFTER_NO1_REST_OTHER_LOGIT
