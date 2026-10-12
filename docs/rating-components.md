@@ -2,7 +2,7 @@
 
 What each part of the rating does, what it uses, how much it was measured to matter, and what it leaves alone. Written for a fantasy manager; the research behind every number is in [the research write-up](research.md), and every idea tried is in the [ideas ledger](ideas-ledger.md).
 
-Current as of Oct 11, 2026 (site code through PR #97).
+Current as of Oct 12, 2026 (site code through PR #123).
 
 ## The two numbers
 
@@ -51,13 +51,17 @@ How good is it overall? Ranking skaters on next week's points per game, the rati
 
 ## 1. Skater points per game
 
-**What it uses:** a per-stat model (ridge regression) with 104 inputs, all from the NHL stats API and MoneyPuck:
+**What it uses:** two per-stat models (ridge regressions), one for the Week rating with 277 inputs and one for the Season rating with 216, all from the NHL stats API and MoneyPuck. The shared inputs:
 - ice time and power-play time over the last 5, 10 and 20 games;
 - shots, shot attempts, hits, blocks, goals, assists, power-play points and fantasy points per game over the same windows, the season to date and last season;
 - expected goals (his own and on-ice) this season and last;
 - scoring per minute (this season plus half of last, pulled toward the position average) × last-5-game ice time, so a role change counts more for an efficient scorer;
 - games played, whether he's a defenseman, and whether he has a last season;
 - where he ranks in his own team's power-play time and ice time each game (top-5 PP time, top-3 forward or top-2 defenseman minutes), with position-by-usage terms (25 inputs, PR #86).
+- two seasons ago (PR #111), and forecasts of next week's ice time and power-play time from small models of his recent games, last season, who missed his team's last game and his line and PP-unit slot in it (PRs #110, #114);
+- 66 products of the 12 strongest inputs, so a role change counts more for an efficient scorer and the model can bend (PR #110).
+
+Week only (PR #115, #118, #122): the 12 strongest inputs also enter as bends at five levels each (60 hinge inputs), the goals target is 80% goals and 20% next week's expected goals, with "finishing luck" inputs (goals above expected this season and last), flags for a fresh top-line or PP1 promotion, bends for players under 24 and over 29, and a small cut for players back from missed games. Season only (PRs #110, #116): an age adjustment (+0.01 a game per year under 24, -0.009 per year over 29) and 24 inputs that build points from parts: per-minute scoring rates × forecast ice time, his share of on-ice goals × on-ice expected goals, and forecast penalty-kill time. Measured in two steps, each on top of the model before it and better in every season: the forecasts, products and two-seasons-ago inputs lifted the weekly ranking +0.0016 (free agents +0.0032), and the Week-only bends, luck, promotion, age and return terms a further +0.0018 (+0.0032). The Season decomposition is worth +0.16 points a week in the hold-or-drop simulation.
 
 Special cases:
 - **Opening games cut short (PR #73):** with 1-3 games this season and the latest under half of last season's ice time, the number is the average of the usual one and one that leaves the short games out. Error fell from 0.41 to 0.28 points a game in all four seasons tested (Sanderson went from 0.38 to about 1.3). From his 4th game on nothing changes.
@@ -185,6 +189,12 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 - **Traded or claimed (PR #57):** +1.0 on the log-odds scale until his 4th start for the new team.
 - **Games 2+ ahead (PR #48):** pulled a little toward an even split, since the chained week ran overconfident.
 - **Injured goalie (PR #17):** his chance shrinks (part 3) before each game is split, so his partner gets his starts.
+- **Back-to-back the no. 1 hasn't played yet (PR #100):** his chance on night 1 dips a little and on night 2 more, later in the week too; and after he rests night 2 the other goalies are cut for the following game, so he is back in net (PR #105).
+- **Losses graded by goals against (PR #109):** a regulation or overtime loss giving up 3 cuts his next-game chance a bit more, 4 more still (−0.35 / −0.65 on the log-odds scale; a bad start keeps its own bigger cut).
+- **Strict A, B rotation (PR #112):** when the last 6+ starts alternate, the last starter's next-game chance drops (−1.2) and the goalie due next is trimmed for the game after (−0.6).
+- **Repeating A A B or A A B B patterns (PR #113):** the last starter's next-game chance follows where the team is in the pattern (+0.8 when it keeps him in, −0.4 / −0.8 when it switches).
+- **Telling last-six strings (PR #117):** with two goalies sharing the last 10 starts, the other goalie is cut next game when the last starter's string says the no. 1 is back after a spot start (−1.0), took over with three straight (−1.2), or the pair rotates after a double (−0.6).
+- **Three-goalie teams (PR #119):** when three goalies started the team's last 10, any of them idle for the last 3 team games is cut (−1.0).
 - **Daily Faceoff:** a goalie listed as **Confirmed** for today or tomorrow gets that game as a certain start and his partner zero, overriding every shift above. Names spelled differently (Matt / Matthew Murray) still match (PR #70). "Likely" and unconfirmed are shown on the row but don't change the number. A confirmed starter the site can't match to NHL data (a call-up) still sits the team's other goalies that game (PR #92).
 
 **What it changes:** expected starts (`exp_starts`), which multiplies points per start into the Week rating. It also gives tonight's start chance used by the stream card.
@@ -203,7 +213,8 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 ## 7. Goalie points per start
 
 **What it uses:** his own fantasy points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the league average of 2.9 over 15 starts; 2.9 if he has none, PR #32). Then:
-- **Tonight's game:** the DraftKings moneyline via the NHL's site, about 2.9 + 4.1 × (win chance − 50%), so roughly 2.3 for a 35% underdog and 3.5 for a 65% favorite (PR #10).
+- **Tonight's game:** the DraftKings moneyline via the NHL's site, about 2.9 + 4.1 × (win chance − 50%), so roughly 2.3 for a 35% underdog and 3.5 for a 65% favorite (PR #10). Morning updates already price tonight's start with ESPN's betting line when the NHL's isn't posted yet (PR #101).
+- **Team strength counted once (PR #102):** this week's points per start no longer adds a team-strength term on top of the line or schedule pricing.
 - **Later games this week:** his own rate + 3.4 × (win chance − 0.5), with the win chance from each team's goal differential (shrunk to half of last season's over 15 games) and home ice (PR #35). Tap a goalie to see "soft schedule" or "tough schedule".
 
 **What it changes:** the points-per-start multiplier in the Week rating, and in the Season rating (own rate only, no line or schedule).
