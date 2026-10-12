@@ -911,6 +911,10 @@ Some coaches run two goalies in a strict A, B, A, B rotation. The start model tr
 
 Some tandems repeat a longer pattern instead of a strict A, B rotation: A, A, B (the starter plays two of every three) or A, A, B, B. **When a team's last starts repeat one of these patterns for at least two full cycles, between two goalies who are both still with the team, the last starter's chance for the next game now follows the pattern.** In an A, A, B pattern he gets a boost when the pattern keeps him in and a smaller cut when it switches; in A, A, B, B he gets a cut when it switches and no change when he stays. Over 2,307 such games this cut forecast error on them by about 2%, better in every season. A Daily Faceoff confirmation still overrides.
 
+## 116. Ice-time forecasts that know who's out
+
+The ice-time and power-play-time forecasts behind the skater rating (section 112) now look at the lineup. **They know whether a player missed his team's last game, how many regulars at his position with more ice time (or more power-play time) missed it, and his role last game and over his last three: where he ranked in ice time and power-play time, his share of the team's power-play time, and whether he was on the top line or the first power-play unit.** A player who just filled in for an injured star had his last game inflated; a player back from missing a game has a stale last game. Over three test seasons this improved how well the rating ranks next week's points by +0.0005 among all skaters and +0.0010 among free agents, positive in every season, and the forecast's ice-time error after a lineup change fell from 3.59 to 3.51.
+
 ## What the independent review changed
 
 | Review point | Outcome |

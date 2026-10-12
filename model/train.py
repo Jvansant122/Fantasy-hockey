@@ -26,7 +26,7 @@ from goalies import START_FEATS, start_table  # noqa: E402
 OLD_START_FEATS = START_FEATS[:8]  # before rest and workload (findings section 11)
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rating_model.json")
-CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots_2017.parquet")
+CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "rating_snapshots_2017_ctx.parquet")
 # game logs and xG back to 2017-18 (research hunt 8), so every skater ridge training row from 2019-20 has two seasons
 # ago; the dress table and replacement level keep the 2021-26 rows they were fit on
 HISTORY_DATA = os.path.join(RESEARCH, "hunt8", "all")
@@ -63,6 +63,15 @@ UX_ERA_FEATS = BASE_FEATS + UX_FEATS
 # inputs again with the forecasts in place of last-5 TOI and PP TOI, plus the forecasts themselves
 TOI_FC_IN = ["last_toi", "toi_l3", "l5_toi", "l10_toi", "l20_toi", "std_toi", "prev_toi"]
 PP_FC_IN = ["pp_l1", "pp_l3", "l5_pptoi", "l10_pptoi", "l20_pptoi", "std_pptoi", "prev_pptoi", "l5_pp_rank", "std_pp_rank"]
+# lineup context (he missed the team's last game; same-position regulars above him in ice time, or above him in PP
+# time, who missed it; the gaps last game vs his last 10) and last-game / last-3 role (findings 320 (1))
+LINEUP_TOI = ["missed_last", "out_above_toi", "ml_gap", "oa_gap"]
+LINEUP_PP = ["missed_last", "out_above_pp", "ml_ppgap", "oap_gap"]
+ROLE_TOI = ["r1_toi_rank", "r3_toi_rank", "r1_top_line", "r3_top_line"]
+ROLE_PP = ["r1_pp_share", "r3_pp_share", "r1_pp_rank", "r3_pp_rank", "r1_pp1", "r3_pp1"]
+PR113_FC_IN = (list(TOI_FC_IN), list(PP_FC_IN))
+TOI_FC_IN = TOI_FC_IN + LINEUP_TOI + ROLE_TOI
+PP_FC_IN = PP_FC_IN + LINEUP_PP + ROLE_PP
 FC_EXTRA = ["no_prev", "is_D", "gpw"]
 FC_FEATS = [f"fc_{n}" for n in UX_FEATS] + ["fc_toi", "fc_pptoi"]
 # pairwise products of the 12 strongest inputs, a linear stand-in for the declined tree layer (findings 310 (2))
@@ -118,6 +127,8 @@ def add_ranks(sk):
     sk["toi_rank"] = sk.groupby(["gameId", "teamAbbrev", "pos"]).toi.rank(ascending=False, method="min")
     sk["pp1"] = ((sk.pp_rank <= 5) & (sk.pptoi > 0.5)).astype(float)
     sk["top_line"] = (sk.toi_rank <= np.where(sk.pos == "D", 2, 3)).astype(float)
+    top = g.pptoi.transform("max")
+    sk["pp_share"] = (sk.pptoi / top.where(top > 0)).fillna(0)  # his PP time over the team's most that game
     return sk
 
 
@@ -135,19 +146,60 @@ def add_recent(df, sk):
         m[["playerId", "monday", "last_toi", "toi_l3", "pp_l1", "pp_l3"]], on=["playerId", "monday"], how="left")
 
 
+def add_context(df, sk):
+    """Lineup context and last-game role before each Monday (findings 320 (1)), same as scripts/rating.py
+    lineup_context and skater_features."""
+    days = sk[["teamAbbrev", "season", "gameDate"]].drop_duplicates().rename(columns={"teamAbbrev": "team", "gameDate": "asof"})
+    keys = df[["team", "season", "monday"]].drop_duplicates().assign(asof=lambda d: d.monday - pd.Timedelta(days=1))
+    keys = pd.merge_asof(keys.sort_values("asof"), days.sort_values("asof").assign(team_last=lambda d: d["asof"]),
+                         on="asof", by=["team", "season"], direction="backward")
+    df = df.drop(columns=LINEUP_TOI + LINEUP_PP[1:] + ROLE_TOI + ROLE_PP, errors="ignore")
+    df = df.merge(keys[["team", "season", "monday", "team_last"]], on=["team", "season", "monday"], how="left")
+    df["missed_last"] = (df.last_game < df.team_last).astype(float)
+    df["out_above_toi"], df["out_above_pp"] = 0.0, 0.0
+    reg = df[df.std_gp >= 5]
+    for _, g in reg.groupby(["team", "monday", "pos"]):
+        o = g.std_toi[g.missed_last > 0].values
+        if len(o):
+            df.loc[g.index, "out_above_toi"] = (o[None, :] > g.std_toi.values[:, None]).sum(1)
+    for _, g in reg.groupby(["team", "monday"]):
+        o = g.std_pptoi[(g.missed_last > 0) & (g.std_pptoi > 0.5)].values
+        if len(o):
+            df.loc[g.index, "out_above_pp"] = (o[None, :] > g.std_pptoi.values[:, None]).sum(1)
+    sk = sk.sort_values(["playerId", "gameDate"]).copy()
+    g = sk.groupby(["playerId", "season"])
+    r = pd.DataFrame({"playerId": sk.playerId, "season": sk.season, "asof": sk.gameDate})
+    for c in ("pp_share", "pp_rank", "toi_rank", "pp1", "top_line"):
+        r[f"r1_{c}"] = sk[c]
+        r[f"r3_{c}"] = g[c].transform(lambda x: x.rolling(3, min_periods=1).mean())
+    keys = df[["playerId", "monday", "season"]].assign(asof=df.monday - pd.Timedelta(days=1)).sort_values("asof")
+    m = pd.merge_asof(keys, r.sort_values("asof"), on="asof", by=["playerId", "season"], direction="backward")
+    return df.drop(columns="team_last").merge(m.drop(columns=["asof", "season"]), on=["playerId", "monday"], how="left")
+
+
+def context_gaps(df):
+    """The last-game vs last-10 gaps the lineup context scales (same as scripts/rating.py forecast_features)."""
+    out = pd.DataFrame(index=df.index)
+    out["ml_gap"] = df.missed_last * (df.l10_toi - df.last_toi)
+    out["ml_ppgap"] = df.missed_last * (df.l10_pptoi - df.pp_l1)
+    out["oa_gap"] = df.out_above_toi.clip(upper=3) * (df.last_toi - df.l10_toi)
+    out["oap_gap"] = df.out_above_pp.clip(upper=3) * (df.pp_l1 - df.l10_pptoi)
+    return out
+
+
 def fc_design(df, ins):
-    X = df[ins].copy()
+    X = pd.concat([df, context_gaps(df)], axis=1)[ins].copy() if "missed_last" in df else df[ins].copy()
     X["no_prev"] = df.prev_gp.isna().astype(float)
     X["is_D"] = (df.pos == "D").astype(float)
     X["gpw"] = np.clip(df.std_gp / 20, 0, 1)
     return X
 
 
-def fit_forecast(train):
+def fit_forecast(train, fc_in=None):
     """Two small ridges (alpha 1, weighted by games next week): next week's TOI/G and PP TOI/G (findings 310 (1))."""
     tr = train[train.y_gp > 0]
     st = {}
-    for tgt, ins in (("y_toi", TOI_FC_IN), ("y_pptoi", PP_FC_IN)):
+    for tgt, ins in zip(("y_toi", "y_pptoi"), fc_in or (TOI_FC_IN, PP_FC_IN)):
         X = fc_design(tr, ins)
         fill = X.mean()
         m = Ridge(alpha=1.0).fit(X.fillna(fill), tr[tgt], sample_weight=tr.y_gp)
@@ -174,7 +226,7 @@ def snapshots():
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
-    df = add_p2(add_recent(common.skater_snapshots(sk), sk), sk)
+    df = add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk)
     df.to_parquet(CACHE)
     return df
 
@@ -209,22 +261,22 @@ def prep(df, feats=FEATS, mu=None, st=None):
     return X[feats]
 
 
-def fit_state(train, feats, mu):
+def fit_state(train, feats, mu, fc_in=None):
     """What the forecast and product inputs need from the training rows: the two forecast ridges, and each product
     factor's training mean (a missing factor is filled with it before multiplying)."""
     tr = train[train.y_gp > 0]
     st = {}
     if any(c in FC_FEATS for c in feats):
-        st["fc"] = fit_forecast(tr)
+        st["fc"] = fit_forecast(tr, fc_in)
     if any(c in PAIR_FEATS for c in feats):
         st["pair_fill"] = prep(tr, UX_ERA_FEATS, mu)[PAIR_IN].mean()
     return st
 
 
-def fit_linear(train, feats=FEATS, mu=None):
+def fit_linear(train, feats=FEATS, mu=None, fc_in=None):
     """One ridge per scoring stat, summed with league weights and folded back to raw-unit coefficients."""
     tr = train[train.y_gp > 0]
-    st = fit_state(tr, feats, mu)
+    st = fit_state(tr, feats, mu, fc_in)
     X = prep(tr, feats, mu, st)
     means = X.mean().fillna(0)
     X = X.fillna(means)
@@ -266,7 +318,7 @@ def skater_backtest(df):
     for s in TEST_SEASONS:
         tr, te = df[df.season < s], df[(df.season == s) & (df.y_gp > 0) & (df.std_gp >= 3)].copy()
         mu = ux_means(tr)
-        te["before"] = predict(te, *fit_linear(tr, PR110_FEATS, mu), PR110_FEATS, mu)
+        te["before"] = predict(te, *fit_linear(tr, FEATS, mu, PR113_FC_IN), FEATS, mu)
         te["after"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
         parts.append(te)
     t = pd.concat(parts)

@@ -195,7 +195,12 @@ def test_games_that_already_started_drop_out(browser, server, data):
     later = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and p["id"] != sk["id"])
     sk["today_start"], later["today_start"] = iso(now - timedelta(hours=1)), iso(now + timedelta(hours=3))
     # his last game this week started: nothing is left, not a rounding leftover
-    last = next(p for p in late["players"] if p["games_left"] == 1 and (p.get("cr") or 0) > 0 and p["id"] not in (sk["id"], later["id"]))
+    last = next((p for p in late["players"] if p["games_left"] == 1 and (p.get("cr") or 0) > 0 and p["id"] not in (sk["id"], later["id"])), None)
+    if last is None:  # early in the week everyone has more games: give one player tonight's game only
+        tonight_sp = next(n["sp"] for n in late["nights"] if not n["past"])
+        last = next(p for p in late["players"] if p["pos"] != "G" and tonight_sp in (p.get("nights") or []) and (p.get("cr_dress_next") or 0) > 0
+                    and (p.get("cr_fpg") or 0) > 0 and p["id"] not in (sk["id"], later["id"]))
+        last.update(games_left=1, nights=[tonight_sp], cr_games=last["cr_dress_next"], cr=round(last["cr_fpg"] * last["cr_dress_next"], 2))
     last["today_start"] = iso(now - timedelta(hours=1))
     ctx, page, errors = open_page(browser, server, data=late)
     got = lambda pid: page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {pid}); return [p.games_left, p.cr]; }})()")
@@ -607,7 +612,7 @@ def test_roster_size_rules(browser, server, data):
     instead of the Drop list; an open spot means an add with no drop."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = json.loads(json.dumps(data))
+    d = _sunday(data)  # Sunday after the first puck: no night left to hold moves for (handoff 207)
     team = d["teams"][0]
     roster = _mine(d, team)
     sk = [p for p in roster if p["pos"] != "G"]
@@ -622,7 +627,7 @@ def test_roster_size_rules(browser, server, data):
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")  # worth stashing
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     activate = _card(page, "Activate from IR")
     assert "Your roster is full: drop" in activate
@@ -647,7 +652,7 @@ def test_roster_size_rules(browser, server, data):
     ctx.close()
     # only one IR slot open and the Drop list's IR move takes it: no IR stash (handoff 212)
     d["ir_slots"] = 2
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     assert "Move to IR" in _card(page, "Drop list") and _card(page, "IR stash") == ""
     assert errors == []
@@ -656,7 +661,7 @@ def test_roster_size_rules(browser, server, data):
     # full, nothing to move to IR, one move left: no open spot, and no stash that needs two moves
     hurt["injury"] = None
     team["moves_used"] = 6
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     assert _card(page, "IR stash") == ""
     assert all(not l.startswith("Add ") for l in _card(page, "Best").split("\n")[1:])
@@ -664,7 +669,7 @@ def test_roster_size_rules(browser, server, data):
     ctx.close()
     # an open spot: the first add needs no drop, and activating needs none either
     d["roster_max"], team["moves_used"] = non_ir + 1, 0
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     assert "roster is full" not in _card(page, "Activate from IR")
     best = _card(page, "Best").split("\n")[1:]
@@ -1361,12 +1366,15 @@ def _sunday(data):
     d = json.loads(json.dumps(data))
     d.update(updated_date="2026-10-11", updated="Sun Oct 11, 3:00 PM ET", updated_utc="2026-10-11T19:00:00Z",
              first_start="2026-10-11T21:00:00Z", final_matchup=False, move_limit=7, matchup_weeks=1, season_over=False)
-    d["nights"][-1]["date"] = "Sun 11"
+    for i, n in enumerate(d["nights"][-7:]):  # Mon 5 .. Sun 11, whatever week the committed data is from
+        n["date"] = f"{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]} {5 + i}"
     for n in d["nights"]:
         n["past"] = n is not d["nights"][-1]
     last = d["nights"][-1]["sp"]
     for p in d["players"]:
         p["today_start"] = d["first_start"] if last in (p.get("nights") or []) else None
+        if p["games_left"] > 1 or (p["games_left"] and not p["today_start"]):  # earlier-week data: only tonight is left
+            p["games_left"] = 1 if p["today_start"] else 0
     for t in d["teams"]:
         t["moves_used"] = 0
     return d
@@ -1588,6 +1596,9 @@ def test_best_moves_hold_moves_for_the_week(browser, server, data):
         d = _weekday(data, day)
         for t in d["teams"]:
             t["moves_used"] = used
+        for p in d["players"]:  # no Mid-week swap takes one of the moves first
+            if p.get("team_id") is not None:
+                p.update(injury=None, sat_last=False)
         ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 5 + day, 10))
         counts, held = [], 0
         for t in d["teams"]:

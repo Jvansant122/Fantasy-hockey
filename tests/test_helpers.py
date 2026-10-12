@@ -427,3 +427,22 @@ def test_sp1_date_from_the_season_schedule():
     nights[40] += timedelta(days=1)  # one stray late game doesn't move it
     assert fetch.sp1_date(nights) == start.isoformat()
     assert fetch.sp1_date({sp: d for sp, d in nights.items() if sp < 20}) is None
+
+
+def test_lineup_context_counts_regulars_above_him_who_missed_the_last_game():
+    tg = {"BOS": list(range(1, 11))}
+    g = lambda pid, game, pos, toi, pp: {"id": pid, "game": game, "team": "BOS", "pos": pos, "toi": toi, "pptoi": pp}
+    by_player = {
+        1: [g(1, n, "C", 19, 3.0) for n in range(1, 10)],     # top line and PP1, missed game 10
+        2: [g(2, n, "L", 15, 1.0) for n in range(1, 11)],
+        3: [g(3, n, "R", 8, 0.0) for n in range(8, 11)],       # 3 games: too few for the counts
+        4: [g(4, n, "D", 22, 2.0) for n in range(1, 11)],      # more PP time than 2 but not than 1
+    }
+    c = rating.lineup_context(by_player, tg)
+    assert c[1] == {"missed_last": 1.0, "out_above_toi": 0.0, "out_above_pp": 0.0}
+    assert c[2] == {"missed_last": 0.0, "out_above_toi": 1.0, "out_above_pp": 1.0}
+    assert c[3] == {"missed_last": 0.0, "out_above_toi": 0.0, "out_above_pp": 0.0}
+    assert c[4] == {"missed_last": 0.0, "out_above_toi": 0.0, "out_above_pp": 1.0}  # a forward: not above him in TOI
+    gaps = rating.context_gaps({"missed_last": 1.0, "l10_toi": 19, "last_toi": 12, "out_above_toi": 5.0, "out_above_pp": 0.0,
+                                "l10_pptoi": 3.0, "pp_l1": None})
+    assert gaps == {"ml_gap": 7, "ml_ppgap": None, "oa_gap": 3 * (12 - 19), "oap_gap": None}
