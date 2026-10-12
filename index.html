@@ -531,7 +531,9 @@ function render(all = true) {
   const shown = list.filter((p, i) => i < 300 || onMyTeam(p) || inRoster(p)), extras = Math.max(0, shown.length - 300);
   $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
     (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
-  $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
+  // a phone draws only its 5 columns unless "All columns" is on: the 9 hidden cells a row cost about a quarter of its layout
+  state.cols = phoneWidth.matches && !$("allcols").checked ? COLS.filter(c => c[3]) : COLS;
+  $("head").innerHTML = state.cols.map(([key, label, align, phone]) =>
     `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights<span class="wkl">(${esc(state.tw.w.label)})</span>` : label}</th>`).join("");
   // the first rows now and the rest as the list scrolls near them: laying out all 300 took most of a phone's sort or filter
   drawRows(shown);
@@ -543,14 +545,14 @@ let rowQueue = [], rowWatch = null;
 function rowHTML(p) {
   const c = cells(p);
   return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
-    COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
+    state.cols.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
     (state.open === p.id ? whyRow(p) : "");
 }
 function drawRows(shown) {
   rowWatch?.disconnect();
   const n = window.ALL_ROWS ? shown.length : FIRST_ROWS;
   rowQueue = shown.slice(n);
-  $("rows").innerHTML = shown.slice(0, n).map(rowHTML).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
+  $("rows").innerHTML = shown.slice(0, n).map(rowHTML).join("") || `<tr><td colspan="${state.cols.length}" class="empty">No players match.</td></tr>`;
   moreRows();
 }
 // the next batch once the "more" row is within a couple of screens; without IntersectionObserver, everything at once
@@ -559,7 +561,7 @@ function moreRows() {
   rows.querySelector("tr.more")?.remove();
   if (!rowQueue.length) return;
   if (!window.IntersectionObserver) { rows.insertAdjacentHTML("beforeend", rowQueue.map(rowHTML).join("")); rowQueue = []; return; }
-  rows.insertAdjacentHTML("beforeend", `<tr class="more"><td colspan="${COLS.length}" class="empty">Loading ${rowQueue.length} more…</td></tr>`);
+  rows.insertAdjacentHTML("beforeend", `<tr class="more"><td colspan="${state.cols.length}" class="empty">Loading ${rowQueue.length} more…</td></tr>`);
   rowWatch = rowWatch || new IntersectionObserver(es => {
     if (!es.some(e => e.isIntersecting)) return;
     rowWatch.disconnect();
@@ -569,7 +571,7 @@ function moreRows() {
   }, { rootMargin: "1500px 0px" });
   rowWatch.observe(rows.querySelector("tr.more"));
 }
-const whyRow = p => `<tr class="why"><td colspan="${COLS.length}"><div class="whytxt">${esc(details(p))}</div></td></tr>`;
+const whyRow = p => `<tr class="why"><td colspan="${state.cols.length}"><div class="whytxt">${esc(details(p))}</div></td></tr>`;
 // opening or closing a player's details changes just those rows: redrawing all 300 took about half a second on a phone
 function toggleDetails(id) {
   const rows = $("rows"), was = state.open;
@@ -861,7 +863,8 @@ function renderUpgrades() {
 // On a phone, fold each card's explainer behind "why", and the long cards (trade ideas, IR stash, goalies note) behind
 // their title, so the actionable lines stay near the top (findings 214: Upgrades was 1564 px tall on a phone)
 const phoneWidth = matchMedia("(max-width: 640px)");
-phoneWidth.addEventListener?.("change", () => { if (state.data && state.team) renderUpgrades(); });  // refold when a window crosses the phone width
+// refold the cards and redraw the table's columns when a window crosses the phone width
+phoneWidth.addEventListener?.("change", () => { if (state.data) render(!!state.team); });
 function foldCards() {
   if (!phoneWidth.matches) return;
   for (const c of $("upgrades").querySelectorAll(".upg")) {
