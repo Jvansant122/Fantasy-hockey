@@ -1268,7 +1268,7 @@ def test_offseason_mover_rated_a_little_lower(monkeypatch, tmp_path):
         monkeypatch.setattr(rating, "OFFSEASON_MOVER_MULT", mult)
         return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], FakeSession(**kw))["Auston Matthews"]
     moved, plain = matthews(0.965, last_team={1: "BOS"}), matthews(1.0, last_team={1: "BOS"})
-    assert moved["cr_fpg"] == pytest.approx(0.965 * plain["cr_fpg"], abs=0.006)
+    assert moved["cr_fpg"] == pytest.approx(0.965 * plain["cr_fpg"], abs=0.01)  # both rounded to 2 places
     assert moved["cr_season"] < plain["cr_season"]
     assert matthews(0.965)["cr_fpg"] == matthews(1.0)["cr_fpg"]  # same team as last season
     # traded this season (2 games for BOS, then TOR): the in-season mover rules apply, not this
