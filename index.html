@@ -534,7 +534,16 @@ function renderUpgrades() {
   // No moves left (findings 146): adds wait for next Monday, so rank them by 7 x Season instead of this week
   const myTeam = d.teams.find(t => String(t.id) === state.team);
   const reset = weekOver(d);
-  const noMoves = !reset && d.rated && d.move_limit && myTeam?.moves_used >= d.move_limit;
+  const tonight = d.nights.find(n => !n.past);
+  const lastNight = !!tonight && tonight === d.nights[d.nights.length - 1];
+  // ESPN holds an add made after the day's first puck until tomorrow (findings 179)
+  const puck = d.first_start ? new Date(d.first_start) : null;
+  const locked = !!puck && puck <= new Date() && !stale(d);
+  // after Sunday's first puck an add is charged to next matchup's moves (findings 290 (1)), as it is once ESPN has rolled over
+  const nextCount = lastNight && locked && !d.final_matchup;
+  const cnt = nextCount || reset ? { limit: d.move_limit_next ?? d.move_limit, used: myTeam?.moves_used_next }
+    : { limit: d.move_limit, used: myTeam?.moves_used };
+  const noMoves = d.rated && cnt.limit && cnt.used != null && cnt.used >= cnt.limit;
   // the final with no moves left: nothing added now ever counts (findings 232)
   const seasonDone = noMoves && d.final_matchup;
   // a two-week playoff round's first week: the next Monday is the same round, with the same moves (findings 232)
@@ -573,7 +582,7 @@ function renderUpgrades() {
   const outs = roster.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.dfo_out !== false && p.games_left > 0)));
   const swapSubs = new Set(), swapDrops = new Set(), dropped = new Set();
   // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
-  const realLeft = !noMoves && !reset && d.move_limit && myTeam?.moves_used != null ? Math.max(0, d.move_limit - myTeam.moves_used) : null;
+  const realLeft = !noMoves && cnt.limit && cnt.used != null ? Math.max(0, cnt.limit - cnt.used) : null;
   const nextWeek = noMoves || reset;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.</span>
     ${outs.map(p => {
@@ -592,17 +601,12 @@ function renderUpgrades() {
   // a swap sub takes the spot of the player he replaces, so an IR move a swap already uses frees nothing more (findings 240)
   const freeSpots = rosterMax == null ? 0 : Math.max(0, rosterMax - nonIR.length + irMove.filter(p => !swapDrops.has(p.id)).length);
   // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
-  const tonight = d.nights.find(n => !n.past);
-  const lastNight = !!tonight && tonight === d.nights[d.nights.length - 1];
-  // ESPN holds an add made after the day's first puck until tomorrow (findings 179)
-  const puck = d.first_start ? new Date(d.first_start) : null;
-  const locked = !!puck && puck <= new Date() && !stale(d);
   let streamShown = false;
   if (d.rated && tonight && !stale(d)) {
     const myG = tonightMine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
     const team = d.teams.find(t => String(t.id) === state.team);
-    const limit = d.move_limit, used = team?.moves_used;  // null when ESPN gives no usable limit: show the card anyway
+    const limit = cnt.limit, used = cnt.used;  // null when ESPN gives no usable limit: show the card anyway
     if (open > 0 && !(limit && used >= limit)) {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
         : (used == null ? "check your moves left" : `${used} move${used === 1 ? "" : "s"} used this matchup`);
@@ -679,6 +683,7 @@ function renderUpgrades() {
     .sort((a, b) => b.gap - a.gap).filter((t, i, all) => all.findIndex(u => u.o.id === t.o.id) === i).slice(0, 5);
   const chips = new Set(trades.map(t => t.m.id));
   const best = [];  // Best moves' picks: the IR stash's move budget counts them (findings 240)
+  let lastCall = false, spare = 2;  // ... and the moves Best moves holds for nights to come (findings 291 (1))
   // Best 2 moves (research findings 68): the biggest keep-value gains over your weakest player at the same position
   // none in the final once the moves are gone: nothing after it counts (findings 232)
   if (d.rated && !seasonDone) {
@@ -690,12 +695,12 @@ function renderUpgrades() {
     // the matchup's last night before its first puck: moves left expire at the rollover, so use all of them (findings 231)
     // with any move left, not only 3+: even one unused move is lost (findings 238)
     // not from yesterday's data: Monday 0-4 AM still shows Sunday as tonight (findings 240)
-    const lastCall = !noMoves && !reset && !locked && !stale(d) && !d.final_matchup && lastNight && realLeft > 0;
+    lastCall = !noMoves && !reset && !locked && !stale(d) && !d.final_matchup && lastNight && realLeft > 0;
     // hold one move for each night still to come (injury swaps, goalie streams), so a team following the card makes about
     // 2 moves on Monday and keeps the rest, instead of 2 more at every update (findings 51, 59, 239)
-    const nightsAfter = d.nights.filter(n => !n.past && n !== tonight).length;
+    const nightsAfter = d.nights.filter(n => !n.past && n !== tonight && n.games > 0).length;  // nights without NHL games hold nothing (findings 291 (5))
     const hold = lastCall ? 0 : Math.min(nightsAfter, (d.move_limit || 7) - 2);
-    const spare = realLeft != null ? Math.max(0, realLeft - swapSubs.size - hold) : 2;
+    spare = realLeft != null ? Math.max(0, realLeft - swapSubs.size - hold) : 2;
     // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
     const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);
     const pick = () => {
@@ -751,7 +756,8 @@ function renderUpgrades() {
   // with a full roster it takes a drop and a second move (findings 231)
   // IR slots the Drop list's IR moves leave, and a drop no other card already uses (findings 240)
   const irLeft = irOpen - irMove.length, stashDrop = dropOrder.find(p => !dropped.has(p.id));
-  const stash = !d.rated || irLeft <= 0 || d.final_matchup || !(noMoves || (realLeft != null ? movesLeft - best.length : movesLeft) >= (full ? 2 : 1)) ? []
+  const stashBudget = noMoves ? Infinity : realLeft != null ? (lastCall ? movesLeft : spare) - best.length : movesLeft;
+  const stash = !d.rated || irLeft <= 0 || d.final_matchup || stashBudget < (full ? 2 : 1) ? []
     : d.players.filter(p => isFA(p) && p.pos !== "G" && irEligible(p) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
   const stashHow = full && stashDrop ? `Your roster is full: drop ${stashDrop.name}, add him, move him to IR, then use the open spot on your next add (2 moves).`
@@ -783,6 +789,7 @@ function renderUpgrades() {
   }
   // once, at the top and never folded: no moves left means every add here is for next Monday (findings 233),
   // the next round in a playoff round's first week, or never in the final (findings 232)
+  if (nextCount && !noMoves) cards.unshift(`<div class="sub warn wvnote">Tonight's first game has started: an add now uses next week's moves${realLeft != null ? ` (${realLeft} of ${cnt.limit} left)` : ""} and plays from Monday.</div>`);
   if (noMoves) cards.unshift(`<div class="sub warn wvnote">${d.final_matchup ? "No moves left, and the season ends with this matchup: nothing added now counts."
     : roundLeft ? "No moves left this round: the adds below are targets for the next round." : "No moves left this matchup: the adds below are next Monday's targets."}</div>`);
   $("upgrades").innerHTML = cards.join("");
@@ -1067,7 +1074,7 @@ fetch("data/players.json", { cache: "no-store" })
     if (stale(d) && d.updated_utc && etDay(d.updated_utc) === etDay(Date.now()))
       $("stale").textContent = "These numbers are from an overnight update, before ESPN moved to today. Last night's games are in, but tonight's lineup cards wait for the 6 AM ET refresh.";
     // Monday after ESPN's rollover, before the first run (findings 233)
-    if (weekOver(d)) $("stale").textContent = "These are last matchup's numbers. ESPN has started the new matchup with fresh moves; the site refreshes at 6 AM ET.";
+    if (weekOver(d)) $("stale").textContent = "These are last matchup's numbers. ESPN has started the new matchup with fresh moves, less any you added after Sunday's first puck; the site refreshes at 6 AM ET.";
     // after the fantasy final there's nothing to pick up or trade (findings 232)
     if (d.season_over) {
       $("stale").hidden = false;

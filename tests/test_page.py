@@ -624,6 +624,7 @@ def test_roster_size_rules(browser, server, data):
     d["ir_slots"] = 3  # two open: one for the IR move, one for the stash (findings 240)
     non_ir = len(roster) - 1
     d["roster_max"], d["move_limit"], team["moves_used"] = non_ir, 7, 0
+    d["move_limit_next"], team["moves_used_next"] = 7, 0  # after Sunday's first puck adds use next week's moves (handoff 263)
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")  # worth stashing
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
@@ -660,7 +661,7 @@ def test_roster_size_rules(browser, server, data):
     d["ir_slots"] = 3
     # full, nothing to move to IR, one move left: no open spot, and no stash that needs two moves
     hurt["injury"] = None
-    team["moves_used"] = 6
+    team["moves_used"] = team["moves_used_next"] = 6
     ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     assert _card(page, "IR stash") == ""
@@ -668,7 +669,7 @@ def test_roster_size_rules(browser, server, data):
     assert errors == []
     ctx.close()
     # an open spot: the first add needs no drop, and activating needs none either
-    d["roster_max"], team["moves_used"] = non_ir + 1, 0
+    d["roster_max"], team["moves_used"], team["moves_used_next"] = non_ir + 1, 0, 0
     ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     assert "roster is full" not in _card(page, "Activate from IR")
@@ -1515,7 +1516,8 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
     for used, shown in ((0, True), (5, False)):  # 7 left: room for it; 2 left: Best moves takes both
-        team["moves_used"] = used
+        team["moves_used"] = team["moves_used_next"] = used  # after Sunday's first puck adds use next week's moves (handoff 263)
+        d["move_limit_next"] = 7
         ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
         page.select_option("#team", str(team["id"]))
         best = [l for l in _card(page, "Best").split("\n")[1:] if l.strip()]
@@ -1697,5 +1699,22 @@ def test_goalie_details_name_the_pull_to_the_league_rate(browser, server, data):
     assert "this week priced at 3.47: pulled most of the way to the league's rate" in text and "then the schedule" in text
     g2 = page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {g['id']}); p.cr_why.sched = null; return why(p); }})()")
     assert "pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)" in g2 and "then" not in g2.split("priced at")[1]
+    assert errors == []
+    ctx.close()
+
+
+def test_sunday_after_first_puck_counts_next_weeks_moves(browser, server, data):
+    """After Sunday's first puck an add is charged to the next matchup (handoff 263): a team out of this week's moves
+    still has next week's, less any it already made tonight."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _sunday(data)
+    team = d["teams"][0]
+    d["move_limit"], d["move_limit_next"], team["moves_used"], team["moves_used_next"] = 7, 7, 7, 1
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+    page.select_option("#team", str(team["id"]))
+    text = page.locator("#upgrades").inner_text()
+    assert "an add now uses next week's moves (6 of 7 left) and plays from Monday" in text
+    assert "No moves left" not in text
     assert errors == []
     ctx.close()

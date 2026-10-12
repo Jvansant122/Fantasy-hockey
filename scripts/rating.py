@@ -1586,10 +1586,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # missed all or most of last season (Barkov): the season before instead of a newcomer's prior, for players on a current
     # NHL roster or with games this season, so retired players don't come back (findings 216)
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
+    prev3 = {}
     if missed:
         older = prev2
         label = f"{(prev_season - 10001) // 10000}-{str((prev_season - 10001) % 100).zfill(2)}"  # 20242025 -> 2024-25 (findings 234)
         prev.update({pid: dict(older[pid], season_label=label) for pid in missed if (older.get(pid) or {}).get("gp", 0) >= PREV_MIN_GP})
+        # a player whose "last season" is the one before (missed last season): his two-seasons-ago input is three seasons back,
+        # as in training (findings 291 (4))
+        prev3 = load_prev_season(s, prev_season - 20002) if any(v.get("season_label") for v in prev.values()) else {}
 
     def name_match(p):
         team = ESPN_TO_NHL.get(p["team"], p["team"])
@@ -1763,8 +1767,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             traded = bool(gl) and espn_team != team and espn_team in team_games and gl[-1]["game"] in tg
             if traded:
                 tg = tg[:tg.index(gl[-1]["game"]) + 1]
-            # his "last season" is already the one before (missed last season): no older season to add (findings 216)
-            p2 = None if (prev.get(pid) or {}).get("season_label") else prev2.get(pid)
+            # his "last season" is already the one before (missed last season): the season before that stands in (findings 291 (4))
+            p2 = prev3.get(pid) if (prev.get(pid) or {}).get("season_label") else prev2.get(pid)
             f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2,
                                   context=context.get(pid))
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
