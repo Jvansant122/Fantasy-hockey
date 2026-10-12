@@ -2179,6 +2179,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     boost_f = season_boost.predict(boost_fpg, boost_x[pid])
                     shift += (boost_f - fpg_t) * (BOOST_FPG_BLEND[0] + BOOST_FPG_BLEND[1] * g)
                 season = rest_share * max(fpg_t + shift, 0.0)
+            season_pts = season / rest_share if rest_share > 0 else None
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -2228,6 +2229,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if season_pts is not None:  # after age, ESPN and the boosted model: Season = this x his share (check_data P5)
+                why["season_pts"] = round(season_pts, 2)
             if boost_q is not None:
                 why["boost_dress"] = round(boost_q, 2)  # the 16-season boosted dress share (findings 360 (3))
             if boost_f is not None:

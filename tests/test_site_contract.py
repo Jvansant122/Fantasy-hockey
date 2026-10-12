@@ -109,6 +109,15 @@ def test_data_rules_catch_past_bugs(data):
             p["injury"] = "INJURY_RESERVE"
     assert not any(e.startswith("G3") for e in check_data.problems(no_season))
     assert check_data.warnings(data, data) == [w for w in check_data.warnings(data, None)]
+    # Season above the skater's own points a game: a share over 1 (P5); the Season rating's points a game counts when given
+    over = copy.deepcopy(data)
+    q = first(lambda p: p["pos"] != "G" and (p.get("cr_season") or 0) > 0.3 and p.get("cr_fpg"))
+    q = next(x for x in over["players"] if x["id"] == q["id"])
+    q["cr_season"] = round(q["cr_fpg"] + 0.5, 2)
+    q.setdefault("cr_why", {}).pop("season_pts", None)
+    assert any(e.startswith("P5") for e in check_data.problems(over))
+    q["cr_why"]["season_pts"] = q["cr_season"]
+    assert not any(e.startswith("P5") for e in check_data.problems(over))
 
 
 def test_check_allows_playoff_rounds_and_empty_weeks(data):
