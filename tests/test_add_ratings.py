@@ -1025,7 +1025,7 @@ def test_unsigned_player_counts_as_not_playing(monkeypatch, tmp_path):
     players = [espn(101, "Auston Matthews", "FA", "C")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     p = players[0]
-    assert p["cr_dress"] == pytest.approx(rating.NOT_PLAYING_DRESS) and p["cr_season"] == pytest.approx(p["cr_fpg"] * rating.NOT_PLAYING_DRESS, abs=0.01)
+    assert p["cr_dress"] == pytest.approx(rating.NOT_PLAYING_DRESS) and p["cr_season"] == pytest.approx(p["cr_why"]["season_fpg"] * rating.NOT_PLAYING_DRESS, abs=0.01)
 
 
 def test_player_who_missed_last_season_uses_the_one_before(monkeypatch, tmp_path):

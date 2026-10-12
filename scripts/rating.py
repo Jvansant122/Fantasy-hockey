@@ -374,8 +374,9 @@ def load_skater_games(s, season, today):
             row = rows.get((r["playerId"], r["gameId"]))
             if row:
                 row["pptoi"] = (r.get("ppTimeOnIce") or 0) / 60
+                row["shtoi"] = (r.get("shTimeOnIce") or 0) / 60
     for row in rows.values():
-        for k in ("hits", "blockedShots", "iCF", "pptoi"):
+        for k in ("hits", "blockedShots", "iCF", "pptoi", "shtoi"):
             row.setdefault(k, 0)
         row["points"] = row["goals"] + row["assists"]
         row["fp"] = sum(row[k] * w for k, w in WEIGHTS.items())
@@ -437,12 +438,13 @@ def load_prev_season(s, season):
     for r in stats_report(s, "skater/timeonice", season):
         if r["playerId"] in out:
             out[r["playerId"]]["pptoi_tot"] = (r.get("ppTimeOnIce") or 0) / 60
+            out[r["playerId"]]["shtoi_tot"] = (r.get("shTimeOnIce") or 0) / 60
     rates = {}
     for pid, t in out.items():
         gp = t["gp"]
         fp = sum((t.get(k) or 0) * w for k, w in WEIGHTS.items())
         rates[pid] = {"gp": gp, "name": t["name"], "pos": t["pos"], "fp": fp / gp, "toi": t["toi"], "team": t.get("team"),
-                      "pptoi": t.get("pptoi_tot", 0) / gp, "points": (t["goals"] + t["assists"]) / gp,
+                      "pptoi": t.get("pptoi_tot", 0) / gp, "shtoi": t.get("shtoi_tot", 0) / gp, "points": (t["goals"] + t["assists"]) / gp,
                       **{k: (t.get(k) or 0) / gp for k in ("shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints")}}
     prev_ranks(rates, {pid: t.get("team") for pid, t in out.items()})
     return rates
@@ -597,7 +599,8 @@ def load_xg(s, year):
         row.update({pre + "ixg": num(f, "I_F_xGoals"), pre + "goals": num(f, "I_F_goals"),
                     pre + "assists": num(f, "I_F_primaryAssists") + num(f, "I_F_secondaryAssists"),
                     pre + "tm_xg": num(f, "OnIce_F_xGoals") - num(f, "I_F_xGoals"),
-                    pre + "tm_goals": num(f, "OnIce_F_goals") - num(f, "I_F_goals")})
+                    pre + "tm_goals": num(f, "OnIce_F_goals") - num(f, "I_F_goals"),
+                    pre + "ogf": num(f, "OnIce_F_goals"), pre + "oxgf": num(f, "OnIce_F_xGoals")})
         if not pre:
             row.update(gp=num(f, "games_played"), onice_xgf=num(f, "OnIce_F_xGoals"), shots=num(f, "I_F_shotsOnGoal"),
                        hits=num(f, "I_F_hits"), blocks=num(f, "shotsBlockedByPlayer"), pos=f[ix["position"]] if "position" in ix else "")
@@ -707,9 +710,12 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
     def fpg(self, feats, season=False):
-        """Points a game: the Week rating's ridge, or with season=True the Season rating's (no hinge curves, findings 320 (2))."""
+        """Points a game: the Week rating's ridge, or with season=True the Season rating's (no hinge curves, findings 320 (2);
+        decomposed scoring forecasts, findings 320 (3))."""
         feats = {**feats, **forecast_features(feats, self.sk)}
         m = self.sk.get("season", self.sk) if season else self.sk
+        if season and m.get("rates"):
+            feats |= season_features(feats, m)
         total = m["intercept"]
         for name, c in zip(m["features"], m["coef"]):
             v = feats.get(name)
@@ -747,7 +753,7 @@ def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=Non
         f[f"r1_{c}"] = games[-1].get(c) if games else None
         f[f"r3_{c}"] = mean([g.get(c) for g in games[-3:]]) if games else None
     w2 = min(p2["gp"] / 82, 1) if p2 else 0.0
-    for r in P2_RATES:
+    for r in P2_RATES + ["goals", "assists"]:
         f[f"p2_{r}"] = p2.get(r) if p2 else None
     f["p2_gp"], f["no_p2"] = (p2["gp"], 0.0) if p2 else (0, 1.0)
     for r in ("fp", "toi", "pptoi"):
@@ -778,6 +784,20 @@ def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=Non
     f["last_toi"], f["pp_l1"] = (games[-1]["toi"], games[-1]["pptoi"]) if games else (None, None)
     f["toi_l3"] = mean([g["toi"] for g in games[-3:]]) if games else None
     f["pp_l3"] = mean([g["pptoi"] for g in games[-3:]]) if games else None
+    # the Season rating's decomposed inputs (findings 320 (3)): this season's and last season's totals with MoneyPuck's
+    # on-ice goals and xG for (all situations, 5 on 4), and short-handed ice time
+    for k, c in (("points", "points"), ("ppPoints", "ppPoints"), ("toi", "toi"), ("pptoi", "pptoi")):
+        f[f"c_{k}"] = sum(g[c] for g in games)
+        f[f"pv_{k}"] = prev[c] * prev["gp"] if prev and prev.get(c) is not None else None
+    for k, c in (("a_ogf", "ogf"), ("a_oxgf", "oxgf"), ("pp_ogf", "pp_ogf"), ("pp_oxgf", "pp_oxgf")):
+        f[f"c_{k}"] = (xg_now or {}).get(c)
+        f[f"pv_{k}"] = (xg_prev or {}).get(c)
+    if f["pv_a_oxgf"] is None or (f["pv_a_oxgf"] == 0 and (f["pv_toi"] or 0) > 100):  # no MoneyPuck season for him
+        for k in ("a_ogf", "a_oxgf", "pp_ogf", "pp_oxgf"):
+            f[f"pv_{k}"] = None
+    sh = [g.get("shtoi", 0) for g in games]
+    f["sh_l1"], f["sh_l5"], f["sh_l10"], f["sh_std"] = (sh[-1], mean(sh[-5:]), mean(sh[-10:]), mean(sh)) if sh else (None,) * 4
+    f["sh_prev"] = prev.get("shtoi") if prev else None
     w = min(gp / 20, 1)
     for r in ("fp", "toi", "pptoi", "shots", "blockedShots", "hits"):
         v = f.get(f"std_{r}")
@@ -1094,6 +1114,46 @@ def forecast_features(f, sk):
         for i, a in enumerate(pairs["inputs"]):
             for b in pairs["inputs"][i + 1:]:
                 out[f"{a}*{b}"] = v[a] * v[b]
+    return out
+
+
+IPP_K, IPP_EV_MIN, IPP_PP_MIN = 20.0, 300.0, 60.0  # shrinkage of IPP and on-ice xGF per minute (findings 320 (3))
+RATE_WIN = ["l5", "l10", "l20", "std", "prev", "p2"]
+
+
+def season_features(f, m):
+    """The Season rating's decomposed inputs (same arithmetic as model/train.py decomposed): per-minute rate forecasts
+    alone and x the TOI forecast; IPP x on-ice xGF per minute x forecast EV and PP minutes; a short-handed TOI forecast
+    and blocks / hits x forecast PK and EV minutes. f carries the forecasts (fc_toi, fc_pptoi)."""
+    num = lambda k: f.get(k) or 0.0
+    lin = lambda mm, x: mm["intercept"] + sum(c * (mm["fill"][k] if x.get(k) is None else x[k]) for k, c in zip(mm["inputs"], mm["coef"]))
+    flags = {"no_prev": f.get("no_prev"), "is_D": f.get("is_D"), "gpw": min(num("std_gp") / 20, 1), "no_p2": f.get("no_p2")}
+    out = {}
+    for c, mm in m["rates"].items():
+        x = dict(flags)
+        for w in RATE_WIN:
+            v, t = f.get(f"{w}_{c}"), f.get(f"{w}_toi")
+            k = f"{w}_{c}_pm"
+            x[k] = None if v is None or t is None or t <= 3 else min(max(v / t, mm["lo"][k]), mm["hi"][k])
+        r = lin(mm, x)
+        out[f"rf_{c}"], out[f"rr_{c}"] = r * f["fc_toi"], r
+    has_c, has_p = f.get("c_a_ogf") is not None, f.get("pv_a_ogf") is not None
+    t = lambda c: (num(f"c_{c}") if has_c else 0.0) + 0.5 * (num(f"pv_{c}") if has_p else 0.0)
+    mu = m["ipp_mu"]["D" if f.get("is_D") else "F"]
+    ipp_ev = (t("points") - t("ppPoints") + IPP_K * mu["ipp_ev"]) / (t("a_ogf") - t("pp_ogf") + IPP_K)
+    ipp_pp = (t("ppPoints") + IPP_K * mu["ipp_pp"]) / (t("pp_ogf") + IPP_K)
+    xev = (t("a_oxgf") - t("pp_oxgf") + IPP_EV_MIN * mu["xev"]) / (t("toi") - t("pptoi") + IPP_EV_MIN)
+    xpp = (t("pp_oxgf") + IPP_PP_MIN * mu["xpp"]) / (t("pptoi") + IPP_PP_MIN)
+    pp = max(f["fc_pptoi"], 0.0)
+    out |= {"ipp_ev": ipp_ev, "ipp_pp": ipp_pp, "xev": xev, "xpp": xpp,
+            "xpts_ev": ipp_ev * xev * max(f["fc_toi"] - pp, 0.0), "xpts_pp": ipp_pp * xpp * pp}
+    out["xpts"] = out["xpts_ev"] + out["xpts_pp"]
+    sh = max(lin(m["sh_forecast"], dict(f, gpw=flags["gpw"])), 0.0)
+    ev = max(f["fc_toi"] - pp - sh, 0.0)
+    tot = num("std_toi") * num("std_gp") + num("prev_toi") * num("prev_gp") * 0.5
+    rate = lambda c, prior: (num(f"std_{c}") * num("std_gp") + num(f"prev_{c}") * num("prev_gp") * 0.5 + 300 * prior) / (tot + 300)
+    blk, hit = rate("blockedShots", 0.06), rate("hits", 0.08)
+    out |= {"fc_sh": sh, "fc_ev": ev, "blk_x_sh": blk * sh, "blk_x_ev": blk * ev, "hit_x_ev": hit * ev}
     return out
 
 
