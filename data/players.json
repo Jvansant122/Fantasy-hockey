@@ -1,8 +1,8 @@
 {
- "updated": "Mon Oct 12, 9:16 AM ET",
+ "updated": "Mon Oct 12, 9:00 AM ET",
  "updated_date": "2026-10-12",
  "first_start": "2026-10-12T17:00:00Z",
- "updated_utc": "2026-10-12T13:16:11Z",
+ "updated_utc": "2026-10-12T12:59:40Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -19774,7 +19774,7 @@
     "season_fpg": 1.06
    },
    "cr_pct": 63,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 3539,
@@ -27546,7 +27546,7 @@
     "season_fpg": 1.1
    },
    "cr_pct": 43,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 4697725,
@@ -27912,7 +27912,7 @@
     "season_fpg": 1.15
    },
    "cr_pct": 43,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 5149210,
@@ -28218,7 +28218,7 @@
     "age_adj": -0.04
    },
    "cr_pct": 41,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 4587713,
@@ -28341,7 +28341,7 @@
     "season_fpg": 1.05
    },
    "cr_pct": 41,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 2993474,
@@ -28645,7 +28645,7 @@
     "season_fpg": 1.09
    },
    "cr_pct": 40,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 5080159,
@@ -29200,7 +29200,7 @@
     "season_fpg": 1.12
    },
    "cr_pct": 38,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 3149633,
@@ -30302,7 +30302,7 @@
     "season_fpg": 1.09
    },
    "cr_pct": 35,
-   "cr_season_pct": 40
+   "cr_season_pct": 41
   },
   {
    "id": 2562602,
@@ -34832,8 +34832,71 @@
     },
     "season_fpg": 0.99
    },
-   "cr_pct": 25,
+   "cr_pct": 24,
    "cr_season_pct": 15
+  },
+  {
+   "id": 3939856,
+   "name": "Bokondji Imama",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "LW",
+   "slots": [
+    "F",
+    "LW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.2,
+   "gp": 5,
+   "ppg": 0.29,
+   "cur_ppg": 0.54,
+   "last_ppg": 0.25,
+   "last_gp": 2,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 2.38,
+   "cr_fpg": 0.69,
+   "cr_season": 0.4,
+   "cr_games": 3.44,
+   "cr_dress": 0.86,
+   "cr_dress_next": 0.91,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478147,
+   "cr_why": {
+    "toi5": 6.58,
+    "toi": 6.58,
+    "pp5": 0.0,
+    "sog": 0.8,
+    "blk": 0.2,
+    "gp": 5,
+    "last_fpg": 0.69,
+    "xfp": {
+     "gp": 5,
+     "fpg": 0.54,
+     "xfpg": 0.63
+    },
+    "last_season": "2024-25",
+    "season_fpg": 0.7
+   },
+   "cr_pct": 24,
+   "cr_season_pct": 10
   },
   {
    "id": 3115033,
@@ -35263,7 +35326,7 @@
     },
     "season_fpg": 0.84
    },
-   "cr_pct": 24,
+   "cr_pct": 23,
    "cr_season_pct": 17
   },
   {
@@ -35326,69 +35389,6 @@
    },
    "cr_pct": 59,
    "cr_season_pct": 56
-  },
-  {
-   "id": 3939856,
-   "name": "Bokondji Imama",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": "2026-10-12T17:00:00Z",
-   "pos": "LW",
-   "slots": [
-    "F",
-    "LW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.2,
-   "gp": 5,
-   "ppg": 0.29,
-   "cur_ppg": 0.54,
-   "last_ppg": 0.25,
-   "last_gp": 2,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 2.29,
-   "cr_fpg": 0.67,
-   "cr_season": 0.4,
-   "cr_games": 3.44,
-   "cr_dress": 0.86,
-   "cr_dress_next": 0.91,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8478147,
-   "cr_why": {
-    "toi5": 6.58,
-    "toi": 6.58,
-    "pp5": 0.0,
-    "sog": 0.8,
-    "blk": 0.2,
-    "gp": 5,
-    "last_fpg": 0.69,
-    "xfp": {
-     "gp": 5,
-     "fpg": 0.54,
-     "xfpg": 0.63
-    },
-    "last_season": "2024-25",
-    "season_fpg": 0.69
-   },
-   "cr_pct": 23,
-   "cr_season_pct": 10
   },
   {
    "id": 4331579,
@@ -48295,8 +48295,8 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.0,
-   "cr_fpg": 1.68,
-   "cr_season": 0.94,
+   "cr_fpg": 1.67,
+   "cr_season": 0.93,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "cr_dress_next": 0.0,
@@ -48314,16 +48314,16 @@
     "xfp": {
      "gp": 2,
      "fpg": 0.65,
-     "xfpg": 1.28
+     "xfpg": 1.16
     },
     "last_season": "2024-25",
-    "season_fpg": 1.77,
+    "season_fpg": 1.74,
     "back": {
      "days": 43
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 40
+   "cr_season_pct": 39
   },
   {
    "id": 5161,
