@@ -204,6 +204,10 @@ PULLED_SEASON, PULLED_TOI = 0.03, 2400
 # a high scorer slightly later than his rate suggests; logit += a x last season's dress rate + b x Season FP/G, fitted with
 # model/season_dress.json's logit as offset, 2023-26 (findings 330 (4), handoff 273)
 DURABLE_OUT = (0.31, -0.10)
+# games this season (capped at 40, over 40) in the same logit: a skater new to the NHL (no games last season) who has stuck
+# keeps his spot and one with 5 or fewer goes back down (findings 350 (2), handoff 311); one who played 1-40 games last
+# season and has stuck this season keeps his too (findings 350 (3), handoff 312). Fitted with the live logit as offset
+NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
 # (findings 330 (5), handoff 274)
@@ -323,9 +327,11 @@ def load_scratches(s, game_ids):
 # 40-59, 60+) and his team's games so far (0-3, 4-7, 8-12, 13-20, 21-35, 36+): the longer his team plays without him, the
 # less of the rest he plays. 2022-26 Mondays; it replaced a flat 0.38 for 60+ GP and the 0.1 idle cap (findings 350 (1),
 # handoff 310)
-UNPLAYED_GP = (20, 40, 60)
+# 1-19 GP last season: findings 350 (4), handoff 313
+UNPLAYED_GP = (1, 20, 40, 60)
 UNPLAYED_TEAM_GAMES = (3, 7, 12, 20, 35)
-UNPLAYED_SHARE = ((0.275, 0.145, 0.118, 0.095, 0.064, 0.030),
+UNPLAYED_SHARE = ((0.119, 0.097, 0.087, 0.074, 0.065, 0.043),
+                  (0.275, 0.145, 0.118, 0.095, 0.064, 0.030),
                   (0.434, 0.196, 0.156, 0.110, 0.081, 0.046),
                   (0.717, 0.349, 0.272, 0.195, 0.130, 0.081))
 # hurt before playing (PRESEASON_INJURED) or just cleared (CLEARED_NEW_SEASON): their share holds through 7 team games,
@@ -339,7 +345,7 @@ def unplayed_cell(team_played):
 
 
 def unplayed_share(prev_gp, team_played):
-    """Rest-of-season dress share of a healthy skater yet to play, or None under 20 games last season (findings 350 (1))."""
+    """Rest-of-season dress share of a healthy skater yet to play, or None with no games last season (findings 350 (1), (4))."""
     band = sum(prev_gp >= g for g in UNPLAYED_GP) - 1
     return UNPLAYED_SHARE[band][unplayed_cell(team_played)] if band >= 0 else None
 # an ESPN status (injury, suspension) in the injury log within CLEARED_DAYS that ESPN has now dropped, and he hasn't played since
@@ -880,6 +886,11 @@ class Model:
         z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items()) + shift
         if x.get("os_long"):
             z += DURABLE_OUT[0] * x["prev_dress_rate"] + DURABLE_OUT[1] * x["fpg"]
+        stuck = min(x.get("gp_now", 0), 40) / 40
+        if x.get("no_prev"):
+            z += NEW_PLAYER_SEASON * stuck + FEW_GAMES_SEASON * (x.get("gp_now", 0) <= 5)
+        elif x.get("prev_dress_rate", 1.0) < 0.5:
+            z += PART_TIMER_SEASON * stuck
         return 1 / (1 + math.exp(-z))
 
     def fpg(self, feats, season=False):
@@ -1249,7 +1260,7 @@ def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov
     x = dict(dress_f)
     x.update(prev_dress_rate=min((prev or {}).get("gp", 0) / 82, 1.0), no_prev=0.0 if prev else 1.0,
              std_toi=f.get("std_toi") or 0, l5_toi=f.get("l5_toi") or 0, std_pptoi=f.get("std_pptoi") or 0, fpg=fpg,
-             games_left=left, os_long=float(k >= 6), os_raw=min(k, 40), mk_logit=math.log(share / (1 - share)), mk_p_out=p_out)
+             gp_now=len(games), games_left=left, os_long=float(k >= 6), os_raw=min(k, 40), mk_logit=math.log(share / (1 - share)), mk_p_out=p_out)
     return x
 
 
@@ -2067,8 +2078,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     * UNPLAYED_NOTED_MULT[unplayed_cell(len(team_games.get(team, [])))]
             elif not gl and pid in on_roster and tg and not p.get("injury") \
                     and unplayed_share((prev.get(pid) or {}).get("gp", 0), len(tg)) is not None:
-                # 20+ games last season, on a current NHL roster (so not retired or overseas), yet to play while his team
-                # has: his share falls the longer that lasts (findings 118, 350 (1))
+                # games last season, on a current NHL roster (so not retired or overseas), yet to play while his team has:
+                # his share falls the longer that lasts (findings 118, 350 (1), (4))
                 season_share = unplayed_share(prev[pid]["gp"], len(tg))
             else:
                 season = fpg_s * p_dress
