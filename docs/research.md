@@ -915,6 +915,10 @@ Some tandems repeat a longer pattern instead of a strict A, B rotation: A, A, B 
 
 The ice-time and power-play-time forecasts behind the skater rating (section 112) now look at the lineup. **They know whether a player missed his team's last game, how many regulars at his position with more ice time (or more power-play time) missed it, and his role last game and over his last three: where he ranked in ice time and power-play time, his share of the team's power-play time, and whether he was on the top line or the first power-play unit.** A player who just filled in for an injured star had his last game inflated; a player back from missing a game has a stale last game. Over three test seasons this improved how well the rating ranks next week's points by +0.0005 among all skaters and +0.0010 among free agents, positive in every season, and the forecast's ice-time error after a lineup change fell from 3.59 to 3.51.
 
+## 117. Bend points in the Week rating
+
+A straight-line model treats the step from an average scorer to a good one the same as from a good one to a star. **The ridge behind the Week rating now gets bend points: for 12 of its strongest inputs (points per game this season and last, the usage x efficiency rates, ice time and power-play time and their forecasts, two seasons ago, shots), how far a player sits above each of five levels (the 10th to 90th percentile of past players).** That lets the rating curve where the data curves. Ranking next week's points improved by +0.0005 among all skaters and +0.0010 among free agents, positive in all three test seasons. These bends slightly hurt rest-of-season ranking, so the Season rating keeps its own ridge without them.
+
 ## What the independent review changed
 
 | Review point | Outcome |

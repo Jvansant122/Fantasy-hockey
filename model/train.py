@@ -69,7 +69,6 @@ LINEUP_TOI = ["missed_last", "out_above_toi", "ml_gap", "oa_gap"]
 LINEUP_PP = ["missed_last", "out_above_pp", "ml_ppgap", "oap_gap"]
 ROLE_TOI = ["r1_toi_rank", "r3_toi_rank", "r1_top_line", "r3_top_line"]
 ROLE_PP = ["r1_pp_share", "r3_pp_share", "r1_pp_rank", "r3_pp_rank", "r1_pp1", "r3_pp1"]
-PR113_FC_IN = (list(TOI_FC_IN), list(PP_FC_IN))
 TOI_FC_IN = TOI_FC_IN + LINEUP_TOI + ROLE_TOI
 PP_FC_IN = PP_FC_IN + LINEUP_PP + ROLE_PP
 FC_EXTRA = ["no_prev", "is_D", "gpw"]
@@ -82,6 +81,12 @@ P2_RATES = ["fp", "toi", "pptoi", "shots", "hits", "blockedShots", "points"]
 P2_FEATS = [f"p2_{r}" for r in P2_RATES] + ["p2_gp", "no_p2"] + [f"p2_{r}_w" for r in ("fp", "toi", "pptoi")]
 PR110_FEATS = UX_ERA_FEATS + FC_FEATS + PAIR_FEATS
 FEATS = PR110_FEATS + P2_FEATS
+# Week rating only: hinge curves max(0, x - knot) on 12 strong inputs, knots at their training 10/30/50/70/90th
+# percentiles; the Season rating keeps the ridge without them, where they cost -0.0003 (findings 320 (2))
+HINGE_IN = ["sx_ux", "sx_fp", "std_fp", "prev_fp", "l5_toi", "fc_toi", "fc_sx_ux", "p2_fp", "fc_pptoi", "fc_sx_pp", "sx_pp", "std_shots"]
+HINGE_Q = [0.1, 0.3, 0.5, 0.7, 0.9]
+HINGE_FEATS = [f"h_{c}_{i}" for c in HINGE_IN for i in range(len(HINGE_Q))]
+WEEK_FEATS = FEATS + HINGE_FEATS
 
 
 def ux_means(df):
@@ -258,6 +263,9 @@ def prep(df, feats=FEATS, mu=None, st=None):
     if st and "pair_fill" in st:
         filled = X[PAIR_IN].fillna(st["pair_fill"])
         X = pd.concat([X, pd.DataFrame({f"{a}*{b}": filled[a] * filled[b] for a, b in combinations(PAIR_IN, 2)}, index=df.index)], axis=1)
+    if st and "knots" in st:  # a missing x leaves its hinges missing, filled with their training means like any input
+        X = pd.concat([X, pd.DataFrame({f"h_{c}_{i}": np.maximum(X[c] - q, 0) for c, k in st["knots"].items() for i, q in enumerate(k)},
+                                       index=df.index)], axis=1)
     return X[feats]
 
 
@@ -270,6 +278,9 @@ def fit_state(train, feats, mu, fc_in=None):
         st["fc"] = fit_forecast(tr, fc_in)
     if any(c in PAIR_FEATS for c in feats):
         st["pair_fill"] = prep(tr, UX_ERA_FEATS, mu)[PAIR_IN].mean()
+    if any(c in HINGE_FEATS for c in feats):
+        X = prep(tr, [c for c in feats if c not in HINGE_FEATS], mu, st)
+        st["knots"] = {c: X[c].quantile(HINGE_Q).values for c in HINGE_IN}
     return st
 
 
@@ -318,8 +329,8 @@ def skater_backtest(df):
     for s in TEST_SEASONS:
         tr, te = df[df.season < s], df[(df.season == s) & (df.y_gp > 0) & (df.std_gp >= 3)].copy()
         mu = ux_means(tr)
-        te["before"] = predict(te, *fit_linear(tr, FEATS, mu, PR113_FC_IN), FEATS, mu)
-        te["after"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
+        te["before"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
+        te["after"] = predict(te, *fit_linear(tr, WEEK_FEATS, mu), WEEK_FEATS, mu)
         parts.append(te)
     t = pd.concat(parts)
     first = t.groupby("season").monday.min()
@@ -350,7 +361,8 @@ def main():
     skater_backtest(df)
 
     mu = ux_means(df)
-    coef, icpt, means, sk_st = fit_linear(df, FEATS, mu)
+    coef, icpt, means, sk_st = fit_linear(df, WEEK_FEATS, mu)
+    s_coef, s_icpt, s_means, s_st = fit_linear(df, FEATS, mu)  # the Season rating's ridge, without the hinges
     tables = df[df.season >= TABLES_FROM]
     wire = tables[tables.wire]
     repl = wire.groupby("pos").std_fp.mean()
@@ -363,8 +375,11 @@ def main():
     pts_per_start = float(g[(g.gamesStarted == 1) & (g.season == g.season.max())].fp.mean())
 
     model = {
-        "skater": {"features": FEATS, "coef": [round(float(x), 6) for x in coef], "intercept": round(float(icpt), 6),
+        "skater": {"features": WEEK_FEATS, "coef": [round(float(x), 6) for x in coef], "intercept": round(float(icpt), 6),
                    "fill": {k: round(float(v), 4) for k, v in means.items()},
+                   "season": {"features": FEATS, "coef": [round(float(x), 6) for x in s_coef], "intercept": round(float(s_icpt), 6),
+                              "fill": {k: round(float(v), 4) for k, v in s_means.items()}},
+                   "hinges": {c: [round(float(q), 6) for q in k] for c, k in sk_st["knots"].items()},
                    "ux_means": {p: {k: round(v, 6) for k, v in m.items()} for p, m in mu.items()},
                    "toi_forecast": {tgt: {"inputs": m["inputs"] + FC_EXTRA, "coef": [round(float(x), 6) for x in m["coef"]],
                                           "intercept": round(m["intercept"], 6), "fill": {k: round(float(v), 4) for k, v in m["fill"].items()}}
@@ -381,25 +396,26 @@ def main():
     with open(OUT, "w") as f:
         json.dump(model, f, indent=1)
     print("wrote", OUT, "pts/start", model["goalie"]["points_per_start"], "dress", model["dress"])
-    check_daily_arithmetic(df, coef, icpt, means, sk_st, mu)
+    check_daily_arithmetic(df, coef, icpt, means, sk_st, mu, WEEK_FEATS)
+    check_daily_arithmetic(df, s_coef, s_icpt, s_means, s_st, mu, FEATS, season=True)
 
 
-def check_daily_arithmetic(df, coef, icpt, means, st, mu, n=2000):
+def check_daily_arithmetic(df, coef, icpt, means, st, mu, feats, season=False, n=2000):
     """scripts/rating.py rebuilds the forecast and product inputs itself: its FP/G must match this script's on the
     training rows, or the daily ratings would silently differ from the fitted model."""
     sys.path.insert(0, os.path.join(os.path.dirname(OUT), "..", "scripts"))
     import rating
     rows = df.sample(min(n, len(df)), random_state=0)
-    want = np.maximum(predict(rows, coef, icpt, means, st, FEATS, mu), 0)
+    want = np.maximum(predict(rows, coef, icpt, means, st, feats, mu), 0)
     base = prep(rows, UX_ERA_FEATS + P2_FEATS, mu)
     m = rating.Model()
     got = []
     for (_, r), (_, b) in zip(rows.iterrows(), base.iterrows()):
         f = {k: (None if pd.isna(v) else float(v)) for k, v in r.items() if isinstance(v, (int, float, np.number))}
         f |= {k: (None if pd.isna(v) else float(v)) for k, v in b.items()}
-        got.append(m.fpg(f))
+        got.append(m.fpg(f, season=season))
     gap = np.abs(np.array(got) - want).max()
-    print(f"daily arithmetic check: largest FP/G gap {gap:.2e} over {len(rows)} rows")
+    print(f"daily arithmetic check ({'Season' if season else 'Week'}): largest FP/G gap {gap:.2e} over {len(rows)} rows")
     assert gap < 1e-3, "scripts/rating.py and model/train.py disagree on the skater inputs"
 
 
