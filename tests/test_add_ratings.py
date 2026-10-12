@@ -424,7 +424,7 @@ def test_unplayed_regulars_keep_a_season_share(run):
     for name, share in (("Brad Marchand", rating.PRESEASON_INJURED["short"]), ("Ryan Spooner", rating.UNPLAYED_REGULAR)):
         p = by_name[name]
         assert p["cr_why"]["gp"] == 0
-        assert p["cr_season"] == pytest.approx(p["cr_fpg"] * share, abs=0.01)
+        assert p["cr_season"] == pytest.approx(p["cr_why"]["season_fpg"] * share, abs=0.01)
 
 
 def test_goalie_new_team_starts_rise():
@@ -757,7 +757,7 @@ def test_status_cleared_before_he_is_back(monkeypatch, tmp_path):
     # yet to play: 0.75 next game, 0.8 later ones, Season 0.72 of his points a game
     assert spooner["cr_dress_next"] == rating.CLEARED_NEW_NEXT
     assert spooner["cr_dress"] == pytest.approx((0.75 + 0.8 * 2) / 3, abs=0.01)
-    assert spooner["cr_season"] == pytest.approx(spooner["cr_fpg"] * rating.CLEARED_NEW_SEASON, abs=0.01)
+    assert spooner["cr_season"] == pytest.approx(spooner["cr_why"]["season_fpg"] * rating.CLEARED_NEW_SEASON, abs=0.01)
     assert out["none"]["Ryan Spooner"]["cr_dress"] < 0.2
     assert out["none"]["Ryan Spooner"]["cr_season"] < spooner["cr_season"]
     # in season and still out: more likely back this week and for the rest of the season

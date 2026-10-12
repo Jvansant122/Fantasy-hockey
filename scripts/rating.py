@@ -706,12 +706,14 @@ class Model:
         z = m["intercept"] + sum(c * x[k] for k, c in m["coef"].items()) + shift
         return 1 / (1 + math.exp(-z))
 
-    def fpg(self, feats):
+    def fpg(self, feats, season=False):
+        """Points a game: the Week rating's ridge, or with season=True the Season rating's (no hinge curves, findings 320 (2))."""
         feats = {**feats, **forecast_features(feats, self.sk)}
-        total = self.sk["intercept"]
-        for name, c in zip(self.sk["features"], self.sk["coef"]):
+        m = self.sk.get("season", self.sk) if season else self.sk
+        total = m["intercept"]
+        for name, c in zip(m["features"], m["coef"]):
             v = feats.get(name)
-            total += c * (self.sk["fill"][name] if v is None else v)
+            total += c * (m["fill"][name] if v is None else v)
         return max(total, 0.0)
 
     def dress(self, d3, d10):
@@ -1081,6 +1083,10 @@ def forecast_features(f, sk):
                for tgt, m in fc.items()}
         u = ux_features(dict(f, l5_toi=val["y_toi"], l5_pptoi=max(val["y_pptoi"], 0.0)), "D" if f.get("is_D") else "F", sk.get("ux_means"))
         out = {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
+    for c, knots in (sk.get("hinges") or {}).items():  # Week rating's bend points (findings 320 (2)); missing x: filled
+        v = out.get(c, f.get(c))
+        for i, q in enumerate(knots):
+            out[f"h_{c}_{i}"] = None if v is None else max(v - q, 0.0)
     pairs = sk.get("pairs")
     if pairs:
         fill = pairs["fill"]
@@ -1643,6 +1649,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   context=context.get(pid))
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
+            fpg_s = model.fpg(f, season=True) if pid else fpg  # the Season rating's ridge (findings 320 (2))
             # opening games cut short: average with his points a game leaving those games out (findings 171)
             kept = short_opening(gl, prev.get(pid)) if pid else None
             if kept is not None:
@@ -1650,10 +1657,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                      is_d=p["pos"] == "D", p2=p2, context=context.get(pid))
                 f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
                 fpg = (fpg + model.fpg(f2)) / 2
+                fpg_s = (fpg_s + model.fpg(f2, season=True)) / 2
             # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)
             last_team = (prev.get(pid) or {}).get("team") if pid else None
             if last_team and team in rosters and last_team != team and not traded and len({g["team"] for g in gl}) <= 1:
                 fpg *= OFFSEASON_MOVER_MULT
+                fpg_s *= OFFSEASON_MOVER_MULT
             df_, base_dress, cap = None, None, 1.0
             if pid is None or (not gl and p["team"] == "FA"):  # not in NHL stats, or unsigned and yet to play (findings 216)
                 p_dress = NOT_PLAYING_DRESS
@@ -1696,7 +1705,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
             season_share = None
             if df_ and model.season_lr:
-                season = fpg * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg, model.season_lr["markov"]),
+                season = fpg_s * model.season_dress(season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"]),
                                                  NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                                  + CLEARED_SEASON_LOGIT * cleared_out)
             elif cleared_new:
@@ -1711,12 +1720,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 # while his team has: such players dress for 0.38 of the rest (findings 118)
                 season_share = UNPLAYED_REGULAR
             else:
-                season = fpg * p_dress
+                season = fpg_s * p_dress
             if season_share is not None:
-                season = fpg * season_share
+                season = fpg_s * season_share
             age_adj = season_age_adj(births.get(pid), today) if pid else 0.0
-            if fpg > 0:
-                season *= max(fpg + age_adj, 0.0) / fpg
+            if fpg_s > 0:
+                season *= max(fpg_s + age_adj, 0.0) / fpg_s
             if n.get("apply"):
                 if n.get("dress") is not None:
                     p_dress = max(0.0, min(float(n["dress"]), 1.0))
@@ -1765,6 +1774,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             why = {k: (round(v, 2) if isinstance(v, float) else v) for k, v in why.items()}
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
+            why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
             if season_share is not None:
                 why["season_share"] = round(season_share, 2)
             if abs(age_adj) >= 0.03:
