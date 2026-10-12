@@ -319,7 +319,29 @@ def load_scratches(s, game_ids):
     return out
 
 
-UNPLAYED_REGULAR, UNPLAYED_REGULAR_GP = 0.38, 60  # rest-of-season dress share, healthy regular yet to play (findings 118)
+# rest-of-season dress share for a healthy skater on an NHL roster yet to play this season, by his games last season (20-39,
+# 40-59, 60+) and his team's games so far (0-3, 4-7, 8-12, 13-20, 21-35, 36+): the longer his team plays without him, the
+# less of the rest he plays. 2022-26 Mondays; it replaced a flat 0.38 for 60+ GP and the 0.1 idle cap (findings 350 (1),
+# handoff 310)
+UNPLAYED_GP = (20, 40, 60)
+UNPLAYED_TEAM_GAMES = (3, 7, 12, 20, 35)
+UNPLAYED_SHARE = ((0.275, 0.145, 0.118, 0.095, 0.064, 0.030),
+                  (0.434, 0.196, 0.156, 0.110, 0.081, 0.046),
+                  (0.717, 0.349, 0.272, 0.195, 0.130, 0.081))
+# hurt before playing (PRESEASON_INJURED) or just cleared (CLEARED_NEW_SEASON): their share holds through 7 team games,
+# then falls as the 60+ row does (its value over the 4-7 cell's 0.349)
+UNPLAYED_NOTED_MULT = (1.0, 1.0, 0.78, 0.56, 0.37, 0.23)
+
+
+def unplayed_cell(team_played):
+    """Column of UNPLAYED_SHARE for a team that has played this many games."""
+    return next((i for i, top in enumerate(UNPLAYED_TEAM_GAMES) if team_played <= top), len(UNPLAYED_TEAM_GAMES))
+
+
+def unplayed_share(prev_gp, team_played):
+    """Rest-of-season dress share of a healthy skater yet to play, or None under 20 games last season (findings 350 (1))."""
+    band = sum(prev_gp >= g for g in UNPLAYED_GP) - 1
+    return UNPLAYED_SHARE[band][unplayed_cell(team_played)] if band >= 0 else None
 # an ESPN status (injury, suspension) in the injury log within CLEARED_DAYS that ESPN has now dropped, and he hasn't played since
 CLEARED_DAYS = 7
 CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no games yet this season (findings 172)
@@ -2036,16 +2058,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                                  NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                                  + CLEARED_SEASON_LOGIT * cleared_out)
             elif cleared_new:
-                season_share = CLEARED_NEW_SEASON
+                season_share = CLEARED_NEW_SEASON * UNPLAYED_NOTED_MULT[unplayed_cell(len(team_games.get(team, [])))]
             elif not gl and pid and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE", "SUSPENSION"):
                 # hurt or suspended before playing this season: such regulars dress for ~41% of the rest, not the idle cap's
                 # 10% (findings 74; suspensions take the short-injury share, findings 118)
                 pre = injury_note(notes[p["id"]], today) if p["id"] in notes else None
-                season_share = PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"]
-            elif not gl and pid in on_roster and tg and not p.get("injury") and (prev.get(pid) or {}).get("gp", 0) >= UNPLAYED_REGULAR_GP:
-                # a regular (60+ games last season, on a current NHL roster, so not retired or overseas) who hasn't played
-                # while his team has: such players dress for 0.38 of the rest (findings 118)
-                season_share = UNPLAYED_REGULAR
+                season_share = PRESEASON_INJURED["season" if pre and pre["season"] else "long" if pre and pre["long"] else "short"] \
+                    * UNPLAYED_NOTED_MULT[unplayed_cell(len(team_games.get(team, [])))]
+            elif not gl and pid in on_roster and tg and not p.get("injury") \
+                    and unplayed_share((prev.get(pid) or {}).get("gp", 0), len(tg)) is not None:
+                # 20+ games last season, on a current NHL roster (so not retired or overseas), yet to play while his team
+                # has: his share falls the longer that lasts (findings 118, 350 (1))
+                season_share = unplayed_share(prev[pid]["gp"], len(tg))
             else:
                 season = fpg_s * p_dress
             if season_share is not None:

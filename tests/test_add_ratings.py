@@ -461,9 +461,9 @@ def test_nickname_needs_same_team_and_last_name():
 
 
 def test_unplayed_regulars_keep_a_season_share(run):
-    """A suspended regular takes the short-injury share and a healthy regular who hasn't played 0.38, not the idle cap (findings 118)."""
+    """A suspended regular takes the short-injury share and a healthy regular who hasn't played his row of the unplayed table, not the idle cap (findings 118, 350 (1))."""
     by_name, _, _ = run
-    for name, share in (("Brad Marchand", rating.PRESEASON_INJURED["short"]), ("Ryan Spooner", rating.UNPLAYED_REGULAR)):
+    for name, share in (("Brad Marchand", rating.PRESEASON_INJURED["short"]), ("Ryan Spooner", rating.unplayed_share(80, 4))):
         p = by_name[name]
         assert p["cr_why"]["gp"] == 0
         assert p["cr_season"] == pytest.approx(p["cr_why"]["season_fpg"] * share, abs=0.01)
@@ -1401,7 +1401,7 @@ def test_details_fields(run):
     sto = by_name["Anthony Stolarz"]
     assert set(sto["cr_g_nights"]) == {"2026-10-09", "2026-10-11"} and sto["cr_g_nights"]["2026-10-09"] == 1.0  # confirmed
     assert by_name["Brad Marchand"]["cr_why"]["season_share"] == rating.PRESEASON_INJURED["short"]
-    assert by_name["Ryan Spooner"]["cr_why"]["season_share"] == rating.UNPLAYED_REGULAR
+    assert by_name["Ryan Spooner"]["cr_why"]["season_share"] == round(rating.unplayed_share(80, 4), 2)  # BOS has played 4
     assert "season_share" not in by_name["Auston Matthews"]["cr_why"]
     assert all("cr_g_nights" not in p for p in by_name.values() if p["pos"] != "G")
 
@@ -1681,3 +1681,13 @@ def test_no1_next_game_sunday_after_a_day_off_and_on_the_road():
     assert p1(sun, {sun}) == p1(sun)  # the road cut doesn't stack on it
     assert p1(tue) == without(lambda: p1(tue))  # Tuesday at home: unchanged
     assert p1(tue, {tue}) < p1(tue)  # Tuesday on the road
+
+
+def test_unplayed_share_falls_as_his_team_plays_without_him():
+    """Yet to play: the share depends on last season's games and his team's games so far (findings 350 (1), handoff 310)."""
+    s = rating.unplayed_share
+    assert s(19, 0) is None and s(20, 0) == 0.275 and s(59, 8) == 0.156 and s(82, 0) == 0.717 and s(82, 50) == 0.081
+    for gp in (25, 45, 70):
+        row = [s(gp, n) for n in (0, 3, 4, 7, 8, 12, 13, 20, 21, 35, 36, 80)]
+        assert row == sorted(row, reverse=True)
+    assert [rating.UNPLAYED_NOTED_MULT[rating.unplayed_cell(n)] for n in (0, 7, 8, 13, 21, 36)] == [1.0, 1.0, 0.78, 0.56, 0.37, 0.23]

@@ -967,6 +967,10 @@ A goalie's Season points per start blends this season's starts with last season'
 
 Replaying the site's own start chances over every team game from 2021 to 2026, the no. 1 goalie started less often than predicted in two situations. **On a Sunday or Monday game after exactly one day off, his next-game chance now drops** (by -0.6 on the log-odds scale): he started 57% of those games against 64% predicted. **On the road, outside back-to-backs and those Sunday/Monday games, it drops by -0.3**: 59% against 63%. Both cuts were picked in every left-out season and improve the start forecasts in every season. They apply to the team's next game only; home games and later games in the week keep their existing rules.
 
+## 130. Skaters who haven't played yet this season
+
+A skater with no games yet used to get a fixed Season share: 0.38 of the rest of the season for a regular (60+ games last season) and the 0.1 idle cap for everyone else. Over 2022-26, the longer a team plays without him, the less of the rest of the season he plays. A 60+ game regular plays 72% of the rest after 0-3 team games without him, 35% after 4-7, and 13% after 21-35. **His Season share now comes from a table by last season's games (20-39, 40-59, 60+) and his team's games so far (0-3, 4-7, 8-12, 13-20, 21-35, 36+).** Skaters hurt before playing, or just back from an injury, keep their own share through 7 team games and then fall the way the 60+ row does. This ranks the whole board's rest-of-season points 0.004 better in each of three test seasons.
+
 ## What the independent review changed
 
 | Review point | Outcome |
