@@ -960,6 +960,25 @@ def test_last_six_start_strings_cut_the_other_goalie(monkeypatch):
         assert p1(seq, on, gap=1) == pytest.approx(p1(seq, {}, gap=1))  # night 2 of a back-to-back: the b2b rules decide
 
 
+def test_three_goalie_teams_cut_the_idle_goalie(monkeypatch):
+    """Three goalies in the last 10: each one whose latest start was 3+ team games ago gets -1.0 next game (findings 247)."""
+    assert rating.three_goalie_idle([1, 1, 3, 1, 2, 1, 2, 1, 1, 1]) == {2, 3}
+    assert rating.three_goalie_idle([1, 1, 3, 1, 1, 1, 1, 2, 3, 1]) == set()  # all three in the last 3
+    assert rating.three_goalie_idle([1, 2, 1, 2, 1, 2, 1, 2, 1, 2]) == set()  # two goalies
+    model = rating.Model()
+
+    def p(cut):
+        monkeypatch.setattr(rating, "THREE_GOALIE_IDLE_LOGIT", cut)
+        seq = [1, 1, 3, 1, 2, 1, 2, 1, 1, 1]
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2, 3], {"TOR": hist}, {1: 50, 2: 20, 3: 12}, [nxt.isoformat()], nxt, today_p=out)
+        return out
+    on, off = p(-1.0), p(0.0)
+    assert on[2] < off[2] and on[3] < off[3] and on[1] > off[1]
+
+
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     # tonight's game started before the run: its start is no longer ahead and the stream card's chance is 0 (findings 178)
     from datetime import datetime, timezone
