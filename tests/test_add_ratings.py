@@ -316,6 +316,19 @@ def test_usage_times_efficiency_rewards_more_ice_time():
     assert rating.ux_features({"std_gp": 0}, "F", mu)["sx_ux"] is None
 
 
+def test_week_luck_and_role_inputs():
+    f = {"std_gp": 10, "std_goals": 0.2, "std_ixg": 0.4, "prev_goals": 0.5, "prev_ixg": 0.3, "std_shots": 3.0,
+         "last_toi": 19.0, "l10_toi": 16.0, "r1_top_line": 1.0, "std_top_line": 0.25, "r1_pp1": 0.0, "std_pp1": 0.9}
+    x = rating.week_extras(f)
+    assert x["luck_neg"] == pytest.approx(0.1) and x["luck_pos"] == 0  # 0.2 below xG, half weight at 10 games
+    assert x["luck_posp"] == pytest.approx(0.2) and x["luck_negp"] == 0
+    assert x["luck_sh"] == pytest.approx(0.3)
+    assert x["j1_up"] == pytest.approx(3.0) and x["j1_dn"] == 0
+    assert x["new_top"] == pytest.approx(0.75) and x["new_pp1"] == 0
+    blank = rating.week_extras({"std_gp": 0})
+    assert all(v is None for v in blank.values())  # left to the ridge's training means
+
+
 def test_injured_starter_hands_starts_to_backup():
     """An injured no. 1's games go to his partner (findings section 48)."""
     model = rating.Model()

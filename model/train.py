@@ -86,7 +86,13 @@ FEATS = PR110_FEATS + P2_FEATS
 HINGE_IN = ["sx_ux", "sx_fp", "std_fp", "prev_fp", "l5_toi", "fc_toi", "fc_sx_ux", "p2_fp", "fc_pptoi", "fc_sx_pp", "sx_pp", "std_shots"]
 HINGE_Q = [0.1, 0.3, 0.5, 0.7, 0.9]
 HINGE_FEATS = [f"h_{c}_{i}" for c in HINGE_IN for i in range(len(HINGE_Q))]
-WEEK_FEATS = FEATS + HINGE_FEATS
+# Week rating only (findings 320 (4)): finishing luck (goals below / above individual xG, this season weighted by games
+# and last season), last-game role and ice-time jumps, and fresh top-line / PP1 promotions
+LUCK_FEATS = ["luck_neg", "luck_pos", "luck_negp", "luck_posp", "luck_sh"]
+ROLE_FEATS = ["r1_top_line", "r3_top_line", "r1_pp1", "r3_pp1", "r1_toi_rank", "r1_pp_share", "r3_pp_share", "j1_up", "j1_dn",
+              "new_top", "new_pp1"]
+WEEK_FEATS = FEATS + HINGE_FEATS + LUCK_FEATS + ROLE_FEATS
+GOAL_BLEND = 0.8  # the Week ridge's goals target: 0.8 x goals + 0.2 x individual xG per game (goals where xG is missing)
 # Season rating only: decomposed scoring forecasts (findings 320 (3)). Per-minute rate forecasts (small ridges on the
 # last 5/10/20, season, last season and two seasons ago per-minute rates) alone and times the TOI forecast; expected
 # points = his share of on-ice goals (IPP) x on-ice xGF per minute x forecast EV and PP minutes, each shrunk to the
@@ -212,6 +218,28 @@ def fc_design(df, ins):
     return X
 
 
+def week_extras(df):
+    """The Week ridge's luck and role inputs (same as scripts/rating.py week_extras); missing factors stay missing."""
+    gw = np.clip(df.std_gp / 20, 0, 1)
+    lk, lkp = df.std_goals - df.std_ixg, df.prev_goals - df.prev_ixg
+    out = pd.DataFrame({"luck_neg": (-lk).clip(lower=0) * gw, "luck_pos": lk.clip(lower=0) * gw,
+                        "luck_negp": (-lkp).clip(lower=0), "luck_posp": lkp.clip(lower=0)}, index=df.index)
+    out["luck_sh"] = out.luck_neg * df.std_shots
+    for c in ("r1_top_line", "r3_top_line", "r1_pp1", "r3_pp1", "r1_toi_rank", "r1_pp_share", "r3_pp_share"):
+        out[c] = df[c]
+    out["j1_up"], out["j1_dn"] = (df.last_toi - df.l10_toi).clip(lower=0), (df.l10_toi - df.last_toi).clip(lower=0)
+    out["new_top"], out["new_pp1"] = df.r1_top_line * (1 - df.std_top_line), df.r1_pp1 * (1 - df.std_pp1)
+    return out
+
+
+def add_y_ixg(df, sk):
+    """Next week's individual xG per game (the Week ridge's smoother goals target)."""
+    s = sk[["playerId", "gameDate", "ixg"]].copy()
+    s["monday"] = s.gameDate - pd.to_timedelta(s.gameDate.dt.weekday, unit="D")
+    y = s.groupby(["playerId", "monday"]).agg(y_ixg=("ixg", "mean")).reset_index()
+    return df.drop(columns="y_ixg", errors="ignore").merge(y, on=["playerId", "monday"], how="left")
+
+
 def fit_forecast(train, fc_in=None):
     """Two small ridges (alpha 1, weighted by games next week): next week's TOI/G and PP TOI/G (findings 310 (1))."""
     tr = train[train.y_gp > 0]
@@ -333,13 +361,17 @@ def decomposed(df, X, st):
 
 
 def snapshots():
-    if os.path.exists(CACHE):
-        return pd.read_parquet(CACHE)
     common.DATA = HISTORY_DATA
+    if os.path.exists(CACHE):
+        df = pd.read_parquet(CACHE)
+        if "y_ixg" not in df:  # a cache from before the smoother goals target
+            df = add_y_ixg(df, common.load_skaters())
+            df.to_parquet(CACHE)
+        return df
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
-    df = add_season_inputs(add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk), sk)
+    df = add_y_ixg(add_season_inputs(add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk), sk), sk)
     df.to_parquet(CACHE)
     return df
 
@@ -363,6 +395,8 @@ def prep(df, feats=FEATS, mu=None, st=None):
         extra |= {f"p2_{r}": df[f"p2_{r}"] for r in P2_RATES} | {"p2_gp": df.p2_gp.fillna(0), "no_p2": df.p2_gp.isna().astype(float)}
         extra |= {f"p2_{r}_w": df[f"p2_{r}"].fillna(0) * w2 for r in ("fp", "toi", "pptoi")}
     X = pd.concat([X.drop(columns=[k for k in extra if k in X]), pd.DataFrame(extra, index=df.index)], axis=1)
+    if any(c in LUCK_FEATS + ROLE_FEATS for c in feats):
+        X = pd.concat([X.drop(columns=[c for c in LUCK_FEATS + ROLE_FEATS if c in X]), week_extras(df)], axis=1)
     if st and "fc" in st:
         fc = forecast(df, st["fc"])
         u = ux_features(df, mu, fc["y_toi"], fc["y_pptoi"].clip(lower=0)).add_prefix("fc_")
@@ -407,7 +441,10 @@ def fit_linear(train, feats=FEATS, mu=None, fc_in=None):
     Z = sc.transform(X)
     coef, icpt = np.zeros(len(feats)), 0.0
     for c, wt in COMPONENTS.items():
-        m = RidgeCV(alphas=np.logspace(-1, 5, 13)).fit(Z, tr[f"y_{c}"], sample_weight=tr.y_gp)
+        y = tr[f"y_{c}"]
+        if c == "goals" and any(f in LUCK_FEATS for f in feats):  # the Week ridge (findings 320 (4))
+            y = (GOAL_BLEND * tr.y_goals + (1 - GOAL_BLEND) * tr.y_ixg).fillna(tr.y_goals)
+        m = RidgeCV(alphas=np.logspace(-1, 5, 13)).fit(Z, y, sample_weight=tr.y_gp)
         coef += wt * m.coef_ / sc.scale_
         icpt += wt * (m.intercept_ - (m.coef_ * sc.mean_ / sc.scale_).sum())
     return coef, icpt, means, st
@@ -436,14 +473,15 @@ def weekly_rho(d, col):
 
 
 def skater_backtest(df):
-    """Rolling origin: each test season predicted by models fit on earlier seasons. Week: the shipped ridge without and
-    with the hinge curves, weekly rank correlation. Season: without and with the decomposed inputs, rest-of-season rank
+    """Rolling origin: each test season predicted by models fit on earlier seasons. Week: the ridge with the hinge curves
+    without and with the luck / role inputs and the smoother goals target, weekly rank correlation. Season: without and with the decomposed inputs, rest-of-season rank
     correlation of max(FP/G + age adjustment, 0) x the shipped Season dress share (research season-rating panel)."""
     parts = []
     for s in TEST_SEASONS:
         tr, te = df[df.season < s], df[df.season == s].copy()
         mu = ux_means(tr)
         te["before"] = predict(te, *fit_linear(tr, FEATS, mu), FEATS, mu)
+        te["hinge"] = predict(te, *fit_linear(tr, FEATS + HINGE_FEATS, mu), FEATS + HINGE_FEATS, mu)
         te["after"] = predict(te, *fit_linear(tr, WEEK_FEATS, mu), WEEK_FEATS, mu)
         te["season_fpg"] = predict(te, *fit_linear(tr, SEASON_FEATS, mu), SEASON_FEATS, mu)
         parts.append(te)
@@ -452,7 +490,7 @@ def skater_backtest(df):
     first = w.groupby("season").monday.min()
     w["early"] = (w.monday - w.season.map(first)).dt.days // 7 < 6
     for pool, d in (("all", w), ("waiver", w[w.wire]), ("first 6 weeks", w[w.early]), ("first 6 weeks waiver", w[w.early & w.wire])):
-        b, a = weekly_rho(d, "before"), weekly_rho(d, "after")
+        b, a = weekly_rho(d, "hinge"), weekly_rho(d, "after")
         gain = (a - b).dropna()
         print(f"skaters {pool:21s} rho {b.mean():.4f} -> {a.mean():.4f}  gain {gain.mean():+.4f} ± {gain.std() / len(gain) ** .5:.4f}")
     panel = os.path.join(os.path.dirname(RESEARCH.rstrip("/")), "season-rating", "data", "ablate_now.parquet")
