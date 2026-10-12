@@ -38,9 +38,17 @@ jobs:
           python-version: "3.12"
       - run: pip install requests
         if: steps.gate.outputs.skip != 'true'
+      # finished weeks of NHL stats, kept between runs (speed audit plan 3); each run saves a new copy that the next restores
+      - uses: actions/cache@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          path: .nhl-cache
+          key: nhl-stats-${{ github.run_id }}
+          restore-keys: nhl-stats-
       - run: python scripts/fetch.py
         if: steps.gate.outputs.skip != 'true'
         env:
+          NHL_CACHE: .nhl-cache
           LEAGUE_ID: ${{ secrets.LEAGUE_ID }}
           ESPN_S2: ${{ secrets.ESPN_S2 }}
           SWID: ${{ secrets.SWID }}
