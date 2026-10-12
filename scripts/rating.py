@@ -182,6 +182,11 @@ NEW_TEAM_START_LOGIT, NEW_TEAM_STARTS = 1.0, 3
 # goalies on today's roster take ~94% of a team's next 20 starts; call-ups, claims and injury fill-ins take the rest,
 # so the Season start share is scaled down (a no. 1 read 0.71 against 0.65 actual, findings 161)
 SEASON_SHARE_SCALE = 0.88
+# ... and it leans toward the goalie stopping more pucks than his partners: + intercept + slope x (his save% minus the
+# start-weighted save% of the team's other starters this season, x 100), both shrunk as in shrunk_save_pcts; refit on
+# this function's own shares, 2023-26 goalie-Mondays (findings 330 (1), handoff 270)
+SAVE_GAP_SEASON = (0.008, 0.0485)
+SAVE_SHRINK, LEAGUE_SAVE_PCT = (600, 1000), 0.902
 
 
 def bad_start(g):
@@ -443,6 +448,7 @@ def load_goalie_games(s, season, today):
         out += [{"id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
                  "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0,
                  "ga": r.get("goalsAgainst") or 0, "toi": r.get("timeOnIce") or 0,
+                 "sv": r.get("saves") or 0, "sa": r.get("shotsAgainst") or 0,
                  "wins": r.get("wins") or 0, "losses": r.get("losses") or 0, "otl": r.get("otLosses") or 0,
                  "fp": goalie_fp(r)}
                 for r in stats_report(s, "goalie/summary", season, a, b)]
@@ -507,8 +513,24 @@ def goalie_fp(r):
 
 
 def load_prev_goalie_season(s, season):
-    """Last season per goalie: (games started, fantasy points). The points include relief appearances."""
-    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r)) for r in stats_report(s, "goalie/summary", season)}
+    """Last season per goalie: (games started, fantasy points, saves, shots against). The points include relief appearances."""
+    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r), r.get("saves") or 0, r.get("shotsAgainst") or 0)
+            for r in stats_report(s, "goalie/summary", season)}
+
+
+def shrunk_save_pcts(goalie_games, prev_goalies):
+    """Each goalie's save% this season shrunk SAVE_SHRINK[0] shots toward last season's, itself shrunk SAVE_SHRINK[1] shots
+    toward last season's league save% (findings 330 (1)). Returns ({goalie id: save%}, league save%)."""
+    sv_all = sum(t[2] for t in prev_goalies.values())
+    sa_all = sum(t[3] for t in prev_goalies.values())
+    lg = sv_all / sa_all if sa_all else LEAGUE_SAVE_PCT
+    prior = {gid: (t[2] + lg * SAVE_SHRINK[1]) / (t[3] + SAVE_SHRINK[1]) for gid, t in prev_goalies.items()}
+    now = {}
+    for g in goalie_games:
+        t = now.setdefault(g["id"], [0, 0])
+        t[0] += g.get("sv", 0); t[1] += g.get("sa", 0)
+    out = {gid: (sv + prior.get(gid, lg) * SAVE_SHRINK[0]) / (sa + SAVE_SHRINK[0]) for gid, (sv, sa) in now.items()}
+    return {**{gid: v for gid, v in prior.items() if gid not in out}, **out}, lg
 
 
 def displaced_skaters(by_player, team_games, healthy):
@@ -1284,7 +1306,7 @@ def repeating_pattern(seq, cands):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None):
+                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -1335,6 +1357,12 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             ewm = (sum(wi for wi, x in zip(w, sq) if x == gid) + k0 * prior[gid]) / (sum(w) + k0)
             season_share[gid] = SEASON_SHARE_SCALE * (0.75 * (sum(x == gid for x in sq) + SEASON_SHARE_K * prior[gid]) / (len(sq) + SEASON_SHARE_K)
                                                       + 0.25 * ewm)
+        if save_pcts:
+            sv, lg = save_pcts
+            for gid in cands:
+                others = {x: seq.count(x) for x in set(seq) if x != gid}  # no other starter yet: no gap
+                gap = (sv.get(gid, lg) - sum(sv.get(x, lg) * n for x, n in others.items()) / sum(others.values())) * 100 if others else 0.0
+                season_share[gid] = min(max(season_share[gid] + SAVE_GAP_SEASON[0] + SAVE_GAP_SEASON[1] * gap, 0.0), 1.0)
         # out for the season, or left his last start without a decision and not yet confirmed back in net (findings 167),
         # unless ESPN already has him out: the share he loses goes to the team's other goalies, a short-term injured one
         # (out, IR) at half weight, since he is back for most of the rest (findings 216-217, 234)
@@ -1560,7 +1588,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     prev = load_prev_season(s, prev_season)
     prev2 = load_prev_season(s, prev_season - 10001)  # two seasons ago, a ridge input (findings 310 (4))
     prev_goalies = load_prev_goalie_season(s, prev_season)
-    prev_gs = {gid: n for gid, (n, _) in prev_goalies.items()}
+    prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
+    save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
     xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
     births = load_birthdates(s, (season, prev_season))
     week_games, week_starts = {}, {}
@@ -1605,7 +1634,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             t = own.setdefault(g["id"], [0.0, 0])
             t[0] += g["fp"]; t[1] += 1
     # the prior is his own last-season pts/start, itself shrunk to the league mean over 15 starts (findings section 60)
-    prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp) in prev_goalies.items() if n}
+    prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp, *_) in prev_goalies.items() if n}
     pps = {gid: (fp + prior.get(gid, base) * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
     # the league's points per start this season, for this week's pricing (findings 231 (8))
     league_pps = (sum(fp for fp, _ in own.values()) + base * LEAGUE_PPS_PRIOR) / (sum(n for _, n in own.values()) + LEAGUE_PPS_PRIOR)
@@ -1736,7 +1765,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         roster_g = [pid for pid, _, pos in rosters.get(team, []) if pos == "G"]
         tod, sea, nights = {}, {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
-                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights)
+                            last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts)
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)

@@ -1548,3 +1548,24 @@ def test_season_range_leans_up_for_rookies():
     assert m.season_range(1.0, False, 70, 10)[1] == "year 2"
     assert m.season_range(0.1, True, 0, 0)[0][0] == 0  # the low end never goes below 0
     assert m.season_range(1.0, False, 20, 0, age=33)[1] == "veteran"  # a veteran back from injury isn't a rookie
+
+
+def test_season_share_follows_the_save_pct_gap(monkeypatch):
+    """The goalie stopping more pucks than his partners gets more of the Season share; nightly starts don't change
+    (findings 330 (1), handoff 270)."""
+    prev = {1: (50, 0.0, 1500, 1650), 2: (30, 0.0, 800, 900)}
+    games = [{"id": 1, "sv": 280, "sa": 300}, {"id": 2, "sv": 250, "sa": 290}]
+    sv, lg = rating.shrunk_save_pcts(games, prev)
+    assert sv[1] > sv[2] and 0.85 < lg < 0.95
+    model = rating.Model()
+    hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), 1 if i % 3 else 2) for i in range(9)]
+    def run(sp):
+        sea, today = {}, {}
+        e = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, ["2026-10-20"], date(2026, 10, 20),
+                                 today_p=today, season_share=sea, save_pcts=sp)
+        return sea, e
+    (on, e_on), (off, e_off) = run((sv, lg)), run(None)
+    gap1 = (sv[1] - sv[2]) * 100
+    assert on[1] == pytest.approx(off[1] + rating.SAVE_GAP_SEASON[0] + rating.SAVE_GAP_SEASON[1] * gap1)
+    assert on[2] == pytest.approx(off[2] + rating.SAVE_GAP_SEASON[0] - rating.SAVE_GAP_SEASON[1] * gap1)
+    assert e_on == e_off  # Season only
