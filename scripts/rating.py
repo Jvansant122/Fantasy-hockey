@@ -17,6 +17,7 @@ import re
 import sys
 import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -281,12 +282,16 @@ def dress_by_game(base, n, sat_last, cap, shift=0.0, by_game=()):
 def load_scratches(s, game_ids):
     """{game id: NHL ids on its healthy-scratch list} from the game page's right rail, which lists healthy scratches
     only, not the injured. A game whose list can't be read or isn't posted is left out."""
-    out = {}
-    for gid in sorted(game_ids):
+    def rail(gid):
         try:
-            info = nhl_get(s, f"{NHL_WEB}/gamecenter/{gid}/right-rail").json().get("gameInfo") or {}
+            return nhl_get(s, f"{NHL_WEB}/gamecenter/{gid}/right-rail").json().get("gameInfo") or {}
         except (requests.RequestException, ValueError) as e:
             print(f"No scratch list for game {gid}: {e}", file=sys.stderr)
+            return None
+    out = {}
+    gids = sorted(game_ids)
+    for gid, info in zip(gids, pmap(rail, gids)):
+        if info is None:
             continue
         sides = [info.get(k) or {} for k in ("awayTeam", "homeTeam")]
         if all(isinstance(t.get("scratches"), list) for t in sides):
@@ -308,6 +313,16 @@ NEWS_CAP = 25
 OFFSEASON_MOVER_MULT = 0.965  # skater on a new team since last season: leave-one-season-out 0.963-0.970 (findings 230)
 # ESPN team abbreviations that differ from the NHL's
 ESPN_TO_NHL = {"TB": "TBL", "NJ": "NJD", "SJ": "SJS", "LA": "LAK", "UTAH": "UTA", "WAS": "WSH", "MON": "MTL", "CLB": "CBJ"}
+
+
+def pmap(f, items, workers=6):
+    """[f(x) for x in items], run a few at a time: a run is mostly waiting on ~100-200 small NHL calls, which one after
+    another took about 15 s and grow by four calls a week (speed audit, Oct 12 2026). Order and errors as the plain loop."""
+    items = list(items)
+    if len(items) < 2:
+        return [f(x) for x in items]
+    with ThreadPoolExecutor(min(workers, len(items))) as ex:
+        return list(ex.map(f, items))
 
 
 def nhl_get(s, url, **params):
@@ -393,17 +408,21 @@ def load_skater_games(s, season, today):
     """This season's skater games with league fantasy points, keyed by (playerId, gameId)."""
     first = date(season // 10000, 9, 20)
     rows = {}
-    for a, b in weekly(first, history_end(today)):
-        for r in stats_report(s, "skater/summary", season, a, b):
+    spans = list(weekly(first, history_end(today)))
+    reports = dict(zip([(a, rep) for a, _ in spans for rep in ("summary", "realtime", "timeonice")],
+                       pmap(lambda x: stats_report(s, f"skater/{x[2]}", season, x[0], x[1]),
+                            [(a, b, rep) for a, b in spans for rep in ("summary", "realtime", "timeonice")])))
+    for a, b in spans:
+        for r in reports[(a, "summary")]:
             rows[(r["playerId"], r["gameId"])] = {
                 "id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
                 "name": r["skaterFullName"], "pos": r["positionCode"], "toi": (r.get("timeOnIcePerGame") or 0) / 60,
                 **{k: r.get(k) or 0 for k in ("goals", "assists", "ppPoints", "shPoints", "shots")}}
-        for r in stats_report(s, "skater/realtime", season, a, b):
+        for r in reports[(a, "realtime")]:
             row = rows.get((r["playerId"], r["gameId"]))
             if row:
                 row.update(hits=r.get("hits") or 0, blockedShots=r.get("blockedShots") or 0, iCF=r.get("totalShotAttempts") or 0)
-        for r in stats_report(s, "skater/timeonice", season, a, b):
+        for r in reports[(a, "timeonice")]:
             row = rows.get((r["playerId"], r["gameId"]))
             if row:
                 row["pptoi"] = (r.get("ppTimeOnIce") or 0) / 60
@@ -444,14 +463,14 @@ def add_ranks(rows):
 def load_goalie_games(s, season, today):
     first = date(season // 10000, 9, 20)
     out = []
-    for a, b in weekly(first, history_end(today)):
+    for week in pmap(lambda ab: stats_report(s, "goalie/summary", season, *ab), weekly(first, history_end(today))):
         out += [{"id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
                  "name": r["goalieFullName"], "started": r.get("gamesStarted") or 0,
                  "ga": r.get("goalsAgainst") or 0, "toi": r.get("timeOnIce") or 0,
                  "sv": r.get("saves") or 0, "sa": r.get("shotsAgainst") or 0,
                  "wins": r.get("wins") or 0, "losses": r.get("losses") or 0, "otl": r.get("otLosses") or 0,
                  "fp": goalie_fp(r)}
-                for r in stats_report(s, "goalie/summary", season, a, b)]
+                for r in week]
     return out
 
 
@@ -1581,20 +1600,26 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     flagged = recently_flagged(today)  # read before this run rewrites the log
     stored_notes = load_injury_notes()
     s = requests.Session()
+    if hasattr(s, "mount"):  # enough pooled connections for the loads below running side by side
+        s.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=32))
     season, prev_season = season_ids(espn_season)
     model = Model()
-    games = load_skater_games(s, season, today)
-    goalie_games = load_goalie_games(s, season, today)
-    prev = load_prev_season(s, prev_season)
-    prev2 = load_prev_season(s, prev_season - 10001)  # two seasons ago, a ridge input (findings 310 (4))
-    prev_goalies = load_prev_goalie_season(s, prev_season)
+    week_games, week_starts = {}, {}
+    # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
+    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength = pmap(lambda f: f(), [
+        lambda: load_skater_games(s, season, today),
+        lambda: load_goalie_games(s, season, today),
+        lambda: load_prev_season(s, prev_season),
+        lambda: load_prev_season(s, prev_season - 10001),  # two seasons ago, a ridge input (findings 310 (4))
+        lambda: load_prev_goalie_season(s, prev_season),
+        lambda: load_xg(s, season // 10000),
+        lambda: load_xg(s, prev_season // 10000),
+        lambda: load_birthdates(s, (season, prev_season)),
+        lambda: week_schedule(s, monday, week_games, weeks, week_starts),
+        lambda: team_strength(s, prev_season),
+    ], workers=4)
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
-    xg_now, xg_prev = load_xg(s, season // 10000), load_xg(s, prev_season // 10000)
-    births = load_birthdates(s, (season, prev_season))
-    week_games, week_starts = {}, {}
-    sched = week_schedule(s, monday, week_games, weeks, week_starts)
-    strength = team_strength(s, prev_season)
     news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
@@ -1642,6 +1667,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for g in sorted(games, key=lambda g: g["date"]):
         by_player.setdefault(g["id"], []).append(g)
     context = lineup_context(by_player, team_games)  # who missed each team's last game (findings 320 (1))
+    # the older scratch lists that players just back ask scratch_list for, read side by side now rather than one by one in
+    # the loop below (about 30 calls, 8 s; speed audit, Oct 12 2026): each skater's window on his latest team, a superset
+    want = set()
+    for gl in by_player.values():
+        if team_games.get(gl[-1]["team"]):
+            comeback_logit(team_games[gl[-1]["team"]], {g["game"] for g in gl}, want.add, gl[-1]["id"])
+    want -= tried
+    tried |= want
+    scratches.update(load_scratches(s, want))
 
     # NHL name index for matching ESPN players
     index = {}
@@ -1656,8 +1690,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         add(g["id"], g["name"], g["team"], "G")
     rosters = {}
     # every team with a game this week or this season: one with no game this week keeps its goalies' Season (findings 230)
-    for team in sorted(set(sched) | set(team_games)):
-        rosters[team] = roster(s, team, goalie_games)
+    teams = sorted(set(sched) | set(team_games))
+    for team, r in zip(teams, pmap(lambda t: roster(s, t, goalie_games), teams)):
+        rosters[team] = r
         for pid, name, pos in rosters[team]:
             known = index.get(norm(name), {})
             if pid not in known or known[pid][0] is None:

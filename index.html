@@ -320,8 +320,10 @@ function tOpen(p) {
   if (!isFA(p) || !state.team) return null;
   return t.nights.filter(n => t.plays(p, n.sp) && t.slots[n.sp]?.[group(p)] > 0).length;
 }
+// only the asked-for column's work: the sort calls this for every player once (a lookup object built all six each time)
+const VALS = { week, games: tGames, light: tLight, opengm: tOpen, nights: tGames, pos: p => posTxt(p) };
 function val(p, key) {
-  return { week: week(p), games: tGames(p), light: tLight(p), opengm: tOpen(p), nights: tGames(p), pos: posTxt(p) }[key] ?? p[key];
+  return VALS[key] ? VALS[key](p) ?? p[key] : p[key];
 }
 // the positions shown in the table (no catch-all F), so the Pos sort matches what you see (findings 232)
 const posTxt = p => p.slots.filter(s => s !== "F").join("/") || p.pos;
@@ -518,10 +520,12 @@ function render(all = true) {
     matches(p, q)
   );
   const k = state.sort, dir = state.dir;
+  // each player's sort value and keep value worked out once, not on every comparison (a phone spent most of a sort here)
+  const sv = new Map(list.map(p => [p, [val(p, k), keep(p)]]));
   list.sort((a, b) => {
-    const x = val(a, k), y = val(b, k);
-    if (typeof x === "string" || typeof y === "string") return dir * String(x ?? "").localeCompare(String(y ?? "")) || keep(b) - keep(a);
-    return dir * ((x ?? -1e9) - (y ?? -1e9)) || keep(b) - keep(a);  // ties (every Week 0.0 after Sunday's first puck) by keep value (findings 211)
+    const [x, ka] = sv.get(a), [y, kb] = sv.get(b);
+    if (typeof x === "string" || typeof y === "string") return dir * String(x ?? "").localeCompare(String(y ?? "")) || kb - ka;
+    return dir * ((x ?? -1e9) - (y ?? -1e9)) || kb - ka;  // ties (every Week 0.0 after Sunday's first puck) by keep value (findings 211)
   });
   // the top 300, plus every player of your own or the picked roster further down: they're the drop candidates (findings 232)
   const shown = list.filter((p, i) => i < 300 || onMyTeam(p) || inRoster(p)), extras = Math.max(0, shown.length - 300);
@@ -533,10 +537,21 @@ function render(all = true) {
     const c = cells(p);
     return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
       COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
-      (state.open === p.id ? `<tr class="why"><td colspan="${COLS.length}"><div class="whytxt">${esc(details(p))}</div></td></tr>` : "");
+      (state.open === p.id ? whyRow(p) : "");
   }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
   if (all) { renderUpgrades(); renderTrade(); }
   save();
+}
+const whyRow = p => `<tr class="why"><td colspan="${COLS.length}"><div class="whytxt">${esc(details(p))}</div></td></tr>`;
+// opening or closing a player's details changes just those rows: redrawing all 300 took about half a second on a phone
+function toggleDetails(id) {
+  const rows = $("rows"), was = state.open;
+  state.open = was === id ? null : id;
+  rows.querySelector("tr.why")?.remove();
+  rows.querySelector(`tr[data-id="${was}"]`)?.setAttribute("aria-expanded", "false");
+  const tr = state.open == null ? null : rows.querySelector(`tr[data-id="${state.open}"]`);
+  const p = tr && state.data.players.find(q => q.id === state.open);
+  if (p) { tr.setAttribute("aria-expanded", "true"); tr.insertAdjacentHTML("afterend", whyRow(p)); }
 }
 function save() {
   store.set(Object.fromEntries(SAVED.map(key => [key, CHECKS.includes(key) ? $(key).checked : key === "team" ? state.team : key === "pos" ? $("pos").value : state[key]])));
@@ -685,7 +700,8 @@ function renderUpgrades() {
     return f >= 11 && f <= 13 && dd >= 6 && dd <= 8;
   };
   // the partner's roster too (findings 211): a team with exactly 5 healthy D won't trade one away
-  const healthy = id => d.players.filter(p => String(p.team_id) === String(id) && p.pos !== "G" && !p.ir && !p.injury && !p.pending_drop);
+  const healthyBy = new Map();  // per team, worked out once: this ran for every pair of players
+  const healthy = id => healthyBy.get(String(id)) ?? healthyBy.set(String(id), d.players.filter(p => String(p.team_id) === String(id) && p.pos !== "G" && !p.ir && !p.injury && !p.pending_drop)).get(String(id));
   const shapeOk = (m, o) => {
     if (group(o) === group(m)) return true;
     const theirs = healthy(o.team_id), tF = theirs.filter(p => group(p) === "F").length;
@@ -1006,8 +1022,7 @@ function wire() {
   });
   $("rows").addEventListener("click", e => {
     const tr = e.target.closest("tr[data-id]"); if (!tr) return;
-    state.open = state.open === +tr.dataset.id ? null : +tr.dataset.id;
-    render(false);
+    toggleDetails(+tr.dataset.id);
   });
   ["tgive", "tget"].forEach(id => $(id).addEventListener("input", e => {
     const v = +e.target.value; if (!v) return;
