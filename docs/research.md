@@ -971,6 +971,15 @@ Replaying the site's own start chances over every team game from 2021 to 2026, t
 
 A skater with no games yet used to get a fixed Season share: 0.38 of the rest of the season for a regular (60+ games last season) and the 0.1 idle cap for everyone else. Over 2022-26, the longer a team plays without him, the less of the rest of the season he plays. A 60+ game regular plays 72% of the rest after 0-3 team games without him, 35% after 4-7, and 13% after 21-35. **His Season share now comes from a table by last season's games (20-39, 40-59, 60+) and his team's games so far (0-3, 4-7, 8-12, 13-20, 21-35, 36+).** Skaters hurt before playing, or just back from an injury, keep their own share through 7 team games and then fall the way the 60+ row does. This ranks the whole board's rest-of-season points 0.004 better in each of three test seasons.
 
+## 131. New and part-time skaters who stick, and fringe players yet to play
+
+Three more changes to how much of the rest of the season a skater is expected to play:
+- **Players new to the NHL** (no games last season) who have stuck now keep their spot: their odds rise with games this season, up to 40. Those with 5 or fewer games are expected to go back down more often. New players with 41+ games played 79% of the rest of the season, against 69% predicted before.
+- **Last season's part-timers** (1-40 games) who now play regularly get the same kind of lift. At 41+ games they played 80% of the rest, against 76% predicted before.
+- **Skaters with 1-19 games last season who haven't played yet** no longer get a flat 0.1. Their share falls from 0.12 to 0.04 as their team plays without them, like section 130's table.
+
+Each ranks the board's rest-of-season points slightly better in every test season over 2023-26.
+
 ## What the independent review changed
 
 | Review point | Outcome |

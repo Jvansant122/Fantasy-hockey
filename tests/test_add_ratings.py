@@ -1686,8 +1686,23 @@ def test_no1_next_game_sunday_after_a_day_off_and_on_the_road():
 def test_unplayed_share_falls_as_his_team_plays_without_him():
     """Yet to play: the share depends on last season's games and his team's games so far (findings 350 (1), handoff 310)."""
     s = rating.unplayed_share
-    assert s(19, 0) is None and s(20, 0) == 0.275 and s(59, 8) == 0.156 and s(82, 0) == 0.717 and s(82, 50) == 0.081
-    for gp in (25, 45, 70):
+    assert s(0, 0) is None and s(19, 0) == 0.119 and s(5, 40) == 0.043 and s(20, 0) == 0.275 and s(59, 8) == 0.156 and s(82, 0) == 0.717 and s(82, 50) == 0.081
+    for gp in (5, 25, 45, 70):
         row = [s(gp, n) for n in (0, 3, 4, 7, 8, 12, 13, 20, 21, 35, 36, 80)]
         assert row == sorted(row, reverse=True)
     assert [rating.UNPLAYED_NOTED_MULT[rating.unplayed_cell(n)] for n in (0, 7, 8, 13, 21, 36)] == [1.0, 1.0, 0.78, 0.56, 0.37, 0.23]
+
+
+def test_new_and_part_time_skaters_who_stick_keep_their_spot():
+    """Season dress logit: no games last season, +0.41 x min(GP, 40)/40 and -0.26 with 5 or fewer games (handoff 311);
+    1-40 games last season, +0.38 x min(GP, 40)/40 (handoff 312); regulars unchanged (findings 350 (2)-(3))."""
+    model = rating.Model()
+    base = {k: 0.0 for k in model.season_lr["coef"]}
+    z = lambda p: math.log(p / (1 - p))
+    def shift(**x):
+        return z(model.season_dress({**base, **x})) - z(model.season_dress(base))
+    assert shift(no_prev=1.0, gp_now=3) == pytest.approx(0.41 * 3 / 40 - 0.26 + model.season_lr["coef"]["no_prev"])
+    assert shift(no_prev=1.0, gp_now=60) == pytest.approx(0.41 + model.season_lr["coef"]["no_prev"])
+    c = model.season_lr["coef"]["prev_dress_rate"]
+    assert shift(prev_dress_rate=0.3, gp_now=20) == pytest.approx(0.3 * c + 0.38 * 0.5)
+    assert shift(prev_dress_rate=0.9, gp_now=20) == pytest.approx(0.9 * c)
