@@ -879,6 +879,12 @@ When a team's no. 1 goalie starts night 1 of a back-to-back and rests night 2, t
 - A goalie's details now say that this week's price is pulled most of the way to the league's rate (section 105) before naming tonight's line or the schedule, so a soft schedule is no longer blamed for a lower price.
 - The update publishes ESPN's own first-day date, and the publish check reads it, so its day-shift rule keeps working next season.
 
+## 111. Goalies after a heavy loss, and the next power-play defenseman
+
+**A loss cuts the next start by how many went in.** A starter who loses gets a small cut to his chance of starting the team's next game. That cut now grows with the goals he allowed: 2 or fewer stays as before, 3 against cuts a little more, and 4 against cuts a lot more. Five or more, or being pulled after 3, still counts as a bad start with the biggest cut. Over five seasons, goalies who lost while allowing 4 started the next game 37% of the time, against the 42% the old rule predicted. Start predictions after losses improved in 4 of the 5 seasons.
+
+**The next power-play defenseman steps up.** For each team, the defensemen with 5+ games are ranked by power-play minutes a game. When the top one (1+ PP minute a game) missed the team's last game, or ESPN has him out, injured or suspended, the healthy defenseman next in line gets +0.15 points a game on his Week rating until the top one plays again. The Season number is unchanged. Over 278 such weeks in 2020-26, those defensemen beat the rating by 0.16 points a game, positive in 5 of 6 seasons. Their details name the player they are filling in for. Forwards get nothing, because the same check on forwards found no gain.
+
 ## What the independent review changed
 
 | Review point | Outcome |

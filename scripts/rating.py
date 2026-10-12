@@ -100,6 +100,7 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
+NEXT_UP_PP_D_FPG, NEXT_UP_PP_D_MIN = 0.15, 1.0  # Week FP/G for the D next in line when the top PP D (1+ PP min/G) is out (findings 310 (5))
 SCHED_SHRINK, SCHED_WIN = 15, (-0.175, 0.594, 0.349)  # starts without a line priced by team strength (findings 70; slope WEEK_SCHED_SLOPE)
 SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last season's inputs stay over 82
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
@@ -124,6 +125,7 @@ STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 # already fits there (68% against 63%, and a larger one scores worse) (findings 213, handoff 105)
 EARLY_GAMES, B2B_NIGHT2_NO1_EARLY = 10, -1.0
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
+LOSS_LOGITS = {3: -0.35, 4: -0.65}  # ... graded by goals against when the loss wasn't a bad start: 3 or 4 against cut deeper (findings 225)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
 # a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
 # and he stays out a median of 6 team games, so the cut lasts: games 2-4 read 0.51-0.59 against 0.19-0.22 actual
@@ -160,7 +162,7 @@ def last_start_shift(g):
     if g.get("wins"):
         return (WIN_LOGIT + (LOW_GA_WIN_LOGIT if g["ga"] <= 1 else 0.0), 0.0)
     if g.get("losses") or g.get("otl"):
-        return (LOSS_LOGIT, 0.0)
+        return (LOSS_LOGITS.get(g["ga"], LOSS_LOGIT), 0.0)
     # started, but another goalie got the decision
     return (NO_DECISION_LOGIT, NO_DECISION_LATER[0]) + (NO_DECISION_LATER[1],) * (NO_DECISION_GAMES - 2)
 
@@ -489,6 +491,29 @@ def displaced_skaters(by_player, team_games, healthy):
         if depth:
             out[min(depth)[1]] = (DISPLACED_CUT[grp], g["name"])
     return out
+
+
+def next_up_pp_d(by_player, team_games, out):
+    """Per team, defensemen with 5+ games this season ranked by PP TOI/G: when the top one (1+ PP min/G) missed the team's
+    last game or ESPN has him OUT, IR or suspended (out: NHL ids), the next healthy one who played that game gets more
+    power-play time (findings 310 (5)). Returns {nhl id of the next-up D: top D's name}."""
+    teams = {}
+    for pid, gl in by_player.items():
+        if len(gl) >= 5 and gl[-1]["pos"] == "D":
+            teams.setdefault(gl[-1]["team"], []).append((sum(g["pptoi"] for g in gl) / len(gl), pid, gl))
+    boost = {}
+    for team, ds in teams.items():
+        tg = team_games.get(team, [])
+        if not tg:
+            continue
+        ds.sort(key=lambda d: -d[0])
+        top_pp, top, top_gl = ds[0]
+        if top_pp < NEXT_UP_PP_D_MIN or not (top in out or top_gl[-1]["game"] != tg[-1]):
+            continue
+        nxt = next((pid for _, pid, gl in ds[1:] if pid not in out and gl[-1]["game"] == tg[-1]), None)
+        if nxt is not None:
+            boost[nxt] = top_gl[-1]["name"]
+    return boost
 
 
 def load_xg(s, year):
@@ -1623,6 +1648,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_dress"] = round(dress, 2)
             p["cr_dress_next"] = round(max(0.0, p["cr_dress_next"] - cut), 2)
             p["cr_why"]["displaced"] = regular
+
+    # the top power-play D is out: the next one up gets his PP time this week, not in the Season number (findings 310 (5))
+    out = {p["nhl_id"] for p in players if p.get("nhl_id") and p.get("injury") in ("OUT", "INJURY_RESERVE", "SUSPENSION")}
+    for pid, top in next_up_pp_d(by_player, team_games, out).items():
+        p = by_nhl.get(pid)
+        if p and p["cr_matched"]:
+            p["cr_fpg"] = round(p["cr_fpg"] + NEXT_UP_PP_D_FPG, 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+            p["cr_why"]["pp_d_out"] = top
 
     # percentile within F / D / G among the players on the site
     groups = {}
