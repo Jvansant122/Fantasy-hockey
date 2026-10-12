@@ -348,7 +348,8 @@ def test_trade_check_and_ideas_keep_roster_shape(browser, server, data):
             if not m or not m.group(2):
                 continue
             mine_p, theirs_p, partner = by_name[m.group(1)], by_name[m.group(3)], names[m.group(5)]
-            healthy = [p for p in d["players"] if str(p.get("team_id")) == str(partner) and p["pos"] != "G" and not p.get("ir") and not p.get("injury")]
+            healthy = [p for p in d["players"] if str(p.get("team_id")) == str(partner) and p["pos"] != "G" and not p.get("ir") and not p.get("injury")
+                       and not p.get("pending_drop")]  # dropped after the first puck: off the roster at the rollover
             f = sum(grp(p) == "F" for p in healthy) + (grp(mine_p) == "F") - (grp(theirs_p) == "F")
             dd = len(healthy) - sum(grp(p) == "F" for p in healthy) + (grp(mine_p) == "D") - (grp(theirs_p) == "D")
             assert 11 <= f <= 13 and 6 <= dd <= 8, line
