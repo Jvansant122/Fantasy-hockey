@@ -193,6 +193,8 @@ def test_every_player_gets_rating_fields(run):
         assert p["cr_dress_next"] is None or 0 <= p["cr_dress_next"] <= 1
         if p["cr_dress"] is not None and p["games_left"]:
             assert p["cr_games"] == pytest.approx(p["games_left"] * p["cr_dress"], abs=0.02)
+        # Proj GP: games so far plus a share of the 84-game season's rest, never more than a full season
+        assert isinstance(p["proj_gp"], int) and 0 <= p["proj_gp"] <= rating.SEASON_GAMES, (p["name"], p["proj_gp"])
         json.dumps(p)  # players.json must stay serialisable
 
 
@@ -1706,3 +1708,11 @@ def test_new_and_part_time_skaters_who_stick_keep_their_spot():
     c = model.season_lr["coef"]["prev_dress_rate"]
     assert shift(prev_dress_rate=0.3, gp_now=20) == pytest.approx(0.3 * c + 0.38 * 0.5)
     assert shift(prev_dress_rate=0.9, gp_now=20) == pytest.approx(0.9 * c)
+
+
+def test_proj_gp_adds_the_season_share_of_games_left(run):
+    """Proj GP = NHL games so far + the Season rating's share of his team's games still to play."""
+    by_name, _, _ = run
+    p = by_name["Ryan Spooner"]
+    assert p["cr_why"]["gp"] == 0 and 0 < p["proj_gp"] < rating.SEASON_GAMES
+    assert p["proj_gp"] == round(p["cr_why"]["season_share"] * (rating.SEASON_GAMES - 4))

@@ -1218,11 +1218,11 @@ def test_position_filter_order_and_skaters(browser, server):
 
 
 def test_column_order(browser, server):
-    """Proj/G and This yr/G follow Games; phones still show Player, Week, Season, Nights, Open (findings 300)."""
+    """Proj/G, This yr/G and Proj GP follow Games, Last yr GP sits before Last yr/G; phones still show Player, Week, Season, Nights, Open (findings 300)."""
     ctx, page, errors = open_page(browser, server)
     heads = page.locator("#head th").all_inner_texts()
     assert [h.rstrip(" ▾▴") for h in heads] == ["Player", "Team", "Pos", "Week", "Season", "Nights", "Games", "Proj/G", "This yr/G",
-                                                "Open", "Light", "ESPN week", "Last yr/G", "% Own"]
+                                                "Proj GP", "Open", "Light", "ESPN week", "Last yr GP", "Last yr/G", "% Own"]
     ctx.close()
     ctx, page, errors2 = open_page(browser, server, phone=True)
     shown = page.evaluate("[...document.querySelectorAll('#head th')].filter(th => th.offsetParent).map(th => th.dataset.k)")
@@ -1276,7 +1276,7 @@ def test_nights_for_a_later_week(browser, server, data):
     rows_ = page.evaluate("""[...document.querySelectorAll('#rows tr[data-id]')].map(r => {
       const p = state.data.players.find(p => p.id === +r.dataset.id);
       return { id: r.dataset.id, team: p.team, fa: p.owner === 'freeagent' || p.owner === 'waivers', pos: p.pos,
-               games: +r.children[6].innerText, open: r.children[9].innerText, light: +r.children[10].innerText,
+               games: +r.children[6].innerText, open: r.children[10].innerText, light: +r.children[11].innerText,
                dots: [...r.children[5].querySelectorAll('i')].map(i => i.className.trim()), week: r.children[3].innerText }; })""")
     light = set(w["light"])
     for r in rows_:
@@ -1340,7 +1340,7 @@ def test_wide_desktop_and_all_columns_on_phones(browser, server, data):
     page.select_option("#team", str(data["teams"][0]["id"]))
     assert page.locator("#allcols").is_visible() and not page.locator("#allcols").is_checked()
     page.check("#allcols")
-    assert page.evaluate("[...document.querySelectorAll('#head th')].filter(th => th.offsetParent).length") == 14
+    assert page.evaluate("[...document.querySelectorAll('#head th')].filter(th => th.offsetParent).length") == 16
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
     wrap = page.evaluate("(() => { const w = document.querySelector('.tablewrap'); return [w.scrollWidth, w.clientWidth]; })()")
     assert wrap[0] > wrap[1]  # the table scrolls sideways inside its box

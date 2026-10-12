@@ -210,7 +210,7 @@
     <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
   <p class="sub"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, so an injured star still rates high; a player hurt before his first game is expected in only part of the rest). Goalies: his share of his team's starts × his points per start. Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from his recent lineup history and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early; IR at 15%; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
-  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D and the UTL, counted as a D unless a tenth forward fills it, 2 G). Most of the value of empty slots is on light nights. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
+  <p class="sub"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D and the UTL, counted as a D unless a tenth forward fills it, 2 G). Most of the value of empty slots is on light nights. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. <b>Last yr GP</b> = NHL games played last season. <b>Proj GP</b> = projected games this season (84 per team): games played so far plus the Season rating's share of his team's games still to play; for goalies, starts so far plus his projected share of the rest. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
 </main>
 <script>
 // UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
@@ -225,9 +225,9 @@ const state = { tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, d
 const COLS = [
   ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
   // Proj/G and This yr/G right after Games (findings 300)
-  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "Proj/G", "r", false], ["cur_ppg", "This yr/G", "r", false],
+  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "Proj/G", "r", false], ["cur_ppg", "This yr/G", "r", false], ["proj_gp", "Proj GP", "r", false],
   ["opengm", "Open", "r", true], ["light", "Light", "r", false], ["week", "ESPN week", "r", false],
-  ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
+  ["last_gp", "Last yr GP", "r", false], ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
 ];
 const $ = id => document.getElementById(id);
 const fmt = v => v == null ? "–" : (Math.round(v * 10) / 10).toFixed(1);
@@ -491,7 +491,7 @@ function cells(p) {
     cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}${upside(p) != null
       ? `<span class="upside" title="${EXP_TXT[p.cr_why.exp]}: 1 in 10 finish above ${fmt(upside(p))}">↑${fmt(upside(p))}</span>` : ""}` : "–", nights: dots(p), games: tGames(p),
     opengm: og == null ? "–" : og, light: tLight(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
-    cur_ppg: fmt(p.cur_ppg), last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
+    cur_ppg: fmt(p.cur_ppg), proj_gp: p.proj_gp ?? "–", last_gp: p.last_gp ?? "–", last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
   };
 }
 
