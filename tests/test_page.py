@@ -1789,3 +1789,21 @@ def test_table_draws_the_first_rows_then_the_rest_on_scroll(browser, server):
     assert page.locator("#rows tr.why").count() == 1
     assert not errors, errors
     ctx.close()
+
+
+def test_phone_table_leaves_out_its_hidden_columns(browser, server):
+    """A phone draws only the 5 phone columns until "All columns" is on, and redraws when the window widens (audit plan 2)."""
+    ctx, page, errors = open_page(browser, server, phone=True)
+    cells = lambda: page.evaluate("document.querySelector('#rows tr[data-id]').children.length")
+    heads = lambda: page.evaluate("document.querySelectorAll('#head th').length")
+    assert cells() == heads() == 5
+    page.locator("#allcols").check()
+    assert cells() == heads() == page.evaluate("COLS.length")
+    page.locator("#allcols").uncheck()
+    assert cells() == 5
+    page.set_viewport_size({"width": 1280, "height": 900})
+    page.wait_for_function("document.querySelectorAll('#head th').length === COLS.length")
+    page.locator("#rows tr[data-id]").first.click()
+    assert page.evaluate("+document.querySelector('#rows tr.why td').colSpan") == page.evaluate("COLS.length")
+    assert not errors, errors
+    ctx.close()
