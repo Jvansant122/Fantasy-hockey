@@ -1718,3 +1718,33 @@ def test_sunday_after_first_puck_counts_next_weeks_moves(browser, server, data):
     assert "No moves left" not in text
     assert errors == []
     ctx.close()
+
+
+def test_update_now_opens_the_workflow_and_reloads_when_new_numbers_land(browser, server, data):
+    """Update now (Jack's ask, Oct 12) opens the workflow on GitHub, shows the run starting, and reloads on fresh data."""
+    import datetime as dt
+    ctx, page, errors = open_page(browser, server, data=data, clock="install")
+    now = page.evaluate("new Date().toISOString()")
+    run = {"status": "in_progress", "conclusion": None, "created_at": now, "updated_at": now, "html_url": "https://github.com/x"}
+    page.route("https://api.github.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"workflow_runs": [run]})))
+    page.evaluate("window.opened = []; window.open = (u) => { window.opened.push(u); return null; }; 0")
+    page.click("#refresh")
+    assert page.evaluate("window.opened") == ["https://github.com/Jvansant122/Fantasy-hockey/actions/workflows/update.yml"]
+    page.wait_for_function("document.getElementById('refreshmsg').textContent.includes('is running')")
+    assert page.evaluate("localStorage.getItem('faf_refresh')")
+    # the run fails: the page says so, keeps its numbers and stops watching
+    run.update(status="completed", conclusion="failure")
+    page.clock.run_for(31_000)
+    page.wait_for_function("document.getElementById('refreshmsg').textContent.includes(\"didn't finish\")")
+    assert page.evaluate("localStorage.getItem('faf_refresh')") is None
+    # pressed again and new numbers are published: the page reloads with them
+    page.click("#refresh")
+    fresh = dict(data, updated_utc=(dt.datetime.fromisoformat(now.replace("Z", "+00:00")) + dt.timedelta(minutes=2)).isoformat())
+    page.route("**/data/players.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(fresh)))
+    with page.expect_navigation():
+        page.clock.run_for(31_000)
+    page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
+    assert page.evaluate("localStorage.getItem('faf_refresh')") is None
+    assert page.locator("#refresh").inner_text() == "Update now"
+    assert errors == []
+    ctx.close()
