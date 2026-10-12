@@ -477,7 +477,7 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
     """A bad start (5+ against, or pulled after 3+) lowers the starter's chance in the next game and a little in
     the one after; a win raises it and a loss lowers it in the next game only (findings 131-133)."""
     monkeypatch.setattr(rating, "NO1_ORDINARY_LOGIT", 0.0)  # this test is about the last-start shifts alone
-    monkeypatch.setattr(rating, "LAST5_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 245)
+    monkeypatch.setattr(rating, "LAST6_OTHER_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 246)
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26"]
@@ -519,7 +519,7 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
 
 def test_goalie_who_left_without_a_decision_stays_out_all_week(monkeypatch):
     """The no-decision cut lasts past the next game, and ends once Daily Faceoff confirms him (findings 164)."""
-    monkeypatch.setattr(rating, "LAST5_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 245)
+    monkeypatch.setattr(rating, "LAST6_OTHER_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 246)
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26", "2026-10-28"]
@@ -924,23 +924,27 @@ def test_repeating_goalie_pattern(monkeypatch):
         assert sign * (today(seq) - plain) > 0.03
 
 
-def test_last_five_start_strings(monkeypatch):
-    """Two goalies in the last 10: 1 1 1 0 1 (no. 1 back after a spot start) +0.6 and 0 0 1 1 1 (three straight after the
-    other's two) +1.0 on the last starter's next game, not on night 2 of a back-to-back (findings 245)."""
+def test_last_six_start_strings_cut_the_other_goalie(monkeypatch):
+    """Two goalies in the last 10, by the last starter's last 6: ends 1 1 1 0 1 -1.0, ends 0 0 1 1 1 -1.2, exactly
+    1 1 0 1 0 1 -0.6 on the other goalie's next game, not on night 2 of a back-to-back (findings 246)."""
     model = rating.Model()
+    assert rating.last_six_cut([1, 1, 2, 1, 1, 1, 1, 1, 2, 1]) == -1.0
+    assert rating.last_six_cut([1, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1]) == -1.2
+    assert rating.last_six_cut([2, 2, 2, 2, 1, 1, 2, 1, 2, 1]) == -0.6
+    assert rating.last_six_cut([1, 1, 3, 1, 1, 1, 1, 1, 2, 1]) == 0.0  # three goalies in the last 10
+    assert rating.last_six_cut([1, 1, 1, 2, 1]) == 0.0  # under 10 games
 
     def p1(seq, logits, gap=2):
-        monkeypatch.setattr(rating, "LAST5_LOGITS", logits)
+        monkeypatch.setattr(rating, "LAST6_OTHER_LOGITS", logits)
         hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
         nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=gap)
         out = {}
         rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
         return out[1]
-    on = {"11101": 0.6, "00111": 1.0}
+    on = {"110101": -0.6, "11101": -1.0, "00111": -1.2}
     for seq in ([1, 1, 2, 1, 1, 1, 1, 1, 2, 1], [1, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1]):
         assert p1(seq, on) > p1(seq, {}) + 0.05
         assert p1(seq, on, gap=1) == pytest.approx(p1(seq, {}, gap=1))  # night 2 of a back-to-back: the b2b rules decide
-    assert p1([1, 1, 3, 1, 1, 1, 1, 2, 2, 1], on) == pytest.approx(p1([1, 1, 3, 1, 1, 1, 1, 2, 2, 1], {}))  # three goalies in the last 10
 
 
 def test_goalie_game_that_already_started(monkeypatch, tmp_path):
