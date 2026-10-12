@@ -533,14 +533,41 @@ function render(all = true) {
     (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
   $("head").innerHTML = COLS.map(([key, label, align, phone]) =>
     `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights<span class="wkl">(${esc(state.tw.w.label)})</span>` : label}</th>`).join("");
-  $("rows").innerHTML = shown.map(p => {
-    const c = cells(p);
-    return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
-      COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
-      (state.open === p.id ? whyRow(p) : "");
-  }).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
+  // the first rows now and the rest as the list scrolls near them: laying out all 300 took most of a phone's sort or filter
+  drawRows(shown);
   if (all) { renderUpgrades(); renderTrade(); }
   save();
+}
+const FIRST_ROWS = 60, MORE_ROWS = 120;
+let rowQueue = [], rowWatch = null;
+function rowHTML(p) {
+  const c = cells(p);
+  return `<tr class="${onMyTeam(p) || inRoster(p) ? "mine" : ""}" data-id="${p.id}" tabindex="0" aria-expanded="${state.open === p.id}">` +
+    COLS.map(([key, , align, phone]) => `<td class="${align} ${phone ? "" : "wide"}">${c[key]}</td>`).join("") + "</tr>" +
+    (state.open === p.id ? whyRow(p) : "");
+}
+function drawRows(shown) {
+  rowWatch?.disconnect();
+  const n = window.ALL_ROWS ? shown.length : FIRST_ROWS;
+  rowQueue = shown.slice(n);
+  $("rows").innerHTML = shown.slice(0, n).map(rowHTML).join("") || `<tr><td colspan="${COLS.length}" class="empty">No players match.</td></tr>`;
+  moreRows();
+}
+// the next batch once the "more" row is within a couple of screens; without IntersectionObserver, everything at once
+function moreRows() {
+  const rows = $("rows");
+  rows.querySelector("tr.more")?.remove();
+  if (!rowQueue.length) return;
+  if (!window.IntersectionObserver) { rows.insertAdjacentHTML("beforeend", rowQueue.map(rowHTML).join("")); rowQueue = []; return; }
+  rows.insertAdjacentHTML("beforeend", `<tr class="more"><td colspan="${COLS.length}" class="empty">Loading ${rowQueue.length} more…</td></tr>`);
+  rowWatch = rowWatch || new IntersectionObserver(es => {
+    if (!es.some(e => e.isIntersecting)) return;
+    rowWatch.disconnect();
+    const batch = rowQueue.splice(0, MORE_ROWS);
+    $("rows").querySelector("tr.more")?.insertAdjacentHTML("beforebegin", batch.map(rowHTML).join(""));
+    moreRows();
+  }, { rootMargin: "1500px 0px" });
+  rowWatch.observe(rows.querySelector("tr.more"));
 }
 const whyRow = p => `<tr class="why"><td colspan="${COLS.length}"><div class="whytxt">${esc(details(p))}</div></td></tr>`;
 // opening or closing a player's details changes just those rows: redrawing all 300 took about half a second on a phone
