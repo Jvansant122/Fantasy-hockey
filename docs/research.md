@@ -959,6 +959,10 @@ About one start in 25 ends with the goalie pulled before 40 minutes. When a goal
 
 For a skater who has missed his team's last 6 or more games, the Season rating's share of the rest of the season he plays now leans on how durable he was last season. Players who dressed for over 90% of last season's games have come back sooner than the lineup chain expected: they played 0.56 of the rest of the season against 0.48 predicted. **The odds he dresses now rise by 0.31 x last season's games-played rate and fall by 0.10 x his Season points a game**, so the heaviest scorers move a little less. This was fitted on top of the site's own Season dress model over 2023-26. It ranks players out 6+ games 0.007 better in each of three test seasons and leaves everyone else unchanged.
 
+## 128. Goalies who changed teams over the summer
+
+A goalie's Season points per start blends this season's starts with last season's rate, and last season's rate was earned on his old team. Wins are worth 3 more points than losses, so a goalie who moved from a strong team to a weak one should expect fewer points per start. **For a goalie whose last game last season was for another team, last season's rate now moves by 3 x (his new team's points% last season - his old team's).** A move from a 0.60 team to a 0.45 team takes about 0.45 off that rate before it is blended with this season's starts. Over 2023-26 Mondays, using the site's own shares, this ranks those goalies' rest-of-season points 0.014 better and all goalies 0.001 better, in each of three test seasons. The 3 comes from the scoring rules rather than from a fit; refits on prediction error chose 0.5-2.5, which also helped in every season but by less. The Week rating is unchanged.
+
 ## What the independent review changed
 
 | Review point | Outcome |
