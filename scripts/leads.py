@@ -13,6 +13,7 @@ import re
 import sys
 import time
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
@@ -62,19 +63,19 @@ def load_teams(s):
 
 def fetch_lineups(s):
     """Every team's projected lineup: {NHL abbrev: {updated, players: [[name, group, injury, game-time decision]]}}."""
-    out = {}
-    for t in load_teams(s):
-        abbrev = NHL_TEAM[t["name"]]
+    def one(t):
         try:
             c = page_data(s, f"{DF}/teams/{t['slug']}/line-combinations").get("combinations") or {}
         except Exception as e:  # noqa: BLE001 - one team failing shouldn't lose the rest
-            out[abbrev] = {"error": repr(e)}
-            continue
-        out[abbrev] = {"updated": c.get("updatedAt"), "source": c.get("sourceName"),
-                       "players": [[p.get("name"), p.get("groupIdentifier"), p.get("injuryStatus"), p.get("gameTimeDecision")]
-                                   for p in c.get("players", [])]}
-        time.sleep(0.5)
-    return out
+            return {"error": repr(e)}
+        time.sleep(0.5)  # each of the 4 readers pauses between pages, so Daily Faceoff sees a few pages a second at most
+        return {"updated": c.get("updatedAt"), "source": c.get("sourceName"),
+                "players": [[p.get("name"), p.get("groupIdentifier"), p.get("injuryStatus"), p.get("gameTimeDecision")]
+                            for p in c.get("players", [])]}
+    teams = load_teams(s)
+    # 4 at a time: one by one, the 32 pages and pauses took about 20 s of a 40 s update (speed audit, Oct 12 2026)
+    with ThreadPoolExecutor(4) as ex:
+        return {NHL_TEAM[t["name"]]: v for t, v in zip(teams, ex.map(one, teams))}
 
 
 DRESSED = {"f1", "f2", "f3", "f4", "d1", "d2", "d3", "d4"}
