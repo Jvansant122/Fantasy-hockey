@@ -1,8 +1,8 @@
 {
- "updated": "Mon Oct 12, 11:24 AM ET",
+ "updated": "Mon Oct 12, 11:00 AM ET",
  "updated_date": "2026-10-12",
  "first_start": "2026-10-12T17:00:00Z",
- "updated_utc": "2026-10-12T15:24:18Z",
+ "updated_utc": "2026-10-12T14:59:54Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -3463,7 +3463,7 @@
    "id": 3,
    "name": "6 Foot Kings Only",
    "mine": false,
-   "moves_used": 2,
+   "moves_used": 0,
    "moves_used_next": 0,
    "waiver_rank": 11
   },
@@ -3655,7 +3655,7 @@
    },
    "cr": 10.06,
    "cr_fpg": 3.35,
-   "cr_season": 1.79,
+   "cr_season": 2.04,
    "cr_games": 3.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -3699,7 +3699,7 @@
    "owner": "other",
    "team_id": 3,
    "ir": false,
-   "bench": false,
+   "bench": true,
    "injury": null,
    "owned": 86.4,
    "gp": 5,
@@ -3716,9 +3716,9 @@
     "17": 0.85,
     "20": 0.76
    },
-   "cr": 9.99,
-   "cr_fpg": 3.58,
-   "cr_season": 1.85,
+   "cr": 10.04,
+   "cr_fpg": 3.59,
+   "cr_season": 2.13,
    "cr_games": 2.79,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -3736,8 +3736,8 @@
     },
     "own_pps": 4.1,
     "line": {
-     "win_prob": 0.5,
-     "pps": 3.37
+     "win_prob": 0.52,
+     "pps": 3.42
     },
     "sched": 0.31,
     "gs": 5,
@@ -4844,7 +4844,7 @@
    },
    "cr": 7.99,
    "cr_fpg": 3.22,
-   "cr_season": 1.95,
+   "cr_season": 2.27,
    "cr_games": 2.48,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -5175,7 +5175,7 @@
    },
    "cr": 7.49,
    "cr_fpg": 3.06,
-   "cr_season": 1.8,
+   "cr_season": 2.05,
    "cr_games": 2.45,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -6021,7 +6021,7 @@
    },
    "cr": 7.2,
    "cr_fpg": 3.28,
-   "cr_season": 2.21,
+   "cr_season": 2.63,
    "cr_games": 2.2,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -6041,67 +6041,6 @@
    },
    "cr_pct": 97,
    "cr_season_pct": 99
-  },
-  {
-   "id": 2976847,
-   "name": "Andrei Vasilevskiy",
-   "team": "TB",
-   "games": 3,
-   "games_left": 3,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 13,
-   "ir": false,
-   "bench": true,
-   "injury": null,
-   "owned": 99.8,
-   "gp": 4,
-   "ppg": 3.42,
-   "cur_ppg": 2.7,
-   "last_ppg": 3.65,
-   "last_gp": 58,
-   "proj_ppg": 3.52,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "15": 0.67,
-    "17": 0.7,
-    "19": 0.76
-   },
-   "cr": 7.08,
-   "cr_fpg": 3.31,
-   "cr_season": 1.88,
-   "cr_games": 2.14,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476883,
-   "cr_why": {
-    "exp_starts": 2.14,
-    "team_games": 3,
-    "share10": 0.8,
-    "n10": 5,
-    "own_pps": 3.33,
-    "sched": 0.27,
-    "gs": 4,
-    "p_today": 0.0,
-    "p_today_pre": 0.0
-   },
-   "cr_pct": 96,
-   "cr_season_pct": 96
   },
   {
    "id": 5452,
@@ -6143,9 +6082,9 @@
     "17": 0.75,
     "19": 0.68
    },
-   "cr": 7.07,
-   "cr_fpg": 2.8,
-   "cr_season": 1.49,
+   "cr": 7.13,
+   "cr_fpg": 2.82,
+   "cr_season": 1.62,
    "cr_games": 2.52,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -6163,8 +6102,8 @@
     },
     "own_pps": 2.72,
     "line": {
-     "win_prob": 0.49,
-     "pps": 2.76
+     "win_prob": 0.5,
+     "pps": 2.82
     },
     "sched": 0.03,
     "gs": 4,
@@ -6173,6 +6112,67 @@
    },
    "cr_pct": 96,
    "cr_season_pct": 87
+  },
+  {
+   "id": 2976847,
+   "name": "Andrei Vasilevskiy",
+   "team": "TB",
+   "games": 3,
+   "games_left": 3,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 13,
+   "ir": false,
+   "bench": true,
+   "injury": null,
+   "owned": 99.8,
+   "gp": 4,
+   "ppg": 3.42,
+   "cur_ppg": 2.7,
+   "last_ppg": 3.65,
+   "last_gp": 58,
+   "proj_ppg": 3.52,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "15": 0.67,
+    "17": 0.7,
+    "19": 0.76
+   },
+   "cr": 7.08,
+   "cr_fpg": 3.31,
+   "cr_season": 2.16,
+   "cr_games": 2.14,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476883,
+   "cr_why": {
+    "exp_starts": 2.14,
+    "team_games": 3,
+    "share10": 0.8,
+    "n10": 5,
+    "own_pps": 3.33,
+    "sched": 0.27,
+    "gs": 4,
+    "p_today": 0.0,
+    "p_today_pre": 0.0
+   },
+   "cr_pct": 96,
+   "cr_season_pct": 96
   },
   {
    "id": 4268771,
@@ -6346,7 +6346,7 @@
    },
    "cr": 6.97,
    "cr_fpg": 3.42,
-   "cr_season": 2.36,
+   "cr_season": 2.83,
    "cr_games": 2.04,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -6606,9 +6606,9 @@
     "17": 0.59,
     "19": 0.6
    },
-   "cr": 6.69,
-   "cr_fpg": 3.19,
-   "cr_season": 1.41,
+   "cr": 6.67,
+   "cr_fpg": 3.18,
+   "cr_season": 1.51,
    "cr_games": 2.1,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -6626,8 +6626,8 @@
     },
     "own_pps": 3.01,
     "line": {
-     "win_prob": 0.5,
-     "pps": 2.9
+     "win_prob": 0.48,
+     "pps": 2.85
     },
     "sched": 0.37,
     "gs": 4,
@@ -6874,7 +6874,7 @@
    },
    "cr": 6.62,
    "cr_fpg": 2.79,
-   "cr_season": 1.76,
+   "cr_season": 2.0,
    "cr_games": 2.37,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -6887,8 +6887,8 @@
     "share10": 0.75,
     "n10": 4,
     "tonight": {
-     "starting": false,
-     "status": "Likely"
+     "starting": true,
+     "status": "Unconfirmed"
     },
     "own_pps": 2.97,
     "line": {
@@ -7009,7 +7009,7 @@
    },
    "cr": 6.57,
    "cr_fpg": 2.92,
-   "cr_season": 1.37,
+   "cr_season": 1.46,
    "cr_games": 2.25,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -7395,7 +7395,7 @@
    },
    "cr": 6.48,
    "cr_fpg": 3.15,
-   "cr_season": 1.82,
+   "cr_season": 2.08,
    "cr_games": 2.05,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -8550,7 +8550,7 @@
    "owner": "other",
    "team_id": 3,
    "ir": false,
-   "bench": true,
+   "bench": false,
    "injury": null,
    "owned": 80.9,
    "gp": 4,
@@ -8568,7 +8568,7 @@
    },
    "cr": 6.18,
    "cr_fpg": 3.32,
-   "cr_season": 1.47,
+   "cr_season": 1.6,
    "cr_games": 1.86,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -9020,7 +9020,7 @@
    },
    "cr": 6.13,
    "cr_fpg": 2.84,
-   "cr_season": 1.29,
+   "cr_season": 1.35,
    "cr_games": 2.16,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -9409,7 +9409,7 @@
    },
    "cr": 6.01,
    "cr_fpg": 3.21,
-   "cr_season": 2.13,
+   "cr_season": 2.51,
    "cr_games": 1.88,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -9602,7 +9602,7 @@
    },
    "cr": 5.96,
    "cr_fpg": 3.24,
-   "cr_season": 2.12,
+   "cr_season": 2.5,
    "cr_games": 1.84,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -9622,77 +9622,6 @@
    },
    "cr_pct": 89,
    "cr_season_pct": 98
-  },
-  {
-   "id": 4233889,
-   "name": "Ukko-Pekka Luukkonen",
-   "team": "BUF",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": "2026-10-12T17:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 59.5,
-   "gp": 3,
-   "ppg": 2.99,
-   "cur_ppg": -1.13,
-   "last_ppg": 3.68,
-   "last_gp": 34,
-   "proj_ppg": 3.4,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "14": 0.76,
-    "15": 0.18,
-    "17": 0.68,
-    "19": 0.58
-   },
-   "cr": 5.92,
-   "cr_fpg": 2.68,
-   "cr_season": 1.1,
-   "cr_games": 2.21,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8480045,
-   "cr_why": {
-    "exp_starts": 2.21,
-    "team_games": 4,
-    "share10": 0.6,
-    "n10": 5,
-    "tonight": {
-     "starting": true,
-     "status": "Unconfirmed"
-    },
-    "own_pps": 2.68,
-    "line": {
-     "win_prob": 0.51,
-     "pps": 2.83
-    },
-    "sched": -0.17,
-    "gs": 3,
-    "p_today": 0.76,
-    "p_today_pre": 0.76
-   },
-   "cr_pct": 88,
-   "cr_season_pct": 74
   },
   {
    "id": 3942073,
@@ -9716,7 +9645,7 @@
    "owner": "other",
    "team_id": 1,
    "ir": false,
-   "bench": true,
+   "bench": false,
    "injury": null,
    "owned": 51.1,
    "gp": 4,
@@ -9734,7 +9663,7 @@
    },
    "cr": 5.92,
    "cr_fpg": 3.04,
-   "cr_season": 1.55,
+   "cr_season": 1.71,
    "cr_games": 1.95,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -9752,7 +9681,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 88,
+   "cr_pct": 89,
    "cr_season_pct": 89
   },
   {
@@ -9820,6 +9749,77 @@
    },
    "cr_pct": 91,
    "cr_season_pct": 76
+  },
+  {
+   "id": 4233889,
+   "name": "Ukko-Pekka Luukkonen",
+   "team": "BUF",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 59.5,
+   "gp": 3,
+   "ppg": 2.99,
+   "cur_ppg": -1.13,
+   "last_ppg": 3.68,
+   "last_gp": 34,
+   "proj_ppg": 3.4,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "14": 0.76,
+    "15": 0.18,
+    "17": 0.68,
+    "19": 0.58
+   },
+   "cr": 5.87,
+   "cr_fpg": 2.66,
+   "cr_season": 1.08,
+   "cr_games": 2.21,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8480045,
+   "cr_why": {
+    "exp_starts": 2.21,
+    "team_games": 4,
+    "share10": 0.6,
+    "n10": 5,
+    "tonight": {
+     "starting": true,
+     "status": "Unconfirmed"
+    },
+    "own_pps": 2.68,
+    "line": {
+     "win_prob": 0.5,
+     "pps": 2.77
+    },
+    "sched": -0.17,
+    "gs": 3,
+    "p_today": 0.76,
+    "p_today_pre": 0.76
+   },
+   "cr_pct": 88,
+   "cr_season_pct": 74
   },
   {
    "id": 4024857,
@@ -10998,77 +10998,6 @@
    "cr_season_pct": 70
   },
   {
-   "id": 3939714,
-   "name": "Adin Hill",
-   "team": "VGK",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": "2026-10-13T00:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 9,
-   "ir": false,
-   "bench": true,
-   "injury": null,
-   "owned": 7.5,
-   "gp": 2,
-   "ppg": 2.38,
-   "cur_ppg": 3.4,
-   "last_ppg": 1.71,
-   "last_gp": 27,
-   "proj_ppg": 2.32,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "14": 0.49,
-    "15": 0.61,
-    "17": 0.41,
-    "19": 0.4
-   },
-   "cr": 5.51,
-   "cr_fpg": 2.9,
-   "cr_season": 0.97,
-   "cr_games": 1.9,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8478499,
-   "cr_why": {
-    "exp_starts": 1.9,
-    "team_games": 4,
-    "share10": 0.33,
-    "n10": 6,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed"
-    },
-    "own_pps": 2.28,
-    "line": {
-     "win_prob": 0.5,
-     "pps": 2.61
-    },
-    "sched": 0.37,
-    "gs": 2,
-    "p_today": 0.49,
-    "p_today_pre": 0.49
-   },
-   "cr_pct": 87,
-   "cr_season_pct": 67
-  },
-  {
    "id": 4587996,
    "name": "Kirill Marchenko",
    "team": "TOR",
@@ -11200,6 +11129,77 @@
    "cr_season_pct": 64
   },
   {
+   "id": 3939714,
+   "name": "Adin Hill",
+   "team": "VGK",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": "2026-10-13T00:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 9,
+   "ir": false,
+   "bench": true,
+   "injury": null,
+   "owned": 7.5,
+   "gp": 2,
+   "ppg": 2.38,
+   "cur_ppg": 3.4,
+   "last_ppg": 1.71,
+   "last_gp": 27,
+   "proj_ppg": 2.32,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "14": 0.49,
+    "15": 0.61,
+    "17": 0.41,
+    "19": 0.4
+   },
+   "cr": 5.49,
+   "cr_fpg": 2.88,
+   "cr_season": 0.9,
+   "cr_games": 1.9,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478499,
+   "cr_why": {
+    "exp_starts": 1.9,
+    "team_games": 4,
+    "share10": 0.33,
+    "n10": 6,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed"
+    },
+    "own_pps": 2.28,
+    "line": {
+     "win_prob": 0.48,
+     "pps": 2.55
+    },
+    "sched": 0.37,
+    "gs": 2,
+    "p_today": 0.49,
+    "p_today_pre": 0.49
+   },
+   "cr_pct": 87,
+   "cr_season_pct": 67
+  },
+  {
    "id": 3652964,
    "name": "Noah Hanifin",
    "team": "VGK",
@@ -11304,7 +11304,7 @@
    },
    "cr": 5.44,
    "cr_fpg": 2.91,
-   "cr_season": 2.0,
+   "cr_season": 2.34,
    "cr_games": 1.87,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -11414,7 +11414,7 @@
    "owner": "other",
    "team_id": 3,
    "ir": false,
-   "bench": false,
+   "bench": true,
    "injury": null,
    "owned": 4.3,
    "gp": 5,
@@ -11691,7 +11691,7 @@
    },
    "cr": 5.33,
    "cr_fpg": 2.65,
-   "cr_season": 1.34,
+   "cr_season": 1.41,
    "cr_games": 2.01,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -11997,7 +11997,7 @@
    "owner": "other",
    "team_id": 3,
    "ir": false,
-   "bench": false,
+   "bench": true,
    "injury": null,
    "owned": 60.2,
    "gp": 5,
@@ -12957,77 +12957,6 @@
    "cr_season_pct": 53
   },
   {
-   "id": 4736758,
-   "name": "Colten Ellis",
-   "team": "BUF",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": "2026-10-12T17:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 3,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 1.3,
-   "gp": 2,
-   "ppg": 3.82,
-   "cur_ppg": 1.9,
-   "last_ppg": 3.94,
-   "last_gp": 14,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "14": 0.24,
-    "15": 0.82,
-    "17": 0.32,
-    "19": 0.42
-   },
-   "cr": 5.13,
-   "cr_fpg": 2.86,
-   "cr_season": 0.92,
-   "cr_games": 1.79,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8481551,
-   "cr_why": {
-    "exp_starts": 1.79,
-    "team_games": 4,
-    "share10": 0.4,
-    "n10": 5,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed"
-    },
-    "own_pps": 3.22,
-    "line": {
-     "win_prob": 0.51,
-     "pps": 3.05
-    },
-    "sched": -0.17,
-    "gs": 2,
-    "p_today": 0.24,
-    "p_today_pre": 0.24
-   },
-   "cr_pct": 84,
-   "cr_season_pct": 66
-  },
-  {
    "id": 4576894,
    "name": "Arturs Silovs",
    "team": "PIT",
@@ -13067,7 +12996,7 @@
    },
    "cr": 5.13,
    "cr_fpg": 2.85,
-   "cr_season": 1.52,
+   "cr_season": 1.66,
    "cr_games": 1.8,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -13085,7 +13014,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 84,
+   "cr_pct": 85,
    "cr_season_pct": 88
   },
   {
@@ -13222,6 +13151,77 @@
    "cr_season_pct": 79
   },
   {
+   "id": 4736758,
+   "name": "Colten Ellis",
+   "team": "BUF",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 1.3,
+   "gp": 2,
+   "ppg": 3.82,
+   "cur_ppg": 1.9,
+   "last_ppg": 3.94,
+   "last_gp": 14,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "14": 0.24,
+    "15": 0.82,
+    "17": 0.32,
+    "19": 0.42
+   },
+   "cr": 5.11,
+   "cr_fpg": 2.85,
+   "cr_season": 0.83,
+   "cr_games": 1.79,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8481551,
+   "cr_why": {
+    "exp_starts": 1.79,
+    "team_games": 4,
+    "share10": 0.4,
+    "n10": 5,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed"
+    },
+    "own_pps": 3.22,
+    "line": {
+     "win_prob": 0.5,
+     "pps": 2.98
+    },
+    "sched": -0.17,
+    "gs": 2,
+    "p_today": 0.24,
+    "p_today_pre": 0.24
+   },
+   "cr_pct": 84,
+   "cr_season_pct": 66
+  },
+  {
    "id": 5622,
    "name": "Scott Wedgewood",
    "team": "COL",
@@ -13261,7 +13261,7 @@
    },
    "cr": 5.1,
    "cr_fpg": 3.6,
-   "cr_season": 1.61,
+   "cr_season": 1.8,
    "cr_games": 1.42,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -13304,7 +13304,7 @@
    "owner": "mine",
    "team_id": 12,
    "ir": false,
-   "bench": true,
+   "bench": false,
    "injury": null,
    "owned": 2.5,
    "gp": 5,
@@ -13651,7 +13651,7 @@
    },
    "cr": 5.0,
    "cr_fpg": 3.16,
-   "cr_season": 1.27,
+   "cr_season": 1.32,
    "cr_games": 1.58,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -13975,7 +13975,7 @@
    },
    "cr": 4.87,
    "cr_fpg": 3.13,
-   "cr_season": 1.54,
+   "cr_season": 1.7,
    "cr_games": 1.55,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -14361,7 +14361,7 @@
    },
    "cr": 4.82,
    "cr_fpg": 2.84,
-   "cr_season": 1.74,
+   "cr_season": 1.98,
    "cr_games": 1.7,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -15010,7 +15010,7 @@
    },
    "cr": 4.73,
    "cr_fpg": 2.44,
-   "cr_season": 1.63,
+   "cr_season": 1.83,
    "cr_games": 1.94,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -15053,7 +15053,7 @@
    "owner": "other",
    "team_id": 1,
    "ir": false,
-   "bench": false,
+   "bench": true,
    "injury": null,
    "owned": 75.2,
    "gp": 3,
@@ -15071,7 +15071,7 @@
    },
    "cr": 4.72,
    "cr_fpg": 2.96,
-   "cr_season": 1.27,
+   "cr_season": 1.32,
    "cr_games": 1.59,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -15258,7 +15258,7 @@
    },
    "cr": 4.69,
    "cr_fpg": 2.96,
-   "cr_season": 0.79,
+   "cr_season": 0.65,
    "cr_games": 1.58,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -15820,7 +15820,7 @@
    "owner": "mine",
    "team_id": 12,
    "ir": false,
-   "bench": false,
+   "bench": true,
    "injury": null,
    "owned": 38.1,
    "gp": 6,
@@ -17199,7 +17199,7 @@
    "owner": "other",
    "team_id": 3,
    "ir": false,
-   "bench": true,
+   "bench": false,
    "injury": null,
    "owned": 8.9,
    "gp": 5,
@@ -17931,7 +17931,7 @@
    },
    "cr": 4.35,
    "cr_fpg": 3.09,
-   "cr_season": 1.06,
+   "cr_season": 1.03,
    "cr_games": 1.41,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -18776,7 +18776,7 @@
    },
    "cr": 4.27,
    "cr_fpg": 2.89,
-   "cr_season": 0.97,
+   "cr_season": 0.9,
    "cr_games": 1.48,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -18843,7 +18843,7 @@
    },
    "cr": 4.26,
    "cr_fpg": 2.8,
-   "cr_season": 0.65,
+   "cr_season": 0.46,
    "cr_games": 1.52,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -18870,7 +18870,7 @@
     "p_today_pre": 0.31
    },
    "cr_pct": 76,
-   "cr_season_pct": 54
+   "cr_season_pct": 55
   },
   {
    "id": 5798,
@@ -19893,7 +19893,7 @@
    },
    "cr": 4.12,
    "cr_fpg": 2.91,
-   "cr_season": 1.04,
+   "cr_season": 1.0,
    "cr_games": 1.42,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -21412,6 +21412,72 @@
    "cr_season_pct": 51
   },
   {
+   "id": 3042037,
+   "name": "Anthony Mantha",
+   "team": "NJ",
+   "games": 4,
+   "games_left": 4,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "RW",
+   "slots": [
+    "F",
+    "RW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 18.9,
+   "gp": 4,
+   "ppg": 1.59,
+   "cur_ppg": 0.17,
+   "last_ppg": 1.78,
+   "last_gp": 81,
+   "proj_ppg": 1.78,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 3.89,
+   "cr_fpg": 1.15,
+   "cr_season": 0.91,
+   "cr_games": 3.38,
+   "cr_dress": 0.85,
+   "cr_dress_next": 0.9,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8477511,
+   "cr_why": {
+    "toi5": 13.67,
+    "toi": 13.67,
+    "pp5": 2.04,
+    "sog": 1.25,
+    "blk": 0.0,
+    "gp": 4,
+    "last_fpg": 1.78,
+    "xfp": {
+     "gp": 4,
+     "fpg": 0.17,
+     "xfpg": 0.91
+    },
+    "season_fpg": 1.15,
+    "season_range": [
+     0.45,
+     1.36
+    ]
+   },
+   "cr_pct": 61,
+   "cr_season_pct": 36
+  },
+  {
    "id": 4697461,
    "name": "Mason Lohrei",
    "team": "BOS",
@@ -21539,72 +21605,6 @@
    },
    "cr_pct": 57,
    "cr_season_pct": 29
-  },
-  {
-   "id": 3042037,
-   "name": "Anthony Mantha",
-   "team": "NJ",
-   "games": 4,
-   "games_left": 4,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": "2026-10-12T23:00:00Z",
-   "pos": "RW",
-   "slots": [
-    "F",
-    "RW"
-   ],
-   "owner": "other",
-   "team_id": 3,
-   "ir": false,
-   "bench": true,
-   "injury": null,
-   "owned": 18.9,
-   "gp": 4,
-   "ppg": 1.59,
-   "cur_ppg": 0.17,
-   "last_ppg": 1.78,
-   "last_gp": 81,
-   "proj_ppg": 1.78,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 3.89,
-   "cr_fpg": 1.15,
-   "cr_season": 0.91,
-   "cr_games": 3.38,
-   "cr_dress": 0.85,
-   "cr_dress_next": 0.9,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8477511,
-   "cr_why": {
-    "toi5": 13.67,
-    "toi": 13.67,
-    "pp5": 2.04,
-    "sog": 1.25,
-    "blk": 0.0,
-    "gp": 4,
-    "last_fpg": 1.78,
-    "xfp": {
-     "gp": 4,
-     "fpg": 0.17,
-     "xfpg": 0.91
-    },
-    "season_fpg": 1.15,
-    "season_range": [
-     0.45,
-     1.36
-    ]
-   },
-   "cr_pct": 61,
-   "cr_season_pct": 36
   },
   {
    "id": 5216858,
@@ -21803,6 +21803,67 @@
    },
    "cr_pct": 60,
    "cr_season_pct": 34
+  },
+  {
+   "id": 4565259,
+   "name": "Pyotr Kochetkov",
+   "team": "CAR",
+   "games": 3,
+   "games_left": 3,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    15,
+    19,
+    20
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 3,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 21.7,
+   "gp": 3,
+   "ppg": 3.53,
+   "cur_ppg": 3.8,
+   "last_ppg": 3.5,
+   "last_gp": 8,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "15": 0.22,
+    "19": 0.53,
+    "20": 0.38
+   },
+   "cr": 3.88,
+   "cr_fpg": 3.42,
+   "cr_season": 1.15,
+   "cr_games": 1.14,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8481611,
+   "cr_why": {
+    "exp_starts": 1.14,
+    "team_games": 3,
+    "share10": 0.43,
+    "n10": 7,
+    "own_pps": 3.22,
+    "sched": 0.42,
+    "gs": 3,
+    "p_today": 0.0,
+    "p_today_pre": 0.0
+   },
+   "cr_pct": 75,
+   "cr_season_pct": 77
   },
   {
    "id": 3067858,
@@ -22818,7 +22879,7 @@
    },
    "cr": 3.8,
    "cr_fpg": 2.6,
-   "cr_season": 1.4,
+   "cr_season": 1.5,
    "cr_games": 1.46,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -22836,7 +22897,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 75,
+   "cr_pct": 74,
    "cr_season_pct": 85
   },
   {
@@ -24057,7 +24118,7 @@
    },
    "cr": 3.65,
    "cr_fpg": 2.8,
-   "cr_season": 0.81,
+   "cr_season": 0.68,
    "cr_games": 1.3,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -24075,7 +24136,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 74,
+   "cr_pct": 73,
    "cr_season_pct": 61
   },
   {
@@ -24183,7 +24244,7 @@
    },
    "cr": 3.65,
    "cr_fpg": 2.37,
-   "cr_season": 1.11,
+   "cr_season": 1.1,
    "cr_games": 1.54,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -24201,7 +24262,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 74,
+   "cr_pct": 73,
    "cr_season_pct": 75
   },
   {
@@ -24829,7 +24890,7 @@
    },
    "cr": 3.6,
    "cr_fpg": 2.99,
-   "cr_season": 1.12,
+   "cr_season": 1.11,
    "cr_games": 1.2,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -24847,7 +24908,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 73,
+   "cr_pct": 72,
    "cr_season_pct": 76
   },
   {
@@ -24981,6 +25042,77 @@
    },
    "cr_pct": 54,
    "cr_season_pct": 55
+  },
+  {
+   "id": 5524,
+   "name": "Calvin Pickard",
+   "team": "MIN",
+   "games": 4,
+   "games_left": 4,
+   "light": 2,
+   "light_left": 2,
+   "nights": [
+    14,
+    15,
+    17,
+    20
+   ],
+   "games_next2": 7,
+   "today_start": "2026-10-12T17:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.2,
+   "gp": 0,
+   "ppg": 1.88,
+   "cur_ppg": null,
+   "last_ppg": 1.88,
+   "last_gp": 13,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "14": 0.18,
+    "15": 0.63,
+    "17": 0.15,
+    "20": 0.24
+   },
+   "cr": 3.57,
+   "cr_fpg": 2.96,
+   "cr_season": 0.0,
+   "cr_games": 1.21,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8475717,
+   "cr_why": {
+    "exp_starts": 1.21,
+    "team_games": 4,
+    "share10": 0.0,
+    "n10": 5,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed"
+    },
+    "own_pps": 2.42,
+    "line": {
+     "win_prob": 0.52,
+     "pps": 2.75
+    },
+    "sched": 0.31,
+    "gs": 0,
+    "p_today": 0.18,
+    "p_today_pre": 0.18
+   },
+   "cr_pct": 71,
+   "cr_season_pct": 0
   },
   {
    "id": 5503,
@@ -25441,77 +25573,6 @@
    },
    "cr_pct": 53,
    "cr_season_pct": 23
-  },
-  {
-   "id": 5524,
-   "name": "Calvin Pickard",
-   "team": "MIN",
-   "games": 4,
-   "games_left": 4,
-   "light": 2,
-   "light_left": 2,
-   "nights": [
-    14,
-    15,
-    17,
-    20
-   ],
-   "games_next2": 7,
-   "today_start": "2026-10-12T17:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.2,
-   "gp": 0,
-   "ppg": 1.88,
-   "cur_ppg": null,
-   "last_ppg": 1.88,
-   "last_gp": 13,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "14": 0.18,
-    "15": 0.63,
-    "17": 0.15,
-    "20": 0.24
-   },
-   "cr": 3.56,
-   "cr_fpg": 2.95,
-   "cr_season": 0.0,
-   "cr_games": 1.21,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475717,
-   "cr_why": {
-    "exp_starts": 1.21,
-    "team_games": 4,
-    "share10": 0.0,
-    "n10": 5,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed"
-    },
-    "own_pps": 2.42,
-    "line": {
-     "win_prob": 0.5,
-     "pps": 2.7
-    },
-    "sched": 0.31,
-    "gs": 0,
-    "p_today": 0.18,
-    "p_today_pre": 0.18
-   },
-   "cr_pct": 72,
-   "cr_season_pct": 0
   },
   {
    "id": 3024798,
@@ -26537,7 +26598,7 @@
    },
    "cr": 3.46,
    "cr_fpg": 2.99,
-   "cr_season": 0.87,
+   "cr_season": 0.77,
    "cr_games": 1.16,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -28165,7 +28226,7 @@
    },
    "cr": 3.3,
    "cr_fpg": 2.41,
-   "cr_season": 1.28,
+   "cr_season": 1.33,
    "cr_games": 1.37,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -28183,7 +28244,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 71,
+   "cr_pct": 70,
    "cr_season_pct": 82
   },
   {
@@ -28244,7 +28305,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 70,
+   "cr_pct": 69,
    "cr_season_pct": 77
   },
   {
@@ -28946,7 +29007,7 @@
    },
    "cr": 3.22,
    "cr_fpg": 2.86,
-   "cr_season": 0.64,
+   "cr_season": 0.45,
    "cr_games": 1.12,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -28965,7 +29026,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 69,
-   "cr_season_pct": 53
+   "cr_season_pct": 54
   },
   {
    "id": 5080159,
@@ -31366,7 +31427,7 @@
    },
    "cr": 3.03,
    "cr_fpg": 3.52,
-   "cr_season": 1.0,
+   "cr_season": 0.95,
    "cr_games": 0.86,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -31384,7 +31445,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 69,
+   "cr_pct": 68,
    "cr_season_pct": 69
   },
   {
@@ -32015,7 +32076,7 @@
    },
    "cr": 2.97,
    "cr_fpg": 1.52,
-   "cr_season": 0.6,
+   "cr_season": 0.39,
    "cr_games": 1.95,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -32033,7 +32094,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 68,
+   "cr_pct": 67,
    "cr_season_pct": 52
   },
   {
@@ -32274,7 +32335,7 @@
    },
    "cr": 2.95,
    "cr_fpg": 1.81,
-   "cr_season": 1.11,
+   "cr_season": 1.1,
    "cr_games": 1.62,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -32292,7 +32353,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 67,
+   "cr_pct": 66,
    "cr_season_pct": 75
   },
   {
@@ -32794,7 +32855,7 @@
    },
    "cr": 2.91,
    "cr_fpg": 2.11,
-   "cr_season": 1.02,
+   "cr_season": 0.97,
    "cr_games": 1.38,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -33119,7 +33180,7 @@
    },
    "cr": 2.86,
    "cr_fpg": 2.99,
-   "cr_season": 0.65,
+   "cr_season": 0.45,
    "cr_games": 0.96,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -33137,7 +33198,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 66,
+   "cr_pct": 65,
    "cr_season_pct": 54
   },
   {
@@ -33637,7 +33698,7 @@
    },
    "cr": 2.79,
    "cr_fpg": 2.67,
-   "cr_season": 0.76,
+   "cr_season": 0.6,
    "cr_games": 1.04,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -33650,8 +33711,8 @@
     "share10": 0.25,
     "n10": 4,
     "tonight": {
-     "starting": true,
-     "status": "Likely"
+     "starting": false,
+     "status": "Unconfirmed"
     },
     "own_pps": 2.71,
     "line": {
@@ -33663,8 +33724,8 @@
     "p_today": 0.26,
     "p_today_pre": 0.26
    },
-   "cr_pct": 65,
-   "cr_season_pct": 59
+   "cr_pct": 64,
+   "cr_season_pct": 58
   },
   {
    "id": 3114994,
@@ -33706,7 +33767,7 @@
    },
    "cr": 2.78,
    "cr_fpg": 2.75,
-   "cr_season": 1.16,
+   "cr_season": 1.17,
    "cr_games": 1.01,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -33725,7 +33786,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 64,
-   "cr_season_pct": 79
+   "cr_season_pct": 80
   },
   {
    "id": 5216880,
@@ -33963,7 +34024,7 @@
    },
    "cr": 2.76,
    "cr_fpg": 2.79,
-   "cr_season": 0.99,
+   "cr_season": 0.93,
    "cr_games": 0.99,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -33981,7 +34042,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 64,
+   "cr_pct": 63,
    "cr_season_pct": 69
   },
   {
@@ -34219,7 +34280,7 @@
    },
    "cr": 2.74,
    "cr_fpg": 2.89,
-   "cr_season": 0.82,
+   "cr_season": 0.7,
    "cr_games": 0.95,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -34237,7 +34298,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 63,
+   "cr_pct": 62,
    "cr_season_pct": 62
   },
   {
@@ -35286,66 +35347,6 @@
    "cr_season_pct": 55
   },
   {
-   "id": 4565259,
-   "name": "Pyotr Kochetkov",
-   "team": "CAR",
-   "games": 2,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    19,
-    20
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "waivers",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 21.7,
-   "gp": 3,
-   "ppg": 3.53,
-   "cur_ppg": 3.8,
-   "last_ppg": 3.5,
-   "last_gp": 8,
-   "proj_ppg": null,
-   "clears": "Wed 14",
-   "dfo_out": null,
-   "cr_g_nights": {
-    "15": 0.22,
-    "19": 0.53,
-    "20": 0.38
-   },
-   "cr": 2.59,
-   "cr_fpg": 3.42,
-   "cr_season": 1.15,
-   "cr_games": 0.76,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8481611,
-   "cr_why": {
-    "exp_starts": 0.76,
-    "team_games": 2,
-    "share10": 0.43,
-    "n10": 7,
-    "own_pps": 3.22,
-    "sched": 0.42,
-    "gs": 3,
-    "p_today": 0.0,
-    "p_today_pre": 0.0
-   },
-   "cr_pct": 62,
-   "cr_season_pct": 77
-  },
-  {
    "id": 4996085,
    "name": "Tim Washe",
    "team": "ANA",
@@ -36065,6 +36066,74 @@
    "cr_season_pct": 22
   },
   {
+   "id": 4024833,
+   "name": "Pierre-Luc Dubois",
+   "team": "WSH",
+   "games": 3,
+   "games_left": 3,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    15,
+    16,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": null,
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "other",
+   "team_id": 3,
+   "ir": false,
+   "bench": false,
+   "injury": "DAY_TO_DAY",
+   "owned": 15.3,
+   "gp": 4,
+   "ppg": 1.62,
+   "cur_ppg": 1.9,
+   "last_ppg": 1.38,
+   "last_gp": 29,
+   "proj_ppg": 1.58,
+   "clears": null,
+   "dfo_out": true,
+   "cr": 2.46,
+   "cr_fpg": 1.64,
+   "cr_season": 1.13,
+   "cr_games": 1.5,
+   "cr_dress": 0.5,
+   "cr_dress_next": 0.5,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8479400,
+   "cr_why": {
+    "toi5": 17.1,
+    "toi": 17.1,
+    "pp5": 2.95,
+    "sog": 1.5,
+    "blk": 0.75,
+    "gp": 4,
+    "last_fpg": 1.38,
+    "xfp": {
+     "gp": 4,
+     "fpg": 1.9,
+     "xfpg": 2.09
+    },
+    "season_fpg": 1.63,
+    "season_range": [
+     0.67,
+     1.58
+    ],
+    "back": {
+     "games": "3"
+    }
+   },
+   "cr_pct": 26,
+   "cr_season_pct": 58
+  },
+  {
    "id": 4588178,
    "name": "Mikey Anderson",
    "team": "LA",
@@ -36167,7 +36236,7 @@
    },
    "cr": 2.42,
    "cr_fpg": 2.14,
-   "cr_season": 0.7,
+   "cr_season": 0.53,
    "cr_games": 1.13,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -36488,7 +36557,7 @@
    },
    "cr": 2.4,
    "cr_fpg": 3.21,
-   "cr_season": 1.02,
+   "cr_season": 0.97,
    "cr_games": 0.75,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -36880,7 +36949,7 @@
    },
    "cr": 2.35,
    "cr_fpg": 2.79,
-   "cr_season": 0.66,
+   "cr_season": 0.48,
    "cr_games": 0.84,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -37006,7 +37075,7 @@
    },
    "cr": 2.31,
    "cr_fpg": 2.89,
-   "cr_season": 0.67,
+   "cr_season": 0.48,
    "cr_games": 0.8,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -37132,7 +37201,7 @@
    },
    "cr": 2.3,
    "cr_fpg": 2.16,
-   "cr_season": 0.64,
+   "cr_season": 0.44,
    "cr_games": 1.06,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -37217,7 +37286,7 @@
      0.79
     ]
    },
-   "cr_pct": 24,
+   "cr_pct": 23,
    "cr_season_pct": 10
   },
   {
@@ -37281,7 +37350,7 @@
      1.5
     ]
    },
-   "cr_pct": 23,
+   "cr_pct": 22,
    "cr_season_pct": 53
   },
   {
@@ -37347,7 +37416,7 @@
      0.9
     ]
    },
-   "cr_pct": 23,
+   "cr_pct": 22,
    "cr_season_pct": 12
   },
   {
@@ -37413,7 +37482,7 @@
      0.99
     ]
    },
-   "cr_pct": 23,
+   "cr_pct": 22,
    "cr_season_pct": 16
   },
   {
@@ -37477,7 +37546,7 @@
      1.48
     ]
    },
-   "cr_pct": 23,
+   "cr_pct": 22,
    "cr_season_pct": 50
   },
   {
@@ -37672,7 +37741,7 @@
      1.46
     ]
    },
-   "cr_pct": 22,
+   "cr_pct": 21,
    "cr_season_pct": 49
   },
   {
@@ -37997,7 +38066,7 @@
      0.96
     ]
    },
-   "cr_pct": 21,
+   "cr_pct": 20,
    "cr_season_pct": 15
   },
   {
@@ -38653,7 +38722,7 @@
      "games": "3"
     }
    },
-   "cr_pct": 19,
+   "cr_pct": 18,
    "cr_season_pct": 34
   },
   {
@@ -38723,73 +38792,6 @@
    "cr_season_pct": 15
   },
   {
-   "id": 4024833,
-   "name": "Pierre-Luc Dubois",
-   "team": "WSH",
-   "games": 2,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    16,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "waivers",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "DAY_TO_DAY",
-   "owned": 15.3,
-   "gp": 4,
-   "ppg": 1.62,
-   "cur_ppg": 1.9,
-   "last_ppg": 1.38,
-   "last_gp": 29,
-   "proj_ppg": 1.58,
-   "clears": "Wed 14",
-   "dfo_out": true,
-   "cr": 1.64,
-   "cr_fpg": 1.64,
-   "cr_season": 1.13,
-   "cr_games": 1.0,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8479400,
-   "cr_why": {
-    "toi5": 17.1,
-    "toi": 17.1,
-    "pp5": 2.95,
-    "sog": 1.5,
-    "blk": 0.75,
-    "gp": 4,
-    "last_fpg": 1.38,
-    "xfp": {
-     "gp": 4,
-     "fpg": 1.9,
-     "xfpg": 2.09
-    },
-    "season_fpg": 1.63,
-    "season_range": [
-     0.67,
-     1.58
-    ],
-    "back": {
-     "games": "3"
-    }
-   },
-   "cr_pct": 18,
-   "cr_season_pct": 58
-  },
-  {
    "id": 4419662,
    "name": "Matt Murray",
    "team": "NSH",
@@ -38829,7 +38831,7 @@
    },
    "cr": 1.63,
    "cr_fpg": 2.96,
-   "cr_season": 0.46,
+   "cr_season": 0.19,
    "cr_games": 0.55,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -39023,7 +39025,7 @@
    },
    "cr": 1.43,
    "cr_fpg": 2.04,
-   "cr_season": 0.87,
+   "cr_season": 0.77,
    "cr_games": 0.7,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -39147,7 +39149,7 @@
    },
    "cr": 1.42,
    "cr_fpg": 3.19,
-   "cr_season": 0.85,
+   "cr_season": 0.74,
    "cr_games": 0.45,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -44813,7 +44815,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 2.57,
-   "cr_season": 0.78,
+   "cr_season": 0.64,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -45063,7 +45065,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 2.96,
-   "cr_season": 1.01,
+   "cr_season": 0.96,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -45123,7 +45125,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 2.76,
-   "cr_season": 0.77,
+   "cr_season": 0.62,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -45247,7 +45249,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 2.65,
-   "cr_season": 0.52,
+   "cr_season": 0.27,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -46369,7 +46371,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 2.96,
-   "cr_season": 0.75,
+   "cr_season": 0.6,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -50367,7 +50369,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 3.08,
-   "cr_season": 0.92,
+   "cr_season": 0.84,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -50433,7 +50435,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 3.12,
-   "cr_season": 1.02,
+   "cr_season": 0.97,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -50497,7 +50499,7 @@
    },
    "cr": 0.0,
    "cr_fpg": 2.78,
-   "cr_season": 0.89,
+   "cr_season": 0.79,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
