@@ -1010,6 +1010,19 @@ A team dresses 12 forwards and 6 defensemen a night. The Season rating now adds 
 
 On top of sections 132-134, this ranks rest-of-season points 0.0007 better on the whole board and 0.0020 better among free agents, positive in every test season (2023-24, 2024-25, 2025-26). A player's details say when his team has open spots or too many regulars.
 
+## 136. Starting goalies: opponent, form and rest
+
+Coaches give the backup the soft games, sit a no. 1 who keeps losing, and go back to him after a long break. The no. 1's start chance (most starts in his team's last 20 games) now moves with three things:
+- **Opponent.** Up against strong teams, down against weak ones, by the opponent's points% this season (pulled 10 games toward last season's).
+- **Form.** Up a little after a win, down after each straight start without one (up to three). Games past the next one get half this move.
+- **Rest.** Up when his team hasn't played in 3 or more days.
+
+In a replay of 2021-26 from each Monday, this predicts who starts 0.72% better for the next game and 0.44% better for later games in the week, better in every season. The no. 1's expected starts per week come to 1.786 against 1.797 actual, up from 1.778.
+
+## 137. Daily Faceoff wording: "until the playoffs" and "out indefinitely"
+
+The Season rating's reading of Daily Faceoff injury news (section 132) missed some season-level wording, such as "out until at least the playoffs", "will not return before the end of the regular season" and "won't play again this season". It now treats those like "season-ending". "Out indefinitely", "long-term" or "several months" (but not long-term injured reserve) now lowers the Season share a little. A milder later item, such as "placed on LTIR", no longer hides an earlier, more serious one posted since his last game. On past seasons the season-level wording ranks rest-of-season points 0.0004 better, positive in every test season; "indefinitely" adds 0.0002 but not in every season.
+
 ## What the independent review changed
 
 | Review point | Outcome |

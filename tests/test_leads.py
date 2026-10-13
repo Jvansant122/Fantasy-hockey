@@ -216,19 +216,38 @@ def test_fetch_news_keeps_each_players_latest_item(monkeypatch, tmp_path):
     s = FakeSession({
         "news/injuries/1": {"data": {"lastPage": 5, "data": [item(1, "2026-11-19T10:00:00.000Z", "Smith will miss the rest of the season after surgery."),
                                                               item(2, "2026-11-18T10:00:00.000Z", "Jones is day-to-day.")]}},
-        "news/injuries/2": {"data": {"lastPage": 5, "data": [item(1, "2026-11-10T10:00:00.000Z", "Smith is day-to-day.")]}},
+        "news/injuries/2": {"data": {"lastPage": 5, "data": [item(2, "2026-11-12T10:00:00.000Z", "Jones is out indefinitely."),
+                                                              item(1, "2026-11-10T10:00:00.000Z", "Smith is day-to-day.")]}},
+        "news/injuries/3": {"data": {"lastPage": 5, "data": []}},
         "news/roster-moves/1": {"data": {"lastPage": 1, "data": [item(3, "2026-11-19T09:00:00.000Z", "Doe has been assigned to Syracuse (AHL).", "Send Down"),
                                                                    item(4, "2026-11-17T09:00:00.000Z", "Roe was recalled from Laval.", "Call Up")]}},
     })
     monkeypatch.setattr(leads.time, "sleep", lambda x: None)
-    stored = {"injuries": {"9": {"ts": "2026-11-10T11:00:00", "season": False, "surgery": False},
+    stored = {"version": leads.NEWS_VERSION, "injuries": {"9": {"ts": "2026-11-10T11:00:00", "season": False, "surgery": False},
                            "8": {"ts": "2025-01-01T09:00:00", "season": True, "surgery": False}}}
     out = leads.fetch_news(s, datetime(2026, 11, 20, 12, tzinfo=timezone.utc), stored)
-    assert out["injuries"]["1"] == {"ts": "2026-11-19T10:00:00", "season": True, "surgery": True}  # newest item wins
+    assert out["injuries"]["1"] == {"ts": "2026-11-19T10:00:00", "season": True, "surgery": True, "indefinite": False,
+                                    "season_ts": "2026-11-19T10:00:00"}  # newest item wins
+    # a later, milder item keeps the date of his latest "indefinitely" item
+    assert out["injuries"]["2"]["indefinite"] is False and out["injuries"]["2"]["indefinite_ts"] == "2026-11-12T10:00:00"
     assert out["injuries"]["2"]["season"] is False and "9" in out["injuries"] and "8" not in out["injuries"]  # a year old: pruned
     assert out["roster-moves"]["3"]["down"] and not out["roster-moves"]["3"]["up"]
     assert out["roster-moves"]["4"]["up"] and not out["roster-moves"]["4"]["down"]
     assert out["fetched"] == "2026-11-20T12:00Z"
+    # items stored under older wording rules are read again: the stored player 9 is gone, the pages refill the rest
+    again = leads.fetch_news(s, datetime(2026, 11, 20, 12, tzinfo=timezone.utc), {**stored, "version": 1})
+    assert "9" not in again["injuries"] and again["injuries"]["1"] == out["injuries"]["1"]
     monkeypatch.setattr(leads, "NEWS_FILE", tmp_path / "dfo_news.json")
     leads.save_news(out)
     assert leads.load_news() == out
+
+
+def test_news_flags_season_level_and_indefinite_wording():
+    """Findings 371: "until the playoffs", "end of the regular season", "won't return this season" are season-level;
+    "out indefinitely" and "long-term" are their own flag, but long-term injured reserve is not."""
+    f = lambda t: leads.news_flags({"details": t})
+    for t in ("Hamilton is out until at least the playoffs.", "He will not return before the end of the regular season.",
+              "Barzal won't play again this season.", "Out for the season with a torn ACL."):
+        assert f(t)["season"], t
+    assert f("McAvoy is out indefinitely.")["indefinite"] and not f("McAvoy is out indefinitely.")["season"]
+    assert not f("He was placed on long-term injured reserve.")["indefinite"] and not f("Day-to-day with a bruise.")["indefinite"]

@@ -144,7 +144,13 @@ def fetch_injuries(s):
 # (call-up / send-down), kept in NEWS_FILE so a run only reads the pages posted since the last one
 NEWS_FILE = Path(__file__).resolve().parent.parent / "data" / "dfo_news.json"
 NEWS_DAYS, NEWS_KEEP_DAYS, NEWS_MAX_PAGES = 60, 365, 60
-NEWS_SEASON = re.compile(r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year", re.I)
+# season-level wording incl. "until the playoffs" and "won't return this season" (findings 371, hunt12/n_feat.py)
+NEWS_SEASON = re.compile(r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year|playoffs"
+                         r"|end of the (regular )?season|(not|won.t) (return|play) (again )?this season|for the season|season is over", re.I)
+NEWS_INDEFINITE = re.compile(r"indefinit|indefeint|long[- ]term|extended period|foreseeable|significant (amount of )?time"
+                             r"|considerable time|long time|several months|multiple months", re.I)
+NEWS_LTIR = re.compile(r"long[- ]term injured reserve|LTIR", re.I)
+NEWS_VERSION = 2  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_DOWN = re.compile(r"(assigned|sent|reassigned|loaned|returned) (down )?to (the )?[A-Za-z .]*\(AHL\)|sent down|assigned to (the )?AHL"
                        r"|to the AHL|conditioning loan", re.I)
@@ -156,6 +162,7 @@ def news_flags(item):
     text = re.sub(r"\s+", " ", f'{item.get("details") or ""} {item.get("fantasyDetails") or ""}')
     cat = item.get("newsCategoryName")
     return {"season": bool(NEWS_SEASON.search(text)), "surgery": bool(NEWS_SURGERY.search(text)),
+            "indefinite": bool(NEWS_INDEFINITE.search(text)) and not NEWS_LTIR.search(text),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text))}
 
 
@@ -169,11 +176,15 @@ def load_news():
 
 def fetch_news(s, now_utc, stored=None):
     """Daily Faceoff's injury and roster-move news, newest page back to the newest item already stored (NEWS_DAYS on a
-    first run). Returns {"injuries": {nhl id: {ts, season, surgery}}, "roster-moves": {nhl id: {ts, down, up}}, "fetched"}
-    with each player's latest item, pruned to NEWS_KEEP_DAYS. Raises if a page can't be read."""
+    first run). Returns {"injuries": {nhl id: {ts, season, surgery, indefinite, season_ts, indefinite_ts}}, "roster-moves":
+    {nhl id: {ts, down, up}}, "fetched"} with each player's latest item, pruned to NEWS_KEEP_DAYS. season_ts / indefinite_ts:
+    his latest item with that wording, so a later, milder item ("placed on LTIR") doesn't hide it (findings 371).
+    Raises if a page can't be read."""
     stored = stored if stored is not None else load_news()
-    out = {"fetched": now_utc.strftime("%Y-%m-%dT%H:%MZ")}
-    for slug, keys in (("injuries", ("season", "surgery")), ("roster-moves", ("down", "up"))):
+    if stored.get("version") != NEWS_VERSION:
+        stored = {}
+    out = {"fetched": now_utc.strftime("%Y-%m-%dT%H:%MZ"), "version": NEWS_VERSION}
+    for slug, keys in (("injuries", ("season", "surgery", "indefinite")), ("roster-moves", ("down", "up"))):
         have = dict(stored.get(slug) or {})
         floor = (now_utc - timedelta(days=NEWS_DAYS)).strftime("%Y-%m-%dT%H:%M")
         newest = max((v["ts"] for v in have.values()), default="")
@@ -185,9 +196,14 @@ def fetch_news(s, now_utc, stored=None):
                 pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
                 if not pid or not ts:
                     continue
-                f = news_flags(it)
-                if ts > (have.get(str(int(pid))) or {}).get("ts", ""):
-                    have[str(int(pid))] = {"ts": ts, **{k: f[k] for k in keys}}
+                f, old = news_flags(it), have.get(str(int(pid))) or {}
+                new = {"ts": ts, **{k: f[k] for k in keys}} if ts > old.get("ts", "") else dict(old)
+                if slug == "injuries":
+                    for k in ("season", "indefinite"):
+                        t = max(old.get(f"{k}_ts", ""), ts if f[k] else "")
+                        if t:
+                            new[f"{k}_ts"] = t
+                have[str(int(pid))] = new
             if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
                 break
             time.sleep(0.2)

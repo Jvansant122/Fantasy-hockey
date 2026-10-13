@@ -1685,6 +1685,35 @@ def test_no1_next_game_sunday_after_a_day_off_and_on_the_road():
     assert p1(tue, {tue}) < p1(tue)  # Tuesday on the road
 
 
+def test_no1_by_opponent_form_and_rest():
+    """Handoff 333 (findings 262-263): the no. 1's logit gets +0.2 per 0.10 of opponent points% above .550, +0.2 - 0.25 per
+    straight start without a win (cap 3, half weight 2+ games ahead), and +0.4 after 3+ days without a game."""
+    model = rating.Model()
+    hist = [((date(2026, 10, 16) - timedelta(days=2 * (8 - i))).isoformat(), 2 if i % 4 == 0 else 1) for i in range(9)]
+    tue, wed, sat = "2026-10-20", "2026-10-21", "2026-10-24"
+    def p1(days, **kw):
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, days, date(2026, 10, 17), by_date=out, **kw)
+        return out[1]
+    base = p1([tue, wed, sat])
+    hot = p1([tue, wed, sat], opp={}, nonwins={})  # rested 4 days, last start a win: +0.6 on Tuesday
+    cold = p1([tue, wed, sat], opp={}, nonwins={1: 5})  # 3 non-wins (capped): -0.55 next game, half later
+    strong = p1([tue, wed, sat], opp={tue: 2.0, sat: -1.0}, nonwins={1: 1})
+    assert hot[tue] > base[tue] and cold[tue] < base[tue] and strong[tue] > p1([tue, wed, sat], opp={}, nonwins={1: 1})[tue]
+    assert cold[sat] > p1([tue, wed, sat], opp={}, nonwins={1: 9})[sat] - 1e-9 and cold[sat] < hot[sat]
+    assert p1([tue], opp={tue: 2.0}) == p1([tue])  # without nonwins nothing changes
+
+
+def test_opponent_strength_and_nonwin_streaks():
+    g = lambda gid, team, game, day, w=0, otl=0, started=1: {"id": gid, "team": team, "game": game, "date": day, "wins": w, "otl": otl, "started": started}
+    games = [g(1, "TOR", 1, "2026-10-08", w=1), g(1, "TOR", 2, "2026-10-10"), g(1, "TOR", 3, "2026-10-12", otl=1),
+             g(2, "TOR", 3, "2026-10-12", started=0), g(3, "BOS", 1, "2026-10-08")]
+    st = rating.opponent_strength(games, {"TOR": 0.6, "MTL": 0.45})
+    assert abs(st["TOR"] - ((3 + 12) / 26 - 0.55) / 0.1) < 1e-9  # 2 W + 1 OTL in 3 games, shrunk 10 games toward .600
+    assert abs(st["BOS"] - ((0 + 11) / 22 - 0.55) / 0.1) < 1e-9 and abs(st["MTL"] - (-1.0)) < 1e-9
+    assert rating.nonwin_streaks(games) == {1: 2, 3: 1}
+
+
 def test_unplayed_share_falls_as_his_team_plays_without_him():
     """Yet to play: the share depends on last season's games and his team's games so far (findings 350 (1), handoff 310)."""
     s = rating.unplayed_share
@@ -1737,6 +1766,12 @@ def test_daily_faceoff_news_moves_the_season_dress_logit():
     assert f(news, 4, "2026-11-12", 2, 20, now) == (0.0, [])  # out now: the call-up term is for players in the lineup
     assert f(news, 5, "2026-11-19", 0, 20, now) == (0.0, [])  # called up more than 60 days ago
     assert f(None, 1, "2026-11-18", 1, 20, now) == (0.0, [])
+    # findings 371: an earlier season-level or "indefinitely" item since his last game still counts under a milder latest one
+    news["injuries"]["6"] = {"ts": "2026-11-19T20:00:00", "season": False, "surgery": False, "season_ts": "2026-11-16T20:00:00"}
+    news["injuries"]["7"] = {"ts": "2026-11-19T20:00:00", "season": False, "surgery": False, "indefinite_ts": "2026-11-16T20:00:00"}
+    assert f(news, 6, "2026-11-15", 3, 20, now) == (pytest.approx(-1.5), ["season-ending"])
+    assert f(news, 6, "2026-11-17", 1, 20, now) == (0.0, [])  # he played after it
+    assert f(news, 7, "2026-11-15", 3, 20, now) == (pytest.approx(-0.3), ["indefinite"])
 
 
 def test_daily_faceoff_news_reaches_the_season_rating(monkeypatch, tmp_path):

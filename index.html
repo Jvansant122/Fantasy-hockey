@@ -453,7 +453,8 @@ function why(p) {
       ? "young players tend to improve through the season" : "players over 30 tend to fade through the season"}` : "") + seasonRange(w));
     // Daily Faceoff news lowers or raises his Season share (findings 360 (1))
     const NEWS_TXT = {"sent down": "sent to the AHL since his last game", "called up": "called up recently and in the lineup",
-      "season-ending": "latest injury news says season-ending", "surgery": "latest injury news mentions surgery"};
+      "season-ending": "latest injury news says season-ending", "surgery": "latest injury news mentions surgery",
+      "indefinite": "injury news says out indefinitely or long-term"};
     if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(p.proj_ppg)}); the pull fades as he plays games`);
     if (w.lineup_slack != null && Math.abs(w.lineup_slack) >= 0.5) parts.push(w.lineup_slack > 0
       ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so his Season share goes up`
