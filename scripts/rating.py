@@ -144,6 +144,12 @@ ROTATION_THIRD_LOGIT, PLAIN_SECOND_LOGIT = -0.9, -0.45
 # the no. 1 in the next game: a Sunday or Monday game after one day off (findings 254-255, handoff 291), else a road game
 # that isn't night 2 of a back-to-back (findings 257, handoff 292); both picked in every fold, 2021-26
 SUNMON_REST1_NO1_LOGIT, ROAD_NO1_LOGIT = -0.6, -0.3
+# the no. 1's start logit by opponent, form and rest (findings 262-263, handoff 333): + NO1_OPP_LOGIT x the opponent's
+# points% to date (shrunk OPP_SHRINK_GAMES toward last season) minus OPP_CENTER, per OPP_SCALE, clipped at +-OPP_CLIP;
+# + NO1_NONWIN[0] + NO1_NONWIN[1] x his straight starts without a win (cap NO1_NONWIN_CAP), at NO1_NONWIN_LATER weight
+# for games 2+ ahead; + NO1_REST[1] when the game is NO1_REST[0]+ days after the team's previous one
+NO1_OPP_LOGIT, OPP_CENTER, OPP_SCALE, OPP_CLIP, OPP_SHRINK_GAMES = 0.2, 0.55, 0.10, 2.0, 10
+NO1_NONWIN, NO1_NONWIN_CAP, NO1_NONWIN_LATER, NO1_REST = (0.2, -0.25), 3, 0.5, (3, 0.4)
 
 
 def three_goalie_idle(seq):
@@ -215,6 +221,7 @@ NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 # NEWS_RECALL_DAYS: a + b x min(GP, 40)/40; latest injury item since his last game says season-ending / surgery
 NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
 NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
+NEWS_INDEFINITE = -0.3  # "out indefinitely", "long-term", "several months" without season-level wording (findings 371, idea 963)
 NEWS_STALE_DAYS = 2
 # lineup spots per team (12 F, 6 D) and the slack weights on the Season dress logit (findings 370, handoff 350)
 LINEUP_SPOTS = {False: 12, True: 6}
@@ -635,6 +642,36 @@ def prev_points_pct(s, prev_season):
     except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
         print(f"Last season's standings unavailable, goalie team changes not priced: {e!r}", file=sys.stderr)
         return {}
+
+
+def opponent_strength(goalie_games, prev_pct):
+    """{team: (its points% to date shrunk OPP_SHRINK_GAMES games toward last season's, OPP_CENTER without one) - OPP_CENTER,
+    per OPP_SCALE, clipped at +-OPP_CLIP}, from the decisions in this season's goalie rows (findings 262)."""
+    pts, games = {}, {}
+    for g in goalie_games:
+        games.setdefault(g["team"], set()).add(g["game"])
+        pts[g["team"]] = pts.get(g["team"], 0) + 2 * g["wins"] + g["otl"]
+    out = {}
+    for team in set(games) | set(prev_pct):
+        n, last = len(games.get(team, ())), prev_pct.get(team, OPP_CENTER)
+        pct = (pts.get(team, 0) + 2 * OPP_SHRINK_GAMES * last) / (2 * (n + OPP_SHRINK_GAMES))
+        out[team] = min(max((pct - OPP_CENTER) / OPP_SCALE, -OPP_CLIP), OPP_CLIP)
+    return out
+
+
+def nonwin_streaks(goalie_games):
+    """{goalie id: his straight starts without a win, latest first} (findings 262)."""
+    out = {}
+    for g in sorted((g for g in goalie_games if g["started"]), key=lambda g: (g["date"], g["game"]), reverse=True):
+        if g["id"] not in out:
+            out[g["id"]] = [0, True]
+        run = out[g["id"]]
+        if run[1]:
+            if g["wins"]:
+                run[1] = False
+            else:
+                run[0] += 1
+    return {gid: n for gid, (n, _) in out.items()}
 
 
 def shrunk_save_pcts(goalie_games, prev_goalies):
@@ -1322,9 +1359,14 @@ def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
         z += NEWS_CALLED_UP[0] + NEWS_CALLED_UP[1] * min(gp_now, 40) / 40
         why.append("called up")
     if inj and inj["ts"] > since:
-        if inj.get("season"):
+        # the latest item since his last game, or any item since then with that wording (findings 371)
+        flag = lambda k: inj.get(k) or inj.get(f"{k}_ts", "") > since
+        if flag("season"):
             z += NEWS_SEASON_OUT
             why.append("season-ending")
+        elif flag("indefinite"):
+            z += NEWS_INDEFINITE
+            why.append("indefinite")
         if inj.get("surgery"):
             z += NEWS_SURGERY
             why.append("surgery")
@@ -1507,7 +1549,8 @@ def repeating_pattern(seq, cands):
 
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
-                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=()):
+                  injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
+                  opp=None, nonwins=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -1527,7 +1570,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     by_date: if given, filled with {goalie id: {date: chance he starts}} for each game from today on (findings 236).
     pulled: goalies pulled from their latest start; their season_share drops PULLED_SEASON unless the no-decision cut
     already applies (findings 330 (3)).
-    road: dates of the team's road games this week (findings 257)."""
+    road: dates of the team's road games this week (findings 257).
+    opp: {date: opponent strength} (opponent_strength); nonwins: {goalie id: straight starts without a win}. With nonwins
+    given, the no. 1's logit moves by opponent, form and days of rest (findings 262-263)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -1667,6 +1712,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     z += SUNMON_REST1_NO1_LOGIT
                 elif ahead == 0 and d in road and gap != 1:
                     z += ROAD_NO1_LOGIT
+            if gid == no1 and nonwins is not None:
+                rest = gap if ahead == 0 else (day - prev_d).days if prev_d else 0
+                form = NO1_NONWIN[0] + NO1_NONWIN[1] * min(nonwins.get(gid, 0), NO1_NONWIN_CAP)
+                z += NO1_OPP_LOGIT * (opp or {}).get(d, 0.0) + form * (1.0 if ahead == 0 else NO1_NONWIN_LATER) \
+                    + (NO1_REST[1] if rest >= NO1_REST[0] else 0.0)
             if ahead == 0 and gid in idle3:
                 z += THREE_GOALIE_IDLE_LOGIT
             if seq and gid == seq[-1] and (rotating and ahead == 2 or plain and ahead == 1):
@@ -1818,6 +1868,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     ], workers=4)
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
+    opp_str, nonwins = opponent_strength(goalie_games, prev_pct), nonwin_streaks(goalie_games)
     news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
@@ -2008,7 +2059,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         tod, sea, nights = {}, {}, {}
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
                             last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
-                            {d for d, _, home in week_games.get(team, []) if not home})
+                            {d for d, _, home in week_games.get(team, []) if not home},
+                            {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins)
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
