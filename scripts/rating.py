@@ -216,6 +216,9 @@ NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
 NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
 NEWS_STALE_DAYS = 2
+# lineup spots per team (12 F, 6 D) and the slack weights on the Season dress logit (findings 370, handoff 350)
+LINEUP_SPOTS = {False: 12, True: 6}
+LINEUP_SLACK = (1.34, 2.84)
 # ESPN's preseason projected FP/G blended into the Season FP/G (after the age term) with weight a + b g + c g^2,
 # g = min(GP, 40)/40: 0.29 at 0 games, about 0.07-0.08 from 30 games on (findings 360 (2), handoffs 331-332)
 ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
@@ -1265,6 +1268,43 @@ def lineup_chain_share(k, p_out, h, n):
     return tot / max(n, 1)
 
 
+def lineup_slack(lineup, boost_x, boost_dress, model):
+    """Open lineup spots (findings 370, handoff 350): per NHL team and position group, LINEUP_SPOTS minus the summed Season
+    dress shares of its skaters with games this season (team = his latest). Skaters not on the site count with the boosted
+    model's share (within 0.015 of the final one on average). Each listed skater's logit then moves by
+    a x max(slack, 0)/3 x (1 - p) + b x min(slack, 0)/3 x (1 - p): depth players gain when regulars are out, lose when the
+    lineup is full. One pass, from the shares before this step; Season, Proj GP and the Season range follow."""
+    sums, counts, seen = {}, {}, set()
+    def add(key, share):
+        sums[key] = sums.get(key, 0.0) + share
+        counts[key] = counts.get(key, 0) + 1
+    for e in lineup:
+        if e["pid"] in seen:
+            continue
+        seen.add(e["pid"])
+        add((e["team"], e["isD"]), e["share"])
+    if boost_dress:
+        for pid, x in boost_x.items():
+            if pid not in seen:
+                add((x["team"], x["isD"] == 1.0), min(max(season_boost.predict(boost_dress, x), 0.0), 1.0))
+    for e in lineup:
+        # fewer players than spots means missing game logs, not open spots: leave that group alone
+        if not e["pts"] or counts[(e["team"], e["isD"])] < LINEUP_SPOTS[e["isD"]]:
+            continue
+        slack = LINEUP_SPOTS[e["isD"]] - sums[(e["team"], e["isD"])]
+        q = min(max(e["share"], 0.001), 0.999)
+        z = math.log(q / (1 - q)) + (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
+        share = 1 / (1 + math.exp(-z))
+        p, why = e["p"], e["p"]["cr_why"]
+        season = share * e["pts"]
+        p["cr_season"] = round(season, 2)
+        p["proj_gp"] = round(e["gp"] + share * e["left"])
+        why["lineup_slack"] = round(slack, 1)
+        rng, _ = model.season_range(season, *e["range"])
+        if rng:
+            why["season_range"] = rng
+
+
 def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
     """Season dress logit shift from Daily Faceoff news (findings 360 (1)) and its labels for the why panel. An item counts
     as since his last game when posted after 03:00 UTC on that game's date, as in the research's fit."""
@@ -1977,6 +2017,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             dst.update({gid: v for gid, v in src.items() if gid in kept})
 
     unmatched = 0
+    lineup = []  # skaters with games this season, for the lineup-slot step (findings 370)
     injury_log = []
     for p in players:
         pid = match(p)
@@ -2246,6 +2287,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             gp_last = 0 if (prev.get(pid) or {}).get("season_label") else (prev.get(pid) or {}).get("gp", 0)
             rng, exp = model.season_range(season, p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
                                           (today - births[pid]).days / 365.25 if pid in births else None) if pid else (None, None)
+            if gl and pid:  # his team's open lineup spots, once every share is known (findings 370, below)
+                lineup.append({"p": p, "pid": pid, "team": gl[-1]["team"], "isD": gl[-1].get("pos") == "D", "share": rest_share,
+                               "pts": season_pts, "gp": len(gl), "left": max(SEASON_GAMES - len(team_games.get(espn_team, [])), 0),
+                               "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
+                                         (today - births[pid]).days / 365.25 if pid in births else None)})
             if rng:
                 why["season_range"] = rng
                 if exp != "veteran":
@@ -2265,6 +2311,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_why"] = why
         if n:
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
+
+    lineup_slack(lineup, boost_x, boost_dress, model)
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)
     by_nhl = {p["nhl_id"]: p for p in players if p.get("nhl_id") and p["pos"] != "G"}
