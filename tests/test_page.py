@@ -1011,7 +1011,8 @@ def test_trade_check_roster_spots(browser, server, data):
     ctx.close()
     # with roster_max: an open spot means no drop; a partner at the limit has to drop for a 2-for-1
     d["roster_max"] = len([p for p in mine if not p["ir"]]) + 1
-    other_n = len([p for p in d["players"] if str(p.get("team_id")) == str(other["id"]) and not p["ir"]])
+    # a pending drop doesn't hold a spot (the page counts it the same way)
+    other_n = len([p for p in d["players"] if str(p.get("team_id")) == str(other["id"]) and not p["ir"] and not p.get("pending_drop")])
     d["roster_max"] = max(d["roster_max"], other_n)
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(team["id"]))
