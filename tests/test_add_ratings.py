@@ -1704,6 +1704,32 @@ def test_no1_by_opponent_form_and_rest():
     assert p1([tue], opp={tue: 2.0}) == p1([tue])  # without nonwins nothing changes
 
 
+def test_no1_after_split_back_to_back_and_backup_results():
+    """Handoffs 334-335 (findings 264-267), next game only: +0.8 when the no. 1 started one night of a back-to-back and the
+    next game is 2 days after night 2; +0.8 when a backup started and didn't win the last game; -0.6 when the latest backup
+    start was a win 2-3 team games ago."""
+    model = rating.Model()
+    def p1(hist, wins, days, **kw):
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, days, date(2026, 10, 20), by_date=out,
+                             start_wins=wins, **kw)
+        return out[1]
+    day = lambda n: (date(2026, 10, 1) + timedelta(days=n)).isoformat()
+    base = [(day(2 * i), 1) for i in range(8)]  # goalie 1 the clear no. 1, a game every other day to Oct 15
+    # back-to-back Oct 17-18 split 1 then 2 (2 won), next game Oct 20
+    split = base + [(day(16), 1), (day(17), 2)]
+    on, off = p1(split, [True] * 10, [day(19)]), p1(split, None, [day(19)])
+    assert on[day(19)] > off[day(19)]
+    # backup lost the last game (Oct 17, two days off): +0.8; backup won it 2 games ago: -0.6
+    lost = base + [(day(16), 2)]
+    assert p1(lost, [True] * 8 + [False], [day(19)])[day(19)] > p1(lost, None, [day(19)])[day(19)]
+    won = base + [(day(15), 2), (day(17), 1)]
+    assert p1(won, [True] * 10, [day(19)])[day(19)] < p1(won, None, [day(19)])[day(19)]
+    # later games are untouched
+    two = p1(won, [True] * 10, [day(19), day(21)])
+    assert abs(two[day(21)] - p1(won, None, [day(19), day(21)])[day(21)]) < 0.05
+
+
 def test_opponent_strength_and_nonwin_streaks():
     g = lambda gid, team, game, day, w=0, otl=0, started=1: {"id": gid, "team": team, "game": game, "date": day, "wins": w, "otl": otl, "started": started}
     games = [g(1, "TOR", 1, "2026-10-08", w=1), g(1, "TOR", 2, "2026-10-10"), g(1, "TOR", 3, "2026-10-12", otl=1),
