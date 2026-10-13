@@ -1004,6 +1004,12 @@ Two such models now feed the Season rating:
 
 Both models are fitted offline and saved as files the daily run reads, so the run needs nothing new. A player's details show both models' numbers. Together with sections 132 and 133, this ranks rest-of-season points 0.0049 better on the whole board and 0.0062 better among free agents, positive in every test season (2023-24, 2024-25, 2025-26), with the weights fitted leaving one season out.
 
+## 135. Open lineup spots
+
+A team dresses 12 forwards and 6 defensemen a night. The Season rating now adds up its expected share of the rest of the season for every skater on each team, by position. When the total falls short of the spots (several regulars hurt for a long time), its depth players' Season share goes up; when it runs over (a full, healthy lineup plus extras), theirs goes down. Regulars near a full share barely move. Players ESPN doesn't list still count toward their team's total, using the 16-season model's share for them.
+
+On top of sections 132-134, this ranks rest-of-season points 0.0007 better on the whole board and 0.0020 better among free agents, positive in every test season (2023-24, 2024-25, 2025-26). A player's details say when his team has open spots or too many regulars.
+
 ## What the independent review changed
 
 | Review point | Outcome |

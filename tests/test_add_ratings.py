@@ -1823,3 +1823,21 @@ def test_boosted_models_reach_the_season_rating(run):
     m = by_name["Auston Matthews"]["cr_why"]
     assert 0.01 <= m["boost_dress"] <= 0.99 and m["boost_fpg"] >= 0
     assert "boost_dress" not in by_name["Ryan Spooner"]["cr_why"]  # yet to play: no panel row
+
+
+def test_open_lineup_spots_lift_depth_players():
+    """Findings 370, handoff 350: per team and position group, slack = spots - summed Season shares; logit(p) moves by
+    1.34 x max(slack, 0)/3 x (1 - p) + 2.84 x min(slack, 0)/3 x (1 - p); a group with fewer players than spots is left alone."""
+    model = rating.Model()
+    def entry(pid, team, share, is_d=False):
+        return {"p": {"cr_why": {}, "pos": "D" if is_d else "C"}, "pid": pid, "team": team, "isD": is_d, "share": share, "pts": 2.0,
+                "gp": 5, "left": 70, "range": (is_d, 80, 80, 27.0)}
+    thin = [entry(i, "TOR", 0.6) for i in range(12)]  # 7.2 of 12 forward spots filled: slack 4.8
+    full = [entry(100 + i, "BOS", 0.8) for i in range(18)]  # 14.4 of 12: slack -2.4
+    few = [entry(200 + i, "MTL", 0.5, True) for i in range(4)]  # 4 D listed: missing logs, unchanged
+    rating.lineup_slack(thin + full + few, {}, None, model)
+    z = math.log(0.6 / 0.4) + 1.34 * 4.8 / 3 * 0.4
+    assert thin[0]["p"]["cr_season"] == round(2.0 / (1 + math.exp(-z)), 2) and thin[0]["p"]["cr_why"]["lineup_slack"] == 4.8
+    z = math.log(0.8 / 0.2) + 2.84 * -2.4 / 3 * 0.2
+    assert full[0]["p"]["cr_season"] == round(2.0 / (1 + math.exp(-z)), 2) < 1.6
+    assert "cr_season" not in few[0]["p"] and thin[0]["p"]["proj_gp"] == round(5 + 1 / (1 + math.exp(-math.log(1.5) - 1.34 * 1.6 * 0.4)) * 70)
