@@ -124,6 +124,29 @@ def test_displaced_skater_is_least_used_at_the_returning_regulars_position():
     assert rating.displaced_skaters(by_player, tg, healthy=set()) == {}  # still listed as out
 
 
+def test_roster_moves_newcomer_sits_the_least_used_and_a_departed_d_brings_one_in():
+    """Handoffs 337-338 (findings 269-272)."""
+    tg = {"BOS": list(range(1, 11)), "TOR": list(range(101, 111))}
+    g = lambda pid, game, pos, toi, team="BOS": {"id": pid, "game": game, "team": team, "pos": pos, "toi": toi, "name": f"P{pid}"}
+    by_player = {
+        1: [g(1, n, "C", 16, "TOR") for n in range(101, 110)],   # traded TOR -> BOS, no BOS game yet
+        2: [g(2, n, "L", 15) for n in range(1, 11)],
+        3: [g(3, n, "R", 9) for n in range(1, 11)],              # least-used BOS forward: sits more
+        4: [g(4, n, "D", 20) for n in range(1, 11)],             # BOS D now listed on TOR: departed
+        5: [g(5, n, "D", 14) for n in range(1, 9)],              # BOS D out the last 2 games: lifted
+        6: [g(6, n, "D", 14) for n in range(1, 4)],              # out 7 games: not lifted
+        7: [g(7, n, "D", 16) for n in range(1, 11)],
+    }
+    listed = {1: "BOS", 2: "BOS", 3: "BOS", 4: "TOR", 5: "BOS", 6: "BOS", 7: "BOS"}
+    cuts, lifts = rating.roster_moves(by_player, tg, listed, healthy={2, 3, 5, 6, 7})
+    assert cuts == {3: (0.08, "P1")}  # P4 joined TOR, which has no D in its last game to sit
+    assert lifts == {5: "P4"}
+    assert rating.roster_moves(by_player, tg, listed, healthy={2, 3, 6, 7})[1] == {}  # injured: no lift
+    # three games for his new team: no longer a newcomer
+    by_player[1] += [g(1, n, "C", 16) for n in range(8, 11)]
+    assert 3 not in rating.roster_moves(by_player, tg, listed, healthy=set())[0]
+
+
 def test_two_week_playoff_round_counts_14_days_and_14_moves():
     """Playoff rounds span two Monday-Sunday weeks (findings 109): in week 2 of a round a manager who used 7 still has 7."""
     periods = {str(k): [k] for k in range(1, 24)} | {"24": [24, 25], "25": [26, 27]}

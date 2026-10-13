@@ -105,6 +105,9 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
+# trades and claims (findings 269-272): a newcomer at his position cuts the least-used skater like a returning regular until
+# the newcomer has played ARRIVAL_GAMES for the team; a departed D lifts the team's healthy D out 1-4 games by DEPARTED_D_LIFT
+ARRIVAL_GAMES, DEPARTED_D_LIFT, DEPARTED_D_GAMES, DEPARTED_D_OUT = 3, 0.10, 3, (1, 4)
 AGE_YOUNG, AGE_OLD = (24, 0.01), (29, 0.009)  # Season FP/G + 0.01 a year under 24, - 0.009 a year over 29 (findings 310 (3))
 NEXT_UP_PP_D_FPG, NEXT_UP_PP_D_MIN = 0.15, 1.0  # Week FP/G for the D next in line when the top PP D (1+ PP min/G) is out (findings 310 (5))
 SCHED_SHRINK, SCHED_WIN = 15, (-0.175, 0.594, 0.349)  # starts without a line priced by team strength (findings 70; slope WEEK_SCHED_SLOPE)
@@ -150,6 +153,10 @@ SUNMON_REST1_NO1_LOGIT, ROAD_NO1_LOGIT = -0.6, -0.3
 # for games 2+ ahead; + NO1_REST[1] when the game is NO1_REST[0]+ days after the team's previous one
 NO1_OPP_LOGIT, OPP_CENTER, OPP_SCALE, OPP_CLIP, OPP_SHRINK_GAMES = 0.2, 0.55, 0.10, 2.0, 10
 NO1_NONWIN, NO1_NONWIN_CAP, NO1_NONWIN_LATER, NO1_REST = (0.2, -0.25), 3, 0.5, (3, 0.4)
+# the no. 1's next game only: after he started one night of a back-to-back and the next game is 2 days after night 2
+# (findings 264-265, handoff 334); after a backup started and didn't win the last game; after the latest backup start was a
+# win 2-3 team games ago (findings 266-267, handoff 335)
+NO1_SPLIT_B2B, NO1_AFTER_BACKUP_LOSS, NO1_AFTER_BACKUP_WIN = 0.8, 0.8, -0.6
 
 
 def three_goalie_idle(seq):
@@ -712,6 +719,43 @@ def displaced_skaters(by_player, team_games, healthy):
         if depth:
             out[min(depth)[1]] = (DISPLACED_CUT[grp], g["name"])
     return out
+
+
+def roster_moves(by_player, team_games, listed, healthy):
+    """Trades and waiver claims, from ESPN's NHL team for each skater (listed: {nhl id: NHL team}) against his game log.
+    Arrival (findings 269, 272, handoff 337): listed on a team he has played under ARRIVAL_GAMES games for, after games for
+    another NHL team this season; the team's skater at his position (F or D) with the least ice time in its last game, not
+    the newcomer, sits more by DISPLACED_CUT. Departure (findings 270-272, handoff 338): a defenseman who dressed in one of
+    the team's last DEPARTED_D_GAMES games and is now listed on another team lifts the team's D listed with it and healthy
+    (healthy: no ESPN status at all) who missed the last 1-4 team games.
+    Returns ({nhl id: (cut, newcomer's name)}, {nhl id: departed D's name})."""
+    last, streaks = {}, {}
+    for pid, gl in by_player.items():
+        tg = team_games.get(gl[-1]["team"], [])
+        if tg:
+            played = {g["game"] for g in gl}
+            last[pid] = gl[-1]
+            streaks[pid] = next((i for i, g in enumerate(reversed(tg)) if g in played), len(tg))
+    grp = lambda g: "D" if g["pos"] == "D" else "F"
+    cuts, lifts = {}, {}
+    for pid, team in listed.items():
+        gl = by_player.get(pid)
+        if not gl or not team_games.get(team):
+            continue
+        here = sum(g["team"] == team for g in gl)
+        if here < ARRIVAL_GAMES and any(g["team"] != team for g in gl):
+            tg = team_games[team]
+            depth = [(h["toi"], hid) for hid, h in last.items() if hid != pid and streaks[hid] == 0 and h["team"] == team
+                     and h["game"] == tg[-1] and grp(h) == grp(gl[-1]) and listed.get(hid, team) == team]
+            if depth:
+                cuts.setdefault(min(depth)[1], (DISPLACED_CUT[grp(gl[-1])], gl[-1]["name"]))
+        old = last[pid]["team"] if pid in last else None
+        if old and old != team and team in team_games and grp(last[pid]) == "D" and last[pid]["game"] in team_games.get(old, [])[-DEPARTED_D_GAMES:]:
+            for hid, h in last.items():
+                if h["team"] == old and grp(h) == "D" and listed.get(hid) == old and hid in healthy \
+                        and DEPARTED_D_OUT[0] <= streaks[hid] <= DEPARTED_D_OUT[1]:
+                    lifts.setdefault(hid, last[pid]["name"])
+    return cuts, lifts
 
 
 def lineup_context(by_player, team_games):
@@ -1550,7 +1594,7 @@ def repeating_pattern(seq, cands):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None):
+                  opp=None, nonwins=None, start_wins=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -1572,7 +1616,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     already applies (findings 330 (3)).
     road: dates of the team's road games this week (findings 257).
     opp: {date: opponent strength} (opponent_strength); nonwins: {goalie id: straight starts without a win}. With nonwins
-    given, the no. 1's logit moves by opponent, form and days of rest (findings 262-263)."""
+    given, the no. 1's logit moves by opponent, form and days of rest (findings 262-263).
+    start_wins: whether each start in starts_by_team[team] was a win; with it the no. 1's next game moves after a split
+    back-to-back and after a backup's last result (findings 264-267)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -1717,6 +1763,12 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 form = NO1_NONWIN[0] + NO1_NONWIN[1] * min(nonwins.get(gid, 0), NO1_NONWIN_CAP)
                 z += NO1_OPP_LOGIT * (opp or {}).get(d, 0.0) + form * (1.0 if ahead == 0 else NO1_NONWIN_LATER) \
                     + (NO1_REST[1] if rest >= NO1_REST[0] else 0.0)
+            if gid == no1 and ahead == 0 and start_wins is not None and len(start_wins) == len(seq) >= 2:
+                backup = [i for i, x in enumerate(seq) if x != no1 and x in cands]
+                split = (log[-1][0] - log[-2][0]).days == 1 and gap == 2 and (seq[-1] == no1) != (seq[-2] == no1)
+                z += NO1_SPLIT_B2B * split \
+                    + NO1_AFTER_BACKUP_LOSS * bool(backup and backup[-1] == len(seq) - 1 and not start_wins[-1]) \
+                    + NO1_AFTER_BACKUP_WIN * bool(backup and 2 <= len(seq) - backup[-1] <= 3 and start_wins[backup[-1]])
             if ahead == 0 and gid in idle3:
                 z += THREE_GOALIE_IDLE_LOGIT
             if seq and gid == seq[-1] and (rotating and ahead == 2 or plain and ahead == 1):
@@ -1872,12 +1924,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
-    team_games, starts_by_team, last_start = {}, {}, {}
+    team_games, starts_by_team, last_start, start_wins = {}, {}, {}, {}
     for g in sorted(goalie_games, key=lambda g: g["date"]):
         if g["game"] not in team_games.setdefault(g["team"], []):
             team_games[g["team"]].append(g["game"])
         if g["started"]:
             starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
+            start_wins.setdefault(g["team"], []).append(bool(g["wins"]))
             last_start[g["team"]] = (g["id"], last_start_shift(g))  # the latest start wins
     team_dates = {}  # each team's played game dates (ET)
     for g in goalie_games:
@@ -2060,7 +2113,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
                             last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
                             {d for d, _, home in week_games.get(team, []) if not home},
-                            {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins)
+                            {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []))
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
@@ -2378,6 +2431,27 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_dress"] = round(dress, 2)
             p["cr_dress_next"] = round(max(0.0, p["cr_dress_next"] - cut), 2)
             p["cr_why"]["displaced"] = regular
+    # trades and claims: a newcomer at his position sits the least-used skater; a departed D brings a sitting D in
+    listed = {pid: ESPN_TO_NHL.get(p["team"], p["team"]) for pid, p in by_nhl.items() if p.get("team")}
+    cuts, lifts = roster_moves(by_player, team_games, listed, {pid for pid, p in by_nhl.items() if not p.get("injury")})
+    for pid, (cut, newcomer) in cuts.items():
+        p = by_nhl.get(pid)
+        if p and p["cr_dress"] and "displaced" not in p["cr_why"]:  # the same cut as a returning regular, not stacked
+            dress = max(0.0, p["cr_dress"] - cut)
+            p["cr_games"] = round(p["games_left"] * dress, 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+            p["cr_dress"] = round(dress, 2)
+            p["cr_dress_next"] = round(max(0.0, p["cr_dress_next"] - cut), 2)
+            p["cr_why"]["newcomer"] = newcomer
+    for pid, gone in lifts.items():
+        p = by_nhl.get(pid)
+        if p and p["cr_dress"] is not None:
+            dress = min(1.0, p["cr_dress"] + DEPARTED_D_LIFT)
+            p["cr_games"] = round(p["games_left"] * dress, 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+            p["cr_dress"] = round(dress, 2)
+            p["cr_dress_next"] = round(min(1.0, p["cr_dress_next"] + DEPARTED_D_LIFT), 2)
+            p["cr_why"]["d_departed"] = gone
 
     # the top power-play D is out: the next one up gets his PP time this week, not in the Season number (findings 310 (5))
     out = {p["nhl_id"] for p in players if p.get("nhl_id") and p.get("injury") in ("OUT", "INJURY_RESERVE", "SUSPENSION")}

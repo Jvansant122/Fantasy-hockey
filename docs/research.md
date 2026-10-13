@@ -1023,6 +1023,18 @@ In a replay of 2021-26 from each Monday, this predicts who starts 0.72% better f
 
 The Season rating's reading of Daily Faceoff injury news (section 132) missed some season-level wording, such as "out until at least the playoffs", "will not return before the end of the regular season" and "won't play again this season". It now treats those like "season-ending". "Out indefinitely", "long-term" or "several months" (but not long-term injured reserve) now lowers the Season share a little. A milder later item, such as "placed on LTIR", no longer hides an earlier, more serious one posted since his last game. On past seasons the season-level wording ranks rest-of-season points 0.0004 better, positive in every test season; "indefinitely" adds 0.0002 but not in every season.
 
+## 138. Starting goalies: back-to-backs and the backup's last game
+
+Two more patterns in who starts the next game:
+- **After a split back-to-back.** When the no. 1 started one night of a back-to-back and the next game comes 2 days later, he almost always gets it.
+- **After the backup plays.** When the backup started the last game and didn't win it, the no. 1 is more likely back in net. When the backup's latest start was a win two or three games ago, the no. 1 is a little less likely to start.
+
+Both apply to the team's next game only; carrying them further gained nothing. In a replay of 2021-26 from each Monday, the next game's starter is predicted 0.69% better, better in every season.
+
+## 139. Trades and waiver claims
+
+When a team adds a skater by trade or waiver claim, its least-used skater at his position (fewest minutes last game) is now marked as more likely to sit, the same cut the site already makes when a regular comes back from injury. It lasts until the newcomer has played 3 games for his new team. When a defenseman who was in the lineup is traded or claimed away, the team's healthy defensemen who have sat the last 1-4 games are 10 points more likely to play, for the team's next 3 games. Forwards showed no clear lift, so they are left alone. Both sizes come from checking against the site's own lineup model over 2023-26, which already explains part of the raw effect.
+
 ## What the independent review changed
 
 | Review point | Outcome |
