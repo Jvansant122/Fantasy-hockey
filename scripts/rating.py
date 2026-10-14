@@ -272,6 +272,17 @@ DRESS_SHIFT_IN, DRESS_SHIFT_OUT = (0.6, 0.2, -0.1, -0.3), (-0.55, -0.15, 0.1, 0.
 # missed-game shift, every game (0.25 to 0.34 per game against 0.345 actual, findings 153); split by position, since
 # scratched defensemen come back more often than forwards (findings 291, handoff 345)
 SCRATCH_LOGIT = {"F": 0.3, "D": 0.65}
+# team form (findings 281-283, 289, 292, handoffs 340-342, 344): additive on each game's dress chance this week.
+# Depth = healthy, dressed his team's last game, under DEPTH_TOI minutes in it. After 4+ straight games without a win depth
+# skaters sit more (340); after a loss by 4+ goals more still (341, the larger of the two, not both); a team on 3+ straight
+# wins keeps skaters out 1-4 games out (342)
+DEPTH_TOI = {"F": 13.0, "D": 16.0}
+SLUMP_GAMES, SLUMP_DEPTH = 4, {"F": -0.03, "D": -0.065}
+BLOWOUT_GOALS, BLOWOUT_DEPTH = 4, -0.07
+WIN_RUN_GAMES, WIN_RUN_OUT, WIN_RUN_OUT_GAMES = 3, -0.045, (1, 4)
+# defensemen who dressed last game on under 14 minutes dress less than the lineup model says, 14-16 a little less
+# (findings 292, handoff 346): stacks with the team-form shifts
+DEPTH_D_SHIFT = ((14.0, -0.05), (16.0, -0.025))
 # a skater who dressed for his team's last game in his first 1-3 games after a trade or waiver claim: the new team plays
 # him more than his old-team dressed share says (0.78 to 0.85 per game against 0.86 actual, findings 155)
 NEW_TEAM_LOGIT, NEW_TEAM_GAMES = 0.45, 3
@@ -680,6 +691,53 @@ def nonwin_streaks(goalie_games):
             else:
                 run[0] += 1
     return {gid: n for gid, (n, _) in out.items()}
+
+
+def team_form(goalie_games):
+    """{team: (straight games without a win, straight wins, last game's goal margin or None)}, latest game first, from
+    this season's goalie rows (findings 281-283). A game is won when one of the team's goalies has the win; goals for are
+    the other team's goals against in the same game."""
+    games = {}
+    for g in goalie_games:
+        t = games.setdefault((g["team"], g["game"]), {"date": g["date"], "win": False, "ga": 0})
+        t["win"] = t["win"] or bool(g["wins"])
+        t["ga"] += g.get("ga", 0)
+    teams_in = {}
+    for team, gid in games:
+        teams_in.setdefault(gid, []).append(team)
+    out = {}
+    for team in {t for t, _ in games}:
+        seq = sorted(((t["date"], gid, t) for (tm, gid), t in games.items() if tm == team), key=lambda x: (x[0], x[1]), reverse=True)
+        nonwins = next((k for k, (_, _, t) in enumerate(seq) if t["win"]), len(seq))
+        wins = next((k for k, (_, _, t) in enumerate(seq) if not t["win"]), len(seq))
+        _, gid, last = seq[0]
+        opp = [tm for tm in teams_in[gid] if tm != team]
+        margin = games[(opp[0], gid)]["ga"] - last["ga"] if opp else None
+        out[team] = (nonwins, wins, margin)
+    return out
+
+
+def form_shift(pos, depth_toi, out_games, form):
+    """Shift on each game's dress chance this week (handoffs 340-342 and 346, stacked per 344), and the reasons.
+    pos 'F' or 'D'; depth_toi: last-game minutes for a healthy skater who dressed his team's last game, else None;
+    out_games: his team's straight games he has missed (not long-term injured), else 0; form: team_form's tuple or None."""
+    shift, why = 0.0, []
+    nonwins, wins, margin = form or (0, 0, None)
+    if depth_toi is not None and depth_toi < DEPTH_TOI[pos]:
+        drop = min(SLUMP_DEPTH[pos] if nonwins >= SLUMP_GAMES else 0.0,
+                   BLOWOUT_DEPTH if margin is not None and margin <= -BLOWOUT_GOALS else 0.0)
+        if drop:
+            shift += drop
+            why.append("blowout" if drop == BLOWOUT_DEPTH and margin is not None and margin <= -BLOWOUT_GOALS else "slump")
+    if pos == "D" and depth_toi is not None:
+        d = next((x for top, x in DEPTH_D_SHIFT if depth_toi < top), 0.0)
+        if d:
+            shift += d
+            why.append("depth_d")
+    if WIN_RUN_OUT_GAMES[0] <= out_games <= WIN_RUN_OUT_GAMES[1] and wins >= WIN_RUN_GAMES:
+        shift += WIN_RUN_OUT
+        why.append("win_run")
+    return shift, why
 
 
 def shrunk_save_pcts(goalie_games, prev_goalies):
@@ -1922,6 +1980,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
     opp_str, nonwins = opponent_strength(goalie_games, prev_pct), nonwin_streaks(goalie_games)
+    forms = team_form(goalie_games)  # streaks and last margin, for the lineup shifts (handoffs 340-342)
     news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
@@ -2361,6 +2420,20 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             per_game = dress_by_game(base_dress, gn, sat_last and not in_lines, min(cap, inj),
                                      SCRATCH_LOGIT["D" if p["pos"] == "D" else "F"] * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
                 if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
+            # team form and depth D (handoffs 340-342, 346): healthy depth skaters after a slump or a blowout, D on low
+            # minutes, and skaters out 1-4 games while their team keeps winning
+            pos2 = "D" if p["pos"] == "D" else "F"
+            depth_toi = gl[-1]["toi"] if gl and not sat_last and not traded and not early and not p.get("injury") else None
+            out_games = 0
+            if gl and sat_last and not traded and not (note and note["long"]) and p.get("injury") != "INJURY_RESERVE":
+                played = {g["game"] for g in gl}
+                out_games = next((k for k, g in enumerate(reversed(tg)) if g in played), len(tg))
+            fshift, fwhy = form_shift(pos2, depth_toi, out_games, forms.get(team)) if pid else (0.0, [])
+            if fshift and per_game:
+                per_game = [min(max(q + fshift, 0.0), 1.0) for q in per_game]
+                why_form = {"shift": round(fshift, 3), "why": fwhy}
+            else:
+                why_form = None
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
@@ -2379,6 +2452,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if why_form:
+                why["form"] = why_form  # team form / depth D lineup shift on this week's games (handoffs 340-342, 346)
             if season_pts is not None:  # after age, ESPN and the boosted model: Season = this x his share (check_data P5)
                 why["season_pts"] = round(season_pts, 2)
             if boost_q is not None:
