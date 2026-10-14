@@ -1987,3 +1987,27 @@ def test_left_early_teammates():
                  3: [g(3, k, 15.0, "C") for k in range(6)]}  # a normal night, and not the last game
     out = rating.left_early_teammates(by_player, {"TOR": list(range(6))})
     assert out == {("TOR", True): {1}}
+
+
+def test_week_news_shifts_from_daily_faceoff_items_since_his_last_game():
+    """Handoffs 406-408: out-now terms, sent down, and hurt after a game he dressed for with no ESPN status yet."""
+    item = lambda ts, cat, *f, tl=None: {"ts": ts, "cat": cat, "f": sorted(f), **({"tl": tl} if tl is not None else {})}
+    news = {"recent": {"1": [item("2026-10-08T20:00:00", "inj", "out"),  # before his last game: ignored
+                             item("2026-10-11T15:00:00", "inj", "skate"), item("2026-10-12T15:00:00", "inj", "full", "ret")],
+                       "2": [item("2026-10-11T15:00:00", "inj", "wtw", tl=21.0)],
+                       "3": [item("2026-10-11T15:00:00", "move", "down")],
+                       "4": [item("2026-10-11T15:00:00", "inj", "out")]}}
+    dates = ["2026-10-13", "2026-10-15", "2026-10-25"]
+    w = rating.WEEK_NEWS
+    z, practising, why = rating.week_news_logit(news, 1, "2026-10-10", True, "OUT", dates)
+    assert practising and z == [pytest.approx(w["practice"] + w["ret"])] * 3 and why == ["practising", "set to return"]
+    z, practising, _ = rating.week_news_logit(news, 2, "2026-10-10", True, "OUT", dates)
+    # 21 days from Oct 11: 19 and 17 days left at the first two games (7+ past), 7 at Oct 25 (7+ too), none after Nov 1
+    assert not practising and z == [pytest.approx(w["wtw"] + w["timeline"])] * 3
+    assert rating.week_news_logit(news, 2, "2026-10-10", True, "OUT", ["2026-11-05"])[0] == [pytest.approx(w["wtw"])]
+    assert rating.week_news_logit(news, 3, "2026-10-10", True, None, dates)[0] == [w["down_out"]] * 3
+    assert rating.week_news_logit(news, 3, "2026-10-10", False, None, dates)[0] == [w["down_in"]] * 3
+    assert rating.week_news_logit(news, 4, "2026-10-10", False, None, dates)[0] == [w["hurt_out"]] * 3
+    assert rating.week_news_logit(news, 4, "2026-10-10", False, "DAY_TO_DAY", dates)[0] == [0.0] * 3  # ESPN's cap covers it
+    assert rating.week_news_logit(news, 4, "2026-10-12", False, None, dates)[0] == [0.0] * 3  # news older than his last game
+    assert rating.week_news_logit(None, 4, "2026-10-10", False, None, dates)[0] == [0.0] * 3

@@ -234,12 +234,25 @@ def test_fetch_news_keeps_each_players_latest_item(monkeypatch, tmp_path):
     assert out["roster-moves"]["3"]["down"] and not out["roster-moves"]["3"]["up"]
     assert out["roster-moves"]["4"]["up"] and not out["roster-moves"]["4"]["down"]
     assert out["fetched"] == "2026-11-20T12:00Z"
+    # every recent item with the Week dress's flags (handoffs 406-408)
+    assert [(r["ts"], r["f"]) for r in out["recent"]["2"]] == [("2026-11-12T10:00:00", ["indefinite", "out"]), ("2026-11-18T10:00:00", ["dtd"])]
+    assert out["recent"]["3"] == [{"ts": "2026-11-19T09:00:00", "cat": "move", "f": ["down"]}]
     # items stored under older wording rules are read again: the stored player 9 is gone, the pages refill the rest
     again = leads.fetch_news(s, datetime(2026, 11, 20, 12, tzinfo=timezone.utc), {**stored, "version": 1})
     assert "9" not in again["injuries"] and again["injuries"]["1"] == out["injuries"]["1"]
     monkeypatch.setattr(leads, "NEWS_FILE", tmp_path / "dfo_news.json")
     leads.save_news(out)
     assert leads.load_news() == out
+
+
+def test_news_flags_for_the_week_dress():
+    """Handoffs 406-408: practice, skating, could-return, return and out wording, and the stated timeline in days."""
+    f = lambda t: leads.news_flags({"details": t})
+    assert f("Hughes was a full participant in practice Tuesday.")["full"] and f("He wore a no-contact jersey.")["limited"]
+    assert f("He skated on his own Monday.")["skate"] and f("He is a game-time decision.")["gtd"]
+    assert f("He will return to the lineup Thursday.")["ret"] and f("He has been ruled out Saturday.")["out"]
+    assert f("He is expected to miss 4-6 weeks.")["tl"] == 35 and f("He'll miss his 10th straight game.")["tl"] is None
+    assert f("Out a couple weeks.")["tl"] == 14 and f("He is day-to-day.")["tl"] is None
 
 
 def test_news_flags_season_level_and_indefinite_wording():
