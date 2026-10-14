@@ -227,7 +227,7 @@ def test_fetch_news_keeps_each_players_latest_item(monkeypatch, tmp_path):
                            "8": {"ts": "2025-01-01T09:00:00", "season": True, "surgery": False}}}
     out = leads.fetch_news(s, datetime(2026, 11, 20, 12, tzinfo=timezone.utc), stored)
     assert out["injuries"]["1"] == {"ts": "2026-11-19T10:00:00", "season": True, "surgery": True, "indefinite": False,
-                                    "season_ts": "2026-11-19T10:00:00"}  # newest item wins
+                                    "season_ts": "2026-11-19T10:00:00", "nf": ["out", "season", "surgery"]}  # newest item wins
     # a later, milder item keeps the date of his latest "indefinitely" item
     assert out["injuries"]["2"]["indefinite"] is False and out["injuries"]["2"]["indefinite_ts"] == "2026-11-12T10:00:00"
     assert out["injuries"]["2"]["season"] is False and "9" in out["injuries"] and "8" not in out["injuries"]  # a year old: pruned

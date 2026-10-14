@@ -119,3 +119,23 @@ def features(by_player, team_games, prev, prev2, bios, xg_prev, season, today, s
             x["toi_rank"] = (sum(rows[q]["toi"] > x["toi"] for q in inl) + (sum(rows[q]["toi"] == x["toi"] for q in inl) + 1) / 2
                              if x["out"] == 0 else None)
     return rows
+
+
+NEWS_FLAGS = ("season", "surgery", "ir", "ltir", "wtw", "dtd", "ret", "out", "practice", "gtd", "illness", "concussion")
+
+
+def news_inputs(item, last_game, now_utc):
+    """The Week model's injury-news inputs (handoff 413, model/train_boost.py news_inputs): his latest Daily Faceoff injury
+    item (leads.fetch_news, with its hunt11b/news.py flags nf and stated timeline tl) counts when posted after 03:00 UTC on
+    his last game's date; inj_age is days since it, inj_rem the timeline left (0-250)."""
+    after = bool(item and last_game and item["ts"] > f"{last_game[:10]}T03:00")
+    out = {f"inj_{k}": float(after and k in (item.get("nf") or ())) for k in NEWS_FLAGS}
+    out["inj_after"] = float(after)
+    out["inj_age"] = out["inj_rem"] = None
+    if after:
+        from datetime import datetime
+        age = (now_utc.replace(tzinfo=None) - datetime.fromisoformat(item["ts"][:19])).total_seconds() / 86400
+        out["inj_age"] = age
+        if item.get("tl") is not None:
+            out["inj_rem"] = min(max(item["tl"] - age, 0.0), 250.0)
+    return out

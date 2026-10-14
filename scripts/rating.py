@@ -245,10 +245,13 @@ BOOST_DRESS_W = 0.56
 WEEK_NEWS = {"practice": 1.8, "skate": 0.5, "gtd": 0.7, "ret": 0.5, "dtd": 0.3, "wtw": -0.17, "long": -0.7, "timeline": -0.3,
              "down_out": -1.1, "down_in": -1.4, "hurt_out": -2.1, "hurt_dtd": -1.9}
 WEEK_NEWS_TIMELINE_DAYS = 7
+# league-wide F/D scoring drift into the Season FP/G (handoff 405, idea 1118: +0.0002 full board, +0.0005 free agents)
+DRIFT_W, DRIFT_MIN_GP = 0.5, 10
 # the Week's per-game dress logits move BOOST_WEEK_W x (logit(b) - logit(mean of his per-game chances)), b = a 16-season
 # boosted next-week dress share (model/season_boost_week.json) clipped to BOOST_WEEK_CLIP, after the other per-game shifts
-# (handoff 411, idea 1142: Brier -2.0% / -6.1% in 2024-25 / 2025-26)
-BOOST_WEEK_W, BOOST_WEEK_CLIP = 0.8, (0.005, 0.995)
+# and the news terms (handoffs 411-414, ideas 1142, 1161-1168: with its injury-news inputs and 406-408, Brier -5.1% / -9.6%
+# in 2024-25 / 2025-26, Week Spearman +0.008)
+BOOST_WEEK_W, BOOST_WEEK_CLIP = 0.9, (0.005, 0.995)
 BOOST_FPG_BLEND = (0.60, -0.37)  # an older stored copy (the fetch has failed since) adds nothing
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
@@ -1480,6 +1483,9 @@ def lineup_slack(lineup, boost_x, boost_dress, model):
         if not e["pts"] or counts[(e["team"], e["isD"])] < LINEUP_SPOTS[e["isD"]]:
             continue
         slack = LINEUP_SPOTS[e["isD"]] - sums[(e["team"], e["isD"])]
+        # a skater Daily Faceoff reports sent down since his last game doesn't fill his team's open spots (handoff 420)
+        if slack > 0 and "sent down" in (e["p"]["cr_why"].get("season_news") or ()):
+            continue
         q = min(max(e["share"], 0.001), 0.999)
         z = math.log(q / (1 - q)) + (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
         share = 1 / (1 + math.exp(-z))
@@ -1524,6 +1530,42 @@ def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
     return z, why
 
 
+def season_drift(rows, model):
+    """Handoff 405 (idea 1118, findings 400; hunt13/season/s26.py, drift.py): a league-wide shift in forward or defenseman
+    scoring this season. Over skaters with DRIFT_MIN_GP+ games: e_std = season-to-date FP/G - Season FP/G (weight GP) and
+    e_l10 = last-10 FP/G - Season FP/G (weight min(GP, 10)); for F and D, gap = the group's weighted mean minus everyone's,
+    drift = (gap_std + gap_l10) / 2. Every skater in the group gets Season FP/G max(fp + DRIFT_W x drift, 0.05) before his
+    share; Week untouched. rows: [{p, D, pts, share, fp, range, lineup}]."""
+    sums = {}
+    for r in rows:
+        n = len(r["fp"])
+        if n < DRIFT_MIN_GP:
+            continue
+        e_std, e_l10 = sum(r["fp"]) / n - r["pts"], sum(r["fp"][-10:]) / 10 - r["pts"]
+        for key in (r["D"], "all"):
+            t = sums.setdefault(key, [0.0, 0.0, 0.0, 0.0])
+            t[0] += e_std * n; t[1] += n; t[2] += e_l10 * 10; t[3] += 10
+    if "all" not in sums:
+        return
+    mean = lambda t, i: t[i] / t[i + 1] if t[i + 1] else 0.0
+    drift = {g: (mean(sums[g], 0) - mean(sums["all"], 0) + mean(sums[g], 2) - mean(sums["all"], 2)) / 2 if g in sums else 0.0
+             for g in (False, True)}
+    for r in rows:
+        if not drift[r["D"]]:
+            continue
+        p, why = r["p"], r["p"]["cr_why"]
+        pts = max(r["pts"] + DRIFT_W * drift[r["D"]], 0.05)
+        season = r["share"] * pts
+        p["cr_season"] = round(season, 2)
+        why["season_pts"] = round(pts, 2)
+        why["drift"] = round(DRIFT_W * drift[r["D"]], 3)
+        if r["lineup"]:
+            r["lineup"]["pts"] = pts
+        rng, _ = model.season_range(season, *r["range"])
+        if rng:
+            why["season_range"] = rng
+
+
 def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
     """Per-game Week dress logit shifts from Daily Faceoff items since his last game (posted after 03:00 UTC on its date, as
     in the research), whether he is practising (his OUT / IR cap becomes day-to-day's), and labels for the why panel.
@@ -1560,14 +1602,15 @@ def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
             for k, d in enumerate(game_dates):
                 if max(tl) - (date.fromisoformat(d) - first).days >= WEEK_NEWS_TIMELINE_DAYS:
                     shifts[k] += WEEK_NEWS["timeline"]
+    down = 0.0
     if moves and "down" in moves[-1]["f"] and "up" not in moves[-1]["f"]:
-        z += WEEK_NEWS["down_out" if sat_last else "down_in"]; why.append("sent down")
+        down = WEEK_NEWS["down_out" if sat_last else "down_in"]; why.append("sent down")
     elif not sat_last and not espn_status and inj:
         if any_f("out"):
             z += WEEK_NEWS["hurt_out"]; why.append("hurt since")
         elif any_f("dtd"):
             z += WEEK_NEWS["hurt_dtd"]; why.append("day-to-day since")
-    return [x + z for x in shifts], practising, why
+    return [x + z for x in shifts], down, practising, why
 
 
 def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov, played=None):
@@ -2166,6 +2209,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     boost_dress, boost_fpg, boost_week = season_boost.load("dress"), season_boost.load("fpg"), season_boost.load("week")
     boost_x = season_boost.features(by_player, team_games, prev, prev2, bios, xg_prev, season, today, SEASON_GAMES) \
         if boost_dress or boost_fpg or boost_week else {}
+    if boost_week:  # the Week model also reads his latest Daily Faceoff injury item (handoff 413)
+        for pid, x in boost_x.items():
+            gl_ = by_player.get(pid) or []
+            x.update(season_boost.news_inputs(((dfo_news or {}).get("injuries") or {}).get(str(pid)),
+                                              max(g["date"] for g in gl_) if gl_ else None, now_utc))
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     prev3 = {}
     if missed:
@@ -2278,6 +2326,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
 
     unmatched = 0
     lineup = []  # skaters with games this season, for the lineup-slot step (findings 370)
+    drift_rows = []  # every skater's Season FP/G, for the league-wide scoring drift (handoff 405)
     injury_log = []
     for p in players:
         pid = match(p)
@@ -2512,7 +2561,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             gn = p["games_left"]
             wk_dates = [d for d in sched.get(espn_team, []) if d >= today.isoformat()][-gn:] if gn else []
             wk_dates = (wk_dates + wk_dates[-1:] * gn)[:gn] if wk_dates else [today.isoformat()] * gn
-            wk_news, practising, wk_why = week_news_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sat_last,
+            wk_news, wk_down, practising, wk_why = week_news_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sat_last,
                                                           p.get("injury"), wk_dates)
             if practising and p.get("injury") in ("OUT", "INJURY_RESERVE") and not (note and note["long"]):
                 inj = max(inj, SKATER_INJURY_CAP["DAY_TO_DAY"])  # practising: day-to-day's cap (handoff 406)
@@ -2545,6 +2594,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why_form = {"shift": round(fshift, 3), "why": fwhy}
             else:
                 why_form = None
+            # Daily Faceoff injury news since his last game (handoffs 406, 408), then the boosted model, then a send-down and the
+            # caps (handoff 412)
+            if per_game and any(wk_news) and base_dress is not None:
+                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), cap, inj) for q, z in zip(per_game, wk_news)]
             # the 16-season boosted next-week dress share (handoff 411), still under his injury caps; not for a skater ESPN
             # lists on a team he hasn't played for yet, whose inputs describe his old team
             boost_wk = None
@@ -2555,10 +2608,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
                     per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + boost_wk))), cap, inj)
                                 for q in per_game]
-            # the news shifts go on after the boosted model, which can't see them and would otherwise pull 80% of them back
-            # toward its share (handoffs 406-408)
-            if per_game and any(wk_news) and base_dress is not None:
-                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), cap, inj) for q, z in zip(per_game, wk_news)]
+            if per_game and wk_down and base_dress is not None:  # sent down: the boosted model can't see it (handoff 407)
+                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + wk_down))), cap, inj) for q in per_game]
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
@@ -2581,8 +2632,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
-            if wk_why and any(wk_news) and base_dress is not None:
-                why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news), 2), "why": wk_why}  # handoffs 406-408
+            if wk_why and wk_news and (any(wk_news) or wk_down) and base_dress is not None:  # no games left: nothing moved
+                why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "why": wk_why}  # handoffs 406-408
             if boost_wk is not None:
                 why["boost_week"] = round(boost_wk, 2)  # the 16-season boosted next-week dress shift (handoff 411)
             if why_form:
@@ -2609,6 +2660,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                "pts": season_pts, "gp": len(gl), "left": max(SEASON_GAMES - len(team_games.get(espn_team, [])), 0),
                                "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
                                          (today - births[pid]).days / 365.25 if pid in births else None)})
+            if pid and season_pts is not None:  # the league-wide F/D scoring drift, once every Season FP/G is known (handoff 405)
+                drift_rows.append({"p": p, "D": p["pos"] == "D", "pts": season_pts, "share": rest_share, "fp": [g["fp"] for g in gl],
+                                   "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
+                                             (today - births[pid]).days / 365.25 if pid in births else None),
+                                   "lineup": lineup[-1] if gl else None})
             if rng:
                 why["season_range"] = rng
                 if exp != "veteran":
@@ -2629,6 +2685,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if n:
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
 
+    season_drift(drift_rows, model)
     lineup_slack(lineup, boost_x, boost_dress, model)
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)

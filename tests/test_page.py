@@ -615,7 +615,12 @@ def test_roster_size_rules(browser, server, data):
     instead of the Drop list; an open spot means an add with no drop."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _sunday(data)  # Sunday after the first puck: no night left to hold moves for (handoff 207)
+    # Saturday morning: one move held for Sunday (handoff 207), and no free agent with a game left, so no Mid-week swap
+    # sub takes the spot the IR move opens (handoff 211)
+    d = _weekday(data, 5)
+    for p in d["players"]:
+        if p["owner"] in ("freeagent", "waivers") and p["pos"] != "G":
+            p["games_left"] = 0
     team = d["teams"][0]
     roster = _mine(d, team)
     sk = [p for p in roster if p["pos"] != "G"]
@@ -631,7 +636,7 @@ def test_roster_size_rules(browser, server, data):
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")  # worth stashing
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
-    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     activate = _card(page, "Activate from IR")
     assert "Your roster is full: drop" in activate
@@ -656,7 +661,7 @@ def test_roster_size_rules(browser, server, data):
     ctx.close()
     # only one IR slot open and the Drop list's IR move takes it: no IR stash (handoff 212)
     d["ir_slots"] = 2
-    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     assert "Move to IR" in _card(page, "Drop list") and _card(page, "IR stash") == ""
     assert errors == []
@@ -665,7 +670,7 @@ def test_roster_size_rules(browser, server, data):
     # full, nothing to move to IR, one move left: no open spot, and no stash that needs two moves
     hurt["injury"] = None
     team["moves_used"] = team["moves_used_next"] = 6
-    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     assert _card(page, "IR stash") == ""
     assert all(not l.startswith("Add ") for l in _card(page, "Best").split("\n")[1:])
@@ -673,7 +678,7 @@ def test_roster_size_rules(browser, server, data):
     ctx.close()
     # an open spot: the first add needs no drop, and activating needs none either
     d["roster_max"], team["moves_used"], team["moves_used_next"] = non_ir + 1, 0, 0
-    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     assert "roster is full" not in _card(page, "Activate from IR")
     best = _card(page, "Best").split("\n")[1:]
@@ -860,7 +865,7 @@ def test_stale_note_and_monday_rollover(browser, server, data):
     ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 12, 6, 0, tzinfo=timezone.utc))
     assert page.evaluate("weekOver(state.data)") is False
     note = page.locator("#stale").inner_text()
-    assert "from Sun Oct 11, 5:02 PM ET" in note and "already out of Week" in note and "Next update about 6 AM ET" in note
+    assert "from Sun Oct 11, 5:02 PM ET" in note and "already out of Week" in note and "Next update about 6:10 AM ET" in note
     first_left = next(i for i, n in enumerate(d["nights"]) if not n["past"])
     assert "past" in page.locator("#nights > *").nth(first_left).get_attribute("class")
     page.select_option("#team", str(d["teams"][0]["id"]))
@@ -873,9 +878,9 @@ def test_stale_note_and_monday_rollover(browser, server, data):
     assert "last matchup's numbers" in page.locator("#stale").inner_text()
     assert errors == []
     ctx.close()
-    # the next run after 1 PM ET is 5 PM
+    # the next numbers after 1 PM ET come about 5:10 PM
     ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 12, 17, 0, tzinfo=timezone.utc))
-    assert page.evaluate("nextRun()") == "5 PM"
+    assert page.evaluate("nextRun()") == "5:10 PM"
     ctx.close()
 
 
@@ -1364,6 +1369,7 @@ def _et(month, day, hour, minute=0):
 
 
 SUN_6PM = _et(10, 11, 18)  # Sun Oct 11, 6 PM ET: after the first puck of the matchup's last night
+SAT_10AM = _et(10, 10, 10)  # Sat Oct 10, 10 AM ET: _weekday(data, 5)'s run, before the first puck
 
 
 def _sunday(data):
@@ -1509,7 +1515,7 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     """IR stash needs a move left after Best moves takes its picks (handoff 216)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _sunday(data)  # Sunday after the first puck: no night left to hold moves for
+    d = _weekday(data, 5)  # Saturday morning: one move held for Sunday (handoff 207)
     d["move_limit"] = 7
     team = d["teams"][0]
     roster = _mine(d, team)
@@ -1519,10 +1525,10 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
-    for used, shown in ((0, True), (5, False)):  # 7 left: room for it; 2 left: Best moves takes both
+    for used, shown in ((0, True), (4, False)):  # 7 left: room for it; 3 left, one held for Sunday: Best moves takes the other 2
         team["moves_used"] = team["moves_used_next"] = used  # after Sunday's first puck adds use next week's moves (handoff 263)
         d["move_limit_next"] = 7
-        ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+        ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
         page.select_option("#team", str(team["id"]))
         best = [l for l in _card(page, "Best").split("\n")[1:] if l.strip()]
         assert len(best) == 2, best
@@ -1733,6 +1739,12 @@ def test_update_now_opens_the_workflow_and_reloads_when_new_numbers_land(browser
     page.route("https://api.github.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"workflow_runs": [run]})))
     page.evaluate("window.opened = []; window.open = (u) => { window.opened.push(u); return null; }; 0")
     page.click("#refresh")
+    # a league member can't press Run workflow on GitHub (handoff 421): told so, with the next scheduled update
+    msg = page.locator("#refreshmsg").inner_text()
+    assert "Only the site owner can start an update" in msg and "next scheduled update is about" in msg and "Run workflow" not in msg
+    assert page.evaluate("window.opened") == []
+    page.click("#iamowner")
+    assert page.evaluate("localStorage.getItem('faf_owner')") == "1"
     assert page.evaluate("window.opened") == ["https://github.com/Jvansant122/Fantasy-hockey/actions/workflows/update.yml"]
     page.wait_for_function("document.getElementById('refreshmsg').textContent.includes('is running')")
     assert page.evaluate("localStorage.getItem('faf_refresh')")
@@ -1807,4 +1819,150 @@ def test_phone_table_leaves_out_its_hidden_columns(browser, server):
     page.locator("#rows tr[data-id]").first.click()
     assert page.evaluate("+document.querySelector('#rows tr.why td').colSpan") == page.evaluate("COLS.length")
     assert not errors, errors
+    ctx.close()
+
+
+def test_overnight_monday_counts_the_new_matchups_moves(browser, server, data):
+    """Monday 0-4 AM with overnight data: adds since Sunday's first puck use the new matchup's moves, so a team that used
+    all of last week's still has its fresh ones (handoff 415)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _sunday(data)
+    d["move_limit_next"] = 7
+    for t in d["teams"]:
+        t["moves_used"], t["moves_used_next"] = 7, 0
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 12, 3, 30))
+    assert page.evaluate("stale(state.data)") and not page.evaluate("weekOver(state.data)")
+    page.select_option("#team", str(d["teams"][0]["id"]))
+    text = page.locator("#upgrades").inner_text()
+    assert "No moves left" not in text
+    assert "uses the new matchup's moves (7 of 7 left) and plays from today" in text
+    assert errors == []
+    ctx.close()
+
+
+def test_next_weeks_moves_hold_all_but_two(browser, server, data):
+    """From Sunday's first puck to Monday's first run, Best moves offers next week's 2 Monday moves once, not 2 more at every
+    update; Mid-week swaps offers subs for next week (handoff 416)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    for clock in (SUN_6PM, _et(10, 12, 5, 30)):  # Sunday night, and Monday after ESPN's rollover before the first run
+        for used, most in ((0, 2), (2, 0)):
+            d = _sunday(data)
+            d["move_limit_next"] = 7
+            for t in d["teams"]:
+                t["moves_used_next"] = used
+            for p in d["players"]:
+                if p.get("team_id") is not None:
+                    p.update(injury=None, sat_last=False)
+            ctx, page, errors = open_page(browser, server, data=d, clock=clock)
+            counts = []
+            for t in d["teams"]:
+                page.select_option("#team", str(t["id"]))
+                best = _card(page, "Best")
+                counts.append(0 if "is held for each night" in best else len([l for l in best.split("\n")[1:] if l.strip()]))
+            assert max(counts) == most, (clock, used, counts)
+            assert errors == []
+            ctx.close()
+    # a player who sat Sunday's game gets a sub for next week, though no free agent has a game left this week
+    d = _sunday(data)
+    d["move_limit_next"] = 7
+    team = d["teams"][0]
+    sk = next(p for p in _mine(d, team) if p["pos"] != "G" and not p.get("ir"))
+    sk.update(sat_last=True, dfo_out=None, games_left=1, injury=None)
+    ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
+    page.select_option("#team", str(team["id"]))
+    swaps = _card(page, "Mid-week swaps")
+    assert "→" in swaps and "Season" in swaps, swaps
+    assert errors == []
+    ctx.close()
+
+
+def test_phone_hides_the_season_percentile(browser, server, data):
+    """Phones show no percentile badge next to Season, with or without All columns (handoff 417)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    ctx, page, errors = open_page(browser, server, phone=True)
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    shown = """(key => { const i = [...document.querySelectorAll('#head th')].findIndex(th => th.dataset.k === key);
+      return [...document.querySelectorAll('#rows tr[data-id]')].map(r => r.children[i]?.querySelector('.pct')).filter(b => b && b.offsetParent).length; })"""
+    assert page.evaluate(f"{shown}('cr_season')") == 0
+    assert page.evaluate(f"{shown}('cr')") > 0  # Week keeps its badge
+    page.check("#allcols")
+    assert page.evaluate(f"{shown}('cr_season')") == 0
+    assert page.evaluate(f"{shown}('cr')") > 0
+    assert errors == []
+    ctx.close()
+
+
+def test_trade_check_takes_one_partner(browser, server, data):
+    """ESPN trades are between two teams: once a player to get is picked, only his team's players are offered (handoff 418)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    ctx, page, errors = open_page(browser, server)
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    assert page.locator("#tget optgroup").count() > 1
+    page.select_option("#tget", page.locator("#tget option").nth(1).get_attribute("value"))
+    assert page.locator("#tget optgroup").count() == 1
+    assert "Add another player from" in page.locator("#tget option").first.inner_text()
+    # a saved trade with players from two teams keeps only the first one's
+    other = page.evaluate("""(() => { const first = state.data.players.find(p => p.id === state.tget[0]);
+      return state.data.players.find(p => p.team_id != null && p.team_id !== first.team_id && String(p.team_id) !== state.team
+        && p.owner !== 'freeagent' && p.owner !== 'waivers').id; })()""")
+    page.evaluate(f"state.tget.push({other}); renderTrade(); 0")
+    assert page.evaluate("state.tget.length") == 1
+    page.locator("#trade button[data-rm^='get:']").first.click()
+    assert page.locator("#tget optgroup").count() > 1
+    assert errors == []
+    ctx.close()
+
+
+def test_goalie_tonight_news_only_for_tonight(browser, server, data):
+    """A Daily Faceoff starter tag and 'counted as certain' show only on today's data for a goalie whose team plays tonight,
+    and a waiver goalie isn't 'counted as certain' (handoff 419)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _weekday(data, 2)  # Wed Oct 7, 10 AM run, first puck 7 PM
+    tonight = d["nights"][2]["sp"]
+    plays, idle = [p for p in d["players"] if p["pos"] == "G" and p["owner"] in ("freeagent", "waivers")][:2]
+    for g in (plays, idle):
+        g.update(owner="freeagent", today_start=None)
+        g["cr_why"] = dict(g.get("cr_why") or {}, tonight={"status": "Confirmed", "starting": True})
+    plays["nights"] = sorted(set(plays.get("nights") or []) | {tonight})
+    idle["nights"] = [n for n in idle.get("nights") or [] if n != tonight]
+    js = "(id => { const p = state.data.players.find(p => p.id === id); return [cells(p).name, why(p)]; })"
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 7, 12))
+    name, why = page.evaluate(f"{js}({plays['id']})")
+    assert "starts tonight" in name and "confirmed, counted as certain" in why
+    name, why = page.evaluate(f"{js}({idle['id']})")
+    assert "starts tonight" not in name and "Daily Faceoff:" not in why
+    page.evaluate(f"state.data.players.find(p => p.id === {plays['id']}).owner = 'waivers'; 0")
+    assert "counted as certain" not in page.evaluate(f"{js}({plays['id']})")[1]
+    assert errors == []
+    ctx.close()
+    # the next morning before the 6 AM run: that news was about last night
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(10, 8, 3))
+    name, why = page.evaluate(f"{js}({plays['id']})")
+    assert "starts tonight" not in name and "Daily Faceoff:" not in why
+    assert errors == []
+    ctx.close()
+
+
+def test_details_wording_for_news_cuts_and_small_samples(browser, server, data):
+    """News that cut a player's Season share isn't 'no injury discount' (handoff 420); a last-season rate from a few games
+    gives the count, and the form shift is in percentage points (handoff 422)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    p = next(p for p in d["players"] if p["pos"] != "G" and p.get("cr_season") is not None and p.get("cr_why"))
+    p["cr_why"].update(season_share=None, season_news=["surgery"], lineup_slack=1.4, last_fpg=3.3, last_season=None,
+                       form={"why": ["slump"], "shift": -0.07})
+    p["last_gp"] = 1
+    ctx, page, errors = open_page(browser, server, data=d)
+    why = page.evaluate(f"why(state.data.players.find(p => p.id === {p['id']}))")
+    assert "no injury discount" not in why and "share cut by the Daily Faceoff news below" in why
+    assert "only partly offsets the news below" in why
+    assert "last season 3.3 pts/game (1 GP)" in why
+    assert "(−7 percentage points on his chance to play" in why
+    assert errors == []
     ctx.close()

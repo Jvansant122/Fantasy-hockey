@@ -656,6 +656,7 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     """A skater on the last game's healthy-scratch list gets +0.5 on his dress logit; one who missed it but isn't on
     the list doesn't; if the list can't be read, missing the game with no ESPN injury counts (findings 153)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(**kw):
         fake = FakeSession(**kw)
@@ -709,6 +710,7 @@ def test_just_back_in_the_lineup(monkeypatch, tmp_path):
     """Back 1-3 games from a short healthy-scratch spell: sits again more (-0.4); back 1-2 games from a 5+ game absence
     that wasn't mostly scratches: plays more (+0.4) (findings 168)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def matthews(**kw):
         fake = FakeSession(missed={1: {2}}, **kw)
@@ -1999,15 +2001,61 @@ def test_week_news_shifts_from_daily_faceoff_items_since_his_last_game():
                        "4": [item("2026-10-11T15:00:00", "inj", "out")]}}
     dates = ["2026-10-13", "2026-10-15", "2026-10-25"]
     w = rating.WEEK_NEWS
-    z, practising, why = rating.week_news_logit(news, 1, "2026-10-10", True, "OUT", dates)
+    z, _, practising, why = rating.week_news_logit(news, 1, "2026-10-10", True, "OUT", dates)
     assert practising and z == [pytest.approx(w["practice"] + w["ret"])] * 3 and why == ["practising", "set to return"]
-    z, practising, _ = rating.week_news_logit(news, 2, "2026-10-10", True, "OUT", dates)
+    z, _, practising, _ = rating.week_news_logit(news, 2, "2026-10-10", True, "OUT", dates)
     # 21 days from Oct 11: 19 and 17 days left at the first two games (7+ past), 7 at Oct 25 (7+ too), none after Nov 1
     assert not practising and z == [pytest.approx(w["wtw"] + w["timeline"])] * 3
     assert rating.week_news_logit(news, 2, "2026-10-10", True, "OUT", ["2026-11-05"])[0] == [pytest.approx(w["wtw"])]
-    assert rating.week_news_logit(news, 3, "2026-10-10", True, None, dates)[0] == [w["down_out"]] * 3
-    assert rating.week_news_logit(news, 3, "2026-10-10", False, None, dates)[0] == [w["down_in"]] * 3
+    assert rating.week_news_logit(news, 3, "2026-10-10", True, None, dates)[:2] == ([0.0] * 3, w["down_out"])
+    assert rating.week_news_logit(news, 3, "2026-10-10", False, None, dates)[:2] == ([0.0] * 3, w["down_in"])
     assert rating.week_news_logit(news, 4, "2026-10-10", False, None, dates)[0] == [w["hurt_out"]] * 3
     assert rating.week_news_logit(news, 4, "2026-10-10", False, "DAY_TO_DAY", dates)[0] == [0.0] * 3  # ESPN's cap covers it
     assert rating.week_news_logit(news, 4, "2026-10-12", False, None, dates)[0] == [0.0] * 3  # news older than his last game
     assert rating.week_news_logit(None, 4, "2026-10-10", False, None, dates)[0] == [0.0] * 3
+
+
+def test_week_model_news_inputs_from_the_latest_injury_item():
+    """Handoff 413: flags count only for an item posted after his last game; age in days and the timeline left."""
+    import season_boost
+    from datetime import datetime, timezone
+    now = datetime(2026, 10, 14, 12, tzinfo=timezone.utc)
+    item = {"ts": "2026-10-12T12:00:00", "nf": ["out", "wtw"], "tl": 14.0}
+    x = season_boost.news_inputs(item, "2026-10-11", now)
+    assert x["inj_after"] == 1 and x["inj_out"] == 1 and x["inj_wtw"] == 1 and x["inj_dtd"] == 0
+    assert x["inj_age"] == pytest.approx(2.0) and x["inj_rem"] == pytest.approx(12.0)
+    old = season_boost.news_inputs(item, "2026-10-13", now)  # he has played since
+    assert old["inj_after"] == 0 and old["inj_out"] == 0 and old["inj_age"] is None and old["inj_rem"] is None
+    assert season_boost.news_inputs(None, "2026-10-11", now)["inj_after"] == 0
+    assert set(season_boost.load("week")["features"]) >= set(x)
+
+
+def test_season_drift_moves_a_group_whose_scoring_runs_ahead_of_its_season_rating():
+    """Handoff 405: forwards outscoring their Season FP/G more than everyone else get half the gap, defensemen the rest."""
+    class M:
+        def season_range(self, season, *a):
+            return [round(season * 0.8, 2), round(season * 1.2, 2)], "veteran"
+    p = lambda: {"cr_why": {}}
+    rows = [{"p": p(), "D": False, "pts": 2.0, "share": 0.9, "fp": [3.0] * 12, "range": (False, 80, 80, 25), "lineup": None},
+            {"p": p(), "D": True, "pts": 1.0, "share": 0.9, "fp": [1.0] * 12, "range": (True, 80, 80, 25), "lineup": {"pts": 1.0}},
+            {"p": p(), "D": False, "pts": 1.5, "share": 0.5, "fp": [1.0] * 4, "range": (False, 0, 0, 20), "lineup": None}]  # under 10 GP
+    rating.season_drift(rows, M())
+    # e_std = e_l10: F +1.0 (12 GP), D 0.0 (12 GP), all +0.5; F drift +0.5, D -0.5; half of each
+    assert rows[0]["p"]["cr_why"]["season_pts"] == 2.25 and rows[0]["p"]["cr_season"] == round(0.9 * 2.25, 2)
+    assert rows[1]["p"]["cr_why"]["drift"] == -0.25 and rows[1]["lineup"]["pts"] == 0.75
+    assert rows[2]["p"]["cr_why"]["season_pts"] == 1.75  # every forward moves, whatever his games
+    few = [dict(r, fp=r["fp"][:5], p=p()) for r in rows]
+    rating.season_drift(few, M())
+    assert all("drift" not in r["p"]["cr_why"] for r in few)  # nobody with 10 games yet
+
+
+def test_sent_down_skater_with_no_games_left_still_rates(monkeypatch, tmp_path):
+    """A send-down with no games left this week moves nothing and must not break the run (handoffs 407, 412)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    news = {"fetched": "2099-01-01T00:00Z", "recent": {str(i): [{"ts": "2099-01-01T00:00:00", "cat": "move", "f": ["down"]}] for i in range(1, 10)}}
+    for gl in (0, 3):
+        players = [espn(101, "Auston Matthews", "TOR", "C", games_left=gl), espn(103, "David Pastrnak", "BOS", "RW", games_left=gl)]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, dfo_news=news)
+        assert all(p.get("cr") is not None for p in players)
