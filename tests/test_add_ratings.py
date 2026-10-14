@@ -1952,3 +1952,13 @@ def test_form_shift_stacks_as_handoff_344_says():
     assert why == ["early"] and shift == pytest.approx(rating.EARLY_DEPTH)
     assert rating.form_shift("F", 12.5, 0, None, team_played=6) == (0.0, [])
     assert rating.form_shift("D", 15.0, 0, None, team_played=15)[1] == ["depth_d"]
+
+
+def test_left_early_teammates():
+    """Skaters with 5+ games who played the team's last game under 40% of their average minutes (handoff 352)."""
+    g = lambda pid, game, toi, pos="D": {"id": pid, "game": game, "team": "TOR", "toi": toi, "pos": pos}
+    by_player = {1: [g(1, k, 20.0) for k in range(5)] + [g(1, 5, 5.0)],  # left early in the last game
+                 2: [g(2, k, 20.0) for k in range(3)] + [g(2, 5, 5.0)],  # too few games
+                 3: [g(3, k, 15.0, "C") for k in range(6)]}  # a normal night, and not the last game
+    out = rating.left_early_teammates(by_player, {"TOR": list(range(6))})
+    assert out == {("TOR", True): {1}}

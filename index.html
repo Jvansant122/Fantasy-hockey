@@ -481,6 +481,8 @@ function why(p) {
   if (p.cr_why?.pp_d_out) parts.push(`top power-play defenseman ${p.cr_why.pp_d_out} is out: more power-play time (+0.15 pts/game this week)`);
   if (p.cr_why?.newcomer) parts.push(`His team just added ${p.cr_why.newcomer} at his position, so he may sit (he had the least ice time at his position last game)`);
   if (p.cr_why?.d_departed) parts.push(`${p.cr_why.d_departed} has left his team's defense, so he is more likely back in the lineup`);
+  if (p.cr_why?.fills_in) parts.push("a teammate at his position left the last game early, and scratches like him usually fill in");
+  if (p.cr_why?.depth_point) parts.push("scored in his last game on depth minutes, and coaches tend to keep those players in");
   // team form and depth D (handoffs 340-342, 346): each reason that moved this week's dress chance
   const form = p.cr_why?.form;
   if (form) {
