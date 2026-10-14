@@ -144,25 +144,45 @@ def fetch_injuries(s):
 # (call-up / send-down), kept in NEWS_FILE so a run only reads the pages posted since the last one
 NEWS_FILE = Path(__file__).resolve().parent.parent / "data" / "dfo_news.json"
 NEWS_DAYS, NEWS_KEEP_DAYS, NEWS_MAX_PAGES = 60, 365, 60
-# season-level wording incl. "until the playoffs" and "won't return this season" (findings 371, hunt12/n_feat.py)
-NEWS_SEASON = re.compile(r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year|playoffs"
-                         r"|end of the (regular )?season|(not|won.t) (return|play) (again )?this season|for the season|season is over", re.I)
-NEWS_INDEFINITE = re.compile(r"indefinit|indefeint|long[- ]term|extended period|foreseeable|significant (amount of )?time"
-                             r"|considerable time|long time|several months|multiple months", re.I)
+# season-level wording (findings 360, 371): hunt 11b's flag, or a season phrase tied to an absence (handoff 401, idea 1114,
+# hunt13/n_fix.py): "fully healthy for the playoffs" and "ready for the season opener" no longer count
+NEWS_SEASON_907 = re.compile(r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year", re.I)
+NEWS_SEASON = re.compile(r"(out|miss|sidelined|shut down|done|sit out)[^.]{0,40}(for the (rest of the |remainder of the )?(\d{4}-\d{2} )?(regular )?season|for the year|rest of the (\d{4}-\d{2} )?(regular )?season|remainder of the (\d{4}-\d{2} )?(regular )?season)"
+                         r"|until (at least )?the playoffs|(before|for) the (start of the )?playoffs\b(?![^.]{0,30}(healthy|ready))|(not|won.t|will not|isn.t expected to) (return|play|be back)[^.]{0,30}(this season|this year|regular season|before the playoffs)"
+                         r"|season[- ]ending|season is over|end of the (regular )?season", re.I)
+NEWS_INDEFINITE = re.compile(r"indefinit|long[- ]term|extended period|foreseeable|significant (amount of )?time|considerable time|several months|multiple months", re.I)
 NEWS_LTIR = re.compile(r"long[- ]term injured reserve|LTIR", re.I)
-NEWS_VERSION = 2  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+# a negation just before an indefinite phrase ("not expected to be a long-term issue") or a past season around either
+# ("missed significant time last season") skips that match
+NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|\bshouldn't\b", re.I)
+NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
+NEWS_VERSION = 3  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_DOWN = re.compile(r"(assigned|sent|reassigned|loaned|returned) (down )?to (the )?[A-Za-z .]*\(AHL\)|sent down|assigned to (the )?AHL"
                        r"|to the AHL|conditioning loan", re.I)
 NEWS_UP = re.compile(r"recalled|called up|call[- ]up|summoned", re.I)
 
 
+def news_wording(text, pat, neg=True):
+    """True if a sentence of text matches pat outside a negation (neg) or a past-season context (hunt13/n_fix.py)."""
+    for sent in re.split(r"(?<=[.!?])\s+", text):
+        for m in pat.finditer(sent):
+            if pat is NEWS_INDEFINITE and NEWS_LTIR.search(sent):
+                continue
+            if neg and NEWS_NEG.search(sent[max(0, m.start() - 30):m.start()]):
+                continue
+            if NEWS_PAST.search(sent[max(0, m.start() - 60):m.end() + 40]):
+                continue
+            return True
+    return False
+
+
 def news_flags(item):
     """One news item as the research parsed it (hunt11b/news.py): season-ending / surgery for injuries, down / up for moves."""
     text = re.sub(r"\s+", " ", f'{item.get("details") or ""} {item.get("fantasyDetails") or ""}')
     cat = item.get("newsCategoryName")
-    return {"season": bool(NEWS_SEASON.search(text)), "surgery": bool(NEWS_SURGERY.search(text)),
-            "indefinite": bool(NEWS_INDEFINITE.search(text)) and not NEWS_LTIR.search(text),
+    return {"season": bool(NEWS_SEASON_907.search(text)) or news_wording(text, NEWS_SEASON, neg=False),
+            "surgery": bool(NEWS_SURGERY.search(text)), "indefinite": news_wording(text, NEWS_INDEFINITE),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text))}
 
 

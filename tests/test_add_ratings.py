@@ -1142,9 +1142,10 @@ def test_back_to_back_no1_early_in_the_season(monkeypatch):
         out = {}
         rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
         return out
-    early, off = p(6, rating.B2B_NIGHT2_NO1_EARLY), p(6, 0.0)
+    shift = rating.B2B_NIGHT2_NO1_EARLY  # read before p() patches it
+    early, off = p(6, shift), p(6, 0.0)
     assert early[1] < off[1] - 0.02 and early[1] + early[2] == pytest.approx(1)
-    assert p(12, rating.B2B_NIGHT2_NO1_EARLY)[1] == pytest.approx(p(12, 0.0)[1])
+    assert p(12, shift)[1] == pytest.approx(p(12, 0.0)[1])  # game 12: past EARLY_GAMES (10), whatever the skater depth rules use
 
 
 def test_unsigned_player_counts_as_not_playing(monkeypatch, tmp_path):

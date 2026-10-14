@@ -1047,6 +1047,10 @@ Coaches change lineups when results go wrong, and they keep a lineup that wins. 
 
 When a skater leaves his team's last game early (under 40% of his usual minutes), the site already expects him to sit. Now the team's healthy scratches at his position get a bigger chance to play the rest of the week, most of all defensemen: in the last two seasons scratched defensemen in that spot dressed about 60% of the time when the site had them near 30%. Separately, a depth player (under 13 minutes for a forward, 16 for a defenseman) who had a point in his last game gets a small bump, since coaches tend to keep a fourth-liner who just scored. Both made dress forecasts more accurate in each of the last two seasons when fitted on one and tested on the other.
 
+## 143. Four fixes from an audit of recent changes
+
+An audit of the last few days' changes found four slips, now fixed. The early-season back-to-back rule for no. 1 goalies (an extra nudge to the backup on night 2 through a team's 10th game) had been accidentally stretched to 15 games by a skater rule that reused its setting's name; from about October 26 that would have rated no. 1 goalies too low on the second night of back-to-backs. Daily Faceoff injury notes are read more carefully: "not expected to be a long-term issue" or "missed significant time last season" no longer count as out indefinitely, and "ready for the season opener" no longer counts as season-ending (a season phrase now has to describe an absence). That lifted Morrissey, Sanderson and Ristolainen back up, and on past seasons the stricter reading improves the Season rating's correlation by +0.0011 every season (+0.0015 among free agents). A defenseman traded away now keeps lifting his old team's sitting defensemen for its next 3 games, not just until his first game with the new team. And when a newcomer arrives, the player expected to sit for him is now chosen from healthy teammates only, not one who left the last game hurt.
+
 ## What the independent review changed
 
 | Review point | Outcome |

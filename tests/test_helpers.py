@@ -120,8 +120,9 @@ def test_displaced_skater_is_least_used_at_the_returning_regulars_position():
         3: [g(3, n, "R", 8) for n in range(8, 11)],           # fill-in, least ice time
         4: [g(4, n, "D", 6) for n in range(1, 11)],           # a defenseman: not displaced by a forward
     }
-    assert rating.displaced_skaters(by_player, tg, healthy={1}) == {3: (0.08, "P1")}
-    assert rating.displaced_skaters(by_player, tg, healthy=set()) == {}  # still listed as out
+    assert rating.displaced_skaters(by_player, tg, healthy={1, 2, 3, 4}) == {3: (0.08, "P1")}
+    assert rating.displaced_skaters(by_player, tg, healthy={1, 2, 4}) == {2: (0.08, "P1")}  # P3 hurt: the next one sits
+    assert rating.displaced_skaters(by_player, tg, healthy={2, 3, 4}) == {}  # still listed as out
 
 
 def test_roster_moves_newcomer_sits_the_least_used_and_a_departed_d_brings_one_in():
@@ -142,6 +143,12 @@ def test_roster_moves_newcomer_sits_the_least_used_and_a_departed_d_brings_one_i
     assert cuts == {3: (0.08, "P1")}  # P4 joined TOR, which has no D in its last game to sit
     assert lifts == {5: "P4"}
     assert rating.roster_moves(by_player, tg, listed, healthy={2, 3, 6, 7})[1] == {}  # injured: no lift
+    # handoff 403: the least-used forward is hurt, so the cut lands on the next one
+    assert rating.roster_moves(by_player, tg, listed, healthy={2, 3, 5, 6, 7}, available={2, 5, 6, 7})[0] == {2: (0.08, "P1")}
+    # handoff 402: after P4's first game for TOR the lift still runs from his last BOS game
+    tg2 = {"BOS": tg["BOS"], "TOR": tg["TOR"] + [111]}
+    moved = {**by_player, 4: by_player[4] + [g(4, 111, "D", 20, "TOR")]}
+    assert rating.roster_moves(moved, tg2, listed, healthy={2, 3, 5, 6, 7})[1] == {5: "P4"}
     # three games for his new team: no longer a newcomer
     by_player[1] += [g(1, n, "C", 16) for n in range(8, 11)]
     assert 3 not in rating.roster_moves(by_player, tg, listed, healthy=set())[0]
