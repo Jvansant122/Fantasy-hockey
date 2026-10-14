@@ -79,8 +79,35 @@ def problems(data):
     # with no game left this week (Sunday night, the Olympic break) every Week rating is 0 by right (findings 232)
     if data["rated"] and any(p.get("games_left") for p in players) and all(not p.get("cr") for p in players):
         out.append("rated is true but every Claude Rating is 0")
+    out += winners_problems(data.get("winners"))
     if not out:
         out += rules(data)
+    return out
+
+
+GAME_FIELDS = {"date", "home", "away", "p_home", "started", "inputs"}
+SIDE_FIELDS = {"id", "name", "now", "rest", "total"}
+
+
+def winners_problems(w):
+    """The Predicted winners tab (findings 450-451): optional (data from before it shipped has none), but when present every
+    game and matchup has its fields, win chances are probabilities, and no game still to come is missing its pick."""
+    if w is None:
+        return []
+    out = []
+    games, ms = w.get("games"), w.get("matchups")
+    if not isinstance(games, list) or not isinstance(ms, list) or not isinstance(w.get("record"), dict):
+        return ["winners missing games, matchups or record"]
+    bad = [g for g in games if GAME_FIELDS - set(g)]
+    if bad:
+        out.append(f"{len(bad)} predicted games missing fields, e.g. {sorted(GAME_FIELDS - set(bad[0]))}")
+    elif [g for g in games if g["p_home"] is not None and not 0 < g["p_home"] < 1]:
+        out.append("a predicted game's win chance is outside 0-1")
+    elif games and all(g["p_home"] is None for g in games if not g["started"]) and any(not g["started"] for g in games):
+        out.append("no NHL game still to come has a predicted winner")
+    if [m for m in ms if not (isinstance(m.get("home"), dict) and isinstance(m.get("away"), dict)
+                              and SIDE_FIELDS <= set(m["home"]) and SIDE_FIELDS <= set(m["away"]) and 0 <= m.get("p_home", -1) <= 1)]:
+        out.append("a fantasy matchup is missing fields or its win chance is outside 0-1")
     return out
 
 
@@ -238,6 +265,12 @@ def warnings(data, prev):
     if not data.get("rated"):
         return out
     players = data["players"]
+    # W5 the Predicted winners tab came out empty (each part fails alone and publishes empty, findings 450)
+    w = data.get("winners") or {}
+    if not w.get("games"):
+        out.append("W5 no predicted NHL games this run (see 'Predicted winners' in the fetch log)")
+    if not w.get("matchups"):
+        out.append("W5 no fantasy matchups this run (see 'Fantasy matchups' in the fetch log)")
     # W1 ESPN's goalie games below his NHL starts: This yr/G inflated (findings 182)
     lag = [p["name"] for p in players if p["pos"] == "G" and (p.get("cr_why") or {}).get("gs") and p.get("gp") is not None
            and p["gp"] < p["cr_why"]["gs"]]

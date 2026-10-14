@@ -2059,3 +2059,20 @@ def test_sent_down_skater_with_no_games_left_still_rates(monkeypatch, tmp_path):
         players = [espn(101, "Auston Matthews", "TOR", "C", games_left=gl), espn(103, "David Pastrnak", "BOS", "RW", games_left=gl)]
         rating.add_ratings(players, 2027, TODAY, MONDAY, dfo_news=news)
         assert all(p.get("cr") is not None for p in players)
+
+
+def test_predicted_winners_cover_the_week(monkeypatch, tmp_path):
+    """The Predicted winners tab (findings 450): one row per game this week, home side first, a win chance for each
+    game, and the stronger team (TOR outscored BOS last season and this) favoured at home."""
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D"),
+               espn(111, "Joseph Woll", "TOR", "G"), espn(113, "Jeremy Swayman", "BOS", "G")]
+    winners = {}
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [], winners=winners)
+    games = winners["games"]
+    assert [g["date"] for g in games] == WEEK
+    assert all(g["home"] == "TOR" and g["away"] == "BOS" for g in games)
+    assert all(0.5 < g["p_home"] < 0.95 for g in games), [g["p_home"] for g in games]
+    assert all(g["inputs"]["pts"][0] > 0 and g["inputs"]["pts"][1] > 0 for g in games)

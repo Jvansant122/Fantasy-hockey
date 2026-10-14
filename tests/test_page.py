@@ -1966,3 +1966,61 @@ def test_details_wording_for_news_cuts_and_small_samples(browser, server, data):
     assert "(−7 percentage points on his chance to play" in why
     assert errors == []
     ctx.close()
+
+
+def with_winners(data):
+    """The committed data plus a Predicted winners section: a finished game with a pick, one without, one to come with a
+    betting line, and two fantasy matchups (the first data run after the tab shipped writes the real one)."""
+    d = json.loads(json.dumps(data))
+    day = d["updated_date"]
+    ids = [t["id"] for t in d["teams"]]
+    names = {t["id"]: t["name"] for t in d["teams"]}
+    game = lambda home, away, p, **kw: {"date": day, "start": f"{day}T23:00:00Z", "home": home, "away": away, "home_name": None,
+                                        "away_name": "Bruins", "p_home": p, "inputs": {"pts": [8.5, 8.0], "gd": [0.2, 0.1], "sv": [0.9, 0.9], "b2b": [0, 1]},
+                                        "state": "FUT", "started": False, **kw}
+    d["winners"] = {
+        "games": [game("TOR", "BOS", 0.61, started=True, state="OFF", home_score=2, away_score=3, last="OT", home_won=False, frozen=True),
+                  game("MTL", "OTT", None, started=True, state="OFF", home_score=4, away_score=1, last="REG", home_won=True),
+                  game("NYR", "NJD", 0.45, start="2099-01-01T00:00:00Z", p_line=0.48)],
+        "record": {"games": 1, "right": 0, "home_right": 0},
+        "matchups": [{"home": {"id": a, "name": names[a], "now": 40.0, "rest": 60.2, "total": 100.2},
+                      "away": {"id": b, "name": names[b], "now": 30.0, "rest": 62.0, "total": 92.0}, "p_home": 0.7, "sd": 14.0}
+                     for a, b in zip(ids[:4:2], ids[1:4:2])],
+    }
+    return d
+
+
+@pytest.mark.parametrize("phone", [False, True])
+def test_predicted_winners_tab(browser, server, data, phone):
+    """Jack's Oct 14 ask: a Predicted winners tab. It hides the free agent cards, shows each game's pick and result and the
+    league's matchups, is remembered across reloads, and fits a phone."""
+    ctx, page, errors = open_page(browser, server, with_winners(data), phone=phone)
+    assert page.locator("#winview").is_hidden() and page.locator("#upgcard").is_visible()
+    page.select_option("#team", str(data["teams"][0]["id"]))
+    page.click("#tab-win")
+    assert page.locator("#upgcard").is_hidden() and page.locator("#faview").is_hidden()
+    assert page.locator("#nhlgames .game").count() == 3
+    text = page.locator("#nhlgames").inner_text()
+    assert "pick wrong" in text and "no pick" in text and "betting line 52% for the pick" in text
+    assert "0 of 1 right" in page.locator("#nhlhead").inner_text()
+    assert page.locator("#fantasy .matchup").count() == 2
+    assert page.locator("#fantasy .matchup").first.get_attribute("class").endswith("mine")  # your matchup first
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+    page.reload()
+    page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
+    assert page.locator("#winview").is_visible() and page.get_attribute("#tab-win", "aria-selected") == "true"
+    page.click("#tab-fa")
+    assert page.locator("#upgcard").is_visible() and page.locator("#winview").is_hidden()
+    assert errors == []
+    ctx.close()
+
+
+def test_predicted_winners_before_the_first_run(browser, server, data):
+    """Data from before the tab shipped has no winners: the tab says when they come, with no error."""
+    d = json.loads(json.dumps(data))
+    d.pop("winners", None)
+    ctx, page, errors = open_page(browser, server, d)
+    page.click("#tab-win")
+    assert "next data update" in page.locator("#nhlhead").inner_text()
+    assert errors == []
+    ctx.close()

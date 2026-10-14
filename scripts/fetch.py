@@ -17,6 +17,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import leads
+import winners as winners_model
 from rating import ESPN_TO_NHL, add_ratings
 
 BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl/seasons/{season}"
@@ -270,6 +271,32 @@ def utc_iso(dt):
 
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
+
+
+def previous_winners(path=DATA_PATH):
+    """The last published NHL games, for the win chances frozen at puck drop."""
+    try:
+        return (json.loads(path.read_text()).get("winners") or {}).get("games") or []
+    except (OSError, ValueError, AttributeError):
+        return []
+
+
+def predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc):
+    """The Predicted winners tab: this week's NHL games (the rating's, each pick frozen at puck drop) and the league's
+    fantasy matchups. Either part can fail alone and publishes empty."""
+    games = winners_model.freeze(winners.get("games") or [], previous_winners())
+    matchups = []
+    try:  # points so far this matchup, from ESPN's scoreboard view
+        sched = get(s, league_url, ["mMatchupScore", "mScoreboard"], scoringPeriodId=today_sp).get("schedule") or []
+        now = [m for m in sched if m.get("matchupPeriodId") == period]
+        if now:
+            print("ESPN matchup score keys:", sorted(now[0].get("home", {}).keys()))
+        matchups = winners_model.fantasy_matchups(sched, period, players, team_names, today_sp, matchup_sps, run_utc)
+    except Exception as e:  # noqa: BLE001 - never let the tab block the update
+        print(f"Fantasy matchups failed, publishing without them: {e!r}", file=sys.stderr)
+    print(f"Predicted winners: {len(games)} NHL games ({sum(g.get('p_home') is not None for g in games)} with a pick), "
+          f"{len(matchups)} fantasy matchups")
+    return {"games": games, "record": winners_model.record(games), "matchups": matchups}
 
 
 def sp1_date(night_dates):
@@ -628,11 +655,12 @@ def main():
         odds = leads.fetch_odds(web, now, ESPN_TO_NHL)
     except Exception as e:  # noqa: BLE001
         lead_errors["odds"] = repr(e)
+    winners = {}
     try:
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
         add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left),
-                    reschedule=reschedule, dfo_news=news)
+                    reschedule=reschedule, dfo_news=news, winners=winners)
         for p in players:  # goalie start chances by night, keyed like nights (findings 236)
             if p["pos"] == "G" and "cr_g_nights" in p:
                 p["cr_g_nights"] = nights_by_sp(p["cr_g_nights"], today_et, today_sp)
@@ -692,6 +720,8 @@ def main():
           f"season over: {season_over}, moves used known for "
           f"{sum(v is not None for v in moves_used.values())} teams")
 
+    predicted = predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc)
+
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
         "updated_date": today_et.isoformat(),
@@ -719,6 +749,7 @@ def main():
                    "moves_used_next": moves_used_next[t["id"]],
                    # ESPN waiver order, 1 = first claim (findings 212: losing claims cost no move)
                    "waiver_rank": t.get("waiverRank")} for t in league["teams"]],
+        "winners": predicted,  # the Predicted winners tab (findings 450-451)
         "players": sorted(players, key=lambda x: -x["cr"] if rated else -(x["ppg"] or 0) * x["games"]),
     }
     path = DATA_PATH

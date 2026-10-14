@@ -249,3 +249,17 @@ def test_check_reads_period_one_from_the_data(data):
     assert [m for m in check_data.problems(d) if m.startswith("N1")]
     d["sp1_date"] = "not a date"
     assert not [m for m in check_data.problems(d) if m.startswith("N1")]
+
+
+def test_check_reads_the_predicted_winners(data):
+    """The Predicted winners section is optional, but a broken one blocks publishing (findings 450)."""
+    d = json.loads(json.dumps(data))
+    g = {"date": d["updated_date"], "home": "TOR", "away": "BOS", "p_home": 0.6, "started": False, "inputs": {}}
+    side = {"id": 1, "name": "A", "now": 1.0, "rest": 2.0, "total": 3.0}
+    d["winners"] = {"games": [g], "record": {}, "matchups": [{"home": side, "away": side, "p_home": 0.5}]}
+    assert check_data.problems(d) == []
+    for broken in ({**g, "p_home": 1.4}, {**g, "p_home": None}, {k: v for k, v in g.items() if k != "inputs"}):
+        d["winners"]["games"] = [broken]
+        assert check_data.problems(d), broken
+    d["winners"] = {"games": [g], "record": {}, "matchups": [{"home": side, "away": {"id": 2}, "p_home": 0.5}]}
+    assert check_data.problems(d)

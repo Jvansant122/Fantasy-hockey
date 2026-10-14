@@ -26,6 +26,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import season_boost
+import winners as winners_model
 
 ROOT = Path(__file__).resolve().parent.parent
 NHL_STATS = "https://api.nhle.com/stats/rest/en"
@@ -1014,10 +1015,11 @@ def expected_fp(now, prev, is_d):
     return out
 
 
-def week_schedule(s, monday, games=None, weeks=1, starts=None):
+def week_schedule(s, monday, games=None, weeks=1, starts=None, results=None, names=None):
     """NHL abbrev -> sorted list of game dates (ISO) in the Monday-Sunday week(s) from monday (2 in a playoff round).
     games, if given, is filled with NHL abbrev -> [(date, opponent, home)]; starts with (NHL abbrev, date) -> the game's
-    start time (UTC ISO), when the schedule gives one (findings 241)."""
+    start time (UTC ISO), when the schedule gives one (findings 241); results with (home abbrev, date) -> its state and
+    score, and names with abbrev -> team name, for the Predicted winners tab (findings 450)."""
     out = {}
     days = [d for k in range(weeks) for d in nhl_get(s, f"{NHL_WEB}/schedule/{(monday + timedelta(days=7 * k)).isoformat()}").json().get("gameWeek", [])]
     for day in days:
@@ -1029,6 +1031,12 @@ def week_schedule(s, monday, games=None, weeks=1, starts=None):
                         games.setdefault(g[side]["abbrev"], []).append((day["date"], g[other]["abbrev"], side == "homeTeam"))
                     if starts is not None and g.get("startTimeUTC"):
                         starts[(g[side]["abbrev"], day["date"])] = g["startTimeUTC"]
+                    if names is not None and (g[side].get("commonName") or {}).get("default"):
+                        names[g[side]["abbrev"]] = g[side]["commonName"]["default"]
+                if results is not None:
+                    results[(g["homeTeam"]["abbrev"], day["date"])] = {
+                        "state": g.get("gameState"), "home_score": g["homeTeam"].get("score"), "away_score": g["awayTeam"].get("score"),
+                        "last": (g.get("gameOutcome") or {}).get("lastPeriodType")}
     return out
 
 
@@ -2078,15 +2086,47 @@ def line_win_probs(odds, today, now=None):
     return out
 
 
+def predicted_games(players, by_player, prev, rosters, team_games, team_dates, sched, goalie_nights, save_pcts, strength,
+                    week_games, week_starts, week_results, team_names, lines, now_utc):
+    """The week's NHL games with the home side's win chance, rolled up from the player projections (findings 450):
+    each skater's points per game x his chance to dress (the site's own, or DEPTH_DRESS for depth players it doesn't rate),
+    the starter's save% weighted by each goalie's chance to start, goal differential and back-to-backs."""
+    rate, depth = winners_model.skater_rates(by_player, prev)
+    dress = {}
+    for p in players:
+        if p.get("nhl_id") and p["pos"] != "G":
+            d = p.get("cr_dress") if p.get("cr_dress") is not None else p.get("cr_dress_next")
+            if d is not None:
+                dress[p["nhl_id"]] = d
+    sv, lg = save_pcts
+    lineups, goalie_sv = {}, {"_league": lg}
+    for team, r in rosters.items():
+        skaters = [(pid, "D" if pos == "D" else "F") for pid, _, pos in r if pos != "G"]
+        for pid, _ in skaters:
+            if pid not in dress:
+                dress[pid] = winners_model.depth_dress(by_player.get(pid), team_games.get(team))
+        lineups[team] = winners_model.lineup_points(skaters, rate, dress, depth)
+        by_day = {}
+        for pid, _, pos in r:
+            for d, q in (goalie_nights.get(pid) or {}).items():
+                t = by_day.setdefault(d, [0.0, 0.0])
+                t[0] += q * sv.get(pid, lg); t[1] += q
+        goalie_sv[team] = {d: a / b for d, (a, b) in by_day.items() if b > 0}
+    play_dates = {t: set(team_dates.get(t, ())) | set(sched.get(t, ())) for t in set(team_dates) | set(sched)}
+    return winners_model.nhl_games(week_games, week_starts, week_results, team_names, strength, play_dates, lineups,
+                                   goalie_sv, lines, now_utc)
+
+
 def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
-                dfo_news=None):
+                dfo_news=None, winners=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
 
     starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
     odds: today's betting lines (leads.fetch_odds); they price tonight's goalie starts (research section 30).
     injuries: ESPN's injury notes (leads.fetch_injuries); a long absence takes a skater's week to 0 (findings section 58).
     reschedule(p, nhl team): fetch.py's, gives a player ESPN lists as 'FA' his NHL team's games (findings 230).
-    dfo_news: Daily Faceoff injury and roster-move news (leads.fetch_news), for the Season rating (findings 360 (1))."""
+    dfo_news: Daily Faceoff injury and roster-move news (leads.fetch_news), for the Season rating (findings 360 (1)).
+    winners: if given, filled with {"games": [...]}: the week's NHL games with each one's win chance (findings 450)."""
     notes = {i["athlete_id"]: i for i in injuries or [] if i.get("athlete_id")}
     now_utc = utcnow()
     if dfo_news and (dfo_news.get("fetched") or "") < (now_utc - timedelta(days=NEWS_STALE_DAYS)).strftime("%Y-%m-%dT%H:%MZ"):
@@ -2098,7 +2138,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         s.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=32))
     season, prev_season = season_ids(espn_season)
     model = Model()
-    week_games, week_starts = {}, {}
+    week_games, week_starts, week_results, team_names = {}, {}, {}, {}
     bios = {}  # {id: (birth, draft, first season)}, filled by load_birthdates for the boosted models
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
     games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct = pmap(lambda f: f(), [
@@ -2110,7 +2150,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         lambda: load_xg(s, season // 10000),
         lambda: load_xg(s, prev_season // 10000),
         lambda: load_birthdates(s, (season, prev_season), bios),
-        lambda: week_schedule(s, monday, week_games, weeks, week_starts),
+        lambda: week_schedule(s, monday, week_games, weeks, week_starts, week_results, team_names),
         lambda: team_strength(s, prev_season),
         lambda: prev_points_pct(s, prev_season),
     ], workers=4)
@@ -2743,5 +2783,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 p[key + "_pct" if key != "cr" else "cr_pct"] = round(100 * below / max(len(vals) - 1, 1))
     write_injury_log(injury_log, today)
     write_injury_notes(stored_notes, today)
+    if winners is not None:
+        try:  # the Predicted winners tab never blocks the ratings
+            winners["games"] = predicted_games(players, by_player, prev, rosters, team_games, team_dates, sched, goalie_nights,
+                                               save_pcts, strength, week_games, week_starts, week_results, team_names, lines, now_utc)
+        except Exception as e:  # noqa: BLE001
+            print(f"Predicted winners failed: {e!r}", file=sys.stderr)
     print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")
     return unmatched
