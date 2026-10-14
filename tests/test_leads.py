@@ -260,3 +260,12 @@ def test_news_flags_season_level_and_indefinite_wording():
         assert not f(t)["season"], t
     assert f("He will miss the remainder of the 2024-25 season.")["season"]
     assert f("He is sidelined for the rest of the regular season.")["season"]
+    # handoff 410: returns in time for the playoffs are not season-level; absences until then still are
+    for t in ("He is fully healthy for the playoffs.", "He should be ready for the playoffs.", "He's back in time for the playoffs."):
+        assert not f(t)["season"], t
+    assert f("He is out until the playoffs.")["season"] and f("He will miss the remainder of the 2024-25 regular season.")["season"]
+    # handoff 404: negated surgery
+    for t in ("Out 3-4 weeks, no surgery required.", "He will not need surgery.", "He won't need surgery.",
+              "He avoided surgery.", "Surgery is not required."):
+        assert not f(t)["surgery"], t
+    assert f("He underwent surgery on Tuesday.")["surgery"] and f("He needs surgery and is out.")["surgery"]

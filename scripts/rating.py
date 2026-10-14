@@ -240,6 +240,10 @@ ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
 # the Season dress logit moves BOOST_DRESS_W of the way to the boosted one, and the Season FP/G gains
 # (boosted - FP/G) x (a + b g). The ESPN weights above were refitted jointly with these, leaving one season out over 2021-26
 BOOST_DRESS_W = 0.56
+# the Week's per-game dress logits move BOOST_WEEK_W x (logit(b) - logit(mean of his per-game chances)), b = a 16-season
+# boosted next-week dress share (model/season_boost_week.json) clipped to BOOST_WEEK_CLIP, after the other per-game shifts
+# (handoff 411, idea 1142: Brier -2.0% / -6.1% in 2024-25 / 2025-26)
+BOOST_WEEK_W, BOOST_WEEK_CLIP = 0.8, (0.005, 0.995)
 BOOST_FPG_BLEND = (0.60, -0.37)  # an older stored copy (the fetch has failed since) adds nothing
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
@@ -347,6 +351,11 @@ def comeback_logit(tg, played, scratch_list, pid):
 # the Season rating's rest-of-season dress share for a skater in his first 1-10 games for a new team (0.62-0.67 against
 # 0.71-0.72 actual, findings 158)
 NEW_TEAM_SEASON_LOGIT, NEW_TEAM_SEASON_GAMES = 0.3, 10
+
+
+def logit(q):
+    q = min(max(q, 1e-4), 1 - 1e-4)
+    return math.log(q / (1 - q))
 
 
 def dress_by_game(base, n, sat_last, cap, shift=0.0, by_game=()):
@@ -2103,9 +2112,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # missed all or most of last season (Barkov): the season before instead of a newcomer's prior, for players on a current
     # NHL roster or with games this season, so retired players don't come back (findings 216)
     # the boosted Season models (findings 360 (3)-(4)) read last season as it was, before the stand-in below
-    boost_dress, boost_fpg = season_boost.load("dress"), season_boost.load("fpg")
+    boost_dress, boost_fpg, boost_week = season_boost.load("dress"), season_boost.load("fpg"), season_boost.load("week")
     boost_x = season_boost.features(by_player, team_games, prev, prev2, bios, xg_prev, season, today, SEASON_GAMES) \
-        if boost_dress or boost_fpg else {}
+        if boost_dress or boost_fpg or boost_week else {}
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     prev3 = {}
     if missed:
@@ -2478,6 +2487,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why_form = {"shift": round(fshift, 3), "why": fwhy}
             else:
                 why_form = None
+            # the 16-season boosted next-week dress share (handoff 411), still under his injury caps; not for a skater ESPN
+            # lists on a team he hasn't played for yet, whose inputs describe his old team
+            boost_wk = None
+            if boost_week and base_dress is not None and pid in boost_x and per_game and not traded:
+                live = [q for q in per_game if q > 0.001]
+                if live:
+                    b = min(max(season_boost.predict(boost_week, boost_x[pid]), BOOST_WEEK_CLIP[0]), BOOST_WEEK_CLIP[1])
+                    boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
+                    per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + boost_wk))), cap, inj)
+                                for q in per_game]
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
@@ -2500,6 +2519,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
+            if boost_wk is not None:
+                why["boost_week"] = round(boost_wk, 2)  # the 16-season boosted next-week dress shift (handoff 411)
             if why_form:
                 why["form"] = why_form  # team form / depth D lineup shift on this week's games (handoffs 340-342, 346)
             if season_pts is not None:  # after age, ESPN and the boosted model: Season = this x his share (check_data P5)
