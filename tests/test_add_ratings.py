@@ -651,8 +651,8 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     assert no_list["cr_dress_next"] == listed["cr_dress_next"]
     assert listed["cr_games"] > unlisted["cr_games"]
     base = rating.dress_by_game(0.25, 3, True, 1.0)
-    up = rating.dress_by_game(0.25, 3, True, 1.0, rating.SCRATCH_LOGIT)
-    assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, rating.SCRATCH_LOGIT)) <= 0.3
+    up = rating.dress_by_game(0.25, 3, True, 1.0, rating.SCRATCH_LOGIT["F"])
+    assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, rating.SCRATCH_LOGIT["F"])) <= 0.3
 
 
 def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
