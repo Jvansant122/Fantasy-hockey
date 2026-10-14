@@ -255,6 +255,14 @@ def test_news_flags_for_the_week_dress():
     assert f("Out a couple weeks.")["tl"] == 14 and f("He is day-to-day.")["tl"] is None
 
 
+def test_news_timeline_skips_stat_lines():
+    """Handoff 428: "52 points in 58 games" and "played 11 games" are stat lines, not absences."""
+    tl = leads.news_timeline
+    assert tl("Hyman has 52 points (31G / 21A) in 58 games.") is None and tl("Tanev only played 11 games last season.") is None
+    assert tl("He has two goals over his last five games.") is None and tl("He will miss the next two games.") == 4.4
+    assert tl("Expected to be sidelined 6-8 months.") == 210 and tl("Smith is expected to miss 4-6 weeks.") == 35
+
+
 def test_week_flags_read_the_news_line_and_skip_false_returns():
     """Handoffs 424 and 426: practice, skating and game-time flags from the details line only; "will return to the
     sidelines" and "eligible to be activated" are not returns."""

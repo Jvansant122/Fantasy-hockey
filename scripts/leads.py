@@ -158,7 +158,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 7  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 8  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
 NEWS_SURGERY_NEG = re.compile(r"\b(no|not|without|avoid(ed|s)?)\b|n't", re.I)
@@ -201,6 +201,12 @@ _N = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|a couple|a f
 NEWS_TIMELINE = re.compile(_N + r"(?:\s*(?:-|to|or)\s*" + _N + r")?\s*(?:more\s+|additional\s+)?(day|week|month|game)s?", re.I)
 
 
+# handoff 428 (idea 1180, hunt13/p_week_tl.py): counts after these words are stat lines, and a game count needs an absence
+# word in the 40 characters before it
+NEWS_TL_PRE = re.compile(r"\b(in|over|through|across|last|past|first|previous|his|all|of|with)\s+(the\s+|his\s+)?$", re.I)
+NEWS_TL_ABSENCE = re.compile(r"miss|\bout\b|sideline|\bsit|absence|suspen|return|week-to-week|expected|shelved|month", re.I)
+
+
 def news_timeline(text):
     """The longest stated absence in days ("4-6 weeks" = 35, a game = 2.2 days), or None (hunt11b/news.py parse)."""
     num = lambda w: float(w) if w.isdigit() else NEWS_NUM.get(w.lower())
@@ -209,8 +215,11 @@ def news_timeline(text):
         a, b = num(m.group(1)), num(m.group(2)) if m.group(2) else None
         if a is None:
             continue
-        u = m.group(3).lower()
-        if u == "game" and re.search(r"(straight|consecutive|\d+th|missed)", text[max(0, m.start() - 20):m.end() + 15].lower()):
+        u, pre = m.group(3).lower(), text[max(0, m.start() - 40):m.start()]
+        if NEWS_TL_PRE.search(pre):  # a stat line ("52 points in 58 games", "over his last five games"), handoff 428
+            continue
+        if u == "game" and (re.search(r"(straight|consecutive|\d+th|missed)", text[max(0, m.start() - 20):m.end() + 15].lower())
+                            or not NEWS_TL_ABSENCE.search(pre)):
             continue
         v = (a if b is None else (a + b) / 2) * {"day": 1, "week": 7, "month": 30, "game": 2.2}[u]
         days = v if days is None else max(days, v)

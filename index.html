@@ -551,7 +551,8 @@ function why(p) {
       "long absence": "Daily Faceoff describes a long absence", "sent down": "Daily Faceoff reports him sent down",
       "hurt since": "Daily Faceoff says he is out since his last game", "day-to-day since": "Daily Faceoff lists him day-to-day since his last game",
       "day-to-day": "Daily Faceoff lists him day-to-day", "week-to-week": "Daily Faceoff lists him week-to-week",
-      "timeline": "Daily Faceoff's stated timeline runs past some of this week's games" };
+      "timeline": "Daily Faceoff's stated timeline runs past some of this week's games",
+      "timeline up": "Daily Faceoff's stated timeline has run out for some of this week's games" };
     const txt = wkn.why.map(k => WKN_TXT[k]).filter(Boolean).join("; ");
     if (txt) parts.push(`${txt} (${wkn.shift > 0 ? "more" : "less"} likely to play this week)`);
   }
