@@ -656,6 +656,7 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     """A skater on the last game's healthy-scratch list gets +0.5 on his dress logit; one who missed it but isn't on
     the list doesn't; if the list can't be read, missing the game with no ESPN injury counts (findings 153)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(**kw):
         fake = FakeSession(**kw)
@@ -709,6 +710,7 @@ def test_just_back_in_the_lineup(monkeypatch, tmp_path):
     """Back 1-3 games from a short healthy-scratch spell: sits again more (-0.4); back 1-2 games from a 5+ game absence
     that wasn't mostly scratches: plays more (+0.4) (findings 168)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def matthews(**kw):
         fake = FakeSession(missed={1: {2}}, **kw)
@@ -2011,3 +2013,18 @@ def test_week_news_shifts_from_daily_faceoff_items_since_his_last_game():
     assert rating.week_news_logit(news, 4, "2026-10-10", False, "DAY_TO_DAY", dates)[0] == [0.0] * 3  # ESPN's cap covers it
     assert rating.week_news_logit(news, 4, "2026-10-12", False, None, dates)[0] == [0.0] * 3  # news older than his last game
     assert rating.week_news_logit(None, 4, "2026-10-10", False, None, dates)[0] == [0.0] * 3
+
+
+def test_week_model_news_inputs_from_the_latest_injury_item():
+    """Handoff 413: flags count only for an item posted after his last game; age in days and the timeline left."""
+    import season_boost
+    from datetime import datetime, timezone
+    now = datetime(2026, 10, 14, 12, tzinfo=timezone.utc)
+    item = {"ts": "2026-10-12T12:00:00", "nf": ["out", "wtw"], "tl": 14.0}
+    x = season_boost.news_inputs(item, "2026-10-11", now)
+    assert x["inj_after"] == 1 and x["inj_out"] == 1 and x["inj_wtw"] == 1 and x["inj_dtd"] == 0
+    assert x["inj_age"] == pytest.approx(2.0) and x["inj_rem"] == pytest.approx(12.0)
+    old = season_boost.news_inputs(item, "2026-10-13", now)  # he has played since
+    assert old["inj_after"] == 0 and old["inj_out"] == 0 and old["inj_age"] is None and old["inj_rem"] is None
+    assert season_boost.news_inputs(None, "2026-10-11", now)["inj_after"] == 0
+    assert set(season_boost.load("week")["features"]) >= set(x)

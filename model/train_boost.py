@@ -4,14 +4,16 @@ model/season_boost_*.json, which scripts/season_boost.py evaluates in plain Pyth
 scikit-learn and the research data in /mnt/project-files; the daily run only reads the JSON.
 
 Rebuild the panel first with the research scripts (hunt11b/compact.py, mp_prev.py, fetch_bios.py), then:
-    python model/train_boost.py [out_dir] [--pickle] [--week]
+    python model/train_boost.py [out_dir] [--pickle] [--models=dress,fpg,week]
 
-  dress: rest-of-season dress share (x22 "boost (no news)"), seasons >= 2011-12, target y, weight tleft, features FD.
+  dress: rest-of-season dress share (x22 "boost (no news)"), seasons >= 2011-12, target y, weight tleft, features FD;
+         each season's first two weeks added (handoff 414).
   fpg:   rest-of-season FP per game played (x19 "components + MoneyPuck"), rows with y_gp >= 1, target y_fp / y_gp, weight y_gp,
          features F + MP, compact merged with mp_prev on playerId + season.
 
-  week:  next Monday-Sunday dress share (handoff 411, idea 1142, hunt13/p_boost_wk_fd.py): games he played that week / his
-         team's games that week, weight = team games, features FD (exp clipped at 5 as the site builds it), all 16 seasons,
+  week:  next Monday-Sunday dress share (handoffs 411, 413, 414; ideas 1142, 1162, 1168; hunt13/p_boost_wk_news.py, early1.py):
+         games he played that week / his team's games that week, weight = team games, features FW = FD (exp clipped at 5 as
+         the site builds it) + the latest Daily Faceoff injury item's flags (news_inputs), all 16 seasons plus early weeks,
          HistGBM up to 400 x 0.05 (sklearn's default early stopping, as the research ran it), 31 leaves, 200 rows a leaf. Needs hunt13/data/wk_targets.parquet and hunt13/feats.py.
          Exported to season_boost_week.json.
 
@@ -64,56 +66,86 @@ def export(m, feats):
             "trees": trees}
 
 
+NW = ["season", "surgery", "ir", "ltir", "wtw", "dtd", "ret", "out", "practice", "gtd", "illness", "concussion"]
+FW = FD + [f"inj_{k}" for k in NW] + ["inj_after", "inj_age", "inj_rem"]
+
+
+def news_inputs(c):
+    """Handoff 413 (hunt11b/feats_news_compact.py): per row, the latest Daily Faceoff injury item before Monday 09:00 UTC as
+    hunt11b/news.py parses it; its flags count only when it came after his last game (posted after 03:00 UTC that day)."""
+    sys.path.insert(0, f"{R}/hunt11b")
+    import news  # research parser for the 2011-26 Daily Faceoff archive
+    a = pd.read_parquet(f"{R}/data/skater_games.parquet", columns=["playerId", "gameDate"])
+    b = pd.read_parquet(f"{H}/skater_games_old.parquet", columns=["playerId", "gameDate"])
+    g = pd.concat([a, b]); g["gameDate"] = pd.to_datetime(g.gameDate); g = g.sort_values("gameDate")
+    k = c[["playerId", "monday"]].drop_duplicates().sort_values("monday")
+    k = pd.merge_asof(k, g.rename(columns={"gameDate": "last_game"}), left_on="monday", right_on="last_game", by="playerId",
+                      direction="backward", allow_exact_matches=False)
+    n = pd.concat([news.load(("injuries",)), news.load(("injuries_old",))]).drop_duplicates("id").sort_values("ts")
+    q = n[["playerId", "ts"] + NW + ["tl_days"]].rename(columns={x: "inj_" + x for x in NW + ["tl_days"]})
+    k["cut"] = k.monday + pd.Timedelta(hours=9)
+    k = pd.merge_asof(k.sort_values("cut"), q, left_on="cut", right_on="ts", by="playerId", direction="backward")
+    k["inj_after"] = ((k.ts > k.last_game + pd.Timedelta(hours=3)) & k.ts.notna()).astype(float)
+    age = (k.cut - k.ts).dt.total_seconds() / 86400
+    for x in NW:
+        k["inj_" + x] = k["inj_" + x].fillna(False).astype(float) * k.inj_after
+    k["inj_rem"] = np.where(k.inj_after == 1, np.clip(k.inj_tl_days - age, 0, 250), np.nan)
+    k["inj_age"] = np.where(k.inj_after == 1, age, np.nan)
+    return c.merge(k[["playerId", "monday"] + FW[len(FD):]], on=["playerId", "monday"], how="left")
+
+
 def week_model(c):
-    """Handoff 411: the next-week dress share model on every compact-panel row whose team plays that week."""
+    """Handoffs 411, 413, 414: the next-week dress share model on every compact-panel row (and each season's first two
+    weeks, hunt13/compact_early.py) whose team plays that week, with the injury-news inputs (hunt13/early1.py targets)."""
     sys.path.insert(0, f"{R}/hunt13")
-    import feats  # research helper: the 16 seasons' team schedules
+    import feats  # research helper: the 16 seasons' game logs and team schedules
     c = c.copy(); c["monday"] = pd.to_datetime(c.monday)
-    c = c.merge(pd.read_parquet(f"{R}/hunt13/data/wk_targets.parquet"), on=["playerId", "monday"], how="left")
-    ts, keys, rows = feats.team_sched(), c[["team", "monday"]].drop_duplicates(), []
-    for tm, q in ts.groupby("teamAbbrev"):
-        d = q.gameDate.values
-        for m in keys[keys.team == tm].monday.values:
-            rows.append((tm, m, int(((d >= m) & (d < m + np.timedelta64(7, "D"))).sum())))
-    c = c.merge(pd.DataFrame(rows, columns=["team", "monday", "wk_tg"]), on=["team", "monday"], how="left")
-    c = c[c.wk_tg > 0]; c["exp"] = c.exp.clip(upper=5)
-    y = (c.w_gp.fillna(0) / c.wk_tg).clip(0, 1)
-    return HistGradientBoostingRegressor(**WEEK_SET).fit(c[FD].astype(float).values, y.values, sample_weight=c.wk_tg.values), len(c)
+    g = feats.games_all(("playerId", "gameDate", "teamAbbrev", "season")); ts = feats.team_sched()
+    mons = np.sort(c.monday.unique())
+
+    def wk(df, key):
+        d = df.copy(); d["monday"] = mons[np.clip(np.searchsorted(mons, d.gameDate.values, side="right") - 1, 0, None)]
+        d = d[(d.gameDate - d.monday).dt.days.between(0, 6)]
+        return d.groupby(key + ["monday"]).size()
+    c = c.merge(wk(g, ["playerId"]).rename("w_gp").reset_index(), on=["playerId", "monday"], how="left")
+    c = c.merge(wk(ts, ["teamAbbrev"]).rename("w_tg").reset_index().rename(columns={"teamAbbrev": "team"}), on=["team", "monday"], how="left")
+    c["w_gp"] = c.w_gp.fillna(0); c = c[c.w_tg > 0]; c["exp"] = c.exp.clip(upper=5)
+    c = news_inputs(c)
+    y = (c.w_gp / c.w_tg).clip(0, 1)
+    return HistGradientBoostingRegressor(**WEEK_SET).fit(c[FW].astype(float).values, y.values, sample_weight=c.w_tg.values), len(c)
+
+
+def save(name, m, feats):
+    js = export(m, feats)
+    with open(f"{OUT}/season_boost_{name}.json", "w") as fh:
+        json.dump(js, fh, separators=(",", ":"), allow_nan=False)
+    if "--pickle" in sys.argv:  # sklearn copies, only for checking the JSON against .predict
+        with open(f"{OUT}/model_{name}.pkl", "wb") as fh:
+            pickle.dump(m, fh)
+    print(name, "baseline", js["baseline"], "trees", js["n_trees"], "nodes", sum(len(t[0]) for t in js["trees"]))
 
 
 def main():
-    c = pd.read_parquet(f"{H}/compact.parquet")
-    if "--week" in sys.argv:  # only the Week model (handoff 411); the Season models stay as committed
+    only = next((a.split("=", 1)[1].split(",") for a in sys.argv[1:] if a.startswith("--models=")), ["dress", "fpg", "week"])
+    late = pd.read_parquet(f"{H}/compact.parquet")
+    # dress and week also train on each season's first two weeks (handoff 414, hunt13/compact_early.py): the site applies
+    # them from game 1; FP/G stays on the later Mondays
+    both = pd.concat([late, pd.read_parquet(f"{R}/hunt13/data/compact_early.parquet")], ignore_index=True)
+    if "dress" in only:  # (x22): exp clipped at 5, seasons 2011-12 on
+        cd = both.copy(); cd["exp"] = cd.exp.clip(upper=5); cd = cd[cd.season >= 20112012]
         t0 = time.time()
-        mw, n = week_model(c)
+        save("dress", HistGradientBoostingRegressor(**SET).fit(cd[FD].astype(float).values, cd.y.values, sample_weight=cd.tleft.values), FD)
+        print(f"dress: {len(cd)} rows, {time.time() - t0:.1f}s")
+    if "fpg" in only:  # (x19): compact + MoneyPuck last season, rows with y_gp >= 1 (x19 does not clip exp; exp is not in F)
+        cf = late.merge(pd.read_parquet(f"{H}/mp_prev.parquet"), on=["playerId", "season"], how="left"); cf = cf[cf.y_gp >= 1]
+        t0 = time.time()
+        save("fpg", HistGradientBoostingRegressor(**SET).fit(cf[FF].astype(float).values, (cf.y_fp / cf.y_gp).values, sample_weight=cf.y_gp.values), FF)
+        print(f"fpg: {len(cf)} rows, {time.time() - t0:.1f}s")
+    if "week" in only:
+        t0 = time.time()
+        mw, n = week_model(both)
+        save("week", mw, FW)
         print(f"week: {n} rows, {time.time() - t0:.1f}s")
-        js = export(mw, FD)
-        with open(f"{OUT}/season_boost_week.json", "w") as fh:
-            json.dump(js, fh, separators=(",", ":"), allow_nan=False)
-        if "--pickle" in sys.argv:
-            with open(f"{OUT}/model_week.pkl", "wb") as fh:
-                pickle.dump(mw, fh)
-        print("week baseline", js["baseline"], "nodes", sum(len(t[0]) for t in js["trees"]))
-        return
-    # dress (x22): exp clipped at 5, seasons 2011-12 on
-    cd = c.copy(); cd["exp"] = cd.exp.clip(upper=5); cd = cd[cd.season >= 20112012]
-    t0 = time.time()
-    md = HistGradientBoostingRegressor(**SET).fit(cd[FD].astype(float).values, cd.y.values, sample_weight=cd.tleft.values)
-    td = time.time() - t0
-    # FP/G (x19): compact + MoneyPuck last season, rows with y_gp >= 1 (x19 does not clip exp; exp is not in F)
-    cf = c.merge(pd.read_parquet(f"{H}/mp_prev.parquet"), on=["playerId", "season"], how="left"); cf = cf[cf.y_gp >= 1]
-    t0 = time.time()
-    mf = HistGradientBoostingRegressor(**SET).fit(cf[FF].astype(float).values, (cf.y_fp / cf.y_gp).values, sample_weight=cf.y_gp.values)
-    tf = time.time() - t0
-    print(f"dress: {len(cd)} rows, {td:.1f}s | fpg: {len(cf)} rows, {tf:.1f}s")
-    for name, m, feats in [("dress", md, FD), ("fpg", mf, FF)]:
-        js = export(m, feats)
-        with open(f"{OUT}/season_boost_{name}.json", "w") as fh:
-            json.dump(js, fh, separators=(",", ":"), allow_nan=False)
-        if "--pickle" in sys.argv:  # sklearn copies, only for checking the JSON against .predict
-            with open(f"{OUT}/model_{name}.pkl", "wb") as fh:
-                pickle.dump(m, fh)
-        print(name, "baseline", js["baseline"], "nodes", sum(len(t[0]) for t in js["trees"]))
 
 
 if __name__ == "__main__":

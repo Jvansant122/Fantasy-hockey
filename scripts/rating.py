@@ -247,8 +247,9 @@ WEEK_NEWS = {"practice": 1.8, "skate": 0.5, "gtd": 0.7, "ret": 0.5, "dtd": 0.3, 
 WEEK_NEWS_TIMELINE_DAYS = 7
 # the Week's per-game dress logits move BOOST_WEEK_W x (logit(b) - logit(mean of his per-game chances)), b = a 16-season
 # boosted next-week dress share (model/season_boost_week.json) clipped to BOOST_WEEK_CLIP, after the other per-game shifts
-# (handoff 411, idea 1142: Brier -2.0% / -6.1% in 2024-25 / 2025-26)
-BOOST_WEEK_W, BOOST_WEEK_CLIP = 0.8, (0.005, 0.995)
+# and the news terms (handoffs 411-414, ideas 1142, 1161-1168: with its injury-news inputs and 406-408, Brier -5.1% / -9.6%
+# in 2024-25 / 2025-26, Week Spearman +0.008)
+BOOST_WEEK_W, BOOST_WEEK_CLIP = 0.9, (0.005, 0.995)
 BOOST_FPG_BLEND = (0.60, -0.37)  # an older stored copy (the fetch has failed since) adds nothing
 # a goalie whose last game last season was for another team: his last-season pts/start, for the Season rating only, moves
 # by this x (his team's points% last season - his old team's); 3 is the scoring math, a win is worth 3 more than a loss
@@ -1480,6 +1481,9 @@ def lineup_slack(lineup, boost_x, boost_dress, model):
         if not e["pts"] or counts[(e["team"], e["isD"])] < LINEUP_SPOTS[e["isD"]]:
             continue
         slack = LINEUP_SPOTS[e["isD"]] - sums[(e["team"], e["isD"])]
+        # a skater Daily Faceoff reports sent down since his last game doesn't fill his team's open spots (handoff 420)
+        if slack > 0 and "sent down" in (e["p"]["cr_why"].get("season_news") or ()):
+            continue
         q = min(max(e["share"], 0.001), 0.999)
         z = math.log(q / (1 - q)) + (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
         share = 1 / (1 + math.exp(-z))
@@ -2166,6 +2170,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     boost_dress, boost_fpg, boost_week = season_boost.load("dress"), season_boost.load("fpg"), season_boost.load("week")
     boost_x = season_boost.features(by_player, team_games, prev, prev2, bios, xg_prev, season, today, SEASON_GAMES) \
         if boost_dress or boost_fpg or boost_week else {}
+    if boost_week:  # the Week model also reads his latest Daily Faceoff injury item (handoff 413)
+        for pid, x in boost_x.items():
+            gl_ = by_player.get(pid) or []
+            x.update(season_boost.news_inputs(((dfo_news or {}).get("injuries") or {}).get(str(pid)),
+                                              max(g["date"] for g in gl_) if gl_ else None, now_utc))
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     prev3 = {}
     if missed:
@@ -2545,6 +2554,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why_form = {"shift": round(fshift, 3), "why": fwhy}
             else:
                 why_form = None
+            # Daily Faceoff news since his last game (handoffs 406-408), then the boosted model, then the caps (handoff 412)
+            if per_game and any(wk_news) and base_dress is not None:
+                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), cap, inj) for q, z in zip(per_game, wk_news)]
             # the 16-season boosted next-week dress share (handoff 411), still under his injury caps; not for a skater ESPN
             # lists on a team he hasn't played for yet, whose inputs describe his old team
             boost_wk = None
@@ -2555,10 +2567,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
                     per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + boost_wk))), cap, inj)
                                 for q in per_game]
-            # the news shifts go on after the boosted model, which can't see them and would otherwise pull 80% of them back
-            # toward its share (handoffs 406-408)
-            if per_game and any(wk_news) and base_dress is not None:
-                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), cap, inj) for q, z in zip(per_game, wk_news)]
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)

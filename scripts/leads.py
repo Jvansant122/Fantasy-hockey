@@ -158,7 +158,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 5  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 6  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
 NEWS_SURGERY_NEG = re.compile(r"\b(no|not|without|avoid(ed|s)?)\b|n't", re.I)
@@ -181,6 +181,18 @@ NEWS_WEEK = {k: re.compile(v, re.I) for k, v in {
            r"|full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice|no[- ]contact jersey|non-contact",
     "dtd": r"day[- ]to[- ]day", "wtw": r"week[- ]to[- ]week", "mtm": r"month[- ]to[- ]month", "ltir": r"\bLTIR\b|long[- ]term injured reserve",
     "out": r"will not|(will|'ll|to|expected to) miss|won.t play|will be out|is out|ruled out|sidelined|remains out|will sit|not expected to play",
+}.items()}
+# the 16-season Week dress model's inputs (handoff 413): hunt11b/news.py's flags for the latest injury item, as it read
+# the archive (plain wording, no negation checks: the model learned from these)
+NEWS_MODEL = {k: re.compile(v, re.I) for k, v in {
+    "season": r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year",
+    "surgery": r"surgery|surgical|operation", "ir": r"\bIR\b|injured reserve", "ltir": r"\bLTIR\b|long[- ]term injured reserve",
+    "wtw": r"week[- ]to[- ]week", "dtd": r"day[- ]to[- ]day",
+    "ret": r"will (return|play|be in the lineup|suit up|make his return|rejoin|draw back)|is expected to (return|play|rejoin)|activated"
+           r"|returns? to (the )?lineup|has been cleared|cleared to (play|return)|back in the lineup",
+    "out": r"will not|(will|'ll|to|expected to) miss|won.t play|will be out|is out|ruled out|sidelined|remains out|will sit|not expected to play",
+    "practice": r"full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice|no[- ]contact jersey|non-contact",
+    "gtd": r"game[- ]time decision", "illness": r"illness|flu\b|sick", "concussion": r"concussion",
 }.items()}
 NEWS_NUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "twelve": 12,
             "a couple": 2, "a few": 3, "several": 4, "a": 1}
@@ -234,7 +246,8 @@ def news_flags(item):
     return {"season": bool(NEWS_SEASON_907.search(text)) or news_wording(text, NEWS_SEASON, neg=False),
             "surgery": news_surgery(text), "indefinite": news_wording(text, NEWS_INDEFINITE),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text)),
-            **{k: bool(r.search(text)) for k, r in NEWS_WEEK.items()}, "tl": news_timeline(text)}
+            **{k: bool(r.search(text)) for k, r in NEWS_WEEK.items()}, "tl": news_timeline(text),
+            "nf": sorted(k for k, r in NEWS_MODEL.items() if r.search(text))}
 
 
 def recent_item(slug, ts, f):
@@ -256,7 +269,7 @@ def load_news():
 
 def fetch_news(s, now_utc, stored=None):
     """Daily Faceoff's injury and roster-move news, newest page back to the newest item already stored (NEWS_DAYS on a
-    first run). Returns {"injuries": {nhl id: {ts, season, surgery, indefinite, season_ts, indefinite_ts}}, "roster-moves":
+    first run). Returns {"injuries": {nhl id: {ts, season, surgery, indefinite, season_ts, indefinite_ts, nf, tl}}, "roster-moves":
     {nhl id: {ts, down, up}}, "recent": {nhl id: [{ts, cat, f, tl}]}, "fetched"} with each player's latest item, pruned to NEWS_KEEP_DAYS. season_ts / indefinite_ts:
     his latest item with that wording, so a later, milder item ("placed on LTIR") doesn't hide it (findings 371). recent:
     every item of the last NEWS_RECENT_DAYS with the Week dress's flags (recent_item; handoffs 406-408).
@@ -283,6 +296,10 @@ def fetch_news(s, now_utc, stored=None):
                 if not any(r["ts"] == ts and r["cat"] == ("inj" if slug == "injuries" else "move") for r in mine):
                     mine.append(recent_item(slug, ts, f))
                 new = {"ts": ts, **{k: f[k] for k in keys}} if ts > old.get("ts", "") else dict(old)
+                if slug == "injuries" and ts > old.get("ts", ""):  # the Week dress model's inputs (handoff 413)
+                    new["nf"] = f["nf"]
+                    if f["tl"] is not None:
+                        new["tl"] = round(f["tl"], 1)
                 if slug == "injuries":
                     for k in ("season", "indefinite"):
                         t = max(old.get(f"{k}_ts", ""), ts if f[k] else "")
