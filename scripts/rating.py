@@ -2145,6 +2145,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
             # tonight's game already started: its start is no longer ahead (findings 178)
             started = game_started(p)
+            # or he's on waivers until a later day, so today's game isn't his: its start comes off before the waiver
+            # scaling below (a confirmed starter on waivers put his team's goalies above its games)
+            started = started or (p.get("owner") == "waivers" and not p.get("today_start") and today.isoformat() in sched.get(team, []))
             if started:
                 starts = max(0.0, starts - goalie_today.get(pid, 0.0)) if pid else 0.0
             # on waivers he misses his team's games before he clears (findings 122): keep that share of the starts

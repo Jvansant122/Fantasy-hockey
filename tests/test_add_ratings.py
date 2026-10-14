@@ -222,6 +222,23 @@ def test_goalie_starts_follow_confirmed_starter(run):
     assert woll["cr_dress"] is None
 
 
+def test_confirmed_starter_on_waivers_leaves_tonight_to_his_team(monkeypatch, tmp_path):
+    """On waivers until tomorrow, a goalie confirmed for tonight doesn't count tonight's start: with it, his team's goalies
+    summed above its games and the 8 PM publish check blocked the run (Oct 13, CAR and VAN)."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
+    woll = dict(espn(111, "Joseph Woll", "TOR", "G", games_left=2), owner="other", today_start="2026-10-09T23:00:00Z")
+    stolarz = dict(espn(112, "Anthony Stolarz", "TOR", "G", games_left=1), owner="waivers", today_start=None)
+    rating.add_ratings([woll, stolarz], 2027, TODAY, MONDAY, starters)
+    # tonight is Stolarz's start but not his to count, and Woll sits it: only Oct 11 is left between them
+    assert stolarz["cr_why"]["exp_starts"] + woll["cr_why"]["exp_starts"] == pytest.approx(1, abs=0.02)
+    assert stolarz["cr_why"]["p_today"] == 0 and stolarz["cr_why"]["exp_starts"] <= 1
+
+
 def test_win_prob_removes_the_margin():
     assert rating.win_prob(-110, -110) == pytest.approx(0.5)
     fav = rating.win_prob(-200, 170)
