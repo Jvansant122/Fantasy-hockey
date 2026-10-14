@@ -119,7 +119,7 @@ BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its 
 # second night of a back-to-back, night-1 starter's logit: the team's no. 1 rests more, a backup who played goes again (findings 200)
 B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
 # back-to-backs still ahead in the week, the no. 1's start logit (most starts in the team's last 20, ties to the last starter):
-# night 1 when it is the next game, night 2 of that pair, night 2 of a pair further ahead, and every other game except the
+# night 1 (every one still ahead this week, findings 277), night 2 of that pair, night 2 of a pair further ahead, and every other game except the
 # shipped night-2 case above. 2021-26 replay of 12,960 team-game mornings: Brier -0.6%, no. 1 week-sum error -0.7%, better
 # in 5 of 5 seasons (findings 231, handoffs 133 and 190)
 B2B_AHEAD_NIGHT1, B2B_AHEAD_NIGHT2_NEXT, B2B_AHEAD_NIGHT2_LATER, NO1_ORDINARY_LOGIT = -0.4, -1.2, -0.6, 0.15
@@ -269,8 +269,9 @@ def last_start_shift(g):
 # game than the last one, and a regular the reverse (findings 147)
 DRESS_SHIFT_IN, DRESS_SHIFT_OUT = (0.6, 0.2, -0.1, -0.3), (-0.55, -0.15, 0.1, 0.2)
 # a healthy scratch in his team's last game comes back far more often than an injured player: +0.5 on top of the
-# missed-game shift, every game (0.25 to 0.34 per game against 0.345 actual, findings 153)
-SCRATCH_LOGIT = 0.5
+# missed-game shift, every game (0.25 to 0.34 per game against 0.345 actual, findings 153); split by position, since
+# scratched defensemen come back more often than forwards (findings 291, handoff 345)
+SCRATCH_LOGIT = {"F": 0.3, "D": 0.65}
 # a skater who dressed for his team's last game in his first 1-3 games after a trade or waiver claim: the new team plays
 # him more than his old-team dressed share says (0.78 to 0.85 per game against 0.86 actual, findings 155)
 NEW_TEAM_LOGIT, NEW_TEAM_GAMES = 0.45, 3
@@ -1748,7 +1749,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 prv = [x for x in dates_sorted if x < d and (last_date is None or x > last_date)]
                 n1 = nxt is not None and (date.fromisoformat(nxt) - day).days == 1
                 n2 = bool(prv) and (day - date.fromisoformat(prv[-1])).days == 1
-                if n1 and ahead == 0:
+                if n1:  # every night 1 still ahead this week, not only the next game (findings 277, handoff 339)
                     z += B2B_AHEAD_NIGHT1
                 if n2:
                     z += B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER
@@ -2355,7 +2356,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # sat the last game, but Daily Faceoff's projected lines have him: 14 of 14 dressed next time (findings 174)
             in_lines = sat_last and not p.get("injury") and p.get("dfo_out") is False
             per_game = dress_by_game(base_dress, gn, sat_last and not in_lines, min(cap, inj),
-                                     SCRATCH_LOGIT * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
+                                     SCRATCH_LOGIT["D" if p["pos"] == "D" else "F"] * scratch + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
                 if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)

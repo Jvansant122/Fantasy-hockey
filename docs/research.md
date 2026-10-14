@@ -1035,6 +1035,10 @@ Both apply to the team's next game only; carrying them further gained nothing. I
 
 When a team adds a skater by trade or waiver claim, its least-used skater at his position (fewest minutes last game) is now marked as more likely to sit, the same cut the site already makes when a regular comes back from injury. It lasts until the newcomer has played 3 games for his new team. When a defenseman who was in the lineup is traded or claimed away, the team's healthy defensemen who have sat the last 1-4 games are 10 points more likely to play, for the team's next 3 games. Forwards showed no clear lift, so they are left alone. Both sizes come from checking against the site's own lineup model over 2023-26, which already explains part of the raw effect.
 
+## 140. A back-to-back later in the week, and scratched defensemen
+
+The no. 1 goalie's small dip on the first night of a back-to-back now applies to every such night still ahead this week, not only when it is his team's next game. Before, a later first night got no adjustment at all and read his start chance at 0.61 when it has really been 0.56 (1,242 games, 2021-26). On the site's own code, start forecasts for games after the next one get 0.11% more accurate, better in 4 of 5 seasons, and the next game is unchanged. The bump for a skater on his team's last healthy-scratch list is now split by position: +0.3 for forwards and +0.65 for defensemen, in place of +0.5 for both. Scratched defensemen were dressing more often than predicted and scratched forwards less, in both of the last two seasons, and the split makes those forecasts about 0.5% more accurate in each.
+
 ## What the independent review changed
 
 | Review point | Outcome |

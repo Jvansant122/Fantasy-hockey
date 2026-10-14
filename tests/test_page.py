@@ -261,7 +261,7 @@ def test_stream_card_follows_the_first_puck(browser, server, data):
         for p in d["players"]:
             if p["pos"] == "G" and p.get("cr_why"):
                 p["cr_why"].pop("tonight", None)  # every team has two open G slots tonight
-                p["cr_why"]["p_today"] = 0
+                p["cr_why"]["p_today"] = p["cr_why"]["p_today_pre"] = 0  # pre: a game already started on the real clock
         ctx, page, errors = open_page(browser, server, data=d)
         page.select_option("#team", str(d["teams"][0]["id"]))
         assert want in page.locator("#upgrades").inner_text()
@@ -750,7 +750,7 @@ def test_playoff_round_and_final_wording(browser, server, data):
     for p in d["players"]:
         if p["pos"] == "G" and p.get("cr_why"):
             p["cr_why"].pop("tonight", None)
-            p["cr_why"]["p_today"] = 0
+            p["cr_why"]["p_today"] = p["cr_why"]["p_today_pre"] = 0  # pre: a game already started on the real clock
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(d["teams"][0]["id"]))
     assert "nothing added now counts" in _card(page, "Stream a goalie tonight")
@@ -1463,7 +1463,7 @@ def test_final_with_no_moves_shows_no_drops(browser, server, data):
         ctx, page, errors = open_page(browser, server, data=d)
         page.select_option("#team", str(team["id"]))
         text = page.locator("#upgrades").inner_text()
-        goalies = _card(page, "Goalies")
+        goalies = _card(page, "Goalies · you carry")  # not the 'Goalies · your weakest' add card
         if not shown:
             assert _card(page, "Drop list") == "" and "fourth spot" not in text and goalies == "", text
         else:
