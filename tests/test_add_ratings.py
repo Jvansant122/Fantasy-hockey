@@ -735,6 +735,7 @@ def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
     """A skater who dressed last game in his first 1-3 games for a new team gets +0.45 on his dress logit; from his
     4th game with the team, nothing (findings 155)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def matthews(moved, logit):
         monkeypatch.setattr(rating, "NEW_TEAM_LOGIT", logit)
@@ -1875,6 +1876,29 @@ def test_boosted_model_walks_its_trees_like_sklearn():
         m = season_boost.load(name)
         assert m and len(m["trees"]) == 400
         assert lo < season_boost.predict(m, {}) < hi
+    week = season_boost.load("week")  # sklearn's early stopping: fewer than 400 trees (handoff 411)
+    assert week and 50 <= len(week["trees"]) <= 400 and 0.0 < season_boost.predict(week, {}) < 1.2
+
+
+def test_weekly_boosted_dress_model_moves_the_week_toward_its_share(monkeypatch, tmp_path):
+    """Handoff 411: each remaining game's dress logit moves 0.8 x (logit(b) - logit(his mean)); injury caps still hold."""
+    import season_boost
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    real = season_boost.load
+
+    def run(b, w=0.8, injury=None):
+        monkeypatch.setattr(rating, "BOOST_WEEK_W", w)
+        monkeypatch.setattr(rating.season_boost, "load", lambda n: {"features": [], "baseline": b, "trees": []} if n == "week" else real(n))
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+        players = [espn(101, "Auston Matthews", "TOR", "C", injury=injury), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    off, low, high = run(0.5, w=0.0), run(0.05), run(0.99)
+    assert low["cr_dress"] < off["cr_dress"] < high["cr_dress"] <= 1.0
+    assert low["cr_why"]["boost_week"] < 0 < high["cr_why"]["boost_week"]
+    # day-to-day after a full game: capped at 0.75 (DTD_PLAYED_CAPS) however high the boosted share
+    assert run(0.99, injury="DAY_TO_DAY")["cr_dress"] == pytest.approx(rating.DTD_PLAYED_CAPS[-1][1])
 
 
 def test_boosted_inputs_follow_the_research_panel():

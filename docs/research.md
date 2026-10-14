@@ -1051,6 +1051,12 @@ When a skater leaves his team's last game early (under 40% of his usual minutes)
 
 An audit of the last few days' changes found four slips, now fixed. The early-season back-to-back rule for no. 1 goalies (an extra nudge to the backup on night 2 through a team's 10th game) had been accidentally stretched to 15 games by a skater rule that reused its setting's name; from about October 26 that would have rated no. 1 goalies too low on the second night of back-to-backs. Daily Faceoff injury notes are read more carefully: "not expected to be a long-term issue" or "missed significant time last season" no longer count as out indefinitely, and "ready for the season opener" no longer counts as season-ending (a season phrase now has to describe an absence). That lifted Morrissey, Sanderson and Ristolainen back up, and on past seasons the stricter reading improves the Season rating's correlation by +0.0011 every season (+0.0015 among free agents). A defenseman traded away now keeps lifting his old team's sitting defensemen for its next 3 games, not just until his first game with the new team. And when a newcomer arrives, the player expected to sit for him is now chosen from healthy teammates only, not one who left the last game hurt.
 
+## 144. A weekly lineup model trained on 16 seasons
+
+The chance a skater dresses for each game this week now also listens to a boosted model trained on 16 seasons (2010-26) of who played the following week, using the same inputs as the Season rating's boosted dress model (games and ice time so far, recent absences, last season, age, draft position, and how crowded his position is on his team). Each game's chance moves 80% of the way, on the log-odds scale, from his average chance this week to the model's share, and injury caps still apply. Trained only on earlier seasons and scored on the next, it cut the error of the per-game chances by 2.0% in 2024-25 and 6.1% in 2025-26, the largest weekly lineup gain logged so far. A plain recalibration of the existing chances gained nothing, so the model brings new information rather than just correcting the level. Players listed on a new team they haven't played for yet are left out, since the model's inputs still describe their old team.
+
+Two small injury-note fixes went with it: "no surgery required" and "won't need surgery" no longer count as surgery, and "healthy", "ready" or "back in time for the playoffs" no longer reads as season-ending.
+
 ## What the independent review changed
 
 | Review point | Outcome |
