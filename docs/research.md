@@ -1075,6 +1075,10 @@ An audit of the page found eight problems, now fixed. Overnight on Monday mornin
 
 Four follow-ups to sections 145 and 146 from a second audit. The practising, skating and game-time-decision signals now read only Daily Faceoff's news line, as the research fit them, not its background paragraph, which had flagged about half again as many players. "Will return to the sidelines" and "eligible to be activated" no longer count as a player set to return. Every news shift on this week's chance to play now says why in the details, including day-to-day, week-to-week and a stated timeline. So does the 16-season weekly model when it moves a player's chance by 5 points or more. And a player who hasn't played this season (a prospect sent down, say) now gets this week's news too, counted from the season's first game.
 
+## 149. Stat lines no longer read as injury timelines
+
+The news reader took a player's stat line, such as "52 points in 58 games", as a 128-day absence. That was true of 95% of the 40-plus-day timelines in Daily Faceoff's archive, so the timeline signal was mostly noise. Counts after words like "in", "over" or "his last" are now skipped, and a game count needs a word about missing time nearby. With real timelines, the signal is strong: an injured player whose stated timeline runs 7 or more days past a game is much less likely to play it, and one whose timeline has already run out is a little more likely. The practising, skating, game-time, day-to-day and week-to-week terms were refit alongside. On the 2024-25 and 2025-26 seasons, the weekly chance-to-play error fell from 5.1% and 9.6% below the old version to 5.2% and 9.8% below it. Zach Hyman goes back up, and a player out 6-8 months after surgery comes down.
+
 ## What the independent review changed
 
 | Review point | Outcome |

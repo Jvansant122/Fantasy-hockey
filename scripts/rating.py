@@ -242,9 +242,11 @@ ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
 # (boosted - FP/G) x (a + b g). The ESPN weights above were refitted jointly with these, leaving one season out over 2021-26
 BOOST_DRESS_W = 0.56
 # Week dress logit shifts from Daily Faceoff news since his last game (handoffs 406-408, ideas 1137-1139, findings 400;
-# hunt13/p_week*.py: Brier on out-now player-games -5.2% / -5.8% in 2024-25 / 2025-26, all rows -2.1% / -2.6% with 407-408)
-WEEK_NEWS = {"practice": 1.8, "skate": 0.5, "gtd": 0.7, "ret": 0.5, "dtd": 0.3, "wtw": -0.17, "long": -0.7, "timeline": -0.3,
-             "down_out": -1.1, "down_in": -1.4, "hurt_out": -2.1, "hurt_dtd": -1.9}
+# hunt13/p_week*.py: Brier on out-now player-games -5.2% / -5.8% in 2024-25 / 2025-26, all rows -2.1% / -2.6% with 407-408).
+# Handoff 428 (idea 1180, hunt13/p_stack_fast.py): practice, skate, gtd, dtd, wtw and the timeline refit on top of the boosted
+# model once stat lines stopped reading as timelines; a timeline 7+ days past the game, or one already run out (timeline_up)
+WEEK_NEWS = {"practice": 1.55, "skate": 1.19, "gtd": 0.37, "ret": 0.5, "dtd": 0.16, "wtw": -0.21, "long": -0.7, "timeline": -1.25,
+             "timeline_up": 0.17, "down_out": -1.1, "down_in": -1.4, "hurt_out": -2.1, "hurt_dtd": -1.9}
 WEEK_NEWS_TIMELINE_DAYS = 7
 # league-wide F/D scoring drift into the Season FP/G (handoff 405, idea 1118: +0.0002 full board, +0.0005 free agents)
 DRIFT_W, DRIFT_MIN_GP = 0.5, 10
@@ -1578,7 +1580,7 @@ def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
     """Per-game Week dress logit shifts from Daily Faceoff items since his last game (posted after 03:00 UTC on its date, as
     in the research), whether he is practising (his OUT / IR cap becomes day-to-day's), and labels for the why panel.
     Out now (handoff 406): practising, skating, could-return, return / day-to-day / week-to-week, long wording and a stated
-    timeline running 7+ days past the game. Sent down by his latest roster move (407). Dressed last game, no ESPN status,
+    timeline running 7+ days past the game, or already run out (428). Sent down by his latest roster move (407). Dressed last game, no ESPN status,
     and news since says he is out or day-to-day (408)."""
     items = ((news or {}).get("recent") or {}).get(str(nhl_id)) if nhl_id and last_game else None
     since = f"{last_game[:10]}T03:00" if last_game else ""
@@ -1607,11 +1609,13 @@ def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
         tl = [r["tl"] for r in inj if r.get("tl") is not None]
         if tl:
             first = date.fromisoformat(inj[0]["ts"][:10])
-            for k, d in enumerate(game_dates):
-                if max(tl) - (date.fromisoformat(d) - first).days >= WEEK_NEWS_TIMELINE_DAYS:
-                    shifts[k] += WEEK_NEWS["timeline"]
-            if any(shifts):
+            for k, d in enumerate(game_dates):  # timeline left at the game: 7+ days, or run out (handoff 428)
+                rem = max(tl) - (date.fromisoformat(d) - first).days
+                shifts[k] += WEEK_NEWS["timeline"] if rem > WEEK_NEWS_TIMELINE_DAYS else WEEK_NEWS["timeline_up"] if rem <= 0 else 0.0
+            if any(x < 0 for x in shifts):
                 why.append("timeline")
+            if any(x > 0 for x in shifts):
+                why.append("timeline up")
     down = 0.0
     if moves and "down" in moves[-1]["f"] and "up" not in moves[-1]["f"]:
         down = WEEK_NEWS["down_out" if sat_last else "down_in"]; why.append("sent down")
