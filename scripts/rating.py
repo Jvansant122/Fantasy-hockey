@@ -274,6 +274,11 @@ DRESS_SHIFT_IN, DRESS_SHIFT_OUT = (0.6, 0.2, -0.1, -0.3), (-0.55, -0.15, 0.1, 0.
 SCRATCH_LOGIT = {"F": 0.3, "D": 0.65}
 # ... and a healthy scratch who has missed 5+ straight games gets a turn: +0.75, F and D alike (findings 293, handoff 347)
 SCRATCH_LONG_LOGIT, SCRATCH_LONG_GAMES = 0.75, 5
+# ... and a teammate at his position (5+ games) left the team's last game early, under 40% of his average minutes: the
+# scratch fills in, D most (0.6 dressed against the site's 0.3, findings 307, handoff 352)
+TEAMMATE_LEFT_LOGIT, TEAMMATE_LEFT_SHARE, TEAMMATE_LEFT_GP = {"F": 0.5, "D": 1.6}, 0.40, 5
+# a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
+DEPTH_POINT_LOGIT = 0.3
 # team form (findings 281-283, 289, 292, handoffs 340-342, 344): additive on each game's dress chance this week.
 # Depth = healthy, dressed his team's last game, under DEPTH_TOI minutes in it. After 4+ straight games without a win depth
 # skaters sit more (340); after a loss by 4+ goals more still (341, the larger of the two, not both); a team on 3+ straight
@@ -719,6 +724,20 @@ def team_form(goalie_games):
         opp = [tm for tm in teams_in[gid] if tm != team]
         margin = games[(opp[0], gid)]["ga"] - last["ga"] if opp else None
         out[team] = (nonwins, wins, margin)
+    return out
+
+
+def left_early_teammates(by_player, team_games):
+    """{(team, is D): NHL ids of skaters with TEAMMATE_LEFT_GP+ games who played the team's last game on under
+    TEAMMATE_LEFT_SHARE of their average minutes} (findings 307)."""
+    out = {}
+    for pid, gl in by_player.items():
+        tg = team_games.get(gl[-1]["team"]) if gl else None
+        if not tg or len(gl) < TEAMMATE_LEFT_GP or gl[-1]["game"] != tg[-1]:
+            continue
+        avg = sum(g["toi"] for g in gl) / len(gl)
+        if avg and gl[-1]["toi"] < TEAMMATE_LEFT_SHARE * avg:
+            out.setdefault((gl[-1]["team"], gl[-1].get("pos") == "D"), set()).add(pid)
     return out
 
 
@@ -2043,6 +2062,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for g in sorted(games, key=lambda g: g["date"]):
         by_player.setdefault(g["id"], []).append(g)
     context = lineup_context(by_player, team_games)  # who missed each team's last game (findings 320 (1))
+    left_teammates = left_early_teammates(by_player, team_games)  # for the scratches who fill in (handoff 352)
     # the older scratch lists that players just back ask scratch_list for, read side by side now rather than one by one in
     # the loop below (about 30 calls, 8 s; speed audit, Oct 12 2026): each skater's window on his latest team, a superset
     want = set()
@@ -2429,6 +2449,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # straight team games he has missed (any reason), for the long-scratch turn and the win-run shift
             missed = next((k for k, g in enumerate(reversed(tg)) if g in {x["game"] for x in gl}), len(tg)) if gl and sat_last else 0
             scratch_z = (SCRATCH_LONG_LOGIT if missed >= SCRATCH_LONG_GAMES else SCRATCH_LOGIT["D" if p["pos"] == "D" else "F"]) * scratch
+            # a scratch whose same-position teammate left the last game early fills in (handoff 352)
+            filled = scratch and bool(left_teammates.get((team, p["pos"] == "D"), set()) - {pid})
+            if filled:
+                scratch_z += TEAMMATE_LEFT_LOGIT["D" if p["pos"] == "D" else "F"]
+            # a depth skater who scored in the last game keeps his spot more (handoff 351)
+            scored = bool(gl) and not sat_last and not traded and not early and not p.get("injury") \
+                and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("points", 0) > 0
+            if scored:
+                scratch_z += DEPTH_POINT_LOGIT
             per_game = dress_by_game(base_dress, gn, sat_last and not in_lines, min(cap, inj),
                                      scratch_z + NEW_TEAM_LOGIT * new_team + comeback + CLEARED_LOGIT * cleared_out, early) \
                 if base_dress is not None else [CLEARED_NEW_NEXT] + [p_dress] * (gn - 1) if cleared_new and gn else [p_dress] * gn
@@ -2461,6 +2490,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if filled and base_dress is not None:
+                why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
+            if scored and base_dress is not None:
+                why["depth_point"] = True  # a depth player who scored last game (handoff 351)
             if why_form:
                 why["form"] = why_form  # team form / depth D lineup shift on this week's games (handoffs 340-342, 346)
             if season_pts is not None:  # after age, ESPN and the boosted model: Season = this x his share (check_data P5)
