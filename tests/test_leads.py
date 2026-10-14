@@ -251,3 +251,12 @@ def test_news_flags_season_level_and_indefinite_wording():
         assert f(t)["season"], t
     assert f("McAvoy is out indefinitely.")["indefinite"] and not f("McAvoy is out indefinitely.")["season"]
     assert not f("He was placed on long-term injured reserve.")["indefinite"] and not f("Day-to-day with a bruise.")["indefinite"]
+    # handoff 401: negations and past seasons are not flags, and season phrases need an absence
+    for t in ("Morrissey's injury is not expected to be a long-term issue.", "He missed significant time last season.",
+              "Sanderson won't be out long-term."):
+        assert not f(t)["indefinite"], t
+    for t in ("He was healthy again in the playoffs.", "Paul will be ready for the season opener.",
+              "Tkachuk is expected to play for the season opener."):
+        assert not f(t)["season"], t
+    assert f("He will miss the remainder of the 2024-25 season.")["season"]
+    assert f("He is sidelined for the rest of the regular season.")["season"]

@@ -291,8 +291,8 @@ WIN_RUN_GAMES, WIN_RUN_OUT, WIN_RUN_OUT_GAMES = 3, -0.07, (1, 4)
 # forwards under 8 / 10-12 min (findings 294, handoff 348) dress less than the lineup model says; stacks with the team form
 DEPTH_D_SHIFT = ((12.0, -0.025), (14.0, -0.055), (16.0, -0.025))
 DEPTH_F_SHIFT = ((8.0, -0.02), (10.0, 0.0), (12.0, -0.03))
-# a team's first EARLY_GAMES games: depth skaters (under 12 F / 16 D minutes) sit a further 3 points (findings 295, handoff 349)
-EARLY_GAMES, EARLY_DEPTH_TOI, EARLY_DEPTH = 15, {"F": 12.0, "D": 16.0}, -0.03
+# a team's first EARLY_DEPTH_GAMES games: depth skaters (under 12 F / 16 D minutes) sit a further 3 points (findings 295, handoff 349)
+EARLY_DEPTH_GAMES, EARLY_DEPTH_TOI, EARLY_DEPTH = 15, {"F": 12.0, "D": 16.0}, -0.03
 # a skater who dressed for his team's last game in his first 1-3 games after a trade or waiver claim: the new team plays
 # him more than his old-team dressed share says (0.78 to 0.85 per game against 0.86 actual, findings 155)
 NEW_TEAM_LOGIT, NEW_TEAM_GAMES = 0.45, 3
@@ -759,7 +759,7 @@ def form_shift(pos, depth_toi, out_games, form, team_played=99):
         if d:
             shift += d
             why.append("depth_d" if pos == "D" else "depth_f")
-        if team_played < EARLY_GAMES and depth_toi < EARLY_DEPTH_TOI[pos]:
+        if team_played < EARLY_DEPTH_GAMES and depth_toi < EARLY_DEPTH_TOI[pos]:
             shift += EARLY_DEPTH
             why.append("early")
     if WIN_RUN_OUT_GAMES[0] <= out_games <= WIN_RUN_OUT_GAMES[1] and wins >= WIN_RUN_GAMES:
@@ -786,7 +786,8 @@ def shrunk_save_pcts(goalie_games, prev_goalies):
 def displaced_skaters(by_player, team_games, healthy):
     """When a regular (dressed 80%+ of his team's 5-20 games before the gap) has missed 3+ straight team games and
     ESPN now lists him healthy or day-to-day, the team's skater at his position (F or D) with the least ice time in
-    the last game is the one who sits. healthy: NHL ids ESPN lists without a longer injury.
+    the last game is the one who sits, among those ESPN lists healthy too (handoff 403). healthy: NHL ids ESPN lists
+    without a longer injury.
     Returns {nhl id of the displaced player: (cut to P(dresses), regular's name)}."""
     last = {}
     for pid, gl in by_player.items():
@@ -801,20 +802,21 @@ def displaced_skaters(by_player, team_games, healthy):
         if streak < 3 or pid not in healthy or len(before) < 5 or sum(x in played for x in before) < 0.8 * len(before):
             continue
         grp = "D" if g["pos"] == "D" else "F"
-        depth = [(h["toi"], hid) for hid, (h, htg, _, hs) in last.items()
-                 if hs == 0 and h["team"] == g["team"] and h["game"] == tg[-1] and ("D" if h["pos"] == "D" else "F") == grp]
+        depth = [(h["toi"], hid) for hid, (h, htg, _, hs) in last.items() if hs == 0 and h["team"] == g["team"]
+                 and h["game"] == tg[-1] and ("D" if h["pos"] == "D" else "F") == grp and hid in healthy]
         if depth:
             out[min(depth)[1]] = (DISPLACED_CUT[grp], g["name"])
     return out
 
 
-def roster_moves(by_player, team_games, listed, healthy):
+def roster_moves(by_player, team_games, listed, healthy, available=None):
     """Trades and waiver claims, from ESPN's NHL team for each skater (listed: {nhl id: NHL team}) against his game log.
     Arrival (findings 269, 272, handoff 337): listed on a team he has played under ARRIVAL_GAMES games for, after games for
     another NHL team this season; the team's skater at his position (F or D) with the least ice time in its last game, not
     the newcomer, sits more by DISPLACED_CUT. Departure (findings 270-272, handoff 338): a defenseman who dressed in one of
     the team's last DEPARTED_D_GAMES games and is now listed on another team lifts the team's D listed with it and healthy
-    (healthy: no ESPN status at all) who missed the last 1-4 team games.
+    (healthy: no ESPN status at all) who missed the last 1-4 team games. The cut only lands on a skater in available (no
+    ESPN status or day-to-day; handoff 403), all of them when None.
     Returns ({nhl id: (cut, newcomer's name)}, {nhl id: departed D's name})."""
     last, streaks = {}, {}
     for pid, gl in by_player.items():
@@ -824,6 +826,7 @@ def roster_moves(by_player, team_games, listed, healthy):
             last[pid] = gl[-1]
             streaks[pid] = next((i for i, g in enumerate(reversed(tg)) if g in played), len(tg))
     grp = lambda g: "D" if g["pos"] == "D" else "F"
+    available = set(last) if available is None else available
     cuts, lifts = {}, {}
     for pid, team in listed.items():
         gl = by_player.get(pid)
@@ -833,15 +836,18 @@ def roster_moves(by_player, team_games, listed, healthy):
         if here < ARRIVAL_GAMES and any(g["team"] != team for g in gl):
             tg = team_games[team]
             depth = [(h["toi"], hid) for hid, h in last.items() if hid != pid and streaks[hid] == 0 and h["team"] == team
-                     and h["game"] == tg[-1] and grp(h) == grp(gl[-1]) and listed.get(hid, team) == team]
+                     and h["game"] == tg[-1] and grp(h) == grp(gl[-1]) and listed.get(hid, team) == team and hid in available]
             if depth:
                 cuts.setdefault(min(depth)[1], (DISPLACED_CUT[grp(gl[-1])], gl[-1]["name"]))
-        old = last[pid]["team"] if pid in last else None
-        if old and old != team and team in team_games and grp(last[pid]) == "D" and last[pid]["game"] in team_games.get(old, [])[-DEPARTED_D_GAMES:]:
+        # his last game for a team other than the one he is listed on now, so the lift outlasts his first game for the new
+        # team (handoff 402)
+        prev = next((g for g in reversed(gl) if g["team"] != team), None)
+        old = prev["team"] if prev else None
+        if old and team in team_games and grp(prev) == "D" and prev["game"] in team_games.get(old, [])[-DEPARTED_D_GAMES:]:
             for hid, h in last.items():
                 if h["team"] == old and grp(h) == "D" and listed.get(hid) == old and hid in healthy \
                         and DEPARTED_D_OUT[0] <= streaks[hid] <= DEPARTED_D_OUT[1]:
-                    lifts.setdefault(hid, last[pid]["name"])
+                    lifts.setdefault(hid, prev["name"])
     return cuts, lifts
 
 
@@ -2554,7 +2560,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_why"]["displaced"] = regular
     # trades and claims: a newcomer at his position sits the least-used skater; a departed D brings a sitting D in
     listed = {pid: ESPN_TO_NHL.get(p["team"], p["team"]) for pid, p in by_nhl.items() if p.get("team")}
-    cuts, lifts = roster_moves(by_player, team_games, listed, {pid for pid, p in by_nhl.items() if not p.get("injury")})
+    cuts, lifts = roster_moves(by_player, team_games, listed, {pid for pid, p in by_nhl.items() if not p.get("injury")}, healthy)
     for pid, (cut, newcomer) in cuts.items():
         p = by_nhl.get(pid)
         if p and p["cr_dress"] and "displaced" not in p["cr_why"]:  # the same cut as a returning regular, not stacked
