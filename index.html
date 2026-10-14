@@ -549,10 +549,15 @@ function why(p) {
     const WKN_TXT = { "practising": "Daily Faceoff says he is practising", "skating": "Daily Faceoff says he is skating",
       "could return": "Daily Faceoff says he could return", "set to return": "Daily Faceoff's latest says he will return",
       "long absence": "Daily Faceoff describes a long absence", "sent down": "Daily Faceoff reports him sent down",
-      "hurt since": "Daily Faceoff says he is out since his last game", "day-to-day since": "Daily Faceoff lists him day-to-day since his last game" };
+      "hurt since": "Daily Faceoff says he is out since his last game", "day-to-day since": "Daily Faceoff lists him day-to-day since his last game",
+      "day-to-day": "Daily Faceoff lists him day-to-day", "week-to-week": "Daily Faceoff lists him week-to-week",
+      "timeline": "Daily Faceoff's stated timeline runs past some of this week's games" };
     const txt = wkn.why.map(k => WKN_TXT[k]).filter(Boolean).join("; ");
     if (txt) parts.push(`${txt} (${wkn.shift > 0 ? "more" : "less"} likely to play this week)`);
   }
+  // the 16-season weekly lineup model's pull on this week's chance to play, when it moves it 5+ points (handoff 425)
+  const bwm = p.cr_why?.boost_week_move;
+  if (bwm) parts.push(`players with his record and recent absences usually play ${bwm > 0 ? "more" : "less"} than his own trend says (${bwm > 0 ? "+" : "\u2212"}${Math.round(Math.abs(bwm) * 100)} percentage points on his chance to play this week)`);
   if (p.cr_why?.displaced) parts.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);

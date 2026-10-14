@@ -158,7 +158,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 6  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 7  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
 NEWS_SURGERY_NEG = re.compile(r"\b(no|not|without|avoid(ed|s)?)\b|n't", re.I)
@@ -194,6 +194,7 @@ NEWS_MODEL = {k: re.compile(v, re.I) for k, v in {
     "practice": r"full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice|no[- ]contact jersey|non-contact",
     "gtd": r"game[- ]time decision", "illness": r"illness|flu\b|sick", "concussion": r"concussion",
 }.items()}
+NEWS_DETAILS_ONLY = ("skate", "limited", "full", "gtd")
 NEWS_NUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "twelve": 12,
             "a couple": 2, "a few": 3, "several": 4, "a": 1}
 _N = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|a couple|a few|several|a)"
@@ -239,14 +240,29 @@ def news_surgery(text):
                and not NEWS_SURGERY_NOT_NEEDED.search(text[m.end():m.end() + 30]) for m in NEWS_SURGERY.finditer(text))
 
 
+def news_return(text):
+    """The Week "set to return" wording, except "will return to the sidelines / injured reserve / IR" and "eligible to be
+    activated" (handoff 426; "activated off IR" still counts)."""
+    for m in NEWS_WEEK["ret"].finditer(text):
+        if re.match(r".{0,20}?\bto (the )?(sideline|injured reserve|IR\b)", text[m.end():m.end() + 40], re.I | re.S):
+            continue
+        if m.group(0).lower() == "activated" and re.search(r"eligible to be\s*$", text[max(0, m.start() - 20):m.start()], re.I):
+            continue
+        return True
+    return False
+
+
 def news_flags(item):
     """One news item as the research parsed it (hunt11b/news.py): season-ending / surgery for injuries, down / up for moves."""
     text = re.sub(r"\s+", " ", f'{item.get("details") or ""} {item.get("fantasyDetails") or ""}')
+    details = re.sub(r"\s+", " ", item.get("details") or "")
     cat = item.get("newsCategoryName")
     return {"season": bool(NEWS_SEASON_907.search(text)) or news_wording(text, NEWS_SEASON, neg=False),
             "surgery": news_surgery(text), "indefinite": news_wording(text, NEWS_INDEFINITE),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text)),
-            **{k: bool(r.search(text)) for k, r in NEWS_WEEK.items()}, "tl": news_timeline(text),
+            # the return-ladder flags were fit on the news line only, not the background paragraph (handoff 424)
+            **{k: bool(r.search(details if k in NEWS_DETAILS_ONLY else text)) for k, r in NEWS_WEEK.items()},
+            "ret": news_return(text), "tl": news_timeline(text),
             "nf": sorted(k for k, r in NEWS_MODEL.items() if r.search(text))}
 
 

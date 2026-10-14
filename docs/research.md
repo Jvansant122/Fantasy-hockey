@@ -1071,6 +1071,10 @@ The Season rating now notices when forwards or defensemen as a group are scoring
 
 An audit of the page found eight problems, now fixed. Overnight on Monday morning, teams that had used every move were told none were left, though a new matchup had started. From Sunday's first game until Monday's first update, Best moves offered two more moves at every update instead of holding all but two of next week's. Phones showed the Season percentile badge again. Trade check allowed players from two partner teams. Goalies kept "starts tonight" tags from the night before. Details said "no injury discount" next to news that cut a player's share. The Update now button told league members to press a GitHub button only the site owner can see; it now shows the next scheduled update instead. And the details now give the games behind a small sample and say "percentage points" where they meant chance to play.
 
+## 148. Cleaner news reading and clearer details
+
+Four follow-ups to sections 145 and 146 from a second audit. The practising, skating and game-time-decision signals now read only Daily Faceoff's news line, as the research fit them, not its background paragraph, which had flagged about half again as many players. "Will return to the sidelines" and "eligible to be activated" no longer count as a player set to return. Every news shift on this week's chance to play now says why in the details, including day-to-day, week-to-week and a stated timeline. So does the 16-season weekly model when it moves a player's chance by 5 points or more. And a player who hasn't played this season (a prospect sent down, say) now gets this week's news too, counted from the season's first game.
+
 ## What the independent review changed
 
 | Review point | Outcome |
