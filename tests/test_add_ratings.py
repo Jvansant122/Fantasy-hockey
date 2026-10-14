@@ -2047,3 +2047,15 @@ def test_season_drift_moves_a_group_whose_scoring_runs_ahead_of_its_season_ratin
     few = [dict(r, fp=r["fp"][:5], p=p()) for r in rows]
     rating.season_drift(few, M())
     assert all("drift" not in r["p"]["cr_why"] for r in few)  # nobody with 10 games yet
+
+
+def test_sent_down_skater_with_no_games_left_still_rates(monkeypatch, tmp_path):
+    """A send-down with no games left this week moves nothing and must not break the run (handoffs 407, 412)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    news = {"fetched": "2099-01-01T00:00Z", "recent": {str(i): [{"ts": "2099-01-01T00:00:00", "cat": "move", "f": ["down"]}] for i in range(1, 10)}}
+    for gl in (0, 3):
+        players = [espn(101, "Auston Matthews", "TOR", "C", games_left=gl), espn(103, "David Pastrnak", "BOS", "RW", games_left=gl)]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, dfo_news=news)
+        assert all(p.get("cr") is not None for p in players)

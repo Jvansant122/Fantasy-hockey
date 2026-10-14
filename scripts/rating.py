@@ -2632,7 +2632,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
-            if wk_why and (any(wk_news) or wk_down) and base_dress is not None:
+            if wk_why and wk_news and (any(wk_news) or wk_down) and base_dress is not None:  # no games left: nothing moved
                 why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "why": wk_why}  # handoffs 406-408
             if boost_wk is not None:
                 why["boost_week"] = round(boost_wk, 2)  # the 16-season boosted next-week dress shift (handoff 411)
