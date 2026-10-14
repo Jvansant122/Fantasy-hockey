@@ -255,6 +255,18 @@ def test_news_flags_for_the_week_dress():
     assert f("Out a couple weeks.")["tl"] == 14 and f("He is day-to-day.")["tl"] is None
 
 
+def test_week_flags_read_the_news_line_and_skip_false_returns():
+    """Handoffs 424 and 426: practice, skating and game-time flags from the details line only; "will return to the
+    sidelines" and "eligible to be activated" are not returns."""
+    f = lambda d, fd="": leads.news_flags({"details": d, "fantasyDetails": fd})
+    assert not f("Sanderson is day-to-day.", "He skated on his own Monday and is a game-time decision.")["skate"]
+    assert not f("Out.", "He was a full participant.")["full"] and not f("Out.", "Questionable.")["gtd"]
+    assert f("He skated on his own Monday.")["skate"]
+    assert not f("Demidov will return to the sidelines for 2-4 weeks.")["ret"]
+    assert not f("Van Riemsdyk is eligible to be activated Friday.")["ret"]
+    assert f("He will return Thursday.")["ret"] and f("He was activated off IR.")["ret"]
+
+
 def test_news_flags_season_level_and_indefinite_wording():
     """Findings 371: "until the playoffs", "end of the regular season", "won't return this season" are season-level;
     "out indefinitely" and "long-term" are their own flag, but long-term injured reserve is not."""
