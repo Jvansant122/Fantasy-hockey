@@ -158,7 +158,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 4  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 5  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
 NEWS_SURGERY_NEG = re.compile(r"\b(no|not|without|avoid(ed|s)?)\b|n't", re.I)
@@ -166,6 +166,42 @@ NEWS_SURGERY_NOT_NEEDED = re.compile(r"^\W*(is |was |will be )?(not|n't) (requir
 NEWS_DOWN = re.compile(r"(assigned|sent|reassigned|loaned|returned) (down )?to (the )?[A-Za-z .]*\(AHL\)|sent down|assigned to (the )?AHL"
                        r"|to the AHL|conditioning loan", re.I)
 NEWS_UP = re.compile(r"recalled|called up|call[- ]up|summoned", re.I)
+
+
+# the Week dress's wording (handoffs 406-408, hunt13/p_stage.py, p_week.py and hunt11b/news.py): each recent item keeps the
+# flags it matched, for NEWS_RECENT_DAYS
+NEWS_RECENT_DAYS = 45
+NEWS_WEEK = {k: re.compile(v, re.I) for k, v in {
+    "skate": r"skat(ed|ing|es) on (his|their) own|individual(ly)? skat|skated (before|after|prior)|on[- ]ice workout|back on the ice|returned to the ice",
+    "limited": r"no[- ]contact|non[- ]contact|limited (participant|practice|role)|red jersey|yellow jersey|regular jersey",
+    "full": r"full participant|practiced (in full|fully)|full[- ]contact|full practice|took part in (a )?(full )?practice|returned to practice|practiced (with|on) (the|his)",
+    "gtd": r"game[- ]time decision|questionable|probable|could return|may return|might return|possible return|hopeful",
+    "ret": r"will (return|play|be in the lineup|suit up|make his return|rejoin|draw back)|is expected to (return|play|rejoin)|activated"
+           r"|returns? to (the )?lineup|has been cleared|cleared to (play|return)|back in the lineup"
+           r"|full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice|no[- ]contact jersey|non-contact",
+    "dtd": r"day[- ]to[- ]day", "wtw": r"week[- ]to[- ]week", "mtm": r"month[- ]to[- ]month", "ltir": r"\bLTIR\b|long[- ]term injured reserve",
+    "out": r"will not|(will|'ll|to|expected to) miss|won.t play|will be out|is out|ruled out|sidelined|remains out|will sit|not expected to play",
+}.items()}
+NEWS_NUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "twelve": 12,
+            "a couple": 2, "a few": 3, "several": 4, "a": 1}
+_N = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|a couple|a few|several|a)"
+NEWS_TIMELINE = re.compile(_N + r"(?:\s*(?:-|to|or)\s*" + _N + r")?\s*(?:more\s+|additional\s+)?(day|week|month|game)s?", re.I)
+
+
+def news_timeline(text):
+    """The longest stated absence in days ("4-6 weeks" = 35, a game = 2.2 days), or None (hunt11b/news.py parse)."""
+    num = lambda w: float(w) if w.isdigit() else NEWS_NUM.get(w.lower())
+    days = None
+    for m in NEWS_TIMELINE.finditer(text):
+        a, b = num(m.group(1)), num(m.group(2)) if m.group(2) else None
+        if a is None:
+            continue
+        u = m.group(3).lower()
+        if u == "game" and re.search(r"(straight|consecutive|\d+th|missed)", text[max(0, m.start() - 20):m.end() + 15].lower()):
+            continue
+        v = (a if b is None else (a + b) / 2) * {"day": 1, "week": 7, "month": 30, "game": 2.2}[u]
+        days = v if days is None else max(days, v)
+    return days
 
 
 def news_wording(text, pat, neg=True):
@@ -197,7 +233,17 @@ def news_flags(item):
     cat = item.get("newsCategoryName")
     return {"season": bool(NEWS_SEASON_907.search(text)) or news_wording(text, NEWS_SEASON, neg=False),
             "surgery": news_surgery(text), "indefinite": news_wording(text, NEWS_INDEFINITE),
-            "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text))}
+            "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text)),
+            **{k: bool(r.search(text)) for k, r in NEWS_WEEK.items()}, "tl": news_timeline(text)}
+
+
+def recent_item(slug, ts, f):
+    """A stored recent item: its time, category and the flags it matched (the Week dress, handoffs 406-408)."""
+    keys = ("season", "indefinite", *NEWS_WEEK) if slug == "injuries" else ("down", "up")
+    item = {"ts": ts, "cat": "inj" if slug == "injuries" else "move", "f": sorted(k for k in keys if f[k])}
+    if slug == "injuries" and f["tl"] is not None:
+        item["tl"] = round(f["tl"], 1)
+    return item
 
 
 def load_news():
@@ -211,13 +257,15 @@ def load_news():
 def fetch_news(s, now_utc, stored=None):
     """Daily Faceoff's injury and roster-move news, newest page back to the newest item already stored (NEWS_DAYS on a
     first run). Returns {"injuries": {nhl id: {ts, season, surgery, indefinite, season_ts, indefinite_ts}}, "roster-moves":
-    {nhl id: {ts, down, up}}, "fetched"} with each player's latest item, pruned to NEWS_KEEP_DAYS. season_ts / indefinite_ts:
-    his latest item with that wording, so a later, milder item ("placed on LTIR") doesn't hide it (findings 371).
+    {nhl id: {ts, down, up}}, "recent": {nhl id: [{ts, cat, f, tl}]}, "fetched"} with each player's latest item, pruned to NEWS_KEEP_DAYS. season_ts / indefinite_ts:
+    his latest item with that wording, so a later, milder item ("placed on LTIR") doesn't hide it (findings 371). recent:
+    every item of the last NEWS_RECENT_DAYS with the Week dress's flags (recent_item; handoffs 406-408).
     Raises if a page can't be read."""
     stored = stored if stored is not None else load_news()
     if stored.get("version") != NEWS_VERSION:
         stored = {}
     out = {"fetched": now_utc.strftime("%Y-%m-%dT%H:%MZ"), "version": NEWS_VERSION}
+    recent = {pid: list(v) for pid, v in (stored.get("recent") or {}).items()}
     for slug, keys in (("injuries", ("season", "surgery", "indefinite")), ("roster-moves", ("down", "up"))):
         have = dict(stored.get(slug) or {})
         floor = (now_utc - timedelta(days=NEWS_DAYS)).strftime("%Y-%m-%dT%H:%M")
@@ -231,6 +279,9 @@ def fetch_news(s, now_utc, stored=None):
                 if not pid or not ts:
                     continue
                 f, old = news_flags(it), have.get(str(int(pid))) or {}
+                mine = recent.setdefault(str(int(pid)), [])
+                if not any(r["ts"] == ts and r["cat"] == ("inj" if slug == "injuries" else "move") for r in mine):
+                    mine.append(recent_item(slug, ts, f))
                 new = {"ts": ts, **{k: f[k] for k in keys}} if ts > old.get("ts", "") else dict(old)
                 if slug == "injuries":
                     for k in ("season", "indefinite"):
@@ -243,6 +294,9 @@ def fetch_news(s, now_utc, stored=None):
             time.sleep(0.2)
         keep = (now_utc - timedelta(days=NEWS_KEEP_DAYS)).strftime("%Y-%m-%dT%H:%M")
         out[slug] = {k: v for k, v in sorted(have.items()) if v["ts"] >= keep}
+    keep = (now_utc - timedelta(days=NEWS_RECENT_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    out["recent"] = {pid: sorted((r for r in v if r["ts"] >= keep), key=lambda r: (r["ts"], r["cat"]))
+                     for pid, v in sorted(recent.items()) if any(r["ts"] >= keep for r in v)}
     return out
 
 

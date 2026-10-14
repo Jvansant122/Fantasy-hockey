@@ -494,6 +494,16 @@ function why(p) {
       win_run: "his team has won 3+ straight, and coaches tend to keep a winning lineup" };
     parts.push(`${form.why.map(k => FORM_TXT[k]).filter(Boolean).join("; ")} (${Math.round(form.shift * 100)} pts on his chance to play each game this week)`);
   }
+  // Daily Faceoff news since his last game, on this week's chance to play (handoffs 406-408)
+  const wkn = p.cr_why?.week_news;
+  if (wkn) {
+    const WKN_TXT = { "practising": "Daily Faceoff says he is practising", "skating": "Daily Faceoff says he is skating",
+      "could return": "Daily Faceoff says he could return", "set to return": "Daily Faceoff's latest says he will return",
+      "long absence": "Daily Faceoff describes a long absence", "sent down": "Daily Faceoff reports him sent down",
+      "hurt since": "Daily Faceoff says he is out since his last game", "day-to-day since": "Daily Faceoff lists him day-to-day since his last game" };
+    const txt = wkn.why.map(k => WKN_TXT[k]).filter(Boolean).join("; ");
+    if (txt) parts.push(`${txt} (${wkn.shift > 0 ? "more" : "less"} likely to play this week)`);
+  }
   if (p.cr_why?.displaced) parts.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);

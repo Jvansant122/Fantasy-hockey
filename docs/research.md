@@ -1057,6 +1057,10 @@ The chance a skater dresses for each game this week now also listens to a booste
 
 Two small injury-note fixes went with it: "no surgery required" and "won't need surgery" no longer count as surgery, and "healthy", "ready" or "back in time for the playoffs" no longer reads as season-ending.
 
+## 145. This week's Daily Faceoff news in the chance to play
+
+Daily Faceoff's injury and roster news already fed the Season rating; now it also moves each player's chance to dress for this week's games. For a player who missed his team's last game, news since then that he is practising (fully or in a no-contact jersey) raises his chance sharply, and while he is practising ESPN's OUT or IR status is capped like day-to-day instead. Skating on his own, "game-time decision" or "could return", and a latest note saying he will return each raise it a little; week-to-week, long-absence wording, and a stated timeline running a week or more past the game lower it. A player sent down to the AHL in his latest roster move is much less likely to play, even if he dressed last game. And a player who dressed last game but has since been reported out or day-to-day, before ESPN has posted a status, is marked down until ESPN catches up. On 2024-26 replays, fit on one season and scored on the other, this cut the error on out-now players' games by 5.2% and 5.8%, and on all games by 2.1% and 2.6%. The news is applied after the 16-season weekly model (section 144), which can't see it.
+
 ## What the independent review changed
 
 | Review point | Outcome |

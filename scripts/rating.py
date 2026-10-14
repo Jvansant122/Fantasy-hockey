@@ -240,6 +240,11 @@ ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
 # the Season dress logit moves BOOST_DRESS_W of the way to the boosted one, and the Season FP/G gains
 # (boosted - FP/G) x (a + b g). The ESPN weights above were refitted jointly with these, leaving one season out over 2021-26
 BOOST_DRESS_W = 0.56
+# Week dress logit shifts from Daily Faceoff news since his last game (handoffs 406-408, ideas 1137-1139, findings 400;
+# hunt13/p_week*.py: Brier on out-now player-games -5.2% / -5.8% in 2024-25 / 2025-26, all rows -2.1% / -2.6% with 407-408)
+WEEK_NEWS = {"practice": 1.8, "skate": 0.5, "gtd": 0.7, "ret": 0.5, "dtd": 0.3, "wtw": -0.17, "long": -0.7, "timeline": -0.3,
+             "down_out": -1.1, "down_in": -1.4, "hurt_out": -2.1, "hurt_dtd": -1.9}
+WEEK_NEWS_TIMELINE_DAYS = 7
 # the Week's per-game dress logits move BOOST_WEEK_W x (logit(b) - logit(mean of his per-game chances)), b = a 16-season
 # boosted next-week dress share (model/season_boost_week.json) clipped to BOOST_WEEK_CLIP, after the other per-game shifts
 # (handoff 411, idea 1142: Brier -2.0% / -6.1% in 2024-25 / 2025-26)
@@ -1519,6 +1524,52 @@ def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
     return z, why
 
 
+def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
+    """Per-game Week dress logit shifts from Daily Faceoff items since his last game (posted after 03:00 UTC on its date, as
+    in the research), whether he is practising (his OUT / IR cap becomes day-to-day's), and labels for the why panel.
+    Out now (handoff 406): practising, skating, could-return, return / day-to-day / week-to-week, long wording and a stated
+    timeline running 7+ days past the game. Sent down by his latest roster move (407). Dressed last game, no ESPN status,
+    and news since says he is out or day-to-day (408)."""
+    items = ((news or {}).get("recent") or {}).get(str(nhl_id)) if nhl_id and last_game else None
+    since = f"{last_game[:10]}T03:00" if last_game else ""
+    items = [r for r in items or () if r["ts"] > since]
+    inj = [r for r in items if r["cat"] == "inj"]
+    moves = [r for r in items if r["cat"] == "move"]
+    shifts, why, practising = [0.0] * len(game_dates), [], False
+    any_f = lambda k: any(k in r["f"] for r in inj)
+    z = 0.0
+    if sat_last and inj:
+        practising = any_f("full") or any_f("limited")
+        if practising:
+            z += WEEK_NEWS["practice"]; why.append("practising")
+        elif any_f("skate"):
+            z += WEEK_NEWS["skate"]; why.append("skating")
+        if any_f("gtd"):
+            z += WEEK_NEWS["gtd"]; why.append("could return")
+        if "ret" in inj[-1]["f"]:
+            z += WEEK_NEWS["ret"]; why.append("set to return")
+        if any_f("dtd"):
+            z += WEEK_NEWS["dtd"]
+        if any_f("wtw"):
+            z += WEEK_NEWS["wtw"]
+        if any_f("season") or any_f("indefinite") or any_f("ltir") or any_f("mtm"):
+            z += WEEK_NEWS["long"]; why.append("long absence")
+        tl = [r["tl"] for r in inj if r.get("tl") is not None]
+        if tl:
+            first = date.fromisoformat(inj[0]["ts"][:10])
+            for k, d in enumerate(game_dates):
+                if max(tl) - (date.fromisoformat(d) - first).days >= WEEK_NEWS_TIMELINE_DAYS:
+                    shifts[k] += WEEK_NEWS["timeline"]
+    if moves and "down" in moves[-1]["f"] and "up" not in moves[-1]["f"]:
+        z += WEEK_NEWS["down_out" if sat_last else "down_in"]; why.append("sent down")
+    elif not sat_last and not espn_status and inj:
+        if any_f("out"):
+            z += WEEK_NEWS["hurt_out"]; why.append("hurt since")
+        elif any_f("dtd"):
+            z += WEEK_NEWS["hurt_dtd"]; why.append("day-to-day since")
+    return [x + z for x in shifts], practising, why
+
+
 def season_dress_features(games, team, team_games, f, dress_f, prev, fpg, markov, played=None):
     """Inputs for the rest-of-season P(dresses) logistic: next week's lineup features plus last season's games, ice time,
     games left, and a lineup chain (drop-out rate since joining the team, league return curve by games missed).
@@ -2457,8 +2508,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 injury_log.append({"date": today.isoformat(), "espn_id": p["id"], "nhl_id": pid, "name": p["name"],
                                    "status": p["injury"], "long_note": bool(note and note["long"]),
                                    "p_dress_table": round(p_dress, 3), "p_dress": round(min(p_dress, inj), 3)})
-            p_dress = min(p_dress, inj)
+            # Daily Faceoff news since his last game, per remaining game (handoffs 406-408)
             gn = p["games_left"]
+            wk_dates = [d for d in sched.get(espn_team, []) if d >= today.isoformat()][-gn:] if gn else []
+            wk_dates = (wk_dates + wk_dates[-1:] * gn)[:gn] if wk_dates else [today.isoformat()] * gn
+            wk_news, practising, wk_why = week_news_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sat_last,
+                                                          p.get("injury"), wk_dates)
+            if practising and p.get("injury") in ("OUT", "INJURY_RESERVE") and not (note and note["long"]):
+                inj = max(inj, SKATER_INJURY_CAP["DAY_TO_DAY"])  # practising: day-to-day's cap (handoff 406)
+            p_dress = min(p_dress, inj)
             # sat the last game, but Daily Faceoff's projected lines have him: 14 of 14 dressed next time (findings 174)
             in_lines = sat_last and not p.get("injury") and p.get("dfo_out") is False
             # straight team games he has missed (any reason), for the long-scratch turn and the win-run shift
@@ -2497,6 +2555,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
                     per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + boost_wk))), cap, inj)
                                 for q in per_game]
+            # the news shifts go on after the boosted model, which can't see them and would otherwise pull 80% of them back
+            # toward its share (handoffs 406-408)
+            if per_game and any(wk_news) and base_dress is not None:
+                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), cap, inj) for q, z in zip(per_game, wk_news)]
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
@@ -2519,6 +2581,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
+            if wk_why and any(wk_news) and base_dress is not None:
+                why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news), 2), "why": wk_why}  # handoffs 406-408
             if boost_wk is not None:
                 why["boost_week"] = round(boost_wk, 2)  # the 16-season boosted next-week dress shift (handoff 411)
             if why_form:
