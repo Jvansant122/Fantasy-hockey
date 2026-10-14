@@ -72,6 +72,9 @@
   tr.why td { position: static; text-align: left; white-space: normal; color: var(--muted); font-size: 12px; background: var(--chip); box-shadow: none; }
   .meta { display: none; color: var(--muted); font-size: 11px; }
   .tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--chip); color: var(--muted); margin-left: 4px; }
+  /* a name with several tags (a waiver goalie who sits tonight) may wrap its tags rather than widen the table past 1366 px */
+  td:first-child .tags { white-space: normal; }
+  td:first-child .tag { display: inline-block; white-space: nowrap; }
   .tag.inj { color: var(--warn); }
   .tag.wv { color: var(--accent); }
   .tag.news { color: var(--accent); }
@@ -478,6 +481,15 @@ function why(p) {
   if (p.cr_why?.pp_d_out) parts.push(`top power-play defenseman ${p.cr_why.pp_d_out} is out: more power-play time (+0.15 pts/game this week)`);
   if (p.cr_why?.newcomer) parts.push(`His team just added ${p.cr_why.newcomer} at his position, so he may sit (he had the least ice time at his position last game)`);
   if (p.cr_why?.d_departed) parts.push(`${p.cr_why.d_departed} has left his team's defense, so he is more likely back in the lineup`);
+  // team form and depth D (handoffs 340-342, 346): each reason that moved this week's dress chance
+  const form = p.cr_why?.form;
+  if (form) {
+    const FORM_TXT = { slump: "his team has gone 4+ games without a win, and depth players like him sit more then",
+      blowout: "his team lost its last game by 4+ goals, and depth players like him sit more after that",
+      depth_d: "defensemen on his minutes sit more often than their record says",
+      win_run: "his team has won 3+ straight, and coaches tend to keep a winning lineup" };
+    parts.push(`${form.why.map(k => FORM_TXT[k]).filter(Boolean).join("; ")} (${Math.round(form.shift * 100)} pts on his chance to play each game this week)`);
+  }
   if (p.cr_why?.displaced) parts.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);

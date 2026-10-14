@@ -1039,6 +1039,10 @@ When a team adds a skater by trade or waiver claim, its least-used skater at his
 
 The no. 1 goalie's small dip on the first night of a back-to-back now applies to every such night still ahead this week, not only when it is his team's next game. Before, a later first night got no adjustment at all and read his start chance at 0.61 when it has really been 0.56 (1,242 games, 2021-26). On the site's own code, start forecasts for games after the next one get 0.11% more accurate, better in 4 of 5 seasons, and the next game is unchanged. The bump for a skater on his team's last healthy-scratch list is now split by position: +0.3 for forwards and +0.65 for defensemen, in place of +0.5 for both. Scratched defensemen were dressing more often than predicted and scratched forwards less, in both of the last two seasons, and the split makes those forecasts about 0.5% more accurate in each.
 
+## 141. Lineups after slumps, blowouts and win streaks, and depth defensemen
+
+Coaches change lineups when results go wrong, and they keep a lineup that wins. A team's depth skaters, meaning healthy players who dressed last game on under 13 minutes (forwards) or 16 minutes (defensemen), now have a lower chance to play each game this week after the team has gone 4 or more games without a win: 3 points lower for forwards and 6.5 for defensemen. After a loss by 4 or more goals the drop is 7 points instead (the larger of the two, not both). When a team has won 3 or more straight, its skaters who have missed the last 1-4 games are 4.5 points less likely to get back in. Separately, defensemen who played under 14 minutes last game dress less than the lineup model expected (72% against 77%), so they drop 5 points, and 2.5 points at 14-16 minutes. These shifts stack. On a game-by-game replay of the last two seasons, each one made those games' forecasts more accurate in both seasons: by 2.4% for slumps, 5.5% after blowouts, 2.8% for win streaks and about 1.1% for depth defensemen.
+
 ## What the independent review changed
 
 | Review point | Outcome |

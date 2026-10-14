@@ -1919,3 +1919,28 @@ def test_open_lineup_spots_lift_depth_players():
     z = math.log(0.8 / 0.2) + 2.84 * -2.4 / 3 * 0.2
     assert full[0]["p"]["cr_season"] == round(2.0 / (1 + math.exp(-z)), 2) < 1.6
     assert "cr_season" not in few[0]["p"] and thin[0]["p"]["proj_gp"] == round(5 + 1 / (1 + math.exp(-math.log(1.5) - 1.34 * 1.6 * 0.4)) * 70)
+
+
+def test_team_form_streaks_and_margin():
+    """Straight non-wins and wins, latest first, and the last game's margin from both teams' goalie rows (findings 281-283)."""
+    row = lambda team, game, date, win, ga: {"team": team, "game": game, "date": date, "wins": win, "ga": ga, "started": 1}
+    games = [row("TOR", 1, "2026-10-08", 1, 2), row("BOS", 1, "2026-10-08", 0, 3),
+             row("TOR", 2, "2026-10-10", 0, 6), row("BOS", 2, "2026-10-10", 1, 1),
+             row("TOR", 3, "2026-10-12", 0, 5), row("TOR", 3, "2026-10-12", 0, 1), row("BOS", 3, "2026-10-12", 1, 1)]
+    form = rating.team_form(games)
+    assert form["TOR"] == (2, 0, -5)  # two losses since the win; lost the last 1-6 (two TOR goalies)
+    assert form["BOS"] == (0, 2, 5)
+
+
+def test_form_shift_stacks_as_handoff_344_says():
+    # slump and blowout don't stack: the larger drop; depth D adds its own; win run only for skaters out 1-4 games
+    assert rating.form_shift("F", 10.0, 0, (4, 0, -1)) == (rating.SLUMP_DEPTH["F"], ["slump"])
+    assert rating.form_shift("F", 10.0, 0, (5, 0, -4)) == (rating.BLOWOUT_DEPTH, ["blowout"])
+    shift, why = rating.form_shift("D", 13.0, 0, (4, 0, -1))
+    assert why == ["slump", "depth_d"] and shift == pytest.approx(rating.SLUMP_DEPTH["D"] + rating.DEPTH_D_SHIFT[0][1])
+    assert rating.form_shift("D", 15.0, 0, None) == (rating.DEPTH_D_SHIFT[1][1], ["depth_d"])
+    assert rating.form_shift("F", 15.0, 0, (6, 0, -6)) == (0.0, [])  # a regular: no depth shift
+    assert rating.form_shift("D", 17.0, 0, (6, 0, -6)) == (0.0, [])
+    assert rating.form_shift("F", None, 2, (0, 3, 2)) == (rating.WIN_RUN_OUT, ["win_run"])
+    assert rating.form_shift("F", None, 5, (0, 3, 2)) == (0.0, [])  # out 5+: not a lineup choice
+    assert rating.form_shift("F", None, 2, (0, 2, 2)) == (0.0, [])
