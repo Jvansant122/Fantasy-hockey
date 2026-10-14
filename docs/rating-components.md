@@ -280,6 +280,26 @@ These cards use the rating; none of them change it. All are for the team picked 
 
 **No moves left:** when your team has used all its moves, the add cards say "No moves left this matchup; these are next Monday's targets" and rank free agents by 7 × Season, waiver players who clear before Monday are dropped from the list, the stream card is hidden, and the Goalies card says to stream from next Monday.
 
+## 12. Predicted winners tab
+
+A second tab on the page (Jack's ask, Oct 14 2026; `scripts/winners.py`, findings 450-451). It changes no rating.
+
+**NHL games.** Each game this week gets the home team's win chance from a logistic model on home minus away:
+
+| Input | How it's built | Coefficient |
+| --- | --- | --- |
+| Lineup points | Sum over the team's NHL roster skaters of points per game (this season shrunk 40 games toward last season's; a depth skater's rate without 10 games last season) × the site's chance he dresses, scaled to 12 F and 6 D; depth players ESPN doesn't list get 0.85 / 0.4 / 0.1 by whether they played the team's last game, one of its last five, or neither | 0.178 per point |
+| Goal differential | The goalie model's team strength: goal differential per game, shrunk over 15 games toward half of last season's | 0.351 per goal |
+| Goalie | The starter's shrunk save% (the goalie model's), weighted by each goalie's chance to start that night, × 30 shots | 0.027 per goal saved |
+| Back-to-backs | Played the day before | home -0.296, away +0.349 |
+| Home ice | Intercept | 0.118 |
+
+Fit on 6,560 games 2021-26, scored leave one season out: 60.0% right and log loss 0.662, against 53.7% and 0.691 for always picking the home team and 59.0% and 0.667 for goal differential alone. On the 1,651 games with archived closing moneylines (2021-22, 2022-23 to Nov 27) it was right 63.2% (log loss 0.649) against the betting favourite's 63.1% (0.648); its chances correlate 0.92 with the market's. Calibrated within 2 points in every band from 30% to 75%. The backtest used the actual dressed skaters and starter; on the site they're expected values, which Daily Faceoff confirms for nearly every game on the day.
+
+Once a game starts its pick is frozen at the last pre-game value (`winners.freeze` reads the published file), so the week's record ("7 of 11 right") counts only real picks. Tonight's betting line is shown next to the pick for reference; it is not an input.
+
+**Fantasy matchups.** Each league matchup: ESPN's points so far plus each roster's rest-of-week projection, filling the best lineup each night (9 F, 5 D, UTL, 2 G, IR left out) from the Week ratings (a skater's Week spread evenly over his nights left, a goalie's start chance by night × his points per start). The win chance assumes independent nights with a spread per player-game of 0.4 + 0.5 × FP per dressed game for skaters and 3.33 per goalie start (2021-26 player-games). Not backtested (no past league weeks); graded from the logs as the season goes.
+
 ## Built but switched off
 
 A news hook (`data/news.json`) can adjust up to 25 players' games, starts or points per game (capped at ±20%). No news file is published, so it changes nothing today. Daily Faceoff covers the goalie case, which is where news was worth the most.

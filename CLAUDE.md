@@ -8,6 +8,7 @@ A one-page site (GitHub Pages) that ranks free agents in Jack's ESPN fantasy hoc
 - `scripts/fetch.py` - ESPN league, rosters, free agents and schedule -> `data/players.json`. Calls `rating.add_ratings` and `leads`.
 - `scripts/rating.py` - the Claude Rating (NHL stats API + MoneyPuck). Weights in `model/rating_model.json`.
 - `scripts/leads.py` - Daily Faceoff starting goalies (used by the rating), Daily Faceoff injury and call-up news for the Season rating (`data/dfo_news.json`), and the day-of log in `data/log/`.
+- `scripts/winners.py` - the Predicted winners tab: each NHL game's win chance rolled up from the player projections (lineup points x chance to dress, starter save%, goal differential, back-to-backs) with picks frozen at puck drop, and each fantasy matchup's win chance from ESPN's points so far plus the Week ratings. Written into `players.json` as `winners`.
 - `scripts/season_boost.py` - the Season rating's two boosted models (trained on 16 seasons): rebuilds their inputs from the run's NHL data and walks the trees in `model/season_boost_*.json` in plain Python.
 - `model/train_boost.py` - refits `model/season_boost_dress.json` and `season_boost_fpg.json` offline from the research's 16-season panel in `/mnt/project-files/research/claude-rating/hunt11b/data` (pandas, scikit-learn). The JSON is committed; the daily run only reads it.
 - `model/train.py` - refits `model/rating_model.json` from the research data in `/mnt/project-files/research/claude-rating` (needs pandas, scikit-learn, pyarrow).
