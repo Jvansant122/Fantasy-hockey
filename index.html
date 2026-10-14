@@ -72,6 +72,9 @@
   tr.why td { position: static; text-align: left; white-space: normal; color: var(--muted); font-size: 12px; background: var(--chip); box-shadow: none; }
   .meta { display: none; color: var(--muted); font-size: 11px; }
   .tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--chip); color: var(--muted); margin-left: 4px; }
+  /* a name with several tags (a waiver goalie who sits tonight) may wrap its tags rather than widen the table past 1366 px */
+  td:first-child .tags { white-space: normal; }
+  td:first-child .tag { display: inline-block; white-space: nowrap; }
   .tag.inj { color: var(--warn); }
   .tag.wv { color: var(--accent); }
   .tag.news { color: var(--accent); }
