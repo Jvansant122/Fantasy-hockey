@@ -2028,3 +2028,22 @@ def test_week_model_news_inputs_from_the_latest_injury_item():
     assert old["inj_after"] == 0 and old["inj_out"] == 0 and old["inj_age"] is None and old["inj_rem"] is None
     assert season_boost.news_inputs(None, "2026-10-11", now)["inj_after"] == 0
     assert set(season_boost.load("week")["features"]) >= set(x)
+
+
+def test_season_drift_moves_a_group_whose_scoring_runs_ahead_of_its_season_rating():
+    """Handoff 405: forwards outscoring their Season FP/G more than everyone else get half the gap, defensemen the rest."""
+    class M:
+        def season_range(self, season, *a):
+            return [round(season * 0.8, 2), round(season * 1.2, 2)], "veteran"
+    p = lambda: {"cr_why": {}}
+    rows = [{"p": p(), "D": False, "pts": 2.0, "share": 0.9, "fp": [3.0] * 12, "range": (False, 80, 80, 25), "lineup": None},
+            {"p": p(), "D": True, "pts": 1.0, "share": 0.9, "fp": [1.0] * 12, "range": (True, 80, 80, 25), "lineup": {"pts": 1.0}},
+            {"p": p(), "D": False, "pts": 1.5, "share": 0.5, "fp": [1.0] * 4, "range": (False, 0, 0, 20), "lineup": None}]  # under 10 GP
+    rating.season_drift(rows, M())
+    # e_std = e_l10: F +1.0 (12 GP), D 0.0 (12 GP), all +0.5; F drift +0.5, D -0.5; half of each
+    assert rows[0]["p"]["cr_why"]["season_pts"] == 2.25 and rows[0]["p"]["cr_season"] == round(0.9 * 2.25, 2)
+    assert rows[1]["p"]["cr_why"]["drift"] == -0.25 and rows[1]["lineup"]["pts"] == 0.75
+    assert rows[2]["p"]["cr_why"]["season_pts"] == 1.75  # every forward moves, whatever his games
+    few = [dict(r, fp=r["fp"][:5], p=p()) for r in rows]
+    rating.season_drift(few, M())
+    assert all("drift" not in r["p"]["cr_why"] for r in few)  # nobody with 10 games yet

@@ -245,6 +245,8 @@ BOOST_DRESS_W = 0.56
 WEEK_NEWS = {"practice": 1.8, "skate": 0.5, "gtd": 0.7, "ret": 0.5, "dtd": 0.3, "wtw": -0.17, "long": -0.7, "timeline": -0.3,
              "down_out": -1.1, "down_in": -1.4, "hurt_out": -2.1, "hurt_dtd": -1.9}
 WEEK_NEWS_TIMELINE_DAYS = 7
+# league-wide F/D scoring drift into the Season FP/G (handoff 405, idea 1118: +0.0002 full board, +0.0005 free agents)
+DRIFT_W, DRIFT_MIN_GP = 0.5, 10
 # the Week's per-game dress logits move BOOST_WEEK_W x (logit(b) - logit(mean of his per-game chances)), b = a 16-season
 # boosted next-week dress share (model/season_boost_week.json) clipped to BOOST_WEEK_CLIP, after the other per-game shifts
 # and the news terms (handoffs 411-414, ideas 1142, 1161-1168: with its injury-news inputs and 406-408, Brier -5.1% / -9.6%
@@ -1528,6 +1530,42 @@ def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
     return z, why
 
 
+def season_drift(rows, model):
+    """Handoff 405 (idea 1118, findings 400; hunt13/season/s26.py, drift.py): a league-wide shift in forward or defenseman
+    scoring this season. Over skaters with DRIFT_MIN_GP+ games: e_std = season-to-date FP/G - Season FP/G (weight GP) and
+    e_l10 = last-10 FP/G - Season FP/G (weight min(GP, 10)); for F and D, gap = the group's weighted mean minus everyone's,
+    drift = (gap_std + gap_l10) / 2. Every skater in the group gets Season FP/G max(fp + DRIFT_W x drift, 0.05) before his
+    share; Week untouched. rows: [{p, D, pts, share, fp, range, lineup}]."""
+    sums = {}
+    for r in rows:
+        n = len(r["fp"])
+        if n < DRIFT_MIN_GP:
+            continue
+        e_std, e_l10 = sum(r["fp"]) / n - r["pts"], sum(r["fp"][-10:]) / 10 - r["pts"]
+        for key in (r["D"], "all"):
+            t = sums.setdefault(key, [0.0, 0.0, 0.0, 0.0])
+            t[0] += e_std * n; t[1] += n; t[2] += e_l10 * 10; t[3] += 10
+    if "all" not in sums:
+        return
+    mean = lambda t, i: t[i] / t[i + 1] if t[i + 1] else 0.0
+    drift = {g: (mean(sums[g], 0) - mean(sums["all"], 0) + mean(sums[g], 2) - mean(sums["all"], 2)) / 2 if g in sums else 0.0
+             for g in (False, True)}
+    for r in rows:
+        if not drift[r["D"]]:
+            continue
+        p, why = r["p"], r["p"]["cr_why"]
+        pts = max(r["pts"] + DRIFT_W * drift[r["D"]], 0.05)
+        season = r["share"] * pts
+        p["cr_season"] = round(season, 2)
+        why["season_pts"] = round(pts, 2)
+        why["drift"] = round(DRIFT_W * drift[r["D"]], 3)
+        if r["lineup"]:
+            r["lineup"]["pts"] = pts
+        rng, _ = model.season_range(season, *r["range"])
+        if rng:
+            why["season_range"] = rng
+
+
 def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
     """Per-game Week dress logit shifts from Daily Faceoff items since his last game (posted after 03:00 UTC on its date, as
     in the research), whether he is practising (his OUT / IR cap becomes day-to-day's), and labels for the why panel.
@@ -2288,6 +2326,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
 
     unmatched = 0
     lineup = []  # skaters with games this season, for the lineup-slot step (findings 370)
+    drift_rows = []  # every skater's Season FP/G, for the league-wide scoring drift (handoff 405)
     injury_log = []
     for p in players:
         pid = match(p)
@@ -2621,6 +2660,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                "pts": season_pts, "gp": len(gl), "left": max(SEASON_GAMES - len(team_games.get(espn_team, [])), 0),
                                "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
                                          (today - births[pid]).days / 365.25 if pid in births else None)})
+            if pid and season_pts is not None:  # the league-wide F/D scoring drift, once every Season FP/G is known (handoff 405)
+                drift_rows.append({"p": p, "D": p["pos"] == "D", "pts": season_pts, "share": rest_share, "fp": [g["fp"] for g in gl],
+                                   "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
+                                             (today - births[pid]).days / 365.25 if pid in births else None),
+                                   "lineup": lineup[-1] if gl else None})
             if rng:
                 why["season_range"] = rng
                 if exp != "veteran":
@@ -2641,6 +2685,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if n:
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
 
+    season_drift(drift_rows, model)
     lineup_slack(lineup, boost_x, boost_dress, model)
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)

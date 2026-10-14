@@ -125,7 +125,8 @@
     td:first-child .tags .tag:not(.own) { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
     .tags .tag:first-child { margin-left: 0; }
     .pct { margin-left: 2px; padding: 1px 4px; }
-    td:nth-child(5) .pct { display: none; }
+    /* no Season percentile on phones: Season is the 3rd cell, or the 5th with All columns (handoff 417) */
+    body:not(.allcols) td:nth-child(3) .pct, body.allcols td:nth-child(5) .pct { display: none; }
     .night .open { font-size: 12px; letter-spacing: -.02em; }
     .tag { margin-left: 2px; padding: 1px 4px; }
     select, input[type=search], input[type=number] { min-height: 44px; }
@@ -276,8 +277,8 @@ function weekOver(d) {
   // ESPN rolls to the new matchup at about 3:10-3:40 AM ET, so until 4 AM Monday the old matchup's moves still count (findings 233)
   return end < new Date(Date.now() - 4 * 3600e3).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 }
-// the update workflow's runs, ET (CLAUDE.md): about 6 AM, 9 AM, 12:40 PM and 5 PM
-const RUNS = [[6, 0], [9, 0], [12, 40], [17, 0]];
+// the update workflow's runs, ET (CLAUDE.md): new numbers are up about 6:10 AM, 9:10 AM, 12:40 PM and 5:10 PM
+const RUNS = [[6, 10], [9, 10], [12, 40], [17, 10]];
 function nextRun(now = new Date()) {
   const [h, m] = now.toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour12: false }).split(":").map(Number);
   const [rh, rm] = RUNS.find(([rh, rm]) => rh * 60 + rm > (h % 24) * 60 + m) || RUNS[0];
@@ -351,6 +352,9 @@ function keep(p) { return state.data.rated && !state.data.final_matchup ? p.cr +
 
 // a goalie already in net still fills his slot: started() zeroes his p_today, so use the one from before (findings 183, 213)
 // after his game starts, the same sources as before it: a confirmed starter, else the site's own chance (findings 213)
+// Daily Faceoff's tonight news shows only for today's data and a team that plays tonight: overnight data's "tonight" was
+// yesterday, and a waiver goalie can keep a tag for a night his team doesn't play (handoff 419)
+const dfoTonight = p => !!p.cr_why?.tonight && !started(p) && !stale(state.data) && p.nights.includes(state.data.nights.find(n => !n.past)?.sp);
 const startsTonight = p => p.cr_why?.tonight?.status === "Confirmed" ? !!p.cr_why.tonight.starting
   : ((started(p) ? p.cr_why?.p_today_pre : p.cr_why?.p_today) ?? 0) > 0.5;
 // a goalie fills a G slot on a night by his chance to start it, not just because his team plays (findings 236):
@@ -436,8 +440,8 @@ function why(p) {
     parts.push(`Expected starts ${w.exp_starts == null ? "–" : (+w.exp_starts).toFixed(2)} of ${w.team_games} team games left`);
     if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last ${w.n10 ?? 10}`);
     // once his team's game starts, tonight is out of the numbers, so the tonight notes go too (findings 232)
-    if (started(p)) parts.push("tonight's game has started");
-    else if (w.tonight) parts.push(`Daily Faceoff: ${w.tonight.starting ? "starting" : "not starting"} tonight (${w.tonight.status === "Confirmed" ? "confirmed, counted as certain" : w.tonight.status.toLowerCase() + ", not yet counted"})`);
+    if (started(p)) parts.push(stale(state.data) ? "last night's game is already out of the numbers" : "tonight's game has started");
+    else if (dfoTonight(p)) parts.push(`Daily Faceoff: ${w.tonight.starting ? "starting" : "not starting"} tonight (${w.tonight.status === "Confirmed" ? (p.owner === "waivers" ? "confirmed" : "confirmed, counted as certain") : w.tonight.status.toLowerCase() + ", not yet counted"})`);
     if (w.sched != null && Math.abs(w.sched) >= 0.1) parts.push(`${w.sched > 0 ? "soft" : "tough"} schedule the rest of the week: ${w.sched > 0 ? "+" : "−"}${Math.abs(w.sched).toFixed(1)} pts per start from opponents and home ice`);
     if (w.line && !started(p)) parts.push(`tonight's betting line gives his team a ${Math.round(w.line.win_prob * 100)}% chance to win, worth ${w.line.pps.toFixed(1)} pts if he starts`);
     // his own number before tonight's line and the schedule, then what this week's starts are priced at (findings 232)
@@ -450,9 +454,11 @@ function why(p) {
   } else {
     parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
     // a player yet to play takes a fixed share of the rest, which isn't "no injury discount" when he was hurt (findings 232)
+    // nor when Daily Faceoff news cut his share (handoff 420)
+    const newsCut = (w.season_news || []).some(k => k !== "called up");
     if (p.cr_season != null) parts.push(`Season: ${n(p.cr_season)} pts per team game ` + (w.season_share != null
       ? `(expects him in about ${Math.round(w.season_share * 100)}% of the rest: ${p.injury ? "hurt before his first game" : "yet to play this season"})`
-      : "(no injury discount)") + (w.age_adj ? `; ${w.age_adj > 0 ? "+" : ""}${w.age_adj.toFixed(2)} pts/game for age: ${w.age_adj > 0
+      : newsCut ? "(share cut by the Daily Faceoff news below)" : "(no injury discount)") + (w.age_adj ? `; ${w.age_adj > 0 ? "+" : ""}${w.age_adj.toFixed(2)} pts/game for age: ${w.age_adj > 0
       ? "young players tend to improve through the season" : "players over 30 tend to fade through the season"}` : "") + seasonRange(w));
     // Daily Faceoff news lowers or raises his Season share (findings 360 (1))
     const NEWS_TXT = {"sent down": "sent to the AHL since his last game", "called up": "called up recently and in the lineup",
@@ -460,7 +466,7 @@ function why(p) {
       "indefinite": "injury news says out indefinitely or long-term"};
     if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(p.proj_ppg)}); the pull fades as he plays games`);
     if (w.lineup_slack != null && Math.abs(w.lineup_slack) >= 0.5) parts.push(w.lineup_slack > 0
-      ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so his Season share goes up`
+      ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so his Season share goes up${newsCut ? " a little, which only partly offsets the news below" : ""}`
       : `His team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so his Season share goes down`);
     if (w.boost_dress != null || w.boost_fpg != null) parts.push(`A model trained on 16 seasons of game logs expects ` +
       [w.boost_dress != null ? `him in about ${Math.round(w.boost_dress * 100)}% of the rest of the season` : "",
@@ -468,7 +474,8 @@ function why(p) {
     if (w.season_news?.length) parts.push(`Season share uses Daily Faceoff news: ${w.season_news.map(k => NEWS_TXT[k] || k).join("; ")}`);
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");
-    if (w.last_fpg != null) parts.push(`${w.last_season || "last season"} ${n(w.last_fpg)} pts/game`);
+    // a rate from a few games says so (handoff 422); last_gp is last season's, so not for an older season's line
+    if (w.last_fpg != null) parts.push(`${w.last_season || "last season"} ${n(w.last_fpg)} pts/game` + (!w.last_season && p.last_gp > 0 && p.last_gp < 10 ? ` (${p.last_gp} GP)` : ""));
     if (w.xfp) parts.push(`${n(w.xfp.fpg)} pts/game this season vs ${n(w.xfp.xfpg)} expected from his chances` +
       (w.xfp.luck === "hot" ? ". Running hot: about three quarters of a gap like that usually fades within a month, though a few elite finishers beat their chances every year" :
        w.xfp.luck === "cold" ? ". Running cold: about three quarters of a gap like that usually comes back within a month" : ""));
@@ -492,7 +499,7 @@ function why(p) {
       depth_f: "forwards on his minutes sit more often than their record says",
       early: "early in the season, coaches shuffle their depth players more",
       win_run: "his team has won 3+ straight, and coaches tend to keep a winning lineup" };
-    parts.push(`${form.why.map(k => FORM_TXT[k]).filter(Boolean).join("; ")} (${Math.round(form.shift * 100)} pts on his chance to play each game this week)`);
+    parts.push(`${form.why.map(k => FORM_TXT[k]).filter(Boolean).join("; ")} (${form.shift >= 0 ? "+" : "−"}${Math.abs(Math.round(form.shift * 100))} percentage points on his chance to play each game this week)`);
   }
   // Daily Faceoff news since his last game, on this week's chance to play (handoffs 406-408)
   const wkn = p.cr_why?.week_news;
@@ -524,7 +531,7 @@ function cells(p) {
   const teamName = p.team_id != null && state.who === "every" && !onMyTeam(p) ? (state.teamNames[p.team_id] || "") : "";
   const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + wvTag(p) +
     (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
-    (p.cr_why?.tonight?.status === "Confirmed" && !started(p) ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
+    (p.cr_why?.tonight?.status === "Confirmed" && dfoTonight(p) ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
   const og = tOpen(p);
   return {
     name: `${esc(p.name)}${tags ? `<span class="tags">${tags}</span>` : ""}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
@@ -644,8 +651,10 @@ function renderUpgrades() {
   // ESPN holds an add made after the day's first puck until tomorrow (findings 179)
   const puck = d.first_start ? new Date(d.first_start) : null;
   const locked = !!puck && puck <= new Date() && !stale(d);
-  // after Sunday's first puck an add is charged to next matchup's moves (findings 290 (1)), as it is once ESPN has rolled over
-  const nextCount = lastNight && locked && !d.final_matchup;
+  // after Sunday's first puck an add is charged to next matchup's moves (findings 290 (1)), as it is once ESPN has rolled over;
+  // overnight data (Monday 0-4 AM) too, though it's stale: Sunday's puck has still passed (handoff 415)
+  const puckPassed = !!puck && puck <= new Date();
+  const nextCount = lastNight && puckPassed && !d.final_matchup;
   const cnt = nextCount || reset ? { limit: d.move_limit_next ?? d.move_limit, used: myTeam?.moves_used_next }
     : { limit: d.move_limit, used: myTeam?.moves_used };
   const noMoves = d.rated && cnt.limit && cnt.used != null && cnt.used >= cnt.limit;
@@ -688,7 +697,7 @@ function renderUpgrades() {
   const swapSubs = new Set(), swapDrops = new Set(), dropped = new Set();
   // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
   const realLeft = !noMoves && cnt.limit && cnt.used != null ? Math.max(0, cnt.limit - cnt.used) : null;
-  const nextWeek = noMoves || reset;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)
+  const nextWeek = noMoves || reset || nextCount;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.</span>
     ${outs.map(p => {
       // no more subs than moves left (findings 233), and none after the season's last move
@@ -804,7 +813,8 @@ function renderUpgrades() {
     // hold one move for each night still to come (injury swaps, goalie streams), so a team following the card makes about
     // 2 moves on Monday and keeps the rest, instead of 2 more at every update (findings 51, 59, 239)
     const nightsAfter = d.nights.filter(n => !n.past && n !== tonight && n.games > 0).length;  // nights without NHL games hold nothing (findings 291 (5))
-    const hold = lastCall ? 0 : Math.min(nightsAfter, (d.move_limit || 7) - 2);
+    // counting next matchup's moves, its whole week is still to come: hold all but 2 (handoff 416)
+    const hold = lastCall ? 0 : nextCount || reset ? Math.max(0, (cnt.limit || 7) - 2) : Math.min(nightsAfter, (d.move_limit || 7) - 2);
     spare = realLeft != null ? Math.max(0, realLeft - swapSubs.size - hold) : 2;
     // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
     const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);
@@ -894,7 +904,7 @@ function renderUpgrades() {
   }
   // once, at the top and never folded: no moves left means every add here is for next Monday (findings 233),
   // the next round in a playoff round's first week, or never in the final (findings 232)
-  if (nextCount && !noMoves) cards.unshift(`<div class="sub warn wvnote">Tonight's first game has started: an add now uses next week's moves${realLeft != null ? ` (${realLeft} of ${cnt.limit} left)` : ""} and plays from Monday.</div>`);
+  if (nextCount && !noMoves) cards.unshift(`<div class="sub warn wvnote">${stale(d) ? "Sunday's first game has started" : "Tonight's first game has started"}: an add now uses ${stale(d) ? "the new matchup's" : "next week's"} moves${realLeft != null ? ` (${realLeft} of ${cnt.limit} left)` : ""} and plays from ${stale(d) ? "today" : "Monday"}.</div>`);
   if (noMoves) cards.unshift(`<div class="sub warn wvnote">${d.final_matchup ? "No moves left, and the season ends with this matchup: nothing added now counts."
     : roundLeft ? "No moves left this round: the adds below are targets for the next round." : "No moves left this matchup: the adds below are next Monday's targets."}</div>`);
   $("upgrades").innerHTML = cards.join("");
@@ -954,9 +964,13 @@ function renderTrade() {
   const byName = (a, b) => a.name.localeCompare(b.name);
   const mineAll = d.players.filter(p => String(p.team_id) === state.team && !p.pending_drop);  // not a player already dropped (handoff 220)
   $("tgive").innerHTML = `<option value="">Add a player to give…</option>` + mineAll.filter(p => !state.tgive.includes(p.id)).sort(byName).map(opt).join("");
+  // ESPN trades are between two teams (handoff 418): once a player to get is picked, only his team's players can join him
+  const partner = state.tget.map(byId).find(Boolean)?.team_id;
+  if (partner != null) state.tget = state.tget.filter(id => String(byId(id)?.team_id) === String(partner));
   const others = [...new Set(d.players.filter(p => !isFA(p) && String(p.team_id) !== state.team).map(p => String(p.team_id)))]
+    .filter(t => partner == null || t === String(partner))
     .sort((a, b) => (state.teamNames[a] || "").localeCompare(state.teamNames[b] || ""));
-  $("tget").innerHTML = `<option value="">Add a player to get…</option>` + others.map(t => `<optgroup label="${esc(state.teamNames[t] || "Team")}">${
+  $("tget").innerHTML = `<option value="">${partner != null ? `Add another player from ${esc(state.teamNames[partner] || "his team")}…` : "Add a player to get…"}</option>` + others.map(t => `<optgroup label="${esc(state.teamNames[t] || "Team")}">${
     d.players.filter(p => String(p.team_id) === t && !p.pending_drop && !state.tget.includes(p.id)).sort(byName).map(opt).join("")}</optgroup>`).join("");
   const give = state.tgive.map(byId).filter(Boolean), get = state.tget.map(byId).filter(Boolean);
   const list = (ps, side) => ps.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.pos)} ${esc(p.team)} · Season ${p.cr_season != null ? p.cr_season.toFixed(2) : "–"} · ESPN ${p.proj_ppg != null ? p.proj_ppg.toFixed(2) : "–"}</span><button data-rm="${side}:${p.id}" aria-label="Remove ${esc(p.name)}">×</button></div>`).join("") || '<div class="sub">nobody yet</div>';
@@ -1172,6 +1186,10 @@ const etClock = t => new Date(t).toLocaleTimeString("en-US", { timeZone: "Americ
 const refreshMsg = html => { $("refreshmsg").innerHTML = html; };
 const runLink = (href, text) => `<a target="_blank" rel="noopener" href="${esc(href)}">${text}</a>`;
 let refreshTimer = null;
+const owner = {
+  get() { try { return localStorage.getItem("faf_owner") === "1"; } catch { return false; } },
+  set() { try { localStorage.setItem("faf_owner", "1"); } catch { /* private mode: asked again next time */ } },
+};
 
 function refreshDone(html) {
   clearInterval(refreshTimer); refreshTimer = null; refreshAt.set("");
@@ -1212,10 +1230,17 @@ function watchRefresh(at) {
 function wireRefresh() {
   if ($("refresh").dataset.wired) return;
   $("refresh").dataset.wired = "1";
-  $("refresh").addEventListener("click", () => {
+  const start = () => {
     window.open(RUN_PAGE, "_blank", "noopener");
     const at = new Date().toISOString();
     refreshAt.set(at); watchRefresh(at);
+  };
+  // GitHub shows Run workflow only to accounts that can change the repo (handoff 421): everyone else is told when the next
+  // scheduled update comes; the owner says so once and this browser remembers it
+  $("refresh").addEventListener("click", () => {
+    if (owner.get()) return start();
+    refreshMsg(`Only the site owner can start an update. The next scheduled update is about ${nextRun()} ET. <button type="button" id="iamowner">I'm the site owner</button>`);
+    $("iamowner").addEventListener("click", () => { owner.set(); start(); });
   });
   const at = refreshAt.get();
   if (!at) return;
@@ -1260,7 +1285,7 @@ fetch("data/players.json", { cache: "no-store" })
     wire(); wireRefresh(); render(); document.body.classList.add("ready");
     setInterval(() => { if (reloadDue(Date.now())) location.reload(); }, 60e3);
   })
-  .catch(e => { console.error(e); $("updated").textContent = "No data yet. Press Update now to run the Update data workflow."; wireRefresh(); document.body.classList.add("ready"); });
+  .catch(e => { console.error(e); $("updated").textContent = "No data yet. The site owner can press Update now to run the Update data workflow."; wireRefresh(); document.body.classList.add("ready"); });
 </script>
 </body>
 </html>
