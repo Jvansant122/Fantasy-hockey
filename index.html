@@ -487,6 +487,8 @@ function why(p) {
     const FORM_TXT = { slump: "his team has gone 4+ games without a win, and depth players like him sit more then",
       blowout: "his team lost its last game by 4+ goals, and depth players like him sit more after that",
       depth_d: "defensemen on his minutes sit more often than their record says",
+      depth_f: "forwards on his minutes sit more often than their record says",
+      early: "early in the season, coaches shuffle their depth players more",
       win_run: "his team has won 3+ straight, and coaches tend to keep a winning lineup" };
     parts.push(`${form.why.map(k => FORM_TXT[k]).filter(Boolean).join("; ")} (${Math.round(form.shift * 100)} pts on his chance to play each game this week)`);
   }

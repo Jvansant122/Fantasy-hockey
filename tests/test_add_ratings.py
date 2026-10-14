@@ -1933,14 +1933,22 @@ def test_team_form_streaks_and_margin():
 
 
 def test_form_shift_stacks_as_handoff_344_says():
-    # slump and blowout don't stack: the larger drop; depth D adds its own; win run only for skaters out 1-4 games
-    assert rating.form_shift("F", 10.0, 0, (4, 0, -1)) == (rating.SLUMP_DEPTH["F"], ["slump"])
-    assert rating.form_shift("F", 10.0, 0, (5, 0, -4)) == (rating.BLOWOUT_DEPTH, ["blowout"])
+    # slump and blowout don't stack: the larger drop; low minutes add their own; win run only for skaters out 1-4 games
+    assert rating.form_shift("F", 9.0, 0, (4, 0, -1)) == (rating.SLUMP_DEPTH["F"], ["slump"])  # 8-10 min: no minutes shift
+    assert rating.form_shift("F", 9.0, 0, (5, 0, -4)) == (rating.BLOWOUT_DEPTH, ["blowout"])
+    assert rating.form_shift("F", 11.0, 0, None) == (-0.03, ["depth_f"])
+    assert rating.form_shift("F", 7.0, 0, None) == (-0.02, ["depth_f"])
     shift, why = rating.form_shift("D", 13.0, 0, (4, 0, -1))
-    assert why == ["slump", "depth_d"] and shift == pytest.approx(rating.SLUMP_DEPTH["D"] + rating.DEPTH_D_SHIFT[0][1])
-    assert rating.form_shift("D", 15.0, 0, None) == (rating.DEPTH_D_SHIFT[1][1], ["depth_d"])
+    assert why == ["slump", "depth_d"] and shift == pytest.approx(rating.SLUMP_DEPTH["D"] - 0.055)
+    assert rating.form_shift("D", 11.0, 0, None) == (-0.025, ["depth_d"])
+    assert rating.form_shift("D", 15.0, 0, None) == (-0.025, ["depth_d"])
     assert rating.form_shift("F", 15.0, 0, (6, 0, -6)) == (0.0, [])  # a regular: no depth shift
     assert rating.form_shift("D", 17.0, 0, (6, 0, -6)) == (0.0, [])
     assert rating.form_shift("F", None, 2, (0, 3, 2)) == (rating.WIN_RUN_OUT, ["win_run"])
     assert rating.form_shift("F", None, 5, (0, 3, 2)) == (0.0, [])  # out 5+: not a lineup choice
     assert rating.form_shift("F", None, 2, (0, 2, 2)) == (0.0, [])
+    # the team's first 15 games: depth skaters (under 12 F / 16 D) a further -0.03 (handoff 349)
+    shift, why = rating.form_shift("F", 9.0, 0, None, team_played=6)
+    assert why == ["early"] and shift == pytest.approx(rating.EARLY_DEPTH)
+    assert rating.form_shift("F", 12.5, 0, None, team_played=6) == (0.0, [])
+    assert rating.form_shift("D", 15.0, 0, None, team_played=15)[1] == ["depth_d"]
