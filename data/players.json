@@ -1,8 +1,8 @@
 {
- "updated": "Wed Oct 14, 2:07 AM ET",
+ "updated": "Wed Oct 14, 2:17 AM ET",
  "updated_date": "2026-10-13",
  "first_start": "2026-10-13T22:00:00Z",
- "updated_utc": "2026-10-14T06:07:28Z",
+ "updated_utc": "2026-10-14T06:16:48Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -14954,6 +14954,70 @@
    "cr_season_pct": 75
   },
   {
+   "id": 4736758,
+   "name": "Colten Ellis",
+   "team": "BUF",
+   "games": 2,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "waivers",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 1.2,
+   "gp": 3,
+   "ppg": 3.68,
+   "cur_ppg": 1.07,
+   "last_ppg": 3.94,
+   "last_gp": 14,
+   "proj_ppg": null,
+   "clears": "Wed 14",
+   "dfo_out": null,
+   "cr_g_nights": {
+    "17": 0.59,
+    "19": 0.54
+   },
+   "cr": 3.09,
+   "cr_fpg": 2.74,
+   "cr_season": 0.83,
+   "proj_gp": 21,
+   "cr_games": 1.13,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8481551,
+   "cr_why": {
+    "exp_starts": 1.13,
+    "team_games": 2,
+    "share10": 0.43,
+    "n10": 7,
+    "tonight": {
+     "starting": false,
+     "status": "Confirmed"
+    },
+    "own_pps": 3.01,
+    "sched": -0.15,
+    "gs": 3,
+    "p_today": 0.0,
+    "p_today_pre": 0.0
+   },
+   "cr_pct": 81,
+   "cr_season_pct": 64
+  },
+  {
    "id": 3114741,
    "name": "Nikolaj Ehlers",
    "team": "CAR",
@@ -15086,7 +15150,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 82,
+   "cr_pct": 81,
    "cr_season_pct": 98
   },
   {
@@ -17624,7 +17688,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 81,
+   "cr_pct": 80,
    "cr_season_pct": 85
   },
   {
@@ -17760,7 +17824,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 80,
+   "cr_pct": 79,
    "cr_season_pct": 96
   },
   {
@@ -21866,7 +21930,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 79,
+   "cr_pct": 78,
    "cr_season_pct": 88
   },
   {
@@ -22297,6 +22361,70 @@
    },
    "cr_pct": 63,
    "cr_season_pct": 45
+  },
+  {
+   "id": 4565259,
+   "name": "Pyotr Kochetkov",
+   "team": "CAR",
+   "games": 2,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    19,
+    20
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "waivers",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 28.8,
+   "gp": 4,
+   "ppg": 3.54,
+   "cur_ppg": 3.85,
+   "last_ppg": 3.5,
+   "last_gp": 8,
+   "proj_ppg": null,
+   "clears": "Wed 14",
+   "dfo_out": null,
+   "cr_g_nights": {
+    "19": 0.41,
+    "20": 0.33
+   },
+   "cr": 2.54,
+   "cr_fpg": 3.41,
+   "cr_season": 1.26,
+   "proj_gp": 34,
+   "cr_games": 0.75,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8481611,
+   "cr_why": {
+    "exp_starts": 0.75,
+    "team_games": 2,
+    "share10": 0.5,
+    "n10": 8,
+    "tonight": {
+     "starting": true,
+     "status": "Confirmed"
+    },
+    "own_pps": 3.26,
+    "sched": 0.42,
+    "gs": 4,
+    "p_today": 0.0,
+    "p_today_pre": 0.0
+   },
+   "cr_pct": 78,
+   "cr_season_pct": 81
   },
   {
    "id": 4378686,
@@ -22995,7 +23123,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 78,
+   "cr_pct": 76,
    "cr_season_pct": 73
   },
   {
@@ -23060,7 +23188,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 78,
+   "cr_pct": 76,
    "cr_season_pct": 78
   },
   {
@@ -23627,7 +23755,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 77,
+   "cr_pct": 76,
    "cr_season_pct": 67
   },
   {
@@ -24045,7 +24173,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 76,
+   "cr_pct": 75,
    "cr_season_pct": 71
   },
   {
@@ -26307,7 +26435,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 76,
+   "cr_pct": 74,
    "cr_season_pct": 78
   },
   {
@@ -27153,7 +27281,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 75,
+   "cr_pct": 73,
    "cr_season_pct": 56
   },
   {
@@ -28348,7 +28476,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 74,
+   "cr_pct": 73,
    "cr_season_pct": 75
   },
   {
@@ -29267,7 +29395,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 73,
+   "cr_pct": 72,
    "cr_season_pct": 82
   },
   {
@@ -30824,7 +30952,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 73,
+   "cr_pct": 71,
    "cr_season_pct": 73
   },
   {
@@ -31030,7 +31158,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 72,
+   "cr_pct": 71,
    "cr_season_pct": 52
   },
   {
@@ -31885,70 +32013,6 @@
    },
    "cr_pct": 40,
    "cr_season_pct": 33
-  },
-  {
-   "id": 4736758,
-   "name": "Colten Ellis",
-   "team": "BUF",
-   "games": 2,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "waivers",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 1.2,
-   "gp": 3,
-   "ppg": 3.68,
-   "cur_ppg": 1.07,
-   "last_ppg": 3.94,
-   "last_gp": 14,
-   "proj_ppg": null,
-   "clears": "Wed 14",
-   "dfo_out": null,
-   "cr_g_nights": {
-    "17": 0.59,
-    "19": 0.54
-   },
-   "cr": 2.05,
-   "cr_fpg": 2.73,
-   "cr_season": 0.83,
-   "proj_gp": 21,
-   "cr_games": 0.75,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8481551,
-   "cr_why": {
-    "exp_starts": 0.75,
-    "team_games": 2,
-    "share10": 0.43,
-    "n10": 7,
-    "tonight": {
-     "starting": false,
-     "status": "Confirmed"
-    },
-    "own_pps": 3.01,
-    "sched": -0.16,
-    "gs": 3,
-    "p_today": 0.0,
-    "p_today_pre": 0.0
-   },
-   "cr_pct": 71,
-   "cr_season_pct": 64
   },
   {
    "id": 3652598,
@@ -34004,7 +34068,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 71,
+   "cr_pct": 70,
    "cr_season_pct": 53
   },
   {
@@ -34569,7 +34633,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 70,
+   "cr_pct": 69,
    "cr_season_pct": 80
   },
   {
@@ -35348,7 +35412,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 69,
+   "cr_pct": 68,
    "cr_season_pct": 62
   },
   {
@@ -35692,7 +35756,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 68,
+   "cr_pct": 67,
    "cr_season_pct": 77
   },
   {
@@ -36465,7 +36529,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 67,
+   "cr_pct": 66,
    "cr_season_pct": 58
   },
   {
@@ -37387,70 +37451,6 @@
    },
    "cr_pct": 27,
    "cr_season_pct": 24
-  },
-  {
-   "id": 4565259,
-   "name": "Pyotr Kochetkov",
-   "team": "CAR",
-   "games": 2,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    19,
-    20
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "waivers",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 28.8,
-   "gp": 4,
-   "ppg": 3.54,
-   "cur_ppg": 3.85,
-   "last_ppg": 3.5,
-   "last_gp": 8,
-   "proj_ppg": null,
-   "clears": "Wed 14",
-   "dfo_out": null,
-   "cr_g_nights": {
-    "19": 0.41,
-    "20": 0.33
-   },
-   "cr": 1.69,
-   "cr_fpg": 3.4,
-   "cr_season": 1.26,
-   "proj_gp": 34,
-   "cr_games": 0.5,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8481611,
-   "cr_why": {
-    "exp_starts": 0.5,
-    "team_games": 2,
-    "share10": 0.5,
-    "n10": 8,
-    "tonight": {
-     "starting": true,
-     "status": "Confirmed"
-    },
-    "own_pps": 3.26,
-    "sched": 0.41,
-    "gs": 4,
-    "p_today": 0.0,
-    "p_today_pre": 0.0
-   },
-   "cr_pct": 66,
-   "cr_season_pct": 81
   },
   {
    "id": 4588331,
@@ -40099,6 +40099,71 @@
    "cr_season_pct": 53
   },
   {
+   "id": 4894703,
+   "name": "Leevi Merilainen",
+   "team": "VAN",
+   "games": 2,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    17,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "waivers",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 2.3,
+   "gp": 3,
+   "ppg": 1.39,
+   "cur_ppg": 3.93,
+   "last_ppg": 1.14,
+   "last_gp": 19,
+   "proj_ppg": null,
+   "clears": "Wed 14",
+   "dfo_out": null,
+   "cr_g_nights": {
+    "17": 0.22,
+    "19": 0.38
+   },
+   "cr": 1.22,
+   "cr_fpg": 2.03,
+   "cr_season": 0.79,
+   "proj_gp": 34,
+   "cr_games": 0.6,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482447,
+   "cr_why": {
+    "exp_starts": 0.6,
+    "team_games": 2,
+    "share10": 0.38,
+    "n10": 8,
+    "tonight": {
+     "starting": true,
+     "status": "Confirmed"
+    },
+    "own_pps": 2.25,
+    "mover_pps": 1.62,
+    "sched": -0.55,
+    "gs": 3,
+    "p_today": 0.0,
+    "p_today_pre": 0.0
+   },
+   "cr_pct": 60,
+   "cr_season_pct": 63
+  },
+  {
    "id": 5080179,
    "name": "Isaac Howard",
    "team": "EDM",
@@ -40932,7 +40997,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 60,
+   "cr_pct": 59,
    "cr_season_pct": 0
   },
   {
@@ -41210,7 +41275,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 59,
+   "cr_pct": 58,
    "cr_season_pct": 74
   },
   {
@@ -41983,7 +42048,7 @@
     "p_today": 0.0,
     "p_today_pre": 0.0
    },
-   "cr_pct": 58,
+   "cr_pct": 57,
    "cr_season_pct": 63
   },
   {
@@ -42060,71 +42125,6 @@
    },
    "cr_pct": 18,
    "cr_season_pct": 35
-  },
-  {
-   "id": 4894703,
-   "name": "Leevi Merilainen",
-   "team": "VAN",
-   "games": 2,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    17,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "waivers",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 2.3,
-   "gp": 3,
-   "ppg": 1.39,
-   "cur_ppg": 3.93,
-   "last_ppg": 1.14,
-   "last_gp": 19,
-   "proj_ppg": null,
-   "clears": "Wed 14",
-   "dfo_out": null,
-   "cr_g_nights": {
-    "17": 0.22,
-    "19": 0.38
-   },
-   "cr": 0.81,
-   "cr_fpg": 2.02,
-   "cr_season": 0.79,
-   "proj_gp": 34,
-   "cr_games": 0.4,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482447,
-   "cr_why": {
-    "exp_starts": 0.4,
-    "team_games": 2,
-    "share10": 0.38,
-    "n10": 8,
-    "tonight": {
-     "starting": true,
-     "status": "Confirmed"
-    },
-    "own_pps": 2.25,
-    "mover_pps": 1.62,
-    "sched": -0.56,
-    "gs": 3,
-    "p_today": 0.0,
-    "p_today_pre": 0.0
-   },
-   "cr_pct": 56,
-   "cr_season_pct": 63
   },
   {
    "id": 4565260,
