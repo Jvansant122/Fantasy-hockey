@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 169). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 170). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1213,6 +1213,10 @@ The Season range for a rookie defenseman in the top tier used to copy the vetera
 ## 169. Healthy scratches who had a power-play role
 
 A healthy scratch whose last game, within the past 10 days, included at least 30 seconds of power-play time comes back a little less often than the site expected. The gap was mostly in defensemen and after a team win. Measured on the site as it stands now, the gap was about half what the first test found, so the site applies a small drop, alongside the healthy-regular, fight and special-teams adjustments. A larger drop made both seasons worse. A scratch whom Daily Faceoff's projected lines already have back in the lineup is left out. The gain is small but showed up in both seasons and in every half-season.
+
+## 170. The depth player with the fewest minutes
+
+Among a team's healthy depth players, the forward (or defenseman) who played the fewest minutes at his position in the last game is the one most often taken out next. The other depth players keep their spots a little more often than the site expected. Measured on the site as it stands now, both gaps were about half what the first test found, so the site applies a small drop to the lowest-minutes player and a small lift to the other depth players, alongside the healthy-regular, fight, special-teams and power-play adjustments. Both seasons and every half-season improved.
 
 ## What the independent review changed
 

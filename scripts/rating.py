@@ -357,6 +357,10 @@ ST_ROLE_LOGIT, ST_PK_MIN = {"pk": 0.2, "none": -0.1}, 1.0
 # a healthy scratch whose last game played, within 10 days, had 0:30+ of power-play time comes back less (findings 332-333,
 # handoff 359); measured on the current stack at -0.1 with the lifts above, not the row's -0.25 (hunt13/pp_scratch_post)
 PP_SCRATCH_LOGIT, PP_SCRATCH_MIN, PP_SCRATCH_DAYS = -0.1, 0.5, 10
+# a healthy depth skater who played the fewest minutes of his team's dressed forwards (or D) in its last game sits more,
+# other depth skaters less (findings 335-336, handoff 360); measured on the current stack at -0.1 / +0.1 with the lifts
+# above, not the row's -0.15 / +0.15 (hunt13/toi_rank_post)
+DEPTH_RANK_LOGIT = {"lowest": -0.1, "other": 0.1}
 # the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
 # model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
@@ -857,6 +861,17 @@ def left_early_teammates(by_player, team_games):
         band = next((k for k, (cut, _) in enumerate(TEAMMATE_LEFT_BANDS) if gl[-1]["toi"] < cut * avg), None) if avg else None
         if band is not None:
             out.setdefault((gl[-1]["team"], gl[-1].get("pos") == "D"), {})[pid] = band
+    return out
+
+
+def lowest_toi(by_player, team_games):
+    """{(team, is D): fewest minutes among the team's dressed forwards (or D) in its last game} (handoff 360)."""
+    out = {}
+    for gl in by_player.values():
+        tg = team_games.get(gl[-1]["team"]) if gl else None
+        if tg and gl[-1]["game"] == tg[-1]:
+            key = (gl[-1]["team"], gl[-1].get("pos") == "D")
+            out[key] = min(out.get(key, gl[-1]["toi"]), gl[-1]["toi"])
     return out
 
 
@@ -1703,7 +1718,8 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         p = r["p"]
         # handoffs 355 and 356, not in the sums above
         reg = (HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0) \
-            + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch"))  # handoffs 358, 359
+            + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch")) \
+            + DEPTH_RANK_LOGIT.get(r.get("toi_rank"), 0.0)  # handoffs 358-360
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
             if reg:
@@ -2498,6 +2514,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         by_player.setdefault(g["id"], []).append(g)
     context = lineup_context(by_player, team_games)  # who missed each team's last game (findings 320 (1))
     left_teammates = left_early_teammates(by_player, team_games)  # for the scratches who fill in (handoff 352)
+    fewest = lowest_toi(by_player, team_games)  # for the depth skaters' minutes rank (handoff 360)
     # the older scratch lists that players just back ask scratch_list for, read side by side now rather than one by one in
     # the loop below (about 30 calls, 8 s; speed audit, Oct 12 2026): each skater's window on his latest team, a superset
     want = set()
@@ -2994,6 +3011,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if gl and pid and p["pos"] != "D" and not sat_last and not traded and not early and not p.get("injury") \
                     and base_dress is not None and gl[-1]["toi"] < DEPTH_TOI["F"]:
                 st_role = "pk" if gl[-1].get("shtoi", 0) >= ST_PK_MIN else "none" if not gl[-1].get("shtoi") and not gl[-1].get("pptoi") else None
+            # a depth skater's minutes rank among his team's dressed forwards (or D) in its last game (handoff 360)
+            toi_rank = None
+            if gl and pid and not sat_last and not traded and not early and not p.get("injury") and base_dress is not None \
+                    and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and tg and gl[-1]["game"] == tg[-1]:
+                low = fewest.get((gl[-1]["team"], gl[-1].get("pos") == "D"))
+                toi_rank = "lowest" if low is not None and gl[-1]["toi"] <= low else "other"
             # a scratch who had power-play time in his last game, within 10 days (handoff 359); not one Daily Faceoff's
             # lines have back, whose next game is floored at DFO_LINEUP_NEXT
             pp_scratch = bool(scratch and not in_lines and gl and base_dress is not None and gl[-1].get("pptoi", 0) >= PP_SCRATCH_MIN
@@ -3069,7 +3092,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   "regular": not sat_last and not traded and not early and not p.get("injury") and not wk_why
                                   and base_dress is not None
                                   and gl[-1]["toi"] >= DEPTH_TOI["D" if p["pos"] == "D" else "F"],
-                                  "fought": fought, "st_role": st_role, "pp_scratch": pp_scratch})
+                                  "fought": fought, "st_role": st_role, "pp_scratch": pp_scratch,
+                                  "toi_rank": toi_rank})
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
@@ -3087,6 +3111,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
+            if toi_rank:
+                why["toi_rank"] = toi_rank  # fewest minutes of his team's F (or D) last game, or another depth skater (360)
             if pp_scratch:
                 why["pp_scratch"] = True  # a scratch who had power-play time in his last game (handoff 359)
             if st_role:

@@ -2552,3 +2552,31 @@ def test_scratch_with_a_power_play_role_returns_less(monkeypatch, tmp_path):
     on, off, none = rate(120), rate(120, 0.0), rate(0)
     assert on["sat_last"] and on["cr_why"].get("pp_scratch") and on["cr_games"] < off["cr_games"]
     assert "pp_scratch" not in none["cr_why"]
+
+
+def test_lowest_minutes_depth_skater_sits_more(monkeypatch, tmp_path):
+    """Among healthy depth skaters, the one with the fewest minutes of his team's dressed forwards (or D) last game gets
+    DEPTH_RANK_LOGIT['lowest'], the others DEPTH_RANK_LOGIT['other'] (handoff 360)."""
+    def rate(pasta_toi, on=True):
+        class Rank(FakeSession):  # Bolduc on 10 minutes; Pastrnak on pasta_toi seconds in the last game
+            def get(self, url, params=None, **kw):
+                r = super().get(url, params, **kw)
+                if "skater/summary" in url and "gameDate" in (params or {}).get("cayenneExp", ""):
+                    for row in r.payload["data"]:
+                        if row["playerId"] == 7:
+                            row["timeOnIcePerGame"] = 600
+                        if row["playerId"] == 3 and row["gameDate"] == PAST[-1] and pasta_toi:
+                            row["timeOnIcePerGame"] = pasta_toi
+                return r
+        monkeypatch.setattr(rating, "DEPTH_RANK_LOGIT", {"lowest": -0.1, "other": 0.1} if on else {})
+        fake = Rank()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return players[0]
+    low, low_off = rate(None), rate(None, on=False)
+    other, other_off = rate(300), rate(300, on=False)  # Pastrnak played 5 minutes: Bolduc is no longer the lowest
+    assert low["cr_why"].get("toi_rank") == "lowest" and low["cr_games"] < low_off["cr_games"]
+    assert other["cr_why"].get("toi_rank") == "other" and other["cr_games"] > other_off["cr_games"]
