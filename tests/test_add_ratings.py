@@ -2378,3 +2378,23 @@ def test_healthy_regulars_dress_a_little_more(monkeypatch, tmp_path):
     assert on["Auston Matthews"]["cr_games"] >= off["Auston Matthews"]["cr_games"]
     assert on["Auston Matthews"]["cr_dress"] > off["Auston Matthews"]["cr_dress"] or off["Auston Matthews"]["cr_dress"] >= 0.99
     assert on["Charlie McAvoy"]["cr_games"] == off["Charlie McAvoy"]["cr_games"]
+
+
+def test_last_seasons_regulars_yet_to_play_cut_their_teams_season_share(monkeypatch, tmp_path):
+    """Last season's 40+ GP regulars on a team's roster with no game yet this season (Spooner, Marchand at BOS) lower his
+    teammates' Season share once the team has 3+ games; other teams are untouched (handoff 509)."""
+    def rate(c):
+        monkeypatch.setattr(rating, "MISSING_REG_C", c)
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p for p in players}
+    c = rating.MISSING_REG_C
+    off, on = rate(0.0), rate(c)
+    assert on["David Pastrnak"]["cr_why"]["missing_regs"] < 0
+    assert on["David Pastrnak"]["cr_season"] <= off["David Pastrnak"]["cr_season"]
+    assert "missing_regs" not in on["Auston Matthews"]["cr_why"]
+    assert on["Auston Matthews"]["cr_season"] == off["Auston Matthews"]["cr_season"]

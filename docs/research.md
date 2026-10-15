@@ -1176,6 +1176,10 @@ Early ice-time changes. When a skater's ice time this season differs from last s
 
 Safer standings read. If NHL standings ever come back with a blank goals or games field, the three places that read them now skip that input instead of stopping the ratings. The player details also say when this week's opponents gave up more or fewer goals than average last season (section 158), and when the early ice-time change moved the Season rating.
 
+## 161. Regulars who haven't played yet
+
+When a team's regulars from last season haven't played a game yet this season, usually because they are hurt, they will take games back from the players filling in when they return. The Season rating's lineup check only counted players with games this season, so it couldn't see them. Each team's Season chance to play now dips a little for its skaters by the size of that group, weighted by last season's ice time, and the dip fades as the season goes on. It starts once the team has played 3 games. A returning regular counts for his current team, and only while he is on an NHL roster, so summer trades and players who left for Europe don't count. It improved the Season rating's ranking in every test season, most for free agents in October and November.
+
 ## What the independent review changed
 
 | Review point | Outcome |
