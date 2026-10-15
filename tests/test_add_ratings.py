@@ -55,13 +55,14 @@ def goalie_row(pid, name, team, i):
     started = (team == "BOS") or (pid == 11) == (i % 2 == 0)
     return {"playerId": pid, "gameId": game_id(team, i), "gameDate": PAST[i], "teamAbbrev": team, "goalieFullName": name,
             "gamesStarted": int(started), "wins": int(started), "losses": 0, "otLosses": 0, "goalsAgainst": 2 * started,
-            "saves": 28 * started, "shutouts": 0}
+            "saves": 28 * started, "shotsAgainst": 30 * started, "shutouts": 0}
 
 
 class FakeSession:
     def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=(),
-                 bye=False, roster_down=(), last_team=None, starts=None):
+                 bye=False, roster_down=(), last_team=None, starts=None, no_team_xg=False):
         self.calls = []
+        self.no_team_xg = no_team_xg  # MoneyPuck's team file missing: the picks fall back to goal differential
         self.starts = starts or {}  # game date: its start time (UTC) in the NHL week schedule (findings 241)
         self.bye = bye  # BOS has no game this week (TOR plays MTL instead), like 14 teams the week of Feb 1 (findings 230)
         self.roster_down = set(roster_down)  # teams whose NHL roster can't be read
@@ -76,6 +77,14 @@ class FakeSession:
     def get(self, url, params=None, headers=None, timeout=None):
         self.calls.append(url)
         params = params or {}
+        if "moneypuck" in url and url.endswith("teams.csv"):
+            if self.no_team_xg:
+                return Resp(status=404)
+            last = "/2025/" in url  # last season: TOR +0.5 xG a game over 82; this season TOR +1 over 4
+            rows = [("TOR", 250.0, 209.0, 82) if last else ("TOR", 14.0, 10.0, 4), ("BOS", 200.0, 200.0, 82) if last else ("BOS", 10.0, 10.0, 4)]
+            lines = ["team,name,team,position,situation,games_played,xGoalsFor,xGoalsAgainst"]
+            lines += [f"{t},{t},{t},Team Level,{s},{g},{f},{a}" for t, f, a, g in rows for s in ("all", "5on5")]
+            return Resp(text="\n".join(lines))
         if "moneypuck" in url:
             if "/2025/" in url or "/2024/" in url:
                 return Resp(status=404)  # last season's file missing: rating should carry on without it
@@ -129,7 +138,7 @@ class FakeSession:
                 return Resp({"data": []})
             if report.startswith("goalie"):
                 return Resp({"data": [{"playerId": pid, "gamesStarted": 40, "wins": 22, "losses": 12, "otLosses": 6, "goalsAgainst": 110,
-                                  "saves": 1000, "shutouts": 3, "teamAbbrevs": self.last_team.get(pid, team)} for pid, _, team in GOALIES]})
+                                  "saves": 1000, "shotsAgainst": 1110, "shutouts": 3, "teamAbbrevs": self.last_team.get(pid, team)} for pid, _, team in GOALIES]})
             return Resp({"data": [{**skater_row(pid, name, team, pos, 0), "teamAbbrevs": self.last_team.get(pid, team), "gamesPlayed": 80, "goals": 20, "assists": 30,
                                    "ppPoints": 15, "shots": 200, "hits": 60, "blockedShots": 50, "ppTimeOnIce": 12000}
                                   for pid, name, team, pos, _ in SKATERS if (pid in self.away_last) == (season == 20242025)]})
@@ -2008,8 +2017,9 @@ def test_left_early_teammates():
     by_player = {1: [g(1, k, 20.0) for k in range(5)] + [g(1, 5, 5.0)],  # left early in the last game
                  2: [g(2, k, 20.0) for k in range(3)] + [g(2, 5, 5.0)],  # too few games
                  3: [g(3, k, 15.0, "C") for k in range(6)]}  # a normal night, and not the last game
+    by_player[4] = [g(4, k, 20.0, "C") for k in range(5)] + [g(4, 5, 9.0, "C")]  # 45% of his minutes: second band (353)
     out = rating.left_early_teammates(by_player, {"TOR": list(range(6))})
-    assert out == {("TOR", True): {1}}
+    assert out == {("TOR", True): {1: 0}, ("TOR", False): {4: 1}}
 
 
 def test_week_news_shifts_from_daily_faceoff_items_since_his_last_game():
@@ -2103,6 +2113,24 @@ def test_predicted_winners_cover_the_week(monkeypatch, tmp_path):
     assert all(g["home"] == "TOR" and g["away"] == "BOS" for g in games)
     assert all(0.5 < g["p_home"] < 0.95 for g in games), [g["p_home"] for g in games]
     assert all(g["inputs"]["pts"][0] > 0 and g["inputs"]["pts"][1] > 0 for g in games)
+    # team xG (handoff 449): TOR (14 - 10 + 15 x 0.5 x 0.5) / (4 + 15), BOS even
+    assert all(g["inputs"]["xgd"] == [round(7.75 / 19, 2), 0.0] for g in games)
+
+
+def test_predicted_winners_without_team_xg(monkeypatch, tmp_path):
+    """MoneyPuck's team file missing: the picks fall back to the goal-differential coefficients (handoff 449)."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    out = {}
+    for miss in (False, True):
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(no_team_xg=miss))
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D"),
+                   espn(111, "Joseph Woll", "TOR", "G"), espn(113, "Jeremy Swayman", "BOS", "G")]
+        winners = {}
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [], winners=winners)
+        out[miss] = winners["games"]
+    assert all("xgd" not in g["inputs"] and 0.5 < g["p_home"] < 0.95 for g in out[True])
+    assert [g["p_home"] for g in out[True]] != [g["p_home"] for g in out[False]]
 
 
 def test_week_inputs_for_a_skater_with_no_game_lean_on_two_seasons():
@@ -2116,3 +2144,32 @@ def test_week_inputs_for_a_skater_with_no_game_lean_on_two_seasons():
     assert two["pp_l1"] == pytest.approx(1.75) and two["prev_fp"] == 1.0  # last season's own inputs stay
     assert rating.skater_features([], prev, None, None, ["g1"], p2=None, two_season=True)["l5_fp"] == 1.0
     assert [w for _, w in rating.EARLY_WEEK_ESPN] == [0.25, 0.19]
+
+
+def test_early_no_start_goalie_cut(monkeypatch):
+    """Early season, a roster goalie with no start for the team yet gets a lower start chance (handoff 450)."""
+    model = rating.Model()
+    dates = ["2026-10-09", "2026-10-11", "2026-10-13", "2026-10-15"]
+    hist = {"TOR": [("2026-10-05", 1), ("2026-10-07", 1)]}
+    on = rating.goalie_starts(model, "TOR", [1, 2], hist, {1: 50, 2: 32}, dates, TODAY)
+    monkeypatch.setattr(rating, "EARLY_NO_START_LOGIT", 0.0)
+    off = rating.goalie_starts(model, "TOR", [1, 2], hist, {1: 50, 2: 32}, dates, TODAY)
+    assert on[2] < off[2] and on[2] > 0
+
+
+def test_even_tandem_halves_b2b_shift(monkeypatch):
+    """When the last 20 starts are split evenly, the back-to-back shifts are half size (handoff 451)."""
+    model = rating.Model()
+    pair = ["2026-10-23", "2026-10-24"]
+    def gap(hist):
+        def one(on):
+            if not on:
+                monkeypatch.setattr(rating, "B2B_AHEAD_NIGHT1", 0.0)
+                monkeypatch.setattr(rating, "B2B_AHEAD_NIGHT2_NEXT", 0.0)
+            out = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, pair, date(2026, 10, 22))
+            monkeypatch.undo()
+            return out[1]
+        return abs(one(True) - one(False))
+    even = [(f"2026-10-{d:02d}", 1 if i % 2 else 2) for i, d in enumerate(range(1, 21))]
+    lopsided = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21))]
+    assert 0 < gap(even) < gap(lopsided)

@@ -17,6 +17,16 @@ def test_win_prob_moves_the_right_way():
     assert winners.win_prob(side(sv=0.92), side()) > even
 
 
+def test_win_prob_uses_team_xg_when_both_sides_have_it():
+    """Handoff 449: expected-goal differential takes over from goal differential; one side missing it falls back."""
+    xg = lambda **k: {**side(**{a: b for a, b in k.items() if a != "xgd"}), "xgd": k.get("xgd", 0.0)}
+    even = winners.win_prob(xg(), xg())
+    assert 0.53 < even < 0.54  # the xG model's home ice
+    assert winners.win_prob(xg(xgd=0.5), xg()) > even
+    assert winners.win_prob(xg(gd=0.5), xg()) - even < winners.win_prob(side(gd=0.5), side()) - winners.win_prob(side(), side())
+    assert winners.win_prob(xg(xgd=0.5), side()) == winners.win_prob(side(), side())  # only one side has xG: old model
+
+
 def test_lineup_points_fill_and_scale():
     depth = {"F": 0.2, "D": 0.1}
     stars = [(i, "F") for i in range(14)] + [(100 + i, "D") for i in range(6)]
