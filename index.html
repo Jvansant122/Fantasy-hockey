@@ -114,6 +114,8 @@
   @media (max-width: 640px) {
     main { padding: 10px; }
     .card { padding: 10px; }
+    /* the units come from the key line under the count on phones, so the narrow table keeps its width (handoff 472) */
+    th .unit { display: none; }
     .wide { display: none; }
     .meta { display: block; }
     th, td { padding: 6px 4px; }
@@ -278,7 +280,7 @@ const CHECKS = ["left", "healthy", "addfa", "allcols"];
 const state = { view: "fa", tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {}, wk: "", tw: null };
 // [key, label, align, shown on phones]
 const COLS = [
-  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week pts", "r", true], ["cr_season", "Season /gm", "r", true],
+  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", 'Week<span class="unit"> pts</span>', "r", true], ["cr_season", 'Season<span class="unit"> /gm</span>', "r", true],
   // Proj/G and This yr/G right after Games (findings 300)
   ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "ESPN/G", "r", false], ["cur_ppg", "Actual/G", "r", false], ["proj_gp", "Proj GP", "r", false],
   ["opengm", "Open", "r", true], ["light", "Light", "r", false], ["week", "ESPN week", "r", false],
