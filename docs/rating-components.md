@@ -187,6 +187,8 @@ Fallbacks: before his team has played, 90% if he played last season (50% if not)
 | Note's only long word is week-to-week | 5% for a game today or tomorrow, 20% after that (handoff 657) |
 | Note's only long reason is "several" or "a few weeks", or a return 14+ days away | 10% today or tomorrow, 30% after that (handoff 657) |
 | Note says LTIR (with any other long word but surgery or season-ending) | 5% (handoff 673) |
+| Illness note at most 3 days old (day-to-day, OUT or IR; note not long) | 75% (IR: 5% for a game the same day; OUT: 3% for his team's game the same day) (handoff 676) |
+| Note says he will play, is expected to return, practiced or was activated (about him, not hedged) | 50%, and +0.5 on each game's log-odds (handoff 677) |
 
 The softer OUT and IR caps shipped in PR #24; before that OUT and IR were 0.
 
