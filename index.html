@@ -586,6 +586,8 @@ function why(p) {
   if (p.cr_why?.called_up) parts.push("called up in the last week with no NHL game yet: recent call-ups play about 1 game in 4 that week");
   if (p.cr_why?.fills_in) parts.push("a teammate at his position left the last game early, and scratches like him usually fill in");
   if (p.cr_why?.depth_point) parts.push("had a point in his last game on depth minutes, and coaches tend to keep those players in");
+  if (p.cr_why?.st_role === "pk") parts.push("killed penalties for a minute or more in his last game on depth minutes, and coaches tend to keep those players in");
+  if (p.cr_why?.st_role === "none") parts.push("had no power-play or penalty-kill time in his last game on depth minutes, so he is a little more likely to sit");
   if (p.cr_why?.fought) parts.push("dropped the gloves in his last game on depth minutes, and coaches tend to keep those players in");
   // team form and depth D (handoffs 340-342, 346): each reason that moved this week's dress chance
   const form = p.cr_why?.form;

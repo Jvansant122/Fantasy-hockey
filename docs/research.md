@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 166). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 167). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1201,6 +1201,10 @@ With the scratch adjustments now applied after the weekly lineup model (section 
 ## 166. The last-result scratch lift fades over the week
 
 A healthy scratch's chance to play moves with his team's last result: down after a win, up after a loss. That lift used to apply evenly to every game left in the week. Replaying 2024-25 and 2025-26 game by game showed it is mostly a next-game effect, gone by about the third game. It is now applied by game. After a win the shift is largest on his team's next game, smaller on the second, and small after that. After a non-win it is up on the next two games and nothing after. Chance-to-play accuracy improved in both seasons. The other last-game lifts (a depth player who scored, a teammate who left early, a depth player who fought) held steady across the week and stay as they were.
+
+## 167. A depth forward's special-teams role
+
+A forward on depth minutes who killed penalties for a minute or more in his last game dresses more often than his lineup history suggests. One with no power-play and no penalty-kill time at all dresses a little less often. Defensemen showed nothing either way. Measured on the site as it stands now, after the weekly lineup model, the penalty-kill lift held its size, while the "no special teams" drop had mostly been absorbed already. So the site adds a small lift for the penalty killer and a smaller drop for the forward with no special-teams role. Both are applied with the healthy-regular and fight adjustments, after each team's lineup spots are filled. Both seasons improved, by less than the other recent changes.
 
 ## What the independent review changed
 
