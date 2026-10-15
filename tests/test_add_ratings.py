@@ -251,6 +251,27 @@ def test_confirmed_starter_on_waivers_leaves_tonight_to_his_team(monkeypatch, tm
     # tonight is Stolarz's start but not his to count, and Woll sits it: only Oct 11 is left between them
     assert stolarz["cr_why"]["exp_starts"] + woll["cr_why"]["exp_starts"] == pytest.approx(1, abs=0.02)
     assert stolarz["cr_why"]["p_today"] == 0 and stolarz["cr_why"]["exp_starts"] <= 1
+    # his start chances by night are only on nights after he clears, and sum to his expected starts (handoff 492)
+    assert set(stolarz["cr_g_nights"]) == {"2026-10-11"}
+    assert sum(stolarz["cr_g_nights"].values()) == pytest.approx(stolarz["cr_games"], abs=0.02)
+
+
+def test_waiver_goalie_starts_come_from_the_nights_after_he_clears(monkeypatch, tmp_path):
+    """Clearing waivers with one of his team's two games left, a goalie keeps only that night's start chance, and his
+    expected games are that chance, not half his chances over both nights (handoff 492: Askarov 1.02 vs 0.51)."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    woll = dict(espn(111, "Joseph Woll", "TOR", "G", games_left=2), owner="other", today_start="2026-10-09T23:00:00Z")
+    stolarz = dict(espn(112, "Anthony Stolarz", "TOR", "G", games_left=1), owner="waivers", today_start=None)
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 8, 16, tzinfo=timezone.utc))
+    woll["games_left"], woll["today_start"] = 2, None
+    rating.add_ratings([woll, stolarz], 2027, TODAY - timedelta(days=1), MONDAY, [])  # Oct 9 and 11 still ahead
+    assert set(stolarz["cr_g_nights"]) == {"2026-10-11"}
+    assert sum(stolarz["cr_g_nights"].values()) == pytest.approx(stolarz["cr_games"], abs=0.02)
+    assert sum(woll["cr_g_nights"].values()) == pytest.approx(woll["cr_games"], abs=0.02)
 
 
 def test_win_prob_removes_the_margin():
@@ -2207,3 +2228,24 @@ def test_prev_goalie_points_leave_out_relief_appearances():
     relief = 2 * 1 - 1 + 0.2 * 12  # the relief win: W 2, GA -1, 12 saves
     assert stolarz[1] - woll[1] == pytest.approx(relief)
     assert woll[0] == stolarz[0] == 40 and woll[2] == stolarz[2]  # starts and save% inputs unchanged
+
+
+def test_week_slack_fits_each_game_to_the_lineup_spots():
+    """Per team game, the Week's per-game chances move toward 12 forwards dressed (handoff 489): an overfull game pulls
+    every chance down, a game with room lifts them, a 0 stays 0, caps hold, and the Week rating follows its games."""
+    def row(pid, chances, cap=1.0):
+        p = {"cr_fpg": 2.0, "cr_why": {}}
+        return {"p": p, "pid": pid, "team": "TOR", "isD": False, "dates": ["2026-10-09", "2026-10-11"],
+                "per_game": list(chances), "caps": [cap, cap]}
+    # 15 forwards: 13.3 chances summed on Oct 9 (1.3 too many), 9.1 on Oct 11 (2.9 open)
+    rows = [row(k, (0.95, 0.7)) for k in range(12)] + [row(12, (0.0, 0.7)), row(13, (0.95, 0.0), cap=0.95), row(14, (0.95, 0.0))]
+    rating.week_slack(rows, {}, None)
+    first = rows[0]["p"]
+    assert first["cr_dress_next"] < 0.93 and first["cr_why"]["week_slack"] == -1.3  # overfull: down
+    assert rows[0]["per_game"] == [0.95, 0.7]  # the rows keep the chances from before the step
+    assert first["cr"] == round(2.0 * first["cr_games"], 2)
+    assert rows[12]["p"]["cr_dress_next"] == 0.0 and rows[12]["p"]["cr_games"] > 0.75  # a 0 stays 0; room on Oct 11: up
+    assert rows[13]["p"]["cr_dress_next"] <= 0.95  # under his cap
+    few = [row(k, (0.5, 0.5)) for k in range(5)]  # fewer listed than spots: left alone
+    rating.week_slack(few, {}, None)
+    assert "cr_games" not in few[0]["p"]
