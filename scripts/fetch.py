@@ -295,10 +295,11 @@ PRESEASON_SEED = Path(__file__).resolve().parent.parent / "model" / "espn_presea
 PRESEASON_FILE = DATA_PATH.parent / "espn_preseason.json"
 
 
-def preseason_projections(players, season, seed=PRESEASON_SEED, path=PRESEASON_FILE):
+def preseason_projections(players, season, seed=PRESEASON_SEED, path=None):
     """ESPN revises its "preseason" projection in season, folding in his games, but the Season blend (handoff 331) was
     fit on the stored preseason numbers: keep the first projection seen for each player this season (the committed seed,
     then data/espn_preseason.json for players seen later) as proj_ppg_pre (handoff 445)."""
+    path = path or PRESEASON_FILE  # read at call time, so a test's patched path holds (the end-to-end tests wrote data/)
     first = {}
     for f in (seed, path):
         try:

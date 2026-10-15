@@ -1,5 +1,5 @@
 {
- "_doc": "80% range of the skater Season rating (findings 345): Season + low to Season + high, low floored at 0; held out, about 10% finish above and 10% below in every experience x position group. Key position (F/D) | tier | experience. Tier: Season rating below cuts[0] low, below cuts[1] mid, else top. Experience: rookie = under 25 NHL GP last season and two seasons ago together; year 2 = not a rookie, under 25 GP two seasons ago; else veteran; anyone 28 or older is a veteran (back from the AHL, Europe or injury). Refit: research/claude-rating/rookie-upside/r814_live_table.py --write. D|top|rookie is set by hand from rookie D pooled across tiers, scaled to the top tier spread (handoff 521; a refit would copy the veteran cell back). phase (handoff 619, findings: hunt 14 ledger 1633): from late_gp NHL games this season both offsets x late_scale; with 1 to early_gp games a low-tier player's low offset x early_low_tier_lo_scale; 0 GP unchanged.",
+ "_doc": "80% range of the skater Season rating (findings 345): Season + low to Season + high, low floored at 0; held out, about 10% finish above and 10% below in every experience x position group. Key position (F/D) | tier | experience. Tier: Season rating below cuts[0] low, below cuts[1] mid, else top. Experience: rookie = under 25 NHL GP last season and two seasons ago together; year 2 = not a rookie, under 25 GP two seasons ago; else veteran; anyone 28 or older is a veteran (back from the AHL, Europe or injury). Refit: research/claude-rating/rookie-upside/r814_live_table.py --write. D|top|rookie is set by hand from rookie D pooled across tiers, scaled to the top tier spread (handoff 521; a refit would copy the veteran cell back). phase (handoff 619, findings: hunt 14 ledger 1633): from late_gp NHL games this season both offsets x late_scale; with 1 to early_gp games a low-tier player's low offset x early_low_tier_lo_scale; 0 GP unchanged; rookies with rookie_mid_gp games both offsets x rookie_mid_scale (handoff 663, hunt14/corners, findings 494).",
  "keys": [
   "pos",
   "tier",
@@ -95,6 +95,8 @@
   "late_gp": 41,
   "late_scale": 1.1,
   "early_gp": 6,
-  "early_low_tier_lo_scale": 0.7
+  "early_low_tier_lo_scale": 0.7,
+  "rookie_mid_gp": [7, 40],
+  "rookie_mid_scale": 1.1
  }
 }

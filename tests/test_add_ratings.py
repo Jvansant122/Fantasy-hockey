@@ -1460,9 +1460,11 @@ def test_espn_free_agent_on_an_nhl_roster_gets_his_games(monkeypatch, tmp_path):
 
 
 def test_offseason_mover_rated_a_little_lower(monkeypatch, tmp_path):
-    """On a new team since last season and with one team this season: points a game x 0.965 (findings 230)."""
+    """On a new team since last season and with one team this season: Week points a game x 0.98 (handoff 667), Season x 0.965
+    (findings 230)."""
     def matthews(mult, **kw):
         monkeypatch.setattr(rating, "OFFSEASON_MOVER_MULT", mult)
+        monkeypatch.setattr(rating, "OFFSEASON_MOVER_MULT_WEEK", mult)
         return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], FakeSession(**kw))["Auston Matthews"]
     moved, plain = matthews(0.965, last_team={1: "BOS"}), matthews(1.0, last_team={1: "BOS"})
     assert moved["cr_fpg"] == pytest.approx(0.965 * plain["cr_fpg"], abs=0.01)  # both rounded to 2 places
@@ -2750,3 +2752,82 @@ def test_line_without_a_start_time_is_skipped():
                       {"start_utc": "2026-10-09T23:00:00Z", "home": {"team": "MTL", "MONEY_LINE_2_WAY": -150}, "away": {"team": "OTT", "MONEY_LINE_2_WAY": 130}}]}
     lines = rating.line_win_probs(odds, TODAY, datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     assert set(lines) == {"MTL", "OTT"}
+
+
+# handoffs 664-665: tests pinning 629, 631, 632, 362 and long suspension notes (hunt14/audit4)
+
+def _pasta4(monkeypatch, tmp_path, injury, short, when="2026-10-08T12:00Z"):
+    note = {"athlete_id": 103, "name": "David Pastrnak", "short": short, "long": "", "date": when}
+    return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury=injury)], injuries=[note])["David Pastrnak"]
+
+
+def test_injured_reserve_caps_each_game_by_days_to_it(monkeypatch, tmp_path):
+    """Handoff 629: IR is capped game by game (0.05 today, 0.15 tomorrow, 0.25 later), not flat at the 2+ day cap."""
+    p = _pasta4(monkeypatch, tmp_path, "INJURY_RESERVE", "IR")
+    flat = None
+    monkeypatch.setattr(rating, "IR_DAY_CAPS", (0.25, 0.25, 0.25))
+    flat = _pasta4(monkeypatch, tmp_path, "INJURY_RESERVE", "IR")
+    assert p["cr_dress_next"] <= 0.15 + 1e-9 and p["cr_games"] < flat["cr_games"]
+    assert p["cr_dress"] <= 0.25 + 1e-9
+
+
+def test_served_suspension_counts_his_games(monkeypatch, tmp_path):
+    """Handoff 631: a two-game suspension listed Oct 8 caps only the games still to serve."""
+    p = _pasta4(monkeypatch, tmp_path, "SUSPENSION", "Pastrnak was suspended two games for boarding.")
+    assert p["cr_dress_next"] == 0 and p["cr_games"] > 0.5
+    unknown = _pasta4(monkeypatch, tmp_path, "SUSPENSION", "Pastrnak was suspended by the league.")
+    assert unknown["cr_dress_next"] == 0 and 0 < unknown["cr_games"] < p["cr_games"] + 1
+
+
+@pytest.mark.parametrize("short", ["Pastrnak was suspended indefinitely by the NHL pending a hearing.",
+                                   "Pastrnak was suspended for the remainder of the regular season."])
+def test_long_suspension_note_stays_at_zero(monkeypatch, tmp_path, short):
+    """A suspension note with long-absence words stays at 0 every game, as before PR #199."""
+    assert _pasta4(monkeypatch, tmp_path, "SUSPENSION", short)["cr"] == 0
+
+
+def _bolduc4(monkeypatch, tmp_path, points=0, bios=None):
+    class F(FakeSession):  # Bolduc on 10 minutes in every game, points in the last one
+        def get(self, url, params=None, **kw):
+            r = super().get(url, params, **kw)
+            if "skater/summary" in url and "gameDate" in (params or {}).get("cayenneExp", ""):
+                for row in r.payload["data"]:
+                    if row["playerId"] == 7:
+                        row["timeOnIcePerGame"] = 600
+                        if row["gameDate"] == PAST[-1] and points:
+                            row["points"] = points
+                            row["assists"] = points
+            if "skater/summary" in url and "gameDate" not in (params or {}).get("cayenneExp", "") and bios:
+                for row in r.payload["data"]:
+                    if row["playerId"] in bios:
+                        row["gamesPlayed"] = 20  # a rookie: 20 NHL games last season
+            if "skater/bios" in url and bios:
+                for row in r.payload["data"]:
+                    row.update(bios.get(row["playerId"], {}))
+            return r
+    fake = F()
+    monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    return players[0]
+
+
+def test_lowest_minutes_depth_skater_with_a_point_keeps_more(monkeypatch, tmp_path):
+    """Routine row 362: the lowest-minutes depth skater who had a point gets LOW_SCORER_LOGIT back."""
+    on = _bolduc4(monkeypatch, tmp_path, points=1)
+    monkeypatch.setattr(rating, "LOW_SCORER_LOGIT", 0.0)
+    off = _bolduc4(monkeypatch, tmp_path, points=1)
+    assert on["cr_why"].get("toi_rank") == "lowest" and on["cr_games"] > off["cr_games"]
+
+
+def test_first_round_rookie_gets_more_of_the_season(monkeypatch, tmp_path):
+    """Handoff 632: a top-24 pick in his first NHL seasons with few games gets ROOKIE_PICK_SEASON_LOGIT on his Season share."""
+    bios = {7: {"draftOverall": 10, "firstSeasonForGameType": 20252026}}
+    late_bios = {7: {"draftOverall": 40, "firstSeasonForGameType": 20252026}}
+    on, late = _bolduc4(monkeypatch, tmp_path, bios=bios), _bolduc4(monkeypatch, tmp_path, bios=late_bios)
+    monkeypatch.setattr(rating, "ROOKIE_PICK_SEASON_LOGIT", 0.0)
+    off, late_off = _bolduc4(monkeypatch, tmp_path, bios=bios), _bolduc4(monkeypatch, tmp_path, bios=late_bios)
+    assert on["cr_season"] > off["cr_season"] and on["proj_gp"] >= off["proj_gp"]
+    assert late["cr_season"] == late_off["cr_season"]  # picked 40th: no lift
