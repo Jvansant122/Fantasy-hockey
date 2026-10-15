@@ -2988,3 +2988,96 @@ def test_goalie_dfo_injury_news_caps_his_starts(monkeypatch, tmp_path):
     assert hurt["Anthony Stolarz"]["cr_games"] > base["Anthony Stolarz"]["cr_games"]
     assert back["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
     assert old["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
+
+
+# handoffs 681 and 683: pinned lines from #205-#206 (hunt14/audit6)
+def test_season_boost_reads_the_whole_weeks_team_games(monkeypatch, tmp_path):
+    """Handoff 668: the boosted ice-time trees read his team's games in the whole Monday-Sunday week (as trained), not the
+    games left; the Week ridge never gets the boosted forecasts."""
+    seen = []
+    ff = rating.forecast_features
+
+    def spy(f, sk, toi_boost=None, season=False):
+        seen.append((season, bool(toi_boost), f.get("team_games")))
+        return ff(f, sk, toi_boost, season)
+    monkeypatch.setattr(rating, "forecast_features", spy)
+    # Matthews left his last game early: the kept-games path (short_opening) rates him a second time
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")],
+         FakeSession(short_last={1: 200}))
+    season_calls = [s for s in seen if s[0]]
+    assert season_calls and all(b for _, b, _ in season_calls) and not any(b for s, b, _ in seen if not s)
+    assert {tg for *_, tg in season_calls} == {len(WEEK)}  # 4 games Mon-Sun, 2 of them before TODAY
+
+
+def test_return_logit_lifts_a_game_below_the_cap():
+    """Handoff 677: return words add RETURN_LOGIT to each game's chance under its caps (week_slack)."""
+    def row(**kw):
+        return {"p": {"cr_fpg": 2.0, "cr_why": {}}, "pid": 1, "team": "TOR", "isD": False, "dates": ["2026-10-07", "2026-10-09"],
+                "per_game": [0.3, 0.3], "before": [0.3, 0.3], "caps": [0.5, 0.5], "missed": 1, "after_trip": [False, False], **kw}
+    base, back = row(), row(return_words=True)
+    rating.week_slack([base, back], {}, None)  # too few for the slack: only these shifts move them
+    want = 1 / (1 + math.exp(-(math.log(0.3 / 0.7) + rating.RETURN_LOGIT)))
+    assert back["per_game"] == pytest.approx([want, want]) and base["per_game"] == pytest.approx([0.3, 0.3])
+
+
+def test_return_words_need_him_as_the_subject():
+    """Handoff 677: 'will play' about someone else (no 'he' or his name just before it) doesn't count."""
+    assert rating.note_words({"name": "Charlie McAvoy", "short": "Coach says the team will play Sunday without McAvoy.", "long": ""}) == (False, False)
+    assert rating.note_words({"name": "Charlie McAvoy", "short": "McAvoy (upper body) will play Sunday.", "long": ""}) == (False, True)
+
+
+def test_illness_and_return_constants_as_measured(monkeypatch, tmp_path):
+    """Handoffs 676/677 constants as measured; the illness cap reaches a later game."""
+    assert rating.ILLNESS_CAP == 0.75 and rating.ILLNESS_DAYS == 3 and rating.RETURN_CAP == 0.5 and rating.RETURN_LOGIT == 0.5
+    ill = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (illness) is out.")
+    monkeypatch.setattr(rating, "ILLNESS_CAP", 0.5)
+    lower = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (illness) is out.")
+    assert ill["cr_games"] > lower["cr_games"]
+
+
+def test_ltir_beats_indefinitely():
+    """Handoff 673: LTIR wins over 'indefinitely' (a 'words' kind), not only over week-to-week."""
+    assert _why5("Test was placed on LTIR and is out indefinitely.") == "ltir"
+
+def test_stored_long_note_behind_bare_out_gets_no_return_lift(monkeypatch, tmp_path):
+    """IR note: surgery, expected back in December (long). ESPN then lists him OUT with a bare 'out' (carry_injury_notes
+    doesn't swap it: OUT is less severe than IR). The words read the stored surgery note as 'expected to return'."""
+    long_ = "McAvoy (knee) underwent surgery and is expected to return in December."
+    assert rating.injury_note({"short": long_, "long": "", "name": "Charlie McAvoy", "date": "2026-10-08T12:00Z"},
+                              rating.date(2026, 10, 9))["long"]
+    _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", long_)
+    after = _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")
+    plain_dir = tmp_path / "plain"; plain_dir.mkdir()
+    monkeypatch.setattr(rating, "INJURY_NOTES", plain_dir / "injury_notes.json")
+    plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")
+    print("after stored surgery note", after["cr_games"], after["cr_dress_next"], "| bare out, no stored note", plain["cr_games"])
+    assert after["cr_games"] <= plain["cr_games"] + 1e-9
+
+
+def test_stored_dtd_long_note_behind_bare_out(monkeypatch, tmp_path):
+    """Stored DAY_TO_DAY note that reads long ('week-to-week ... expected to return'); now OUT with a bare 'out'."""
+    long_ = "McAvoy (upper body) is considered week-to-week and is expected to return later this month."
+    _mcavoy5(monkeypatch, tmp_path, "DAY_TO_DAY", long_)
+    after = _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")
+    plain_dir = tmp_path / "plain"; plain_dir.mkdir()
+    monkeypatch.setattr(rating, "INJURY_NOTES", plain_dir / "injury_notes.json")
+    plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")
+    direct = _mcavoy5(monkeypatch, tmp_path, "OUT", long_)
+    print("stored wtw note behind 'out'", after["cr_games"], "| bare out", plain["cr_games"], "| same note shown directly", direct["cr_games"])
+    assert after["cr_games"] <= max(plain["cr_games"], direct["cr_games"]) + 1e-9
+
+
+def test_free_agents_on_a_later_game_still_fill_tonight(monkeypatch):
+    """Handoff 680: after the night's first puck a free agent's game tonight no longer counts for an add, but his team's
+    lineup tonight still has him, so his chance counts in tonight's sums and his rostered teammates get no fake open spots."""
+    def row(pid, dates, chances, **kw):
+        return {"p": {"cr_fpg": 2.0, "cr_why": {}}, "pid": pid, "team": "TOR", "isD": False, "dates": list(dates),
+                "per_game": list(chances), "caps": [1.0] * len(chances), **kw}
+    both = ["2026-10-09", "2026-10-11"]
+    roster = lambda: [row(k, both, (0.85, 0.85)) for k in range(12)]
+    fas = lambda: [row(20 + k, both[1:], (0.85,), slack_today=0.85, today="2026-10-09") for k in range(3)]
+    without, with_fa = roster(), roster()
+    rating.week_slack(without + [{**r, "slack_today": None} for r in fas()], {}, None)
+    rating.week_slack(with_fa + fas(), {}, None)
+    assert with_fa[0]["p"]["cr_dress_next"] < without[0]["p"]["cr_dress_next"]  # tonight is full again
+    assert abs(with_fa[0]["p"]["cr_why"].get("week_slack", 0)) < abs(without[0]["p"]["cr_why"].get("week_slack", 0))

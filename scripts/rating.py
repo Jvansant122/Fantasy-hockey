@@ -1872,6 +1872,9 @@ def week_slack(rows, boost_x, boost_week, missing=None):
                 r["per_game"][j] = min(1 / (1 + math.exp(-(logit(q) + dz))), r["caps"][j])
         for d, q in zip(r["dates"], r["per_game"]):
             sums[(r["team"], r["isD"], d)] = sums.get((r["team"], r["isD"], d), 0.0) + q
+        if r.get("slack_today") is not None:  # his team's game tonight is still ahead though it no longer counts for an add
+            key = (r["team"], r["isD"], r["today"])
+            sums[key] = sums.get(key, 0.0) + r["slack_today"]
     if boost_week:
         dates = {}
         for team, isD, d in sums:
@@ -3264,6 +3267,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if wn and PLACEHOLDER_NOTE.match(wn.get("short") or ""):
                 wn = stored_notes.get(str(p["id"]))
                 wn = wn if wn and not played_since(p["id"], str(wn.get("date") or "")) else None
+                # ... unless that note itself reads long ("unclear when" alone isn't long): as the research's not-long rows (audit6)
+                wl = injury_note(wn, today) if wn else None
+                wn = wn if wl and not (wl["long"] and wl["long_why"] != "unclear") else None
             if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and wn and not (note and note["long"]):
                 ill, return_words = note_words(wn)
                 nd = note_date(wn.get("date"))
@@ -3404,7 +3410,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and note and not note["long"]
                                   and note["days_left"] is not None and 0 <= note["days_left"] <= 7 else None,
                                   "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
-                                  "low_scorer": toi_rank == "lowest" and scored})  # handoff 362
+                                  "low_scorer": toi_rank == "lowest" and scored,  # handoff 362
+                                  # a free agent's game tonight stops counting for an add at the first puck (fetch.counts_until),
+                                  # but he still fills a lineup spot if his team's game is later: count him in tonight's sums (audit6)
+                                  "slack_today": per_game[0] if per_game and p.get("owner") in ("freeagent", "waivers")
+                                  and today.isoformat() not in wk_dates and today.isoformat() in sched.get(espn_team if traded else gl[-1]["team"], [])
+                                  and (parse_utc(week_starts.get((espn_team if traded else gl[-1]["team"], today.isoformat()))) or now_utc) > now_utc
+                                  else None, "today": today.isoformat()})
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
@@ -3478,6 +3490,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     why["exp"] = exp
             if p.get("injury") in SKATER_INJURY_CAP and p["injury"] != "SUSPENSION":
                 why["back"] = usually_back(p["injury"], sat_last, note)
+            if word_floor is not None:  # the illness or return-word cap that lifted his (handoffs 676-677, 685)
+                why["note_lift"] = "illness" if word_floor == ILLNESS_CAP and not return_words else "return"
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
         p["cr_season"] = round(season, 2)
