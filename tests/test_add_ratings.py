@@ -2694,3 +2694,20 @@ def test_injured_reserve_caps_by_days_and_suspensions_by_length():
     assert rating.suspension_caps(dict(note, short="Smith was suspended by the league."), played, 3) == list(rating.SUSP_UNKNOWN_CAPS[1:4])
     assert rating.suspension_caps(dict(note, date=None), played, 3) is None
     assert rating.IR_DAY_CAPS[0] < rating.IR_DAY_CAPS[1] < rating.IR_DAY_CAPS[2]
+
+
+def test_older_goalies_lose_season_share_with_games_left():
+    """Handoff 640: share - 0.009 x (team games left / 82) x years over 30, not handed to his partner."""
+    order = [1, 1, 2, 1, 1, 2, 1, 1, 2, 1]
+    hist = [(f"2026-10-{2 * i + 1:02d}", g) for i, g in enumerate(order)]
+
+    def share(ages, left):
+        sea = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 20}, ["2026-10-22"], date(2026, 10, 22),
+                             season_share=sea, ages=ages, team_left=left)
+        return sea
+    young, old = share({1: 29.0, 2: 25.0}, 72), share({1: 38.0, 2: 25.0}, 72)
+    assert old[1] == pytest.approx(max(young[1] - rating.GOALIE_AGE_SEASON * 72 / 82 * 8, 0.0))
+    assert old[2] == pytest.approx(young[2])  # not handed to the partner
+    assert share({1: 38.0, 2: 25.0}, 0)[1] == pytest.approx(young[1])  # no games left, no cut
+    assert [k for _, k in rating.SEASON_PPS_K] == [8, 15, 30]  # handoff 641's shrink tiers

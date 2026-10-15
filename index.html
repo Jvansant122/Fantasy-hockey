@@ -549,7 +549,7 @@ function why(p) {
     // what the Season rating is made of (handoff 605)
     // no share of the remaining starts: the rating is 0, not 0.32 (handoff 636)
     if (p.cr_season != null && w.g_season_share === 0) parts.push(`Season: ${n(p.cr_season)} pts per team game (no share of his team's remaining starts expected)`);
-    else if (p.cr_season != null && w.g_season_share != null && (w.mover_pps ?? w.own_pps) != null) parts.push(`Season: ${n(p.cr_season)} pts per team game = 0.32 + 0.72 × his expected share of his team's remaining starts (${Math.round(w.g_season_share * 100)}%) × ${(+(w.mover_pps ?? w.own_pps)).toFixed(2)} pts per start` + (w.mover_pps != null ? " (his last-season rate adjusted for his new team)" : ""));
+    else if (p.cr_season != null && w.g_season_share != null && (w.season_pps ?? w.mover_pps ?? w.own_pps) != null) parts.push(`Season: ${n(p.cr_season)} pts per team game = 0.32 + 0.72 × his expected share of his team's remaining starts (${Math.round(w.g_season_share * 100)}%) × ${(+(w.season_pps ?? w.mover_pps ?? w.own_pps)).toFixed(2)} pts per start` + (w.mover_pps != null ? " (his last-season rate adjusted for his new team)" : ""));
   } else {
     // no NHL record: rated 0 and said so below, not a formula with a 0% chance (handoff 607)
     if (!w.no_record) parts.push(`Week: ${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.min(Math.round((p.cr_dress ?? 0) * 100), 99)}% chance he plays = ${n(p.cr)}`);
@@ -814,7 +814,10 @@ function renderUpgrades() {
   const full = rosterMax != null && nonIR.length >= rosterMax;
   const addVal = p => noMoves ? KEEP_GAMES * (p.cr_season ?? 0) : keep(p);
   // Drop list: lowest value by the same measure the other cards use (findings 233), IR slot and IR moves excluded
-  const dropOrder = roster.filter(p => !p.ir && p.pos !== "G" && !irMove.includes(p)).sort((a, b) => addVal(a) - addVal(b)), drops = dropOrder.slice(0, 5);
+  // keeping at least 11 healthy forwards and 6 healthy D first (handoff 643: move simulator, every season better)
+  const hSk = roster.filter(p => p.pos !== "G" && !p.ir && !p.injury), hF = hSk.filter(p => group(p) === "F").length, hD = hSk.length - hF;
+  const shapeKeeps = p => !hSk.includes(p) || (group(p) === "D" ? hD - 1 >= 6 : hF - 1 >= 11);
+  const dropOrder = roster.filter(p => !p.ir && p.pos !== "G" && !irMove.includes(p)).sort((a, b) => shapeKeeps(b) - shapeKeeps(a) || addVal(a) - addVal(b)), drops = dropOrder.slice(0, 5);
   // a healthy player left in an IR slot scores nothing (findings 181): first thing to fix
   const irHealthy = roster.filter(p => p.ir && !irEligible(p));
   // with a full roster he needs a free spot before he can leave IR (findings 231); Best moves and IR stash drop someone else (findings 240)
@@ -844,6 +847,8 @@ function renderUpgrades() {
         : fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (nextWeek || f.games_left > 0)).sort((a, b) => nextWeek ? addVal(b) - addVal(a) : score(b) - score(a))[0];
       // a player who only sat (not out) is swapped only for a sub who scores more this week and keeps as much value (handoff 462)
       if (sub && !OUT.includes(p.injury) && !nextWeek && !(score(sub) > score(p) && keep(sub) >= keep(p))) sub = null;
+      // an out player not moved to IR: only for a sub who keeps as much value (handoff 644)
+      if (sub && OUT.includes(p.injury) && !irMove.includes(p) && !nextWeek && keep(sub) < keep(p)) sub = null;
       if (sub) { swapSubs.add(sub.id); swapDrops.add(p.id); }
       const why = OUT.includes(p.injury) ? injLabel(p) : p.injury ? `${injLabel(p)}, sat last game` : "sat last game";
       const ir = irMove.includes(p) ? " (IR-eligible: move him to IR)" : "";
@@ -1058,7 +1063,7 @@ function renderUpgrades() {
   };
   // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded; IR-eligible players move to IR instead (findings 231)
   if (!seasonDone && (drops.length || irMove.length)) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· ${d.final_matchup ? "your lowest points left: this is the final, so nothing after it counts"
-      : noMoves ? "your lowest Season ratings, since adds now wait for the next matchup" : "your lowest keep value: this week plus about two more weeks of points per game"}</span>
+      : noMoves ? "your lowest Season ratings, since adds now wait for the next matchup" : "your lowest keep value: this week plus about two more weeks of points per game, keeping at least 11 healthy F and 6 D"}</span>
     ${irMove.map(p => `<div>${esc(p.name)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <span class="up">Move to IR</span><span class="sub"> (free, keeps him, opens a roster spot)</span></div>`).join("")}
     ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(p.games_left)}</span> <b>${fmt(score(p))}</b><span class="sub"> pts${noMoves && d.rated ? ` · Season ${fmt(p.cr_season)}` : kv(p)}${upside(p) != null ? ` · ${EXP_TXT[p.cr_why.exp]}, upside ${fmt(upside(p))} a game` : ""}${dropGain(p)}</span>${d.rated && !d.final_matchup && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only. Not in the final: no later weeks
@@ -1146,8 +1151,8 @@ function renderNights() {
   }).join("");
 }
 
-// Trade check (research findings 145): summed Season ratings; 0.87 x gap x 3.5 team games a week is the expected
-// rest-of-season edge, and the share of past trades with a gap that size where the higher-rated side really did better.
+// Trade check (research findings 145): summed Season ratings; 2.1 x gap is the expected rest-of-season edge a week (about
+// 3 team games a week, and not every game reaches your total: the move simulator realized 2.14 per 1.0 of gap, handoff 642), and the share of past trades with a gap that size where the higher-rated side really did better.
 const TRADE_RIGHT = [[0.1, 53], [0.2, 60], [0.3, 67], [0.5, 73], [Infinity, 87]];
 function renderTrade() {
   const d = state.data, byId = id => d.players.find(p => p.id === id);
@@ -1276,7 +1281,7 @@ function renderTrade() {
         if (after > d.roster_max) notes.push(`${esc(state.teamNames[t] || "The other team")} would have to drop ${after - d.roster_max === 1 ? "a player" : `${after - d.roster_max} players`} to take ${count(give.length)}.`);
       }
     }
-    const fpw = 0.87 * gap * 3.5;
+    const fpw = 2.1 * gap;
     const right = TRADE_RIGHT.find(([cap]) => Math.round(Math.abs(gap) * 100) / 100 < cap)[1];
     // ESPN's line with the same fills and drops as the Season line (findings 235); goalies' per-start projections don't add up with
     // skaters' per-game ones, so a trade mixing them shows no ESPN line

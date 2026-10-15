@@ -531,6 +531,12 @@ DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.85))  # full minut
 OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
+# the Season rating's pts/start only: the shrink K by NHL starts over the last three seasons, under 50 / 50-100 / over 100
+# (hunt14/gseason, findings 485, handoff 641); the Week keeps PPS_PRIOR
+SEASON_PPS_K = ((50, 8), (100, 15), (float("inf"), 30))
+# older goalies lose Season start share with games left: share - 0.009 x (team games left / 82) x years over 30
+# (findings 484, handoff 640); not handed to partners
+GOALIE_AGE_SEASON = 0.009
 NEWS_CAP = 25
 OFFSEASON_MOVER_MULT = 0.965  # skater on a new team since last season: leave-one-season-out 0.963-0.970 (findings 230)
 # ESPN team abbreviations that differ from the NHL's
@@ -1063,6 +1069,21 @@ def next_up_pp_d(by_player, team_games, out):
     return boost
 
 
+def load_goalie_starts(s, seasons):
+    """{NHL id: NHL games started over these seasons}, from the goalie summary report; a season it can't read counts 0."""
+    out = {}
+    for season in seasons:
+        try:
+            rows = stats_report(s, "goalie/summary", season)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            print(f"NHL goalie summary {season} unavailable: {e}", file=sys.stderr)
+            continue
+        for r in rows:
+            if r.get("playerId"):
+                out[r["playerId"]] = out.get(r["playerId"], 0) + (r.get("gamesStarted") or 0)
+    return out
+
+
 def load_birthdates(s, seasons, bios=None):
     """NHL id: birth date, from the stats API's skater bios report for these seasons. Empty if it can't be read: the
     Season rating then goes without its age adjustment. bios, if given, is filled with {id: (birth date, draft overall,
@@ -1081,6 +1102,17 @@ def load_birthdates(s, seasons, bios=None):
                 pass
             if bios is not None and r.get("playerId") and r["playerId"] not in bios:
                 bios[r["playerId"]] = (out.get(r["playerId"]), r.get("draftOverall"), r.get("firstSeasonForGameType"))
+    for season in seasons:  # goalies too, for the Season start share's age cut (handoff 640)
+        try:
+            rows = stats_report(s, "goalie/bios", season)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            print(f"NHL goalie bios {season} unavailable: {e}", file=sys.stderr)
+            continue
+        for r in rows:
+            try:
+                out.setdefault(r["playerId"], date.fromisoformat(r["birthDate"]))
+            except (KeyError, TypeError, ValueError):
+                pass
     return out
 
 
@@ -2153,7 +2185,7 @@ def repeating_pattern(seq, cands):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -2220,6 +2252,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 # backup (handoff 446, Spencer Martin NYR)
                 floor = min(season_share[gid], GOALIE_SEASON_FLOOR) if injury.get(gid, 1.0) > 0 else 0.0
                 season_share[gid] = min(max(season_share[gid] + SAVE_GAP_SEASON[0] + SAVE_GAP_SEASON[1] * gap, floor), 1.0)
+        # older goalies lose share with games left, not handed to partners (handoff 640); ages: {id: years}
+        for gid in cands:
+            if (ages or {}).get(gid) is not None:
+                season_share[gid] = max(season_share[gid] - GOALIE_AGE_SEASON * (team_left / 82) * max(ages[gid] - 30, 0), 0.0)
         # out for the season, or left his last start without a decision and not yet confirmed back in net (findings 167),
         # unless ESPN already has him out: the share he loses goes to the team's other goalies, a short-term injured one
         # (out, IR) at half weight, since he is back for most of the rest (findings 216-217, 234)
@@ -2519,7 +2555,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     week_games, week_starts, week_results, team_names = {}, {}, {}, {}
     bios = {}  # {id: (birth, draft, first season)}, filled by load_birthdates for the boosted models
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
-    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct, xgd, opp_ga = pmap(lambda f: f(), [
+    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct, xgd, opp_ga, g_starts3 = pmap(lambda f: f(), [
         lambda: load_skater_games(s, season, today),
         lambda: load_goalie_games(s, season, today),
         lambda: load_prev_season(s, prev_season),
@@ -2533,6 +2569,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         lambda: prev_points_pct(s, prev_season),
         lambda: team_xgd(s, season // 10000) if winners is not None else {},
         lambda: opp_last_ga(s, prev_season),
+        lambda: load_goalie_starts(s, (prev_season, prev_season - 10001, prev_season - 20002)),  # handoff 641
     ], workers=4)
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
@@ -2585,6 +2622,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # the prior is his own last-season pts/start, itself shrunk to the league mean over 15 starts (findings section 60)
     prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp, *_) in prev_goalies.items() if n}
     pps = {gid: (fp + prior.get(gid, base) * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
+    # the Season's pts/start: the same blend, shrunk by his last three seasons' starts (handoff 641)
+    season_k = lambda gid: next(k for top, k in SEASON_PPS_K if g_starts3.get(gid, 0) < top)
+    pps_season = {gid: (fp + prior.get(gid, base) * season_k(gid)) / (n + season_k(gid)) for gid, (fp, n) in own.items()}
     # the league's points per start this season, for this week's pricing (findings 231 (8))
     league_pps = (sum(fp for fp, _ in own.values()) + base * LEAGUE_PPS_PRIOR) / (sum(n for _, n in own.values()) + LEAGUE_PPS_PRIOR)
     by_player = {}
@@ -2758,6 +2798,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     goalie_gone.add(pid)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
+    g_ages = {gid: (today - b).days / 365.25 for gid, b in births.items() if b}  # the goalies' age cut (handoff 640)
     # every team, not just those with a game this week: no game this week keeps the Season rating (findings 230)
     for team in sorted(set(sched) | set(team_games)):
         dates = sched.get(team, [])
@@ -2767,7 +2808,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
                             {d for d, _, home in week_games.get(team, []) if not home},
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
-                            likely.get(team))
+                            likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0))
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
@@ -2834,14 +2875,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # changed teams since last season: the last-season part of his Season pts/start moves by the teams' points% gap
             # (findings 330 (5))
             old_team = prev_goalies[pid][4] if pid in prior else None
+            fpg_own_s = pps_season.get(pid, prior.get(pid, base)) if pid else base  # handoff 641
             if old_team and old_team != team and old_team in prev_pct and team in prev_pct:
-                fpg_s = fpg + MOVER_PPS_BETA * (prev_pct[team] - prev_pct[old_team]) * PPS_PRIOR / (own.get(pid, (0.0, 0))[1] + PPS_PRIOR)
+                fpg_s = fpg_own_s + MOVER_PPS_BETA * (prev_pct[team] - prev_pct[old_team]) * PPS_PRIOR / (own.get(pid, (0.0, 0))[1] + PPS_PRIOR)
                 why["mover_pps"] = round(fpg_s, 2)
             else:
-                fpg_s = fpg
+                fpg_s = fpg_own_s
             raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
             if pid:
                 why["g_season_share"] = round(goalie_season.get(pid, 0.0), 2)  # for the page's Season line (handoff 605)
+                why["season_pps"] = round(fpg_s, 2)  # the Season's pts/start (handoff 641)
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
             # Proj GP: NHL starts so far + his share of his team's starts still to play (the Season rating's share)
             proj_gp = (own.get(pid, [0, 0])[1] if pid else 0) \
