@@ -1798,12 +1798,13 @@ def test_update_now_opens_the_workflow_and_reloads_when_new_numbers_land(browser
     page.clock.run_for(31_000)
     until("document.getElementById('refreshmsg').textContent.includes(\"didn't finish\")")
     assert page.evaluate("localStorage.getItem('faf_refresh')") is None
-    # pressed again and new numbers are published: the page reloads with them
-    page.click("#refresh")
+    # pressed again and new numbers are published: the page reloads with them. The new numbers are served before the press
+    # and the wait starts before it, since the press checks at once: a busy machine let that first check read the old
+    # numbers (then the failed run stopped the watch) or reload before the wait began (handoff 514)
     fresh = dict(data, updated_utc=(dt.datetime.fromisoformat(now.replace("Z", "+00:00")) + dt.timedelta(minutes=2)).isoformat())
     page.route("**/data/players.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(fresh)))
     with page.expect_navigation(timeout=120_000):
-        page.clock.run_for(31_000)
+        page.click("#refresh")
     until("document.getElementById('updated').textContent.startsWith('Matchup')")
     assert page.evaluate("localStorage.getItem('faf_refresh')") is None
     assert page.locator("#refresh").inner_text() == "Update now"
