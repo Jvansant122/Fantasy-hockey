@@ -2527,3 +2527,28 @@ def test_depth_forwards_special_teams_role(monkeypatch, tmp_path):
     assert pk["Zack Bolduc"]["cr_why"].get("st_role") == "pk" and pk["Zack Bolduc"]["cr_games"] > pk_off["Zack Bolduc"]["cr_games"]
     assert none["Zack Bolduc"]["cr_why"].get("st_role") == "none" and none["Zack Bolduc"]["cr_games"] < none_off["Zack Bolduc"]["cr_games"]
     assert "st_role" not in pk["David Pastrnak"]["cr_why"] and "st_role" not in none["David Pastrnak"]["cr_why"]
+
+
+def test_scratch_with_a_power_play_role_returns_less(monkeypatch, tmp_path):
+    """A healthy scratch whose last game played, within 10 days, had 0:30+ of power-play time dresses a little less; one
+    with no power-play time in it is untouched (handoff 359)."""
+    def rate(pp, z=-0.1):
+        class PP(FakeSession):
+            def get(self, url, params=None, **kw):
+                r = super().get(url, params, **kw)
+                if "skater/timeonice" in url and "gameDate" in (params or {}).get("cayenneExp", ""):
+                    for row in r.payload["data"]:
+                        if row["playerId"] == 4:
+                            row["ppTimeOnIce"] = pp
+                return r
+        monkeypatch.setattr(rating, "PP_SCRATCH_LOGIT", z)
+        fake = PP()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return players[0]
+    on, off, none = rate(120), rate(120, 0.0), rate(0)
+    assert on["sat_last"] and on["cr_why"].get("pp_scratch") and on["cr_games"] < off["cr_games"]
+    assert "pp_scratch" not in none["cr_why"]

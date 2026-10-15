@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 168). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 169). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1209,6 +1209,10 @@ A forward on depth minutes who killed penalties for a minute or more in his last
 ## 168. A wider top for top-tier rookie defensemen
 
 The Season range for a rookie defenseman in the top tier used to copy the veteran cell, since there are so few such rookies. Held out, 55% of them finished above that range's top. The range for that cell is now taken from rookie defensemen at every tier, scaled to the top tier's spread. It sits higher and is a little narrower, and the coverage error dropped in every held-out season. It still runs high (about 37% finish above), because the cell has only a handful of players. This changes the displayed range only, not the rating.
+
+## 169. Healthy scratches who had a power-play role
+
+A healthy scratch whose last game, within the past 10 days, included at least 30 seconds of power-play time comes back a little less often than the site expected. The gap was mostly in defensemen and after a team win. Measured on the site as it stands now, the gap was about half what the first test found, so the site applies a small drop, alongside the healthy-regular, fight and special-teams adjustments. A larger drop made both seasons worse. A scratch whom Daily Faceoff's projected lines already have back in the lineup is left out. The gain is small but showed up in both seasons and in every half-season.
 
 ## What the independent review changed
 
