@@ -1,8 +1,8 @@
 {
- "updated": "Wed Oct 14, 8:11 PM ET",
+ "updated": "Wed Oct 14, 8:29 PM ET",
  "updated_date": "2026-10-14",
  "first_start": "2026-10-14T23:30:00Z",
- "updated_utc": "2026-10-15T00:11:41Z",
+ "updated_utc": "2026-10-15T00:29:03Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -5071,36 +5071,36 @@
     "home": {
      "id": 5,
      "name": "The First place team",
-     "now": 40.7,
+     "now": 40.8,
      "rest": 69.0,
-     "total": 109.7
+     "total": 109.8
     },
     "away": {
      "id": 10,
      "name": "The Grabbers",
      "now": 36.0,
-     "rest": 59.3,
-     "total": 95.3
+     "rest": 59.2,
+     "total": 95.2
     },
-    "p_home": 0.857,
+    "p_home": 0.86,
     "sd": 13.5
    },
    {
     "home": {
      "id": 1,
      "name": "Your Mom's Aho",
-     "now": 36.3,
+     "now": 35.7,
      "rest": 59.5,
-     "total": 95.8
+     "total": 95.2
     },
     "away": {
      "id": 12,
      "name": "New York Mess",
-     "now": 48.8,
-     "rest": 66.2,
-     "total": 115.0
+     "now": 49.3,
+     "rest": 66.3,
+     "total": 115.6
     },
-    "p_home": 0.08,
+    "p_home": 0.068,
     "sd": 13.7
    },
    {
@@ -5108,8 +5108,8 @@
      "id": 7,
      "name": "Jarvis, Give Ricky a Smooch \ud83d\udc8b",
      "now": 43.6,
-     "rest": 69.9,
-     "total": 113.5
+     "rest": 70.0,
+     "total": 113.6
     },
     "away": {
      "id": 3,
@@ -5118,7 +5118,7 @@
      "rest": 70.6,
      "total": 106.5
     },
-    "p_home": 0.682,
+    "p_home": 0.685,
     "sd": 14.8
    },
    {
@@ -5132,11 +5132,11 @@
     "away": {
      "id": 9,
      "name": "I'm In Agony.. Robert.",
-     "now": 42.6,
+     "now": 43.1,
      "rest": 61.6,
-     "total": 104.2
+     "total": 104.7
     },
-    "p_home": 0.822,
+    "p_home": 0.812,
     "sd": 14.2
    },
    {
@@ -5150,11 +5150,11 @@
     "away": {
      "id": 8,
      "name": "Jerry Slafkovsky",
-     "now": 36.8,
+     "now": 38.4,
      "rest": 60.3,
-     "total": 97.1
+     "total": 98.7
     },
-    "p_home": 0.342,
+    "p_home": 0.299,
     "sd": 13.5
    },
    {
@@ -5212,6 +5212,7 @@
    "proj_ppg": 3.61,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.61,
    "cr_g_nights": {
     "17": 0.96,
     "20": 0.8
@@ -5274,6 +5275,7 @@
    "proj_ppg": 3.17,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 3.17,
    "cr": 5.88,
    "cr_fpg": 3.0,
    "cr_season": 2.81,
@@ -5303,6 +5305,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.81,
     "espn_blend": 0.21,
+    "espn_proj": 3.17,
     "season_range": [
      2.24,
      3.31
@@ -5345,14 +5348,15 @@
    "proj_ppg": 2.29,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.29,
    "cr_g_nights": {
     "17": 0.85,
     "19": 0.77
    },
    "cr": 5.66,
    "cr_fpg": 3.49,
-   "cr_season": 2.06,
-   "proj_gp": 50,
+   "cr_season": 1.7,
+   "proj_gp": 40,
    "cr_games": 1.62,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -5371,7 +5375,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 99,
-   "cr_season_pct": 95
+   "cr_season_pct": 92
   },
   {
    "id": 3069285,
@@ -5407,6 +5411,7 @@
    "proj_ppg": 3.29,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.29,
    "cr_g_nights": {
     "17": 0.92,
     "19": 0.71
@@ -5468,6 +5473,7 @@
    "proj_ppg": 3.52,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.52,
    "cr_g_nights": {
     "17": 0.8,
     "19": 0.83
@@ -5530,6 +5536,7 @@
    "proj_ppg": 2.48,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.48,
    "cr": 5.25,
    "cr_fpg": 2.7,
    "cr_season": 2.31,
@@ -5559,6 +5566,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 2.45,
     "espn_blend": 0.2,
+    "espn_proj": 2.48,
     "season_range": [
      1.74,
      2.81
@@ -5602,6 +5610,7 @@
    "proj_ppg": 3.25,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 3.25,
    "cr": 5.2,
    "cr_fpg": 2.64,
    "cr_season": 2.77,
@@ -5631,6 +5640,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.97,
     "espn_blend": 0.21,
+    "espn_proj": 3.25,
     "season_range": [
      2.2,
      3.27
@@ -5674,6 +5684,7 @@
    "proj_ppg": 2.71,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.72,
    "cr": 5.19,
    "cr_fpg": 2.67,
    "cr_season": 2.37,
@@ -5703,6 +5714,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 2.62,
     "espn_blend": 0.24,
+    "espn_proj": 2.72,
     "age_adj": 0.04,
     "season_range": [
      1.8,
@@ -5747,6 +5759,7 @@
    "proj_ppg": 2.63,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.63,
    "cr": 5.09,
    "cr_fpg": 2.62,
    "cr_season": 2.62,
@@ -5776,6 +5789,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 3.06,
     "espn_blend": 0.21,
+    "espn_proj": 2.63,
     "season_range": [
      2.05,
      3.12
@@ -5819,6 +5833,7 @@
    "proj_ppg": 3.04,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 3.04,
    "cr": 5.02,
    "cr_fpg": 2.55,
    "cr_season": 2.48,
@@ -5848,6 +5863,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 2.53,
     "espn_blend": 0.21,
+    "espn_proj": 3.04,
     "age_adj": -0.04,
     "season_range": [
      1.91,
@@ -5891,6 +5907,7 @@
    "proj_ppg": 2.41,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.41,
    "cr": 4.93,
    "cr_fpg": 2.5,
    "cr_season": 2.21,
@@ -5920,6 +5937,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 2.24,
     "espn_blend": 0.21,
+    "espn_proj": 2.41,
     "season_range": [
      1.65,
      2.61
@@ -5962,6 +5980,7 @@
    "proj_ppg": 2.6,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.6,
    "cr": 4.89,
    "cr_fpg": 2.49,
    "cr_season": 2.26,
@@ -5991,6 +6010,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.31,
     "espn_blend": 0.22,
+    "espn_proj": 2.6,
     "season_range": [
      1.7,
      2.66
@@ -6033,6 +6053,7 @@
    "proj_ppg": 3.04,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.04,
    "cr_g_nights": {
     "17": 0.81,
     "19": 0.77
@@ -6094,6 +6115,7 @@
    "proj_ppg": 2.5,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.5,
    "cr": 4.84,
    "cr_fpg": 2.45,
    "cr_season": 2.25,
@@ -6123,6 +6145,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 2.35,
     "espn_blend": 0.21,
+    "espn_proj": 2.5,
     "season_range": [
      1.69,
      2.65
@@ -6168,6 +6191,7 @@
    "proj_ppg": 2.63,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.63,
    "cr": 4.8,
    "cr_fpg": 2.44,
    "cr_season": 2.25,
@@ -6197,6 +6221,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.35,
     "espn_blend": 0.2,
+    "espn_proj": 2.63,
     "season_range": [
      1.68,
      2.75
@@ -6241,6 +6266,7 @@
    "proj_ppg": 2.39,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.39,
    "cr": 4.77,
    "cr_fpg": 2.43,
    "cr_season": 2.19,
@@ -6270,6 +6296,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.31,
     "espn_blend": 0.19,
+    "espn_proj": 2.39,
     "season_range": [
      1.62,
      2.69
@@ -6315,6 +6342,7 @@
    "proj_ppg": 2.58,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.58,
    "cr": 4.77,
    "cr_fpg": 2.45,
    "cr_season": 2.41,
@@ -6344,6 +6372,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.69,
     "espn_blend": 0.21,
+    "espn_proj": 2.58,
     "season_range": [
      1.84,
      2.91
@@ -6387,6 +6416,7 @@
    "proj_ppg": 2.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.27,
    "cr": 4.7,
    "cr_fpg": 2.4,
    "cr_season": 2.19,
@@ -6416,6 +6446,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.35,
     "espn_blend": 0.21,
+    "espn_proj": 2.27,
     "season_range": [
      1.62,
      2.69
@@ -6461,6 +6492,7 @@
    "proj_ppg": 2.31,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.31,
    "cr": 4.64,
    "cr_fpg": 2.36,
    "cr_season": 2.15,
@@ -6490,6 +6522,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.26,
     "espn_blend": 0.2,
+    "espn_proj": 2.31,
     "season_range": [
      1.58,
      2.65
@@ -6533,6 +6566,7 @@
    "proj_ppg": 2.23,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.23,
    "cr": 4.63,
    "cr_fpg": 2.34,
    "cr_season": 2.1,
@@ -6562,6 +6596,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.14,
     "espn_blend": 0.21,
+    "espn_proj": 2.23,
     "season_range": [
      1.53,
      2.6
@@ -6607,6 +6642,7 @@
    "proj_ppg": 2.18,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.18,
    "cr": 4.61,
    "cr_fpg": 2.33,
    "cr_season": 2.11,
@@ -6636,6 +6672,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.24,
     "espn_blend": 0.2,
+    "espn_proj": 2.18,
     "season_range": [
      1.54,
      2.61
@@ -6679,6 +6716,7 @@
    "proj_ppg": 2.02,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.02,
    "cr": 4.6,
    "cr_fpg": 2.36,
    "cr_season": 1.92,
@@ -6708,6 +6746,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 2.05,
     "espn_blend": 0.2,
+    "espn_proj": 2.02,
     "season_range": [
      1.36,
      2.32
@@ -6751,6 +6790,7 @@
    "proj_ppg": 2.25,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.25,
    "cr": 4.59,
    "cr_fpg": 2.33,
    "cr_season": 2.19,
@@ -6780,6 +6820,7 @@
     "boost_dress": 0.96,
     "boost_fpg": 2.32,
     "espn_blend": 0.21,
+    "espn_proj": 2.25,
     "season_range": [
      1.62,
      2.69
@@ -6824,6 +6865,7 @@
    "proj_ppg": 2.52,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.52,
    "cr": 4.57,
    "cr_fpg": 2.34,
    "cr_season": 2.24,
@@ -6853,6 +6895,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.41,
     "espn_blend": 0.2,
+    "espn_proj": 2.52,
     "season_range": [
      1.67,
      2.74
@@ -6896,6 +6939,7 @@
    "proj_ppg": 2.56,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.56,
    "cr": 4.5,
    "cr_fpg": 2.29,
    "cr_season": 2.15,
@@ -6925,6 +6969,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.26,
     "espn_blend": 0.2,
+    "espn_proj": 2.56,
     "season_range": [
      1.58,
      2.65
@@ -6967,8 +7012,9 @@
    "proj_ppg": 2.33,
    "clears": null,
    "dfo_out": false,
-   "cr": 4.47,
-   "cr_fpg": 2.27,
+   "proj_ppg_pre": 2.33,
+   "cr": 4.49,
+   "cr_fpg": 2.28,
    "cr_season": 1.81,
    "proj_gp": 64,
    "cr_games": 1.96,
@@ -6997,6 +7043,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 2.15,
     "espn_blend": 0.28,
+    "espn_proj": 2.33,
     "season_range": [
      1.25,
      2.21
@@ -7040,6 +7087,7 @@
    "proj_ppg": 2.32,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.32,
    "cr": 4.43,
    "cr_fpg": 2.24,
    "cr_season": 2.1,
@@ -7069,6 +7117,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.19,
     "espn_blend": 0.21,
+    "espn_proj": 2.32,
     "season_range": [
      1.53,
      2.6
@@ -7112,6 +7161,7 @@
    "proj_ppg": 2.44,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.44,
    "cr": 4.38,
    "cr_fpg": 2.22,
    "cr_season": 2.01,
@@ -7141,6 +7191,7 @@
     "boost_dress": 0.96,
     "boost_fpg": 1.96,
     "espn_blend": 0.21,
+    "espn_proj": 2.44,
     "season_range": [
      1.44,
      2.51
@@ -7184,6 +7235,7 @@
    "proj_ppg": 2.03,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.03,
    "cr": 4.37,
    "cr_fpg": 2.23,
    "cr_season": 2.04,
@@ -7213,6 +7265,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 2.26,
     "espn_blend": 0.19,
+    "espn_proj": 2.03,
     "season_range": [
      1.47,
      2.54
@@ -7256,6 +7309,7 @@
    "proj_ppg": 2.28,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.28,
    "cr": 4.35,
    "cr_fpg": 2.2,
    "cr_season": 2.08,
@@ -7285,6 +7339,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.23,
     "espn_blend": 0.19,
+    "espn_proj": 2.28,
     "age_adj": -0.04,
     "season_range": [
      1.51,
@@ -7329,6 +7384,7 @@
    "proj_ppg": 2.26,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.26,
    "cr": 4.35,
    "cr_fpg": 2.23,
    "cr_season": 2.09,
@@ -7358,6 +7414,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.27,
     "espn_blend": 0.2,
+    "espn_proj": 2.26,
     "season_range": [
      1.52,
      2.59
@@ -7400,6 +7457,7 @@
    "proj_ppg": 2.09,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.09,
    "cr": 4.34,
    "cr_fpg": 2.19,
    "cr_season": 1.99,
@@ -7429,13 +7487,14 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.07,
     "espn_blend": 0.21,
+    "espn_proj": 2.09,
     "age_adj": 0.05,
     "season_range": [
      1.63,
      2.48
     ],
     "exp": "year 2",
-    "lineup_slack": 0.3
+    "lineup_slack": 0.6
    },
    "cr_pct": 98,
    "cr_season_pct": 97
@@ -7474,6 +7533,7 @@
    "proj_ppg": 2.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.33,
    "cr": 4.34,
    "cr_fpg": 2.21,
    "cr_season": 2.16,
@@ -7503,6 +7563,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 2.35,
     "espn_blend": 0.21,
+    "espn_proj": 2.33,
     "season_range": [
      1.59,
      2.66
@@ -7545,6 +7606,7 @@
    "proj_ppg": 3.04,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.04,
    "cr_g_nights": {
     "17": 0.7,
     "19": 0.77
@@ -7608,6 +7670,7 @@
    "proj_ppg": 2.43,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.43,
    "cr": 4.3,
    "cr_fpg": 2.21,
    "cr_season": 2.08,
@@ -7637,11 +7700,12 @@
     "boost_dress": 0.88,
     "boost_fpg": 2.35,
     "espn_blend": 0.2,
+    "espn_proj": 2.43,
     "season_range": [
      1.51,
      2.58
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 94,
    "cr_season_pct": 95
@@ -7679,6 +7743,7 @@
    "proj_ppg": 3.06,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.06,
    "cr_g_nights": {
     "17": 0.7,
     "19": 0.75
@@ -7740,6 +7805,7 @@
    "proj_ppg": 3.94,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.94,
    "cr_g_nights": {
     "16": 1.0,
     "18": 0.16
@@ -7777,6 +7843,82 @@
    "cr_season_pct": 89
   },
   {
+   "id": 5149125,
+   "name": "Connor Bedard",
+   "team": "CHI",
+   "games": 3,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 5,
+   "today_start": null,
+   "pos": "C",
+   "slots": [
+    "C",
+    "F",
+    "RW"
+   ],
+   "owner": "other",
+   "team_id": 7,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 94.0,
+   "gp": 1,
+   "ppg": 2.26,
+   "cur_ppg": 1.9,
+   "last_ppg": 2.24,
+   "last_gp": 69,
+   "proj_ppg": 2.27,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 2.27,
+   "cr": 4.21,
+   "cr_fpg": 2.13,
+   "cr_season": 1.84,
+   "proj_gp": 67,
+   "cr_games": 1.97,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8484144,
+   "cr_why": {
+    "toi5": 21.1,
+    "toi": 21.1,
+    "pp5": 2.92,
+    "sog": 3.0,
+    "blk": 0.0,
+    "gp": 1,
+    "last_fpg": 2.24,
+    "xfp": {
+     "gp": 1,
+     "fpg": 1.9,
+     "xfpg": 2.04
+    },
+    "season_fpg": 2.15,
+    "boost_week": 1.59,
+    "boost_week_move": 0.05,
+    "season_pts": 2.14,
+    "boost_dress": 0.85,
+    "boost_fpg": 2.07,
+    "espn_blend": 0.28,
+    "espn_proj": 2.27,
+    "season_range": [
+     1.27,
+     2.34
+    ],
+    "lineup_slack": 0.7
+   },
+   "cr_pct": 94,
+   "cr_season_pct": 88
+  },
+  {
    "id": 4320548,
    "name": "Quinn Hughes",
    "team": "MIN",
@@ -7810,6 +7952,7 @@
    "proj_ppg": 2.25,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.25,
    "cr": 4.19,
    "cr_fpg": 2.13,
    "cr_season": 2.07,
@@ -7839,6 +7982,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.26,
     "espn_blend": 0.2,
+    "espn_proj": 2.25,
     "season_range": [
      1.51,
      2.47
@@ -7881,6 +8025,7 @@
    "proj_ppg": 2.64,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.64,
    "cr_g_nights": {
     "17": 1.0,
     "19": 0.29
@@ -7944,6 +8089,7 @@
    "proj_ppg": 2.12,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.12,
    "cr": 4.18,
    "cr_fpg": 2.13,
    "cr_season": 1.91,
@@ -7973,6 +8119,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 2.03,
     "espn_blend": 0.19,
+    "espn_proj": 2.12,
     "season_range": [
      1.34,
      2.41
@@ -8016,6 +8163,7 @@
    "proj_ppg": 1.92,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.92,
    "cr": 4.17,
    "cr_fpg": 2.12,
    "cr_season": 1.87,
@@ -8045,6 +8193,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.08,
     "espn_blend": 0.19,
+    "espn_proj": 1.92,
     "season_range": [
      1.3,
      2.37
@@ -8089,6 +8238,7 @@
    "proj_ppg": 2.28,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.28,
    "cr": 4.16,
    "cr_fpg": 2.15,
    "cr_season": 2.01,
@@ -8118,11 +8268,12 @@
     "boost_dress": 0.86,
     "boost_fpg": 2.36,
     "espn_blend": 0.2,
+    "espn_proj": 2.28,
     "season_range": [
      1.44,
      2.51
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 93,
    "cr_season_pct": 94
@@ -8162,6 +8313,7 @@
    "proj_ppg": 2.36,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.36,
    "cr": 4.16,
    "cr_fpg": 2.13,
    "cr_season": 1.94,
@@ -8191,6 +8343,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.03,
     "espn_blend": 0.21,
+    "espn_proj": 2.36,
     "season_range": [
      1.37,
      2.44
@@ -8234,6 +8387,7 @@
    "proj_ppg": 2.37,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.37,
    "cr": 4.15,
    "cr_fpg": 2.11,
    "cr_season": 2.0,
@@ -8263,6 +8417,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.08,
     "espn_blend": 0.21,
+    "espn_proj": 2.37,
     "season_range": [
      1.43,
      2.5
@@ -8305,6 +8460,7 @@
    "proj_ppg": 2.56,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.56,
    "cr_g_nights": {
     "17": 0.87,
     "19": 0.65
@@ -8333,80 +8489,6 @@
    },
    "cr_pct": 94,
    "cr_season_pct": 81
-  },
-  {
-   "id": 5149125,
-   "name": "Connor Bedard",
-   "team": "CHI",
-   "games": 3,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "C",
-   "slots": [
-    "C",
-    "F",
-    "RW"
-   ],
-   "owner": "other",
-   "team_id": 7,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 94.0,
-   "gp": 1,
-   "ppg": 2.26,
-   "cur_ppg": 1.9,
-   "last_ppg": 2.24,
-   "last_gp": 69,
-   "proj_ppg": 2.27,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 4.14,
-   "cr_fpg": 2.1,
-   "cr_season": 1.84,
-   "proj_gp": 67,
-   "cr_games": 1.97,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8484144,
-   "cr_why": {
-    "toi5": 21.1,
-    "toi": 21.1,
-    "pp5": 2.92,
-    "sog": 3.0,
-    "blk": 0.0,
-    "gp": 1,
-    "last_fpg": 2.24,
-    "xfp": {
-     "gp": 1,
-     "fpg": 1.9,
-     "xfpg": 2.04
-    },
-    "season_fpg": 2.15,
-    "boost_week": 1.59,
-    "boost_week_move": 0.05,
-    "season_pts": 2.14,
-    "boost_dress": 0.85,
-    "boost_fpg": 2.07,
-    "espn_blend": 0.28,
-    "season_range": [
-     1.27,
-     2.34
-    ],
-    "lineup_slack": 0.7
-   },
-   "cr_pct": 93,
-   "cr_season_pct": 88
   },
   {
    "id": 5436,
@@ -8441,6 +8523,7 @@
    "proj_ppg": 2.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.29,
    "cr": 4.14,
    "cr_fpg": 2.14,
    "cr_season": 2.01,
@@ -8470,6 +8553,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.22,
     "espn_blend": 0.21,
+    "espn_proj": 2.29,
     "age_adj": -0.07,
     "season_range": [
      1.45,
@@ -8513,6 +8597,7 @@
    "proj_ppg": 3.14,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.14,
    "cr_g_nights": {
     "19": 0.59,
     "20": 0.67
@@ -8576,6 +8661,7 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.39,
    "cr": 4.11,
    "cr_fpg": 2.08,
    "cr_season": 1.64,
@@ -8605,6 +8691,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.74,
     "espn_blend": 0.21,
+    "espn_proj": 1.39,
     "season_range": [
      1.07,
      2.14
@@ -8647,6 +8734,7 @@
    "proj_ppg": 2.12,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.12,
    "cr": 4.09,
    "cr_fpg": 2.08,
    "cr_season": 1.9,
@@ -8676,6 +8764,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.11,
     "espn_blend": 0.2,
+    "espn_proj": 2.12,
     "season_range": [
      1.34,
      2.3
@@ -8720,6 +8809,7 @@
    "proj_ppg": 2.44,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.44,
    "cr": 4.08,
    "cr_fpg": 2.12,
    "cr_season": 1.84,
@@ -8749,6 +8839,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 2.01,
     "espn_blend": 0.19,
+    "espn_proj": 2.44,
     "age_adj": -0.05,
     "season_range": [
      1.27,
@@ -8793,6 +8884,7 @@
    "proj_ppg": 2.02,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.02,
    "cr": 4.05,
    "cr_fpg": 2.08,
    "cr_season": 1.85,
@@ -8822,6 +8914,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.03,
     "espn_blend": 0.21,
+    "espn_proj": 2.02,
     "season_range": [
      1.28,
      2.35
@@ -8865,6 +8958,7 @@
    "proj_ppg": 2.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.3,
    "cr": 4.04,
    "cr_fpg": 2.05,
    "cr_season": 1.93,
@@ -8894,6 +8988,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.94,
     "espn_blend": 0.21,
+    "espn_proj": 2.3,
     "age_adj": -0.04,
     "season_range": [
      1.36,
@@ -8939,6 +9034,7 @@
    "proj_ppg": 2.03,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.03,
    "cr": 4.0,
    "cr_fpg": 2.06,
    "cr_season": 1.83,
@@ -8968,6 +9064,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.01,
     "espn_blend": 0.2,
+    "espn_proj": 2.03,
     "age_adj": -0.04,
     "season_range": [
      1.26,
@@ -9012,6 +9109,7 @@
    "proj_ppg": 2.14,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.14,
    "cr": 3.98,
    "cr_fpg": 2.04,
    "cr_season": 1.75,
@@ -9041,6 +9139,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.83,
     "espn_blend": 0.24,
+    "espn_proj": 2.14,
     "season_range": [
      1.18,
      2.25
@@ -9083,6 +9182,7 @@
    "proj_ppg": 3.16,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.16,
    "cr_g_nights": {
     "18": 0.81,
     "19": 0.32
@@ -9145,6 +9245,7 @@
    "proj_ppg": 1.81,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.81,
    "cr": 3.94,
    "cr_fpg": 1.99,
    "cr_season": 1.84,
@@ -9174,6 +9275,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.01,
     "espn_blend": 0.22,
+    "espn_proj": 1.81,
     "season_range": [
      1.27,
      2.34
@@ -9216,6 +9318,7 @@
    "proj_ppg": 2.31,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.31,
    "cr": 3.94,
    "cr_fpg": 2.01,
    "cr_season": 1.77,
@@ -9245,6 +9348,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.84,
     "espn_blend": 0.2,
+    "espn_proj": 2.31,
     "age_adj": -0.03,
     "season_range": [
      1.21,
@@ -9288,6 +9392,7 @@
    "proj_ppg": 2.21,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.21,
    "cr": 3.94,
    "cr_fpg": 2.03,
    "cr_season": 1.83,
@@ -9317,6 +9422,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.03,
     "espn_blend": 0.19,
+    "espn_proj": 2.21,
     "season_range": [
      1.27,
      2.23
@@ -9359,6 +9465,7 @@
    "proj_ppg": 2.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.07,
    "cr": 3.93,
    "cr_fpg": 2.01,
    "cr_season": 1.78,
@@ -9388,6 +9495,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 2.01,
     "espn_blend": 0.2,
+    "espn_proj": 2.07,
     "season_range": [
      1.22,
      2.18
@@ -9430,6 +9538,7 @@
    "proj_ppg": 2.13,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.13,
    "cr": 3.92,
    "cr_fpg": 2.0,
    "cr_season": 1.88,
@@ -9459,6 +9568,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.01,
     "espn_blend": 0.21,
+    "espn_proj": 2.13,
     "season_range": [
      1.32,
      2.28
@@ -9503,6 +9613,7 @@
    "proj_ppg": 1.93,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.93,
    "cr": 3.91,
    "cr_fpg": 1.98,
    "cr_season": 1.86,
@@ -9532,6 +9643,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.02,
     "espn_blend": 0.2,
+    "espn_proj": 1.93,
     "season_range": [
      1.29,
      2.36
@@ -9575,6 +9687,7 @@
    "proj_ppg": 2.31,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.31,
    "cr": 3.89,
    "cr_fpg": 2.0,
    "cr_season": 1.87,
@@ -9604,6 +9717,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 2.03,
     "espn_blend": 0.2,
+    "espn_proj": 2.31,
     "age_adj": -0.09,
     "season_range": [
      1.3,
@@ -9649,6 +9763,7 @@
    "proj_ppg": 2.48,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.48,
    "cr": 3.88,
    "cr_fpg": 2.01,
    "cr_season": 1.88,
@@ -9678,11 +9793,12 @@
     "boost_dress": 0.88,
     "boost_fpg": 2.08,
     "espn_blend": 0.2,
+    "espn_proj": 2.48,
     "season_range": [
      1.31,
      2.38
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 90,
    "cr_season_pct": 91
@@ -9722,6 +9838,7 @@
    "proj_ppg": 2.09,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.09,
    "cr": 3.82,
    "cr_fpg": 1.95,
    "cr_season": 1.85,
@@ -9751,6 +9868,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.96,
     "espn_blend": 0.19,
+    "espn_proj": 2.09,
     "season_range": [
      1.28,
      2.35
@@ -9794,6 +9912,7 @@
    "proj_ppg": 1.78,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.78,
    "cr": 3.81,
    "cr_fpg": 1.97,
    "cr_season": 1.74,
@@ -9823,6 +9942,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 2.05,
     "espn_blend": 0.2,
+    "espn_proj": 1.78,
     "season_range": [
      1.18,
      2.14
@@ -9865,6 +9985,7 @@
    "proj_ppg": 3.43,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.43,
    "cr_g_nights": {
     "17": 0.59,
     "19": 0.72
@@ -9929,6 +10050,7 @@
    "proj_ppg": 1.79,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.79,
    "cr": 3.78,
    "cr_fpg": 1.94,
    "cr_season": 1.63,
@@ -9958,6 +10080,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.72,
     "espn_blend": 0.2,
+    "espn_proj": 1.79,
     "season_range": [
      1.06,
      2.13
@@ -10002,6 +10125,7 @@
    "proj_ppg": 2.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.07,
    "cr": 3.77,
    "cr_fpg": 1.92,
    "cr_season": 1.93,
@@ -10031,6 +10155,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 2.14,
     "espn_blend": 0.21,
+    "espn_proj": 2.07,
     "season_range": [
      1.36,
      2.43
@@ -10075,6 +10200,7 @@
    "proj_ppg": 1.92,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.92,
    "cr": 3.77,
    "cr_fpg": 1.91,
    "cr_season": 1.78,
@@ -10104,6 +10230,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 1.89,
     "espn_blend": 0.21,
+    "espn_proj": 1.92,
     "season_range": [
      1.21,
      2.28
@@ -10147,6 +10274,7 @@
    "proj_ppg": 2.14,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.14,
    "cr": 3.76,
    "cr_fpg": 1.91,
    "cr_season": 1.88,
@@ -10176,6 +10304,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 2.11,
     "espn_blend": 0.2,
+    "espn_proj": 2.14,
     "season_range": [
      1.31,
      2.38
@@ -10220,6 +10349,7 @@
    "proj_ppg": 1.88,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.88,
    "cr": 3.76,
    "cr_fpg": 1.91,
    "cr_season": 1.83,
@@ -10249,6 +10379,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.02,
     "espn_blend": 0.21,
+    "espn_proj": 1.88,
     "season_range": [
      1.26,
      2.33
@@ -10294,6 +10425,7 @@
    "proj_ppg": 2.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.07,
    "cr": 3.76,
    "cr_fpg": 1.9,
    "cr_season": 1.84,
@@ -10323,6 +10455,7 @@
     "boost_dress": 0.96,
     "boost_fpg": 1.94,
     "espn_blend": 0.21,
+    "espn_proj": 2.07,
     "age_adj": -0.07,
     "season_range": [
      1.27,
@@ -10366,6 +10499,7 @@
    "proj_ppg": 1.73,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.73,
    "cr": 3.76,
    "cr_fpg": 1.91,
    "cr_season": 1.75,
@@ -10395,6 +10529,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 1.89,
     "espn_blend": 0.19,
+    "espn_proj": 1.73,
     "season_range": [
      1.19,
      2.15
@@ -10438,6 +10573,7 @@
    "proj_ppg": 2.1,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.1,
    "cr": 3.75,
    "cr_fpg": 1.91,
    "cr_season": 1.87,
@@ -10467,6 +10603,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.04,
     "espn_blend": 0.2,
+    "espn_proj": 2.1,
     "season_range": [
      1.3,
      2.37
@@ -10511,6 +10648,7 @@
    "proj_ppg": 2.15,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.15,
    "cr": 3.73,
    "cr_fpg": 1.9,
    "cr_season": 1.86,
@@ -10540,6 +10678,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.0,
     "espn_blend": 0.2,
+    "espn_proj": 2.15,
     "season_range": [
      1.29,
      2.36
@@ -10583,6 +10722,7 @@
    "proj_ppg": 1.94,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.94,
    "cr": 3.72,
    "cr_fpg": 1.89,
    "cr_season": 1.75,
@@ -10612,6 +10752,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.83,
     "espn_blend": 0.21,
+    "espn_proj": 1.94,
     "age_adj": -0.06,
     "season_range": [
      1.18,
@@ -10655,6 +10796,7 @@
    "proj_ppg": 1.74,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.74,
    "cr": 3.71,
    "cr_fpg": 1.9,
    "cr_season": 1.63,
@@ -10684,6 +10826,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.81,
     "espn_blend": 0.2,
+    "espn_proj": 1.74,
     "age_adj": -0.03,
     "season_range": [
      1.07,
@@ -10727,6 +10870,7 @@
    "proj_ppg": 3.9,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.9,
    "cr_g_nights": {
     "17": 0.6,
     "19": 0.62
@@ -10753,7 +10897,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 91,
-   "cr_season_pct": 95
+   "cr_season_pct": 96
   },
   {
    "id": 3942073,
@@ -10788,6 +10932,7 @@
    "proj_ppg": 3.02,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.02,
    "cr_g_nights": {
     "17": 0.63,
     "19": 0.64
@@ -10850,6 +10995,7 @@
    "proj_ppg": 1.89,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.89,
    "cr": 3.69,
    "cr_fpg": 1.89,
    "cr_season": 1.63,
@@ -10879,6 +11025,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.76,
     "espn_blend": 0.2,
+    "espn_proj": 1.89,
     "season_range": [
      1.06,
      2.13
@@ -10923,6 +11070,7 @@
    "proj_ppg": 2.01,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.01,
    "cr": 3.62,
    "cr_fpg": 1.86,
    "cr_season": 1.6,
@@ -10952,6 +11100,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.67,
     "espn_blend": 0.19,
+    "espn_proj": 2.01,
     "age_adj": -0.04,
     "season_range": [
      1.03,
@@ -10995,6 +11144,7 @@
    "proj_ppg": 3.3,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.3,
    "cr_g_nights": {
     "17": 0.69,
     "19": 0.75
@@ -11059,6 +11209,7 @@
    "proj_ppg": 1.85,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.85,
    "cr": 3.6,
    "cr_fpg": 1.83,
    "cr_season": 1.73,
@@ -11088,6 +11239,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 1.9,
     "espn_blend": 0.2,
+    "espn_proj": 1.85,
     "season_range": [
      1.16,
      2.23
@@ -11132,6 +11284,7 @@
    "proj_ppg": 1.61,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.61,
    "cr": 3.58,
    "cr_fpg": 1.81,
    "cr_season": 1.65,
@@ -11161,6 +11314,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.81,
     "espn_blend": 0.19,
+    "espn_proj": 1.61,
     "season_range": [
      1.08,
      2.15
@@ -11204,6 +11358,7 @@
    "proj_ppg": 1.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.27,
    "cr": 3.57,
    "cr_fpg": 1.81,
    "cr_season": 1.38,
@@ -11233,6 +11388,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.47,
     "espn_blend": 0.2,
+    "espn_proj": 1.27,
     "season_range": [
      0.82,
      1.78
@@ -11279,6 +11435,7 @@
    "proj_ppg": 1.93,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.93,
    "cr": 3.55,
    "cr_fpg": 1.81,
    "cr_season": 1.7,
@@ -11308,6 +11465,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.83,
     "espn_blend": 0.2,
+    "espn_proj": 1.93,
     "season_range": [
      1.13,
      2.2
@@ -11350,6 +11508,7 @@
    "proj_ppg": 1.92,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.92,
    "cr": 3.5,
    "cr_fpg": 1.79,
    "cr_season": 1.62,
@@ -11379,6 +11538,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.8,
     "espn_blend": 0.21,
+    "espn_proj": 1.92,
     "season_range": [
      1.06,
      2.02
@@ -11423,6 +11583,7 @@
    "proj_ppg": 1.96,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.96,
    "cr": 3.49,
    "cr_fpg": 1.77,
    "cr_season": 1.61,
@@ -11452,6 +11613,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.66,
     "espn_blend": 0.2,
+    "espn_proj": 1.96,
     "season_range": [
      1.04,
      2.11
@@ -11496,6 +11658,7 @@
    "proj_ppg": 1.8,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.8,
    "cr": 3.49,
    "cr_fpg": 1.79,
    "cr_season": 1.49,
@@ -11525,6 +11688,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.56,
     "espn_blend": 0.21,
+    "espn_proj": 1.8,
     "season_range": [
      0.92,
      1.99
@@ -11569,6 +11733,7 @@
    "proj_ppg": 1.66,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.66,
    "cr": 3.48,
    "cr_fpg": 1.77,
    "cr_season": 1.47,
@@ -11598,6 +11763,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.5,
     "espn_blend": 0.21,
+    "espn_proj": 1.66,
     "age_adj": -0.06,
     "season_range": [
      0.9,
@@ -11641,6 +11807,7 @@
    "proj_ppg": 2.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.27,
    "cr": 3.48,
    "cr_fpg": 1.79,
    "cr_season": 1.62,
@@ -11670,6 +11837,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.71,
     "espn_blend": 0.21,
+    "espn_proj": 2.27,
     "age_adj": -0.07,
     "season_range": [
      1.06,
@@ -11715,6 +11883,7 @@
    "proj_ppg": 2.03,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.03,
    "cr": 3.47,
    "cr_fpg": 1.79,
    "cr_season": 1.56,
@@ -11744,6 +11913,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 1.7,
     "espn_blend": 0.2,
+    "espn_proj": 2.03,
     "age_adj": -0.1,
     "season_range": [
      0.99,
@@ -11788,6 +11958,7 @@
    "proj_ppg": 1.67,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.67,
    "cr": 3.46,
    "cr_fpg": 1.77,
    "cr_season": 1.56,
@@ -11817,6 +11988,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.76,
     "espn_blend": 0.21,
+    "espn_proj": 1.67,
     "age_adj": -0.04,
     "season_range": [
      0.99,
@@ -11931,6 +12103,7 @@
    "proj_ppg": 1.32,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.32,
    "cr": 3.43,
    "cr_fpg": 1.76,
    "cr_season": 1.43,
@@ -11960,6 +12133,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.58,
     "espn_blend": 0.21,
+    "espn_proj": 1.32,
     "season_range": [
      0.86,
      1.93
@@ -12005,6 +12179,7 @@
    "proj_ppg": 1.68,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.68,
    "cr": 3.42,
    "cr_fpg": 1.75,
    "cr_season": 1.6,
@@ -12034,6 +12209,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.77,
     "espn_blend": 0.2,
+    "espn_proj": 1.68,
     "season_range": [
      1.03,
      2.1
@@ -12076,6 +12252,7 @@
    "proj_ppg": 1.76,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.76,
    "cr": 3.41,
    "cr_fpg": 1.73,
    "cr_season": 1.61,
@@ -12105,6 +12282,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.69,
     "espn_blend": 0.19,
+    "espn_proj": 1.76,
     "season_range": [
      1.05,
      2.01
@@ -12148,6 +12326,7 @@
    "proj_ppg": 1.44,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.44,
    "cr": 3.39,
    "cr_fpg": 1.72,
    "cr_season": 1.59,
@@ -12177,6 +12356,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.78,
     "espn_blend": 0.19,
+    "espn_proj": 1.44,
     "season_range": [
      1.02,
      2.09
@@ -12281,6 +12461,7 @@
    "proj_ppg": 2.22,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.22,
    "cr": 3.39,
    "cr_fpg": 1.77,
    "cr_season": 1.72,
@@ -12310,6 +12491,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.92,
     "espn_blend": 0.24,
+    "espn_proj": 2.22,
     "age_adj": -0.05,
     "season_range": [
      1.15,
@@ -12355,6 +12537,7 @@
    "proj_ppg": 2.04,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.04,
    "cr": 3.38,
    "cr_fpg": 1.74,
    "cr_season": 1.67,
@@ -12384,6 +12567,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.85,
     "espn_blend": 0.21,
+    "espn_proj": 2.04,
     "season_range": [
      1.1,
      2.17
@@ -12426,6 +12610,7 @@
    "proj_ppg": 1.64,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.64,
    "cr": 3.38,
    "cr_fpg": 1.72,
    "cr_season": 1.56,
@@ -12455,6 +12640,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.75,
     "espn_blend": 0.2,
+    "espn_proj": 1.64,
     "season_range": [
      1.0,
      1.96
@@ -12499,6 +12685,7 @@
    "proj_ppg": 1.9,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.9,
    "cr": 3.37,
    "cr_fpg": 1.72,
    "cr_season": 1.63,
@@ -12528,6 +12715,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.8,
     "espn_blend": 0.19,
+    "espn_proj": 1.9,
     "age_adj": -0.04,
     "season_range": [
      1.06,
@@ -12572,6 +12760,7 @@
    "proj_ppg": 1.86,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.86,
    "cr": 3.37,
    "cr_fpg": 1.71,
    "cr_season": 1.55,
@@ -12601,6 +12790,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.63,
     "espn_blend": 0.19,
+    "espn_proj": 1.86,
     "season_range": [
      0.98,
      2.05
@@ -12644,6 +12834,7 @@
    "proj_ppg": 2.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.07,
    "cr": 3.36,
    "cr_fpg": 1.75,
    "cr_season": 1.63,
@@ -12673,6 +12864,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.77,
     "espn_blend": 0.21,
+    "espn_proj": 2.07,
     "season_range": [
      1.06,
      2.13
@@ -12715,6 +12907,7 @@
    "proj_ppg": 1.87,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.87,
    "cr": 3.36,
    "cr_fpg": 1.73,
    "cr_season": 1.55,
@@ -12744,6 +12937,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.61,
     "espn_blend": 0.2,
+    "espn_proj": 1.87,
     "age_adj": -0.07,
     "season_range": [
      0.99,
@@ -12788,6 +12982,7 @@
    "proj_ppg": 1.91,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.91,
    "cr": 3.35,
    "cr_fpg": 1.74,
    "cr_season": 1.71,
@@ -12817,6 +13012,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.98,
     "espn_blend": 0.21,
+    "espn_proj": 1.91,
     "age_adj": -0.06,
     "season_range": [
      1.14,
@@ -12861,6 +13057,7 @@
    "proj_ppg": 1.89,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.89,
    "cr": 3.35,
    "cr_fpg": 1.73,
    "cr_season": 1.53,
@@ -12890,6 +13087,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.68,
     "espn_blend": 0.21,
+    "espn_proj": 1.89,
     "season_range": [
      0.96,
      2.03
@@ -12933,6 +13131,7 @@
    "proj_ppg": 1.67,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.67,
    "cr": 3.34,
    "cr_fpg": 1.72,
    "cr_season": 1.49,
@@ -12962,6 +13161,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.66,
     "espn_blend": 0.21,
+    "espn_proj": 1.67,
     "age_adj": -0.04,
     "season_range": [
      0.93,
@@ -13007,6 +13207,7 @@
    "proj_ppg": 1.89,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.89,
    "cr": 3.33,
    "cr_fpg": 1.72,
    "cr_season": 1.61,
@@ -13036,11 +13237,12 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.79,
     "espn_blend": 0.2,
+    "espn_proj": 1.89,
     "season_range": [
      1.04,
      2.11
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 82,
    "cr_season_pct": 82
@@ -13079,6 +13281,7 @@
    "proj_ppg": 1.68,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.68,
    "cr": 3.33,
    "cr_fpg": 1.69,
    "cr_season": 1.49,
@@ -13108,6 +13311,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.52,
     "espn_blend": 0.19,
+    "espn_proj": 1.68,
     "season_range": [
      0.92,
      1.99
@@ -13223,6 +13427,7 @@
    "proj_ppg": 1.91,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.91,
    "cr": 3.32,
    "cr_fpg": 1.69,
    "cr_season": 1.57,
@@ -13252,6 +13457,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.69,
     "espn_blend": 0.21,
+    "espn_proj": 1.91,
     "age_adj": -0.03,
     "season_range": [
      1.01,
@@ -13296,6 +13502,7 @@
    "proj_ppg": 1.6,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.6,
    "cr": 3.31,
    "cr_fpg": 1.69,
    "cr_season": 1.57,
@@ -13325,6 +13532,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.75,
     "espn_blend": 0.21,
+    "espn_proj": 1.6,
     "season_range": [
      1.0,
      2.07
@@ -13369,6 +13577,7 @@
    "proj_ppg": 1.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.29,
    "cr": 3.31,
    "cr_fpg": 1.68,
    "cr_season": 1.44,
@@ -13398,6 +13607,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.61,
     "espn_blend": 0.2,
+    "espn_proj": 1.29,
     "season_range": [
      0.87,
      1.94
@@ -13442,6 +13652,7 @@
    "proj_ppg": 1.21,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.21,
    "cr": 3.31,
    "cr_fpg": 1.7,
    "cr_season": 1.35,
@@ -13471,6 +13682,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.5,
     "espn_blend": 0.2,
+    "espn_proj": 1.21,
     "season_range": [
      0.78,
      1.85
@@ -13515,6 +13727,7 @@
    "proj_ppg": 1.86,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.86,
    "cr": 3.3,
    "cr_fpg": 1.7,
    "cr_season": 1.59,
@@ -13544,6 +13757,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.76,
     "espn_blend": 0.21,
+    "espn_proj": 1.86,
     "season_range": [
      1.02,
      2.09
@@ -13586,6 +13800,7 @@
    "proj_ppg": 2.66,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.66,
    "cr": 3.28,
    "cr_fpg": 2.21,
    "cr_season": 1.95,
@@ -13616,6 +13831,7 @@
     "boost_dress": 0.78,
     "boost_fpg": 2.44,
     "espn_blend": 0.22,
+    "espn_proj": 2.66,
     "season_range": [
      1.39,
      2.35
@@ -13659,6 +13875,7 @@
    "proj_ppg": 2.7,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.7,
    "cr_g_nights": {
     "17": 0.57,
     "19": 0.56
@@ -13721,6 +13938,7 @@
    "proj_ppg": 1.88,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.88,
    "cr": 3.27,
    "cr_fpg": 1.68,
    "cr_season": 1.57,
@@ -13750,6 +13968,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.75,
     "espn_blend": 0.21,
+    "espn_proj": 1.88,
     "age_adj": -0.04,
     "season_range": [
      1.01,
@@ -13795,6 +14014,7 @@
    "proj_ppg": 1.63,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.63,
    "cr": 3.24,
    "cr_fpg": 1.65,
    "cr_season": 1.41,
@@ -13824,11 +14044,12 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.45,
     "espn_blend": 0.2,
+    "espn_proj": 1.63,
     "season_range": [
      0.84,
      1.91
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 81,
    "cr_season_pct": 73
@@ -13867,6 +14088,7 @@
    "proj_ppg": 1.64,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.64,
    "cr": 3.23,
    "cr_fpg": 1.65,
    "cr_season": 1.38,
@@ -13896,6 +14118,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.39,
     "espn_blend": 0.21,
+    "espn_proj": 1.64,
     "season_range": [
      0.81,
      1.88
@@ -13939,6 +14162,7 @@
    "proj_ppg": 1.89,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.89,
    "cr": 3.22,
    "cr_fpg": 1.65,
    "cr_season": 1.47,
@@ -13968,6 +14192,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.54,
     "espn_blend": 0.2,
+    "espn_proj": 1.89,
     "season_range": [
      0.91,
      1.87
@@ -14011,6 +14236,7 @@
    "proj_ppg": 3.58,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.58,
    "cr_g_nights": {
     "17": 0.65,
     "19": 0.62
@@ -14072,6 +14298,7 @@
    "proj_ppg": 1.55,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.55,
    "cr": 3.2,
    "cr_fpg": 1.63,
    "cr_season": 1.48,
@@ -14101,6 +14328,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.6,
     "espn_blend": 0.2,
+    "espn_proj": 1.55,
     "age_adj": -0.04,
     "season_range": [
      0.92,
@@ -14146,6 +14374,7 @@
    "proj_ppg": 1.36,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.36,
    "cr": 3.2,
    "cr_fpg": 1.64,
    "cr_season": 1.4,
@@ -14175,6 +14404,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.6,
     "espn_blend": 0.21,
+    "espn_proj": 1.36,
     "age_adj": 0.05,
     "season_range": [
      0.9,
@@ -14219,6 +14449,7 @@
    "proj_ppg": 1.96,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.96,
    "cr": 3.19,
    "cr_fpg": 1.66,
    "cr_season": 1.36,
@@ -14248,6 +14479,7 @@
     "boost_dress": 0.82,
     "boost_fpg": 1.54,
     "espn_blend": 0.19,
+    "espn_proj": 1.96,
     "age_adj": -0.04,
     "season_range": [
      0.89,
@@ -14363,6 +14595,7 @@
    "proj_ppg": 1.56,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.56,
    "cr": 3.17,
    "cr_fpg": 1.63,
    "cr_season": 1.31,
@@ -14392,6 +14625,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.41,
     "espn_blend": 0.21,
+    "espn_proj": 1.56,
     "season_range": [
      0.85,
      1.76
@@ -14436,6 +14670,7 @@
    "proj_ppg": 1.6,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.6,
    "cr": 3.16,
    "cr_fpg": 1.62,
    "cr_season": 1.48,
@@ -14465,6 +14700,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.63,
     "espn_blend": 0.2,
+    "espn_proj": 1.6,
     "season_range": [
      0.91,
      1.98
@@ -14508,6 +14744,7 @@
    "proj_ppg": 1.68,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.68,
    "cr": 3.15,
    "cr_fpg": 1.6,
    "cr_season": 1.48,
@@ -14537,6 +14774,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.55,
     "espn_blend": 0.22,
+    "espn_proj": 1.68,
     "age_adj": -0.05,
     "season_range": [
      0.91,
@@ -14581,6 +14819,7 @@
    "proj_ppg": 1.6,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.6,
    "cr": 3.14,
    "cr_fpg": 1.62,
    "cr_season": 1.39,
@@ -14610,6 +14849,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.55,
     "espn_blend": 0.19,
+    "espn_proj": 1.6,
     "season_range": [
      0.83,
      1.79
@@ -14654,6 +14894,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.35,
    "cr": 3.13,
    "cr_fpg": 1.59,
    "cr_season": 1.35,
@@ -14683,6 +14924,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.44,
     "espn_blend": 0.21,
+    "espn_proj": 1.35,
     "season_range": [
      0.78,
      1.85
@@ -14725,6 +14967,7 @@
    "proj_ppg": 3.41,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.41,
    "cr_g_nights": {
     "17": 0.88,
     "19": 0.33
@@ -14787,6 +15030,7 @@
    "proj_ppg": 3.25,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.25,
    "cr_g_nights": {
     "19": 0.83,
     "20": 0.38
@@ -14990,6 +15234,7 @@
    "proj_ppg": 2.01,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.01,
    "cr": 3.12,
    "cr_fpg": 1.61,
    "cr_season": 1.45,
@@ -15019,6 +15264,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.5,
     "espn_blend": 0.2,
+    "espn_proj": 2.01,
     "age_adj": -0.08,
     "season_range": [
      0.88,
@@ -15063,6 +15309,7 @@
    "proj_ppg": 1.81,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.81,
    "cr": 3.11,
    "cr_fpg": 1.6,
    "cr_season": 1.41,
@@ -15092,6 +15339,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.55,
     "espn_blend": 0.2,
+    "espn_proj": 1.81,
     "season_range": [
      0.84,
      1.91
@@ -15134,6 +15382,7 @@
    "proj_ppg": 1.61,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.61,
    "cr": 3.11,
    "cr_fpg": 1.59,
    "cr_season": 1.53,
@@ -15163,6 +15412,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.73,
     "espn_blend": 0.19,
+    "espn_proj": 1.61,
     "season_range": [
      0.97,
      1.93
@@ -15207,6 +15457,7 @@
    "proj_ppg": 1.85,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.85,
    "cr": 3.1,
    "cr_fpg": 1.57,
    "cr_season": 1.55,
@@ -15236,6 +15487,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.64,
     "espn_blend": 0.19,
+    "espn_proj": 1.85,
     "season_range": [
      0.98,
      2.05
@@ -15278,6 +15530,7 @@
    "proj_ppg": 1.41,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.41,
    "cr": 3.1,
    "cr_fpg": 1.6,
    "cr_season": 1.26,
@@ -15307,6 +15560,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 1.5,
     "espn_blend": 0.21,
+    "espn_proj": 1.41,
     "age_adj": -0.03,
     "season_range": [
      0.79,
@@ -15352,6 +15606,7 @@
    "proj_ppg": 1.69,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.69,
    "cr": 3.1,
    "cr_fpg": 1.59,
    "cr_season": 1.56,
@@ -15381,6 +15636,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.77,
     "espn_blend": 0.21,
+    "espn_proj": 1.69,
     "season_range": [
      1.06,
      2.16
@@ -15425,9 +15681,10 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.78,
    "cr": 3.1,
    "cr_fpg": 1.58,
-   "cr_season": 1.5,
+   "cr_season": 1.55,
    "proj_gp": 78,
    "cr_games": 1.97,
    "cr_dress": 0.98,
@@ -15450,18 +15707,19 @@
     },
     "season_fpg": 1.59,
     "boost_week": 0.17,
-    "season_pts": 1.62,
+    "season_pts": 1.67,
     "boost_dress": 0.93,
     "boost_fpg": 1.66,
     "espn_blend": 0.22,
+    "espn_proj": 1.78,
     "season_range": [
-     0.93,
-     2.0
+     0.98,
+     2.05
     ],
     "lineup_slack": 1.6
    },
    "cr_pct": 78,
-   "cr_season_pct": 78
+   "cr_season_pct": 79
   },
   {
    "id": 4736758,
@@ -15559,6 +15817,7 @@
    "proj_ppg": 1.82,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.82,
    "cr": 3.09,
    "cr_fpg": 1.57,
    "cr_season": 1.46,
@@ -15588,6 +15847,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.54,
     "espn_blend": 0.19,
+    "espn_proj": 1.82,
     "season_range": [
      0.89,
      1.96
@@ -15631,6 +15891,7 @@
    "proj_ppg": 1.45,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.45,
    "cr": 3.09,
    "cr_fpg": 1.58,
    "cr_season": 1.33,
@@ -15660,6 +15921,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.44,
     "espn_blend": 0.21,
+    "espn_proj": 1.45,
     "season_range": [
      0.87,
      1.78
@@ -15703,6 +15965,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.35,
    "cr": 3.08,
    "cr_fpg": 1.59,
    "cr_season": 1.39,
@@ -15732,6 +15995,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.61,
     "espn_blend": 0.21,
+    "espn_proj": 1.35,
     "season_range": [
      0.83,
      1.79
@@ -15848,6 +16112,7 @@
    "proj_ppg": 1.65,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.65,
    "cr": 3.07,
    "cr_fpg": 1.57,
    "cr_season": 1.39,
@@ -15877,6 +16142,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.43,
     "espn_blend": 0.19,
+    "espn_proj": 1.65,
     "season_range": [
      0.82,
      1.89
@@ -15920,6 +16186,7 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.58,
    "cr": 3.07,
    "cr_fpg": 1.57,
    "cr_season": 1.4,
@@ -15949,6 +16216,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.53,
     "espn_blend": 0.21,
+    "espn_proj": 1.58,
     "season_range": [
      0.83,
      1.9
@@ -15993,6 +16261,7 @@
    "proj_ppg": 1.63,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.63,
    "cr": 3.07,
    "cr_fpg": 1.57,
    "cr_season": 1.41,
@@ -16022,11 +16291,12 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.57,
     "espn_blend": 0.2,
+    "espn_proj": 1.63,
     "season_range": [
      0.84,
      1.91
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 76,
    "cr_season_pct": 73
@@ -16065,6 +16335,7 @@
    "proj_ppg": 1.82,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.82,
    "cr": 3.06,
    "cr_fpg": 1.55,
    "cr_season": 1.46,
@@ -16094,6 +16365,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.53,
     "espn_blend": 0.21,
+    "espn_proj": 1.82,
     "season_range": [
      0.89,
      1.96
@@ -16137,6 +16409,7 @@
    "proj_ppg": 1.68,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.68,
    "cr": 3.06,
    "cr_fpg": 1.56,
    "cr_season": 1.38,
@@ -16166,6 +16439,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.41,
     "espn_blend": 0.2,
+    "espn_proj": 1.68,
     "season_range": [
      0.81,
      1.88
@@ -16208,6 +16482,7 @@
    "proj_ppg": 1.54,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.54,
    "cr": 3.06,
    "cr_fpg": 1.56,
    "cr_season": 1.39,
@@ -16237,6 +16512,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.58,
     "espn_blend": 0.19,
+    "espn_proj": 1.54,
     "season_range": [
      0.83,
      1.79
@@ -16280,6 +16556,7 @@
    "proj_ppg": 2.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.29,
    "cr": 3.06,
    "cr_fpg": 1.57,
    "cr_season": 1.57,
@@ -16309,6 +16586,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.65,
     "espn_blend": 0.2,
+    "espn_proj": 2.29,
     "age_adj": -0.04,
     "season_range": [
      1.0,
@@ -16354,6 +16632,7 @@
    "proj_ppg": 1.55,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.55,
    "cr": 3.05,
    "cr_fpg": 1.55,
    "cr_season": 1.31,
@@ -16383,6 +16662,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.33,
     "espn_blend": 0.21,
+    "espn_proj": 1.55,
     "age_adj": -0.06,
     "season_range": [
      0.85,
@@ -16428,6 +16708,7 @@
    "proj_ppg": 1.71,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.71,
    "cr": 3.03,
    "cr_fpg": 1.58,
    "cr_season": 1.37,
@@ -16457,6 +16738,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.51,
     "espn_blend": 0.21,
+    "espn_proj": 1.71,
     "season_range": [
      0.8,
      1.87
@@ -16500,6 +16782,7 @@
    "proj_ppg": 1.95,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.95,
    "cr": 3.03,
    "cr_fpg": 1.54,
    "cr_season": 1.56,
@@ -16529,6 +16812,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.63,
     "espn_blend": 0.21,
+    "espn_proj": 1.95,
     "age_adj": -0.05,
     "season_range": [
      0.99,
@@ -16643,6 +16927,7 @@
    "proj_ppg": 3.54,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.54,
    "cr_g_nights": {
     "16": 0.0,
     "19": 0.89
@@ -16847,6 +17132,7 @@
    "proj_ppg": 1.82,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.82,
    "cr": 2.97,
    "cr_fpg": 1.55,
    "cr_season": 1.36,
@@ -16876,6 +17162,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.38,
     "espn_blend": 0.21,
+    "espn_proj": 1.82,
     "season_range": [
      0.8,
      1.76
@@ -16919,6 +17206,7 @@
    "proj_ppg": 1.62,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.62,
    "cr": 2.97,
    "cr_fpg": 1.52,
    "cr_season": 1.29,
@@ -16948,6 +17236,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.31,
     "espn_blend": 0.2,
+    "espn_proj": 1.62,
     "age_adj": -0.07,
     "season_range": [
      0.83,
@@ -16992,6 +17281,7 @@
    "proj_ppg": 1.59,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.59,
    "cr": 2.96,
    "cr_fpg": 1.52,
    "cr_season": 1.36,
@@ -17021,6 +17311,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.46,
     "espn_blend": 0.19,
+    "espn_proj": 1.59,
     "season_range": [
      0.79,
      1.86
@@ -17064,6 +17355,7 @@
    "proj_ppg": 2.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.07,
    "cr": 2.95,
    "cr_fpg": 1.52,
    "cr_season": 1.56,
@@ -17093,6 +17385,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.73,
     "espn_blend": 0.19,
+    "espn_proj": 2.07,
     "season_range": [
      1.0,
      1.96
@@ -17136,6 +17429,7 @@
    "proj_ppg": 1.51,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.51,
    "cr": 2.93,
    "cr_fpg": 1.49,
    "cr_season": 1.31,
@@ -17165,6 +17459,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.37,
     "espn_blend": 0.21,
+    "espn_proj": 1.51,
     "season_range": [
      0.85,
      1.76
@@ -17208,6 +17503,7 @@
    "proj_ppg": 1.69,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.69,
    "cr": 2.93,
    "cr_fpg": 1.51,
    "cr_season": 1.41,
@@ -17237,6 +17533,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.51,
     "espn_blend": 0.21,
+    "espn_proj": 1.69,
     "season_range": [
      0.84,
      1.91
@@ -17280,6 +17577,7 @@
    "proj_ppg": 1.57,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.57,
    "cr": 2.92,
    "cr_fpg": 1.48,
    "cr_season": 1.38,
@@ -17309,6 +17607,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 1.46,
     "espn_blend": 0.2,
+    "espn_proj": 1.57,
     "season_range": [
      0.81,
      1.88
@@ -17317,77 +17616,6 @@
    },
    "cr_pct": 73,
    "cr_season_pct": 72
-  },
-  {
-   "id": 3068087,
-   "name": "Damon Severson",
-   "team": "CBJ",
-   "games": 3,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    15,
-    19,
-    20
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 10,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 8.0,
-   "gp": 3,
-   "ppg": 1.51,
-   "cur_ppg": 2.8,
-   "last_ppg": 1.38,
-   "last_gp": 71,
-   "proj_ppg": 1.38,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 2.92,
-   "cr_fpg": 1.53,
-   "cr_season": 1.26,
-   "proj_gp": 71,
-   "cr_games": 1.91,
-   "cr_dress": 0.96,
-   "cr_dress_next": 0.96,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476923,
-   "cr_why": {
-    "toi5": 23.21,
-    "toi": 23.21,
-    "pp5": 0.55,
-    "sog": 1.33,
-    "blk": 2.0,
-    "gp": 3,
-    "last_fpg": 1.38,
-    "xfp": {
-     "gp": 3,
-     "fpg": 2.8,
-     "xfpg": 1.91
-    },
-    "season_fpg": 1.58,
-    "boost_week": -0.09,
-    "season_pts": 1.46,
-    "boost_dress": 0.85,
-    "boost_fpg": 1.47,
-    "espn_blend": 0.25,
-    "season_range": [
-     0.79,
-     1.64
-    ],
-    "lineup_slack": 0.7
-   },
-   "cr_pct": 80,
-   "cr_season_pct": 69
   },
   {
    "id": 5080160,
@@ -17496,6 +17724,7 @@
    "proj_ppg": 1.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.3,
    "cr": 2.9,
    "cr_fpg": 1.47,
    "cr_season": 1.27,
@@ -17525,6 +17754,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.37,
     "espn_blend": 0.2,
+    "espn_proj": 1.3,
     "season_range": [
      0.8,
      1.83
@@ -17640,6 +17870,7 @@
    "proj_ppg": 1.72,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.72,
    "cr": 2.9,
    "cr_fpg": 1.49,
    "cr_season": 1.33,
@@ -17669,6 +17900,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.43,
     "espn_blend": 0.2,
+    "espn_proj": 1.72,
     "age_adj": -0.04,
     "season_range": [
      0.86,
@@ -17746,8 +17978,81 @@
     ],
     "lineup_slack": -0.1
    },
-   "cr_pct": 78,
+   "cr_pct": 79,
    "cr_season_pct": 72
+  },
+  {
+   "id": 3068087,
+   "name": "Damon Severson",
+   "team": "CBJ",
+   "games": 3,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    15,
+    19,
+    20
+   ],
+   "games_next2": 5,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 10,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 8.0,
+   "gp": 3,
+   "ppg": 1.51,
+   "cur_ppg": 2.8,
+   "last_ppg": 1.38,
+   "last_gp": 71,
+   "proj_ppg": 1.38,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 1.38,
+   "cr": 2.87,
+   "cr_fpg": 1.5,
+   "cr_season": 1.26,
+   "proj_gp": 71,
+   "cr_games": 1.91,
+   "cr_dress": 0.96,
+   "cr_dress_next": 0.96,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476923,
+   "cr_why": {
+    "toi5": 23.21,
+    "toi": 23.21,
+    "pp5": 0.55,
+    "sog": 1.33,
+    "blk": 2.0,
+    "gp": 3,
+    "last_fpg": 1.38,
+    "xfp": {
+     "gp": 3,
+     "fpg": 2.8,
+     "xfpg": 1.91
+    },
+    "season_fpg": 1.58,
+    "boost_week": -0.09,
+    "season_pts": 1.46,
+    "boost_dress": 0.85,
+    "boost_fpg": 1.47,
+    "espn_blend": 0.25,
+    "espn_proj": 1.38,
+    "season_range": [
+     0.79,
+     1.64
+    ],
+    "lineup_slack": 0.7
+   },
+   "cr_pct": 78,
+   "cr_season_pct": 69
   },
   {
    "id": 3899979,
@@ -17783,6 +18088,7 @@
    "proj_ppg": 1.67,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.67,
    "cr": 2.87,
    "cr_fpg": 1.47,
    "cr_season": 1.28,
@@ -17812,6 +18118,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.31,
     "espn_blend": 0.19,
+    "espn_proj": 1.67,
     "season_range": [
      0.82,
      1.73
@@ -17855,6 +18162,7 @@
    "proj_ppg": 1.64,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.64,
    "cr": 2.86,
    "cr_fpg": 1.46,
    "cr_season": 1.26,
@@ -17884,6 +18192,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.24,
     "espn_blend": 0.2,
+    "espn_proj": 1.64,
     "season_range": [
      0.8,
      1.71
@@ -18068,6 +18377,7 @@
    "proj_ppg": 1.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.3,
    "cr": 2.83,
    "cr_fpg": 1.46,
    "cr_season": 1.28,
@@ -18097,6 +18407,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.44,
     "espn_blend": 0.2,
+    "espn_proj": 1.3,
     "season_range": [
      0.81,
      1.66
@@ -18140,6 +18451,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 2.82,
    "cr_fpg": 1.43,
    "cr_season": 1.3,
@@ -18169,6 +18481,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.41,
     "espn_blend": 0.21,
+    "espn_proj": 1.33,
     "season_range": [
      0.84,
      1.75
@@ -18211,6 +18524,7 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.58,
    "cr": 2.81,
    "cr_fpg": 1.43,
    "cr_season": 1.25,
@@ -18240,6 +18554,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.35,
     "espn_blend": 0.21,
+    "espn_proj": 1.58,
     "age_adj": -0.07,
     "season_range": [
      0.78,
@@ -18284,6 +18599,7 @@
    "proj_ppg": 1.62,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.62,
    "cr": 2.8,
    "cr_fpg": 1.44,
    "cr_season": 1.34,
@@ -18313,6 +18629,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.47,
     "espn_blend": 0.19,
+    "espn_proj": 1.62,
     "season_range": [
      0.87,
      1.72
@@ -18427,6 +18744,7 @@
    "proj_ppg": 1.25,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.25,
    "cr": 2.79,
    "cr_fpg": 1.43,
    "cr_season": 1.19,
@@ -18456,6 +18774,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.3,
     "espn_blend": 0.21,
+    "espn_proj": 1.25,
     "season_range": [
      0.73,
      1.64
@@ -18571,6 +18890,7 @@
    "proj_ppg": 1.19,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.19,
    "cr": 2.78,
    "cr_fpg": 1.4,
    "cr_season": 1.12,
@@ -18600,6 +18920,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.17,
     "espn_blend": 0.21,
+    "espn_proj": 1.19,
     "age_adj": -0.08,
     "season_range": [
      0.66,
@@ -18678,7 +18999,7 @@
     "lineup_slack": 0.6
    },
    "cr_pct": 75,
-   "cr_season_pct": 68
+   "cr_season_pct": 67
   },
   {
    "id": 3904177,
@@ -18713,6 +19034,7 @@
    "proj_ppg": 3.61,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.61,
    "cr_g_nights": {
     "16": 0.0,
     "18": 0.84
@@ -18852,6 +19174,7 @@
    "proj_ppg": 1.26,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.26,
    "cr": 2.77,
    "cr_fpg": 1.42,
    "cr_season": 1.19,
@@ -18881,11 +19204,12 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.33,
     "espn_blend": 0.2,
+    "espn_proj": 1.26,
     "season_range": [
      0.73,
      1.64
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 70,
    "cr_season_pct": 61
@@ -18923,6 +19247,7 @@
    "proj_ppg": 1.75,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.75,
    "cr": 2.77,
    "cr_fpg": 1.41,
    "cr_season": 1.37,
@@ -18952,6 +19277,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.43,
     "espn_blend": 0.21,
+    "espn_proj": 1.75,
     "age_adj": -0.03,
     "season_range": [
      0.81,
@@ -19139,6 +19465,7 @@
    "proj_ppg": 1.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.27,
    "cr": 2.76,
    "cr_fpg": 1.4,
    "cr_season": 1.26,
@@ -19168,6 +19495,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 1.35,
     "espn_blend": 0.19,
+    "espn_proj": 1.27,
     "season_range": [
      0.8,
      1.71
@@ -19281,6 +19609,7 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.39,
    "cr": 2.75,
    "cr_fpg": 1.4,
    "cr_season": 1.17,
@@ -19310,6 +19639,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.19,
     "espn_blend": 0.19,
+    "espn_proj": 1.39,
     "season_range": [
      0.71,
      1.62
@@ -19353,6 +19683,7 @@
    "proj_ppg": 1.76,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.76,
    "cr": 2.75,
    "cr_fpg": 1.41,
    "cr_season": 1.31,
@@ -19382,6 +19713,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.33,
     "espn_blend": 0.2,
+    "espn_proj": 1.76,
     "season_range": [
      0.85,
      1.76
@@ -19424,6 +19756,7 @@
    "proj_ppg": 1.48,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.48,
    "cr": 2.75,
    "cr_fpg": 1.44,
    "cr_season": 1.18,
@@ -19453,6 +19786,7 @@
     "boost_dress": 0.76,
     "boost_fpg": 1.46,
     "espn_blend": 0.21,
+    "espn_proj": 1.48,
     "age_adj": -0.05,
     "season_range": [
      0.71,
@@ -19498,7 +19832,7 @@
    "dfo_out": false,
    "cr": 2.74,
    "cr_fpg": 1.41,
-   "cr_season": 1.22,
+   "cr_season": 1.23,
    "proj_gp": 74,
    "cr_games": 1.95,
    "cr_dress": 0.97,
@@ -19525,13 +19859,13 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.43,
     "season_range": [
-     0.75,
-     1.6
+     0.76,
+     1.61
     ],
-    "lineup_slack": 0.3
+    "lineup_slack": 0.6
    },
    "cr_pct": 73,
-   "cr_season_pct": 66
+   "cr_season_pct": 67
   },
   {
    "id": 4196914,
@@ -19566,6 +19900,7 @@
    "proj_ppg": 3.35,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.35,
    "cr_g_nights": {
     "16": 0.0,
     "19": 0.88
@@ -19634,6 +19969,7 @@
    "proj_ppg": 1.45,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.45,
    "cr": 2.72,
    "cr_fpg": 1.38,
    "cr_season": 1.29,
@@ -19663,6 +19999,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.41,
     "espn_blend": 0.2,
+    "espn_proj": 1.45,
     "season_range": [
      0.83,
      1.74
@@ -19777,6 +20114,7 @@
    "proj_ppg": 1.34,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.34,
    "cr": 2.71,
    "cr_fpg": 1.4,
    "cr_season": 1.23,
@@ -19806,6 +20144,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.31,
     "espn_blend": 0.21,
+    "espn_proj": 1.34,
     "season_range": [
      0.77,
      1.68
@@ -19848,6 +20187,7 @@
    "proj_ppg": 1.83,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.83,
    "cr": 2.71,
    "cr_fpg": 1.4,
    "cr_season": 1.37,
@@ -19877,6 +20217,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.54,
     "espn_blend": 0.21,
+    "espn_proj": 1.83,
     "age_adj": -0.05,
     "season_range": [
      0.81,
@@ -19921,6 +20262,7 @@
    "proj_ppg": 1.49,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.49,
    "cr": 2.7,
    "cr_fpg": 1.42,
    "cr_season": 1.1,
@@ -19950,6 +20292,7 @@
     "boost_dress": 0.73,
     "boost_fpg": 1.37,
     "espn_blend": 0.22,
+    "espn_proj": 1.49,
     "season_range": [
      0.63,
      1.48
@@ -19992,6 +20335,7 @@
    "proj_ppg": 1.49,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.49,
    "cr": 2.7,
    "cr_fpg": 1.38,
    "cr_season": 1.33,
@@ -20021,6 +20365,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.48,
     "espn_blend": 0.19,
+    "espn_proj": 1.49,
     "season_range": [
      0.86,
      1.71
@@ -20064,6 +20409,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 2.69,
    "cr_fpg": 1.38,
    "cr_season": 1.14,
@@ -20093,6 +20439,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.2,
     "espn_blend": 0.22,
+    "espn_proj": 1.33,
     "season_range": [
      0.68,
      1.59
@@ -20208,6 +20555,7 @@
    "proj_ppg": 1.56,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.56,
    "cr": 2.68,
    "cr_fpg": 1.39,
    "cr_season": 1.16,
@@ -20237,6 +20585,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.27,
     "espn_blend": 0.21,
+    "espn_proj": 1.56,
     "age_adj": -0.06,
     "season_range": [
      0.7,
@@ -20281,6 +20630,7 @@
    "proj_ppg": 1.46,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.46,
    "cr": 2.68,
    "cr_fpg": 1.38,
    "cr_season": 1.21,
@@ -20310,6 +20660,7 @@
     "boost_dress": 0.8,
     "boost_fpg": 1.42,
     "espn_blend": 0.21,
+    "espn_proj": 1.46,
     "age_adj": -0.04,
     "season_range": [
      0.75,
@@ -20353,6 +20704,7 @@
    "proj_ppg": 3.06,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.06,
    "cr_g_nights": {
     "17": 0.65,
     "19": 0.33
@@ -20415,6 +20767,7 @@
    "proj_ppg": 1.45,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.45,
    "cr": 2.67,
    "cr_fpg": 1.36,
    "cr_season": 1.21,
@@ -20444,6 +20797,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.32,
     "espn_blend": 0.21,
+    "espn_proj": 1.45,
     "season_range": [
      0.75,
      1.66
@@ -20487,6 +20841,7 @@
    "proj_ppg": 1.37,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.37,
    "cr": 2.66,
    "cr_fpg": 1.37,
    "cr_season": 1.24,
@@ -20516,6 +20871,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.35,
     "espn_blend": 0.21,
+    "espn_proj": 1.37,
     "season_range": [
      0.78,
      1.69
@@ -20560,6 +20916,7 @@
    "proj_ppg": 1.12,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.12,
    "cr": 2.66,
    "cr_fpg": 1.35,
    "cr_season": 1.16,
@@ -20589,6 +20946,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.31,
     "espn_blend": 0.21,
+    "espn_proj": 1.12,
     "season_range": [
      0.69,
      1.72
@@ -20705,6 +21063,7 @@
    "proj_ppg": 1.38,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.38,
    "cr": 2.65,
    "cr_fpg": 1.35,
    "cr_season": 1.16,
@@ -20734,6 +21093,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.21,
     "espn_blend": 0.2,
+    "espn_proj": 1.38,
     "age_adj": -0.03,
     "season_range": [
      0.7,
@@ -20779,6 +21139,7 @@
    "proj_ppg": 1.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.27,
    "cr": 2.65,
    "cr_fpg": 1.36,
    "cr_season": 1.29,
@@ -20808,6 +21169,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.48,
     "espn_blend": 0.22,
+    "espn_proj": 1.27,
     "season_range": [
      0.83,
      1.74
@@ -20850,6 +21212,7 @@
    "proj_ppg": 1.96,
    "clears": "Thu 15",
    "dfo_out": false,
+   "proj_ppg_pre": 1.96,
    "cr": 2.64,
    "cr_fpg": 1.35,
    "cr_season": 1.34,
@@ -20879,6 +21242,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.38,
     "espn_blend": 0.22,
+    "espn_proj": 1.96,
     "season_range": [
      0.88,
      1.79
@@ -20922,6 +21286,7 @@
    "proj_ppg": 1.14,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.14,
    "cr": 2.64,
    "cr_fpg": 1.35,
    "cr_season": 1.14,
@@ -20951,6 +21316,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.28,
     "espn_blend": 0.2,
+    "espn_proj": 1.14,
     "season_range": [
      0.67,
      1.52
@@ -20993,6 +21359,7 @@
    "proj_ppg": 1.5,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.5,
    "cr": 2.64,
    "cr_fpg": 1.35,
    "cr_season": 1.27,
@@ -21022,6 +21389,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.42,
     "espn_blend": 0.21,
+    "espn_proj": 1.5,
     "season_range": [
      0.8,
      1.65
@@ -21284,6 +21652,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 2.62,
    "cr_fpg": 1.33,
    "cr_season": 1.26,
@@ -21313,6 +21682,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.41,
     "espn_blend": 0.21,
+    "espn_proj": 1.33,
     "season_range": [
      0.79,
      1.64
@@ -21558,6 +21928,7 @@
    "proj_ppg": 1.74,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.74,
    "cr": 2.61,
    "cr_fpg": 1.38,
    "cr_season": 1.32,
@@ -21587,6 +21958,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.42,
     "espn_blend": 0.2,
+    "espn_proj": 1.74,
     "age_adj": -0.03,
     "season_range": [
      0.85,
@@ -21631,6 +22003,7 @@
    "proj_ppg": 1.5,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.5,
    "cr": 2.6,
    "cr_fpg": 1.35,
    "cr_season": 1.22,
@@ -21660,6 +22033,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.35,
     "espn_blend": 0.21,
+    "espn_proj": 1.5,
     "season_range": [
      0.76,
      1.67
@@ -21704,6 +22078,7 @@
    "proj_ppg": 1.43,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.43,
    "cr": 2.6,
    "cr_fpg": 1.36,
    "cr_season": 1.15,
@@ -21733,6 +22108,7 @@
     "boost_dress": 0.83,
     "boost_fpg": 1.29,
     "espn_blend": 0.19,
+    "espn_proj": 1.43,
     "age_adj": -0.04,
     "season_range": [
      0.69,
@@ -21846,6 +22222,7 @@
    "proj_ppg": 1.53,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.53,
    "cr": 2.6,
    "cr_fpg": 1.34,
    "cr_season": 1.2,
@@ -21875,6 +22252,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.34,
     "espn_blend": 0.2,
+    "espn_proj": 1.53,
     "age_adj": -0.09,
     "season_range": [
      0.73,
@@ -22059,6 +22437,7 @@
    "proj_ppg": 2.86,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.86,
    "cr_g_nights": {
     "18": 0.91,
     "19": 0.11
@@ -22122,6 +22501,7 @@
    "proj_ppg": 1.67,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.67,
    "cr": 2.58,
    "cr_fpg": 1.33,
    "cr_season": 1.28,
@@ -22151,6 +22531,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.45,
     "espn_blend": 0.2,
+    "espn_proj": 1.67,
     "age_adj": -0.05,
     "season_range": [
      0.82,
@@ -22197,6 +22578,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 2.57,
    "cr_fpg": 1.31,
    "cr_season": 1.23,
@@ -22226,6 +22608,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 1.32,
     "espn_blend": 0.2,
+    "espn_proj": 1.33,
     "age_adj": -0.09,
     "season_range": [
      0.77,
@@ -22270,6 +22653,7 @@
    "proj_ppg": 1.37,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.37,
    "cr": 2.57,
    "cr_fpg": 1.32,
    "cr_season": 1.12,
@@ -22299,6 +22683,7 @@
     "boost_dress": 0.8,
     "boost_fpg": 1.3,
     "espn_blend": 0.2,
+    "espn_proj": 1.37,
     "season_range": [
      0.66,
      1.57
@@ -22341,6 +22726,7 @@
    "proj_ppg": 1.23,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.23,
    "cr": 2.57,
    "cr_fpg": 1.31,
    "cr_season": 1.12,
@@ -22370,6 +22756,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.22,
     "espn_blend": 0.21,
+    "espn_proj": 1.23,
     "season_range": [
      0.65,
      1.5
@@ -22554,6 +22941,7 @@
    "proj_ppg": 1.5,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.5,
    "cr": 2.55,
    "cr_fpg": 1.31,
    "cr_season": 1.24,
@@ -22583,6 +22971,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.32,
     "espn_blend": 0.21,
+    "espn_proj": 1.5,
     "season_range": [
      0.78,
      1.69
@@ -22626,6 +23015,7 @@
    "proj_ppg": 1.45,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.45,
    "cr": 2.54,
    "cr_fpg": 1.3,
    "cr_season": 1.09,
@@ -22655,6 +23045,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.22,
     "espn_blend": 0.21,
+    "espn_proj": 1.45,
     "age_adj": 0.05,
     "season_range": [
      0.66,
@@ -22902,6 +23293,7 @@
    "proj_ppg": 1.55,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.55,
    "cr": 2.51,
    "cr_fpg": 1.28,
    "cr_season": 1.22,
@@ -22931,6 +23323,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.32,
     "espn_blend": 0.2,
+    "espn_proj": 1.55,
     "season_range": [
      0.76,
      1.67
@@ -22975,6 +23368,7 @@
    "proj_ppg": 1.12,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.12,
    "cr": 2.51,
    "cr_fpg": 1.27,
    "cr_season": 1.11,
@@ -23004,6 +23398,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.24,
     "espn_blend": 0.22,
+    "espn_proj": 1.12,
     "season_range": [
      0.65,
      1.56
@@ -23046,6 +23441,7 @@
    "proj_ppg": 3.35,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.35,
    "cr_g_nights": {
     "18": 0.09,
     "19": 0.89
@@ -23107,6 +23503,7 @@
    "proj_ppg": 2.57,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.57,
    "cr_g_nights": {
     "17": 0.64,
     "20": 0.7
@@ -23170,6 +23567,7 @@
    "proj_ppg": 1.15,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.15,
    "cr": 2.49,
    "cr_fpg": 1.27,
    "cr_season": 1.07,
@@ -23199,6 +23597,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.13,
     "espn_blend": 0.2,
+    "espn_proj": 1.15,
     "season_range": [
      0.61,
      1.52
@@ -23313,6 +23712,7 @@
    "proj_ppg": 1.19,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.19,
    "cr": 2.49,
    "cr_fpg": 1.27,
    "cr_season": 1.04,
@@ -23342,6 +23742,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.1,
     "espn_blend": 0.19,
+    "espn_proj": 1.19,
     "age_adj": -0.04,
     "season_range": [
      0.58,
@@ -23386,6 +23787,7 @@
    "proj_ppg": 2.46,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.46,
    "cr": 2.49,
    "cr_fpg": 2.51,
    "cr_season": 2.22,
@@ -23415,6 +23817,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 2.23,
     "espn_blend": 0.21,
+    "espn_proj": 2.46,
     "season_range": [
      1.65,
      2.72
@@ -23459,6 +23862,7 @@
    "proj_ppg": 1.65,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.65,
    "cr": 2.49,
    "cr_fpg": 1.28,
    "cr_season": 1.17,
@@ -23488,6 +23892,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.27,
     "espn_blend": 0.19,
+    "espn_proj": 1.65,
     "season_range": [
      0.71,
      1.62
@@ -23674,6 +24079,7 @@
    "proj_ppg": 1.59,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.59,
    "cr": 2.48,
    "cr_fpg": 1.28,
    "cr_season": 1.21,
@@ -23703,11 +24109,12 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.37,
     "espn_blend": 0.21,
+    "espn_proj": 1.59,
     "season_range": [
      0.74,
      1.59
     ],
-    "lineup_slack": 0.3
+    "lineup_slack": 0.6
    },
    "cr_pct": 61,
    "cr_season_pct": 65
@@ -23747,6 +24154,7 @@
    "proj_ppg": 1.19,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.19,
    "cr": 2.47,
    "cr_fpg": 1.27,
    "cr_season": 1.16,
@@ -23776,6 +24184,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.36,
     "espn_blend": 0.2,
+    "espn_proj": 1.19,
     "season_range": [
      0.7,
      1.61
@@ -23818,6 +24227,7 @@
    "proj_ppg": 3.0,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.0,
    "cr_g_nights": {
     "17": 0.47,
     "19": 0.4
@@ -23911,7 +24321,7 @@
      0.69,
      1.54
     ],
-    "lineup_slack": 0.3
+    "lineup_slack": 0.6
    },
    "cr_pct": 60,
    "cr_season_pct": 60
@@ -23949,6 +24359,7 @@
    "proj_ppg": 1.32,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.32,
    "cr": 2.45,
    "cr_fpg": 1.26,
    "cr_season": 1.08,
@@ -23978,6 +24389,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.13,
     "espn_blend": 0.21,
+    "espn_proj": 1.32,
     "age_adj": -0.05,
     "season_range": [
      0.61,
@@ -24022,6 +24434,7 @@
    "proj_ppg": 1.37,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.37,
    "cr": 2.45,
    "cr_fpg": 1.25,
    "cr_season": 1.16,
@@ -24051,6 +24464,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.26,
     "espn_blend": 0.2,
+    "espn_proj": 1.37,
     "season_range": [
      0.7,
      1.61
@@ -24310,6 +24724,7 @@
    "proj_ppg": 1.53,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.53,
    "cr": 2.43,
    "cr_fpg": 1.24,
    "cr_season": 1.22,
@@ -24339,6 +24754,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.34,
     "espn_blend": 0.19,
+    "espn_proj": 1.53,
     "season_range": [
      0.76,
      1.67
@@ -24454,6 +24870,7 @@
    "proj_ppg": 1.8,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.8,
    "cr": 2.41,
    "cr_fpg": 1.25,
    "cr_season": 1.14,
@@ -24483,6 +24900,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.17,
     "espn_blend": 0.2,
+    "espn_proj": 1.8,
     "season_range": [
      0.68,
      1.59
@@ -24977,6 +25395,7 @@
    "proj_ppg": 1.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.3,
    "cr": 2.37,
    "cr_fpg": 1.21,
    "cr_season": 1.06,
@@ -25006,6 +25425,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.12,
     "espn_blend": 0.21,
+    "espn_proj": 1.3,
     "season_range": [
      0.6,
      1.51
@@ -25265,6 +25685,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 2.35,
    "cr_fpg": 1.2,
    "cr_season": 1.11,
@@ -25294,6 +25715,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.25,
     "espn_blend": 0.21,
+    "espn_proj": 1.33,
     "age_adj": -0.04,
     "season_range": [
      0.65,
@@ -25339,6 +25761,7 @@
    "proj_ppg": 1.11,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.11,
    "cr": 2.35,
    "cr_fpg": 1.2,
    "cr_season": 1.1,
@@ -25368,6 +25791,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.23,
     "espn_blend": 0.2,
+    "espn_proj": 1.11,
     "season_range": [
      0.64,
      1.55
@@ -25832,6 +26256,7 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.39,
    "cr": 2.33,
    "cr_fpg": 1.23,
    "cr_season": 1.08,
@@ -25861,6 +26286,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 1.2,
     "espn_blend": 0.21,
+    "espn_proj": 1.39,
     "age_adj": -0.06,
     "season_range": [
      0.62,
@@ -26190,6 +26616,7 @@
    "proj_ppg": 3.4,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.4,
    "cr_g_nights": {
     "17": 0.41,
     "19": 0.46
@@ -26396,6 +26823,7 @@
    "proj_ppg": 1.63,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.63,
    "cr": 2.3,
    "cr_fpg": 1.18,
    "cr_season": 1.13,
@@ -26425,6 +26853,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.28,
     "espn_blend": 0.2,
+    "espn_proj": 1.63,
     "age_adj": 0.05,
     "season_range": [
      0.7,
@@ -26542,6 +26971,7 @@
    "proj_ppg": 1.81,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.81,
    "cr": 2.28,
    "cr_fpg": 1.24,
    "cr_season": 1.22,
@@ -26579,6 +27009,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.37,
     "espn_blend": 0.2,
+    "espn_proj": 1.81,
     "season_range": [
      0.76,
      1.67
@@ -26767,6 +27198,7 @@
    "proj_ppg": 1.53,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.53,
    "cr": 2.27,
    "cr_fpg": 1.19,
    "cr_season": 1.05,
@@ -26796,6 +27228,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.11,
     "espn_blend": 0.21,
+    "espn_proj": 1.53,
     "age_adj": -0.05,
     "season_range": [
      0.59,
@@ -26910,6 +27343,7 @@
    "proj_ppg": 1.51,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.51,
    "cr": 2.25,
    "cr_fpg": 1.26,
    "cr_season": 1.07,
@@ -26945,6 +27379,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 1.21,
     "espn_blend": 0.22,
+    "espn_proj": 1.51,
     "season_range": [
      0.61,
      1.52
@@ -27207,6 +27642,7 @@
    "proj_ppg": 1.42,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.42,
    "cr": 2.25,
    "cr_fpg": 1.16,
    "cr_season": 1.11,
@@ -27236,6 +27672,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.26,
     "espn_blend": 0.2,
+    "espn_proj": 1.42,
     "age_adj": -0.07,
     "season_range": [
      0.65,
@@ -27353,6 +27790,7 @@
    "proj_ppg": 1.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.27,
    "cr": 2.24,
    "cr_fpg": 1.18,
    "cr_season": 1.03,
@@ -27391,6 +27829,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.16,
     "espn_blend": 0.2,
+    "espn_proj": 1.27,
     "season_range": [
      0.57,
      1.48
@@ -27575,6 +28014,7 @@
    "proj_ppg": 1.08,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.08,
    "cr": 2.24,
    "cr_fpg": 1.15,
    "cr_season": 1.0,
@@ -27604,6 +28044,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.14,
     "espn_blend": 0.21,
+    "espn_proj": 1.08,
     "season_range": [
      0.54,
      1.45
@@ -27645,6 +28086,7 @@
    "proj_ppg": 1.75,
    "clears": "Thu 15",
    "dfo_out": false,
+   "proj_ppg_pre": 1.75,
    "cr": 2.23,
    "cr_fpg": 1.59,
    "cr_season": 1.53,
@@ -27674,6 +28116,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.75,
     "espn_blend": 0.21,
+    "espn_proj": 1.75,
     "season_range": [
      0.97,
      1.93
@@ -27719,6 +28162,7 @@
    "proj_ppg": 1.04,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.04,
    "cr": 2.23,
    "cr_fpg": 1.15,
    "cr_season": 0.95,
@@ -27748,6 +28192,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 1.1,
     "espn_blend": 0.2,
+    "espn_proj": 1.04,
     "season_range": [
      0.48,
      1.33
@@ -28001,6 +28446,7 @@
    "proj_ppg": 2.98,
    "clears": "Fri 16",
    "dfo_out": null,
+   "proj_ppg_pre": 2.98,
    "cr_g_nights": {
     "17": 0.68,
     "19": 0.65
@@ -28065,6 +28511,7 @@
    "proj_ppg": 1.11,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.11,
    "cr": 2.21,
    "cr_fpg": 1.13,
    "cr_season": 0.96,
@@ -28094,6 +28541,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.04,
     "espn_blend": 0.2,
+    "espn_proj": 1.11,
     "season_range": [
      0.5,
      1.41
@@ -28137,6 +28585,7 @@
    "proj_ppg": 1.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.07,
    "cr": 2.21,
    "cr_fpg": 1.13,
    "cr_season": 1.04,
@@ -28166,6 +28615,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.16,
     "espn_blend": 0.19,
+    "espn_proj": 1.07,
     "season_range": [
      0.58,
      1.49
@@ -28281,6 +28731,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.35,
    "cr": 2.2,
    "cr_fpg": 1.14,
    "cr_season": 1.07,
@@ -28318,6 +28769,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.17,
     "espn_blend": 0.2,
+    "espn_proj": 1.35,
     "season_range": [
      0.61,
      1.52
@@ -28433,6 +28885,7 @@
    "proj_ppg": 1.15,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.15,
    "cr": 2.19,
    "cr_fpg": 1.13,
    "cr_season": 0.95,
@@ -28462,6 +28915,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.04,
     "espn_blend": 0.2,
+    "espn_proj": 1.15,
     "season_range": [
      0.49,
      1.4
@@ -28655,6 +29109,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 2.19,
    "cr_fpg": 1.13,
    "cr_season": 1.08,
@@ -28684,6 +29139,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.23,
     "espn_blend": 0.21,
+    "espn_proj": 1.33,
     "age_adj": -0.06,
     "season_range": [
      0.61,
@@ -28728,6 +29184,7 @@
    "proj_ppg": 2.28,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.28,
    "cr": 2.19,
    "cr_fpg": 2.23,
    "cr_season": 2.07,
@@ -28757,6 +29214,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 2.17,
     "espn_blend": 0.21,
+    "espn_proj": 2.28,
     "season_range": [
      1.5,
      2.57
@@ -28945,6 +29403,7 @@
    "proj_ppg": 3.46,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.46,
    "cr_g_nights": {
     "17": 0.37,
     "19": 0.36
@@ -29007,6 +29466,7 @@
    "proj_ppg": 1.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.29,
    "cr": 2.18,
    "cr_fpg": 1.17,
    "cr_season": 0.98,
@@ -29036,6 +29496,7 @@
     "boost_dress": 0.79,
     "boost_fpg": 1.14,
     "espn_blend": 0.21,
+    "espn_proj": 1.29,
     "season_range": [
      0.51,
      1.36
@@ -29078,6 +29539,7 @@
    "proj_ppg": 2.12,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.12,
    "cr": 2.18,
    "cr_fpg": 2.21,
    "cr_season": 2.05,
@@ -29107,6 +29569,7 @@
     "boost_dress": 0.96,
     "boost_fpg": 2.1,
     "espn_blend": 0.21,
+    "espn_proj": 2.12,
     "season_range": [
      1.49,
      2.45
@@ -29149,6 +29612,7 @@
    "proj_ppg": 1.38,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.38,
    "cr": 2.18,
    "cr_fpg": 1.13,
    "cr_season": 1.02,
@@ -29178,6 +29642,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.08,
     "espn_blend": 0.21,
+    "espn_proj": 1.38,
     "age_adj": -0.11,
     "season_range": [
      0.55,
@@ -29221,10 +29686,11 @@
    "proj_ppg": 1.31,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.31,
    "cr": 2.17,
    "cr_fpg": 1.14,
    "cr_season": 0.97,
-   "proj_gp": 68,
+   "proj_gp": 69,
    "cr_games": 1.9,
    "cr_dress": 0.95,
    "cr_dress_next": 0.96,
@@ -29250,11 +29716,12 @@
     "boost_dress": 0.76,
     "boost_fpg": 1.22,
     "espn_blend": 0.21,
+    "espn_proj": 1.31,
     "season_range": [
      0.5,
      1.35
     ],
-    "lineup_slack": 0.3
+    "lineup_slack": 0.6
    },
    "cr_pct": 47,
    "cr_season_pct": 37
@@ -29510,6 +29977,7 @@
    "proj_ppg": 1.14,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.14,
    "cr": 2.16,
    "cr_fpg": 1.12,
    "cr_season": 1.01,
@@ -29539,6 +30007,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.19,
     "espn_blend": 0.21,
+    "espn_proj": 1.14,
     "age_adj": -0.04,
     "season_range": [
      0.55,
@@ -29656,6 +30125,7 @@
    "proj_ppg": 1.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.3,
    "cr": 2.14,
    "cr_fpg": 1.09,
    "cr_season": 1.03,
@@ -29685,6 +30155,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.12,
     "espn_blend": 0.21,
+    "espn_proj": 1.3,
     "season_range": [
      0.57,
      1.48
@@ -29728,6 +30199,7 @@
    "proj_ppg": 1.05,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.05,
    "cr": 2.14,
    "cr_fpg": 1.11,
    "cr_season": 0.98,
@@ -29757,6 +30229,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.11,
     "espn_blend": 0.19,
+    "espn_proj": 1.05,
     "season_range": [
      0.51,
      1.54
@@ -29951,6 +30424,7 @@
    "proj_ppg": 2.06,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.06,
    "cr": 2.14,
    "cr_fpg": 2.17,
    "cr_season": 1.88,
@@ -29980,6 +30454,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.91,
     "espn_blend": 0.22,
+    "espn_proj": 2.06,
     "season_range": [
      1.31,
      2.38
@@ -30094,6 +30569,7 @@
    "proj_ppg": 1.38,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.38,
    "cr": 2.12,
    "cr_fpg": 1.09,
    "cr_season": 1.06,
@@ -30123,6 +30599,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.12,
     "espn_blend": 0.21,
+    "espn_proj": 1.38,
     "season_range": [
      0.6,
      1.51
@@ -30166,6 +30643,7 @@
    "proj_ppg": 1.13,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.13,
    "cr": 2.12,
    "cr_fpg": 1.1,
    "cr_season": 0.99,
@@ -30195,6 +30673,7 @@
     "boost_dress": 0.83,
     "boost_fpg": 1.22,
     "espn_blend": 0.2,
+    "espn_proj": 1.13,
     "season_range": [
      0.53,
      1.44
@@ -30238,6 +30717,7 @@
    "proj_ppg": 2.92,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.92,
    "cr_g_nights": {
     "17": 0.35,
     "19": 0.33
@@ -30367,12 +30847,13 @@
    "owned": 98.5,
    "gp": 7,
    "ppg": 2.04,
-   "cur_ppg": 1.53,
+   "cur_ppg": 1.54,
    "last_ppg": 2.25,
    "last_gp": 80,
    "proj_ppg": 2.17,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.17,
    "cr": 2.11,
    "cr_fpg": 2.16,
    "cr_season": 1.9,
@@ -30402,6 +30883,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 2.0,
     "espn_blend": 0.21,
+    "espn_proj": 2.17,
     "season_range": [
      1.34,
      2.3
@@ -30445,6 +30927,7 @@
    "proj_ppg": 2.32,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.32,
    "cr_g_nights": {
     "17": 0.32,
     "19": 0.35
@@ -30506,6 +30989,7 @@
    "proj_ppg": 2.7,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.7,
    "cr_g_nights": {
     "17": 0.78,
     "19": 0.62
@@ -30532,7 +31016,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 72,
-   "cr_season_pct": 52
+   "cr_season_pct": 51
   },
   {
    "id": 5080176,
@@ -30786,6 +31270,7 @@
    "proj_ppg": 1.17,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.17,
    "cr": 2.08,
    "cr_fpg": 1.08,
    "cr_season": 0.96,
@@ -30816,6 +31301,7 @@
     "boost_dress": 0.85,
     "boost_fpg": 1.09,
     "espn_blend": 0.2,
+    "espn_proj": 1.17,
     "season_range": [
      0.5,
      1.41
@@ -30860,6 +31346,7 @@
    "proj_ppg": 2.17,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.17,
    "cr": 2.08,
    "cr_fpg": 2.11,
    "cr_season": 1.93,
@@ -30889,6 +31376,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 2.02,
     "espn_blend": 0.21,
+    "espn_proj": 2.17,
     "season_range": [
      1.36,
      2.43
@@ -30931,6 +31419,7 @@
    "proj_ppg": 3.02,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.02,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.71
@@ -31145,6 +31634,7 @@
    "proj_ppg": 2.19,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.19,
    "cr": 2.07,
    "cr_fpg": 2.12,
    "cr_season": 1.9,
@@ -31174,6 +31664,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.99,
     "espn_blend": 0.21,
+    "espn_proj": 2.19,
     "age_adj": -0.03,
     "season_range": [
      1.33,
@@ -31291,6 +31782,7 @@
    "proj_ppg": 1.13,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.13,
    "cr": 2.06,
    "cr_fpg": 1.06,
    "cr_season": 0.92,
@@ -31320,6 +31812,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.01,
     "espn_blend": 0.19,
+    "espn_proj": 1.13,
     "age_adj": -0.05,
     "season_range": [
      0.46,
@@ -31365,6 +31858,7 @@
    "proj_ppg": 1.21,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.21,
    "cr": 2.06,
    "cr_fpg": 1.06,
    "cr_season": 0.88,
@@ -31394,6 +31888,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 0.96,
     "espn_blend": 0.21,
+    "espn_proj": 1.21,
     "age_adj": -0.03,
     "season_range": [
      0.42,
@@ -31580,6 +32075,7 @@
    "proj_ppg": 1.94,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.94,
    "cr": 2.05,
    "cr_fpg": 2.08,
    "cr_season": 1.96,
@@ -31609,6 +32105,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 2.14,
     "espn_blend": 0.21,
+    "espn_proj": 1.94,
     "season_range": [
      1.4,
      2.36
@@ -31653,6 +32150,7 @@
    "proj_ppg": 1.78,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.78,
    "cr": 2.04,
    "cr_fpg": 1.09,
    "cr_season": 1.06,
@@ -31683,6 +32181,7 @@
     "boost_dress": 0.82,
     "boost_fpg": 1.1,
     "espn_blend": 0.21,
+    "espn_proj": 1.78,
     "season_range": [
      0.6,
      1.51
@@ -31726,6 +32225,7 @@
    "proj_ppg": 1.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.29,
    "cr": 2.04,
    "cr_fpg": 1.07,
    "cr_season": 1.01,
@@ -31755,6 +32255,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.08,
     "espn_blend": 0.21,
+    "espn_proj": 1.29,
     "season_range": [
      0.55,
      1.46
@@ -31950,6 +32451,7 @@
    "proj_ppg": 1.42,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.42,
    "cr": 2.03,
    "cr_fpg": 1.11,
    "cr_season": 1.03,
@@ -31986,6 +32488,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 1.17,
     "espn_blend": 0.22,
+    "espn_proj": 1.42,
     "season_range": [
      0.57,
      1.48
@@ -32029,6 +32532,7 @@
    "proj_ppg": 1.13,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.13,
    "cr": 2.03,
    "cr_fpg": 1.04,
    "cr_season": 0.95,
@@ -32058,6 +32562,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.08,
     "espn_blend": 0.21,
+    "espn_proj": 1.13,
     "season_range": [
      0.49,
      1.4
@@ -32403,6 +32908,7 @@
    "proj_ppg": 1.6,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.6,
    "cr": 2.01,
    "cr_fpg": 2.03,
    "cr_season": 1.85,
@@ -32432,6 +32938,7 @@
     "boost_dress": 0.95,
     "boost_fpg": 2.04,
     "espn_blend": 0.21,
+    "espn_proj": 1.6,
     "age_adj": 0.03,
     "season_range": [
      1.35,
@@ -32478,6 +32985,7 @@
    "proj_ppg": 1.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.29,
    "cr": 2.0,
    "cr_fpg": 1.03,
    "cr_season": 0.96,
@@ -32507,6 +33015,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 0.99,
     "espn_blend": 0.2,
+    "espn_proj": 1.29,
     "season_range": [
      0.5,
      1.41
@@ -32620,6 +33129,7 @@
    "proj_ppg": 2.12,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.12,
    "cr": 2.0,
    "cr_fpg": 2.04,
    "cr_season": 1.81,
@@ -32649,6 +33159,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.88,
     "espn_blend": 0.22,
+    "espn_proj": 2.12,
     "age_adj": -0.05,
     "season_range": [
      1.24,
@@ -33048,6 +33559,7 @@
    "proj_ppg": 1.84,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.84,
    "cr": 1.97,
    "cr_fpg": 2.01,
    "cr_season": 1.84,
@@ -33077,6 +33589,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 2.07,
     "espn_blend": 0.21,
+    "espn_proj": 1.84,
     "season_range": [
      1.27,
      2.34
@@ -33118,6 +33631,7 @@
    "proj_ppg": 1.93,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.93,
    "cr": 1.97,
    "cr_fpg": 2.0,
    "cr_season": 1.73,
@@ -33147,6 +33661,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.93,
     "espn_blend": 0.22,
+    "espn_proj": 1.93,
     "season_range": [
      1.17,
      2.13
@@ -33191,6 +33706,7 @@
    "proj_ppg": 1.16,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.16,
    "cr": 1.96,
    "cr_fpg": 1.02,
    "cr_season": 0.92,
@@ -33220,6 +33736,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.07,
     "espn_blend": 0.2,
+    "espn_proj": 1.16,
     "season_range": [
      0.46,
      1.37
@@ -33363,7 +33880,7 @@
     "lineup_slack": 0.7
    },
    "cr_pct": 41,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 4233575,
@@ -33399,6 +33916,7 @@
    "proj_ppg": 1.16,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.16,
    "cr": 1.95,
    "cr_fpg": 1.01,
    "cr_season": 0.86,
@@ -33429,6 +33947,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 0.98,
     "espn_blend": 0.2,
+    "espn_proj": 1.16,
     "season_range": [
      0.4,
      1.31
@@ -33587,7 +34106,7 @@
     "lineup_slack": 0.5
    },
    "cr_pct": 41,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 4419682,
@@ -33623,6 +34142,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.35,
    "cr": 1.93,
    "cr_fpg": 0.99,
    "cr_season": 0.96,
@@ -33652,6 +34172,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.1,
     "espn_blend": 0.19,
+    "espn_proj": 1.35,
     "season_range": [
      0.5,
      1.41
@@ -33773,6 +34294,7 @@
    "proj_ppg": 1.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.3,
    "cr": 1.92,
    "cr_fpg": 1.0,
    "cr_season": 0.87,
@@ -33802,6 +34324,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 0.99,
     "espn_blend": 0.22,
+    "espn_proj": 1.3,
     "season_range": [
      0.41,
      1.32
@@ -33844,6 +34367,7 @@
    "proj_ppg": 1.41,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.41,
    "cr": 1.92,
    "cr_fpg": 1.14,
    "cr_season": 1.03,
@@ -33873,6 +34397,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.12,
     "espn_blend": 0.21,
+    "espn_proj": 1.41,
     "age_adj": -0.03,
     "season_range": [
      0.56,
@@ -33917,6 +34442,7 @@
    "proj_ppg": 3.02,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.02,
    "cr_g_nights": {
     "17": 0.12,
     "19": 0.67
@@ -34212,6 +34738,7 @@
    "proj_ppg": 1.29,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.29,
    "cr": 1.89,
    "cr_fpg": 1.26,
    "cr_season": 1.11,
@@ -34241,6 +34768,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.23,
     "espn_blend": 0.22,
+    "espn_proj": 1.29,
     "season_range": [
      0.65,
      1.56
@@ -34469,7 +34997,7 @@
     "lineup_slack": 1.6
    },
    "cr_pct": 38,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 4319879,
@@ -34541,7 +35069,7 @@
     "lineup_slack": 1.4
    },
    "cr_pct": 38,
-   "cr_season_pct": 26
+   "cr_season_pct": 25
   },
   {
    "id": 4588175,
@@ -34576,6 +35104,7 @@
    "proj_ppg": 1.3,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.3,
    "cr": 1.87,
    "cr_fpg": 1.04,
    "cr_season": 0.89,
@@ -34612,6 +35141,7 @@
     "boost_dress": 0.77,
     "boost_fpg": 1.14,
     "espn_blend": 0.21,
+    "espn_proj": 1.3,
     "season_range": [
      0.42,
      1.27
@@ -34761,7 +35291,7 @@
     "lineup_slack": 0.7
    },
    "cr_pct": 38,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 5734,
@@ -34796,6 +35326,7 @@
    "proj_ppg": 2.68,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.68,
    "cr_g_nights": {
     "19": 0.17,
     "20": 0.62
@@ -34857,6 +35388,7 @@
    "proj_ppg": 2.68,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.68,
    "cr_g_nights": {
     "18": 0.7
    },
@@ -34918,6 +35450,7 @@
    "proj_ppg": 1.11,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.11,
    "cr": 1.85,
    "cr_fpg": 0.98,
    "cr_season": 0.91,
@@ -34955,6 +35488,7 @@
     "boost_dress": 0.87,
     "boost_fpg": 1.05,
     "espn_blend": 0.21,
+    "espn_proj": 1.11,
     "season_range": [
      0.45,
      1.36
@@ -34997,6 +35531,7 @@
    "proj_ppg": 2.22,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 2.22,
    "cr": 1.85,
    "cr_fpg": 1.06,
    "cr_season": 0.94,
@@ -35034,6 +35569,7 @@
     "boost_dress": 0.69,
     "boost_fpg": 1.13,
     "espn_blend": 0.21,
+    "espn_proj": 2.22,
     "age_adj": -0.06,
     "season_range": [
      0.47,
@@ -35115,7 +35651,7 @@
     "lineup_slack": 1.3
    },
    "cr_pct": 37,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 3096102,
@@ -35214,13 +35750,14 @@
    "injury": null,
    "owned": 29.8,
    "gp": 7,
-   "ppg": 1.61,
-   "cur_ppg": 1.49,
+   "ppg": 1.62,
+   "cur_ppg": 1.56,
    "last_ppg": 1.71,
    "last_gp": 81,
    "proj_ppg": 1.64,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.64,
    "cr": 1.83,
    "cr_fpg": 1.86,
    "cr_season": 1.58,
@@ -35250,6 +35787,7 @@
     "boost_dress": 0.93,
     "boost_fpg": 1.67,
     "espn_blend": 0.21,
+    "espn_proj": 1.64,
     "season_range": [
      1.02,
      1.98
@@ -35374,6 +35912,7 @@
    "proj_ppg": 1.85,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.85,
    "cr": 1.82,
    "cr_fpg": 1.87,
    "cr_season": 1.64,
@@ -35403,6 +35942,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.76,
     "espn_blend": 0.21,
+    "espn_proj": 1.85,
     "age_adj": -0.05,
     "season_range": [
      1.07,
@@ -35527,6 +36067,7 @@
    "proj_ppg": 1.24,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.24,
    "cr": 1.8,
    "cr_fpg": 0.95,
    "cr_season": 0.89,
@@ -35556,6 +36097,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 1.1,
     "espn_blend": 0.2,
+    "espn_proj": 1.24,
     "age_adj": -0.06,
     "season_range": [
      0.42,
@@ -35679,6 +36221,7 @@
    "proj_ppg": 2.43,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.43,
    "cr_g_nights": {
     "17": 0.4,
     "19": 0.38
@@ -35783,7 +36326,7 @@
      0.37,
      1.12
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 36,
    "cr_season_pct": 19
@@ -35856,10 +36399,10 @@
      0.39,
      1.14
     ],
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 35,
-   "cr_season_pct": 20
+   "cr_season_pct": 19
   },
   {
    "id": 5216882,
@@ -36042,13 +36585,14 @@
    "injury": null,
    "owned": 94.5,
    "gp": 7,
-   "ppg": 2.07,
-   "cur_ppg": 0.89,
+   "ppg": 2.08,
+   "cur_ppg": 0.96,
    "last_ppg": 2.24,
    "last_gp": 80,
    "proj_ppg": 2.38,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.38,
    "cr": 1.74,
    "cr_fpg": 1.8,
    "cr_season": 1.74,
@@ -36078,6 +36622,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.81,
     "espn_blend": 0.21,
+    "espn_proj": 2.38,
     "season_range": [
      1.18,
      2.14
@@ -36122,6 +36667,7 @@
    "proj_ppg": 1.01,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.01,
    "cr": 1.74,
    "cr_fpg": 0.9,
    "cr_season": 0.81,
@@ -36151,6 +36697,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 0.9,
     "espn_blend": 0.21,
+    "espn_proj": 1.01,
     "season_range": [
      0.35,
      1.26
@@ -36158,7 +36705,7 @@
     "lineup_slack": 1.8
    },
    "cr_pct": 35,
-   "cr_season_pct": 26
+   "cr_season_pct": 25
   },
   {
    "id": 5080147,
@@ -36272,6 +36819,7 @@
    "proj_ppg": 1.63,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.63,
    "cr": 1.72,
    "cr_fpg": 1.75,
    "cr_season": 1.58,
@@ -36301,6 +36849,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.7,
     "espn_blend": 0.22,
+    "espn_proj": 1.63,
     "season_range": [
      1.01,
      2.08
@@ -36533,7 +37082,7 @@
     "lineup_slack": 1.4
    },
    "cr_pct": 34,
-   "cr_season_pct": 26
+   "cr_season_pct": 25
   },
   {
    "id": 5361711,
@@ -36721,6 +37270,7 @@
    "proj_ppg": 1.25,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.26,
    "cr": 1.64,
    "cr_fpg": 0.99,
    "cr_season": 0.9,
@@ -36751,6 +37301,7 @@
     "boost_dress": 0.84,
     "boost_fpg": 1.0,
     "espn_blend": 0.22,
+    "espn_proj": 1.26,
     "season_range": [
      0.44,
      1.35
@@ -36855,6 +37406,7 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.58,
    "cr": 1.64,
    "cr_fpg": 1.66,
    "cr_season": 1.51,
@@ -36884,6 +37436,7 @@
     "boost_dress": 0.94,
     "boost_fpg": 1.63,
     "espn_blend": 0.22,
+    "espn_proj": 1.58,
     "season_range": [
      0.94,
      2.01
@@ -37083,6 +37636,7 @@
    "proj_ppg": 1.54,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.54,
    "cr": 1.62,
    "cr_fpg": 1.49,
    "cr_season": 1.24,
@@ -37113,6 +37667,7 @@
     "boost_dress": 0.79,
     "boost_fpg": 1.53,
     "espn_blend": 0.22,
+    "espn_proj": 1.54,
     "season_range": [
      0.78,
      1.69
@@ -37234,6 +37789,7 @@
    "proj_ppg": 1.72,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.72,
    "cr": 1.61,
    "cr_fpg": 1.64,
    "cr_season": 1.45,
@@ -37263,6 +37819,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 1.51,
     "espn_blend": 0.21,
+    "espn_proj": 1.72,
     "season_range": [
      0.88,
      1.95
@@ -37386,6 +37943,7 @@
    "proj_ppg": 2.4,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.4,
    "cr": 1.6,
    "cr_fpg": 2.02,
    "cr_season": 1.94,
@@ -37416,6 +37974,7 @@
     "boost_dress": 0.92,
     "boost_fpg": 2.01,
     "espn_blend": 0.21,
+    "espn_proj": 2.4,
     "season_range": [
      1.37,
      2.44
@@ -38116,6 +38675,92 @@
    "cr_season_pct": 15
   },
   {
+   "id": 5509,
+   "name": "Zach Hyman",
+   "team": "EDM",
+   "games": 3,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 7,
+   "today_start": null,
+   "pos": "RW",
+   "slots": [
+    "F",
+    "RW"
+   ],
+   "owner": "other",
+   "team_id": 11,
+   "ir": true,
+   "bench": false,
+   "injury": "DAY_TO_DAY",
+   "owned": 92.0,
+   "gp": 1,
+   "ppg": 2.09,
+   "cur_ppg": 0.5,
+   "last_ppg": 2.09,
+   "last_gp": 58,
+   "proj_ppg": 2.14,
+   "clears": null,
+   "dfo_out": true,
+   "proj_ppg_pre": 2.14,
+   "cr": 1.49,
+   "cr_fpg": 1.92,
+   "cr_season": 1.35,
+   "proj_gp": 53,
+   "cr_games": 0.77,
+   "cr_dress": 0.39,
+   "cr_dress_next": 0.34,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8475786,
+   "cr_why": {
+    "toi5": 20.55,
+    "toi": 20.55,
+    "pp5": 5.07,
+    "sog": 3.0,
+    "blk": 0.0,
+    "gp": 1,
+    "last_fpg": 2.09,
+    "xfp": {
+     "gp": 1,
+     "fpg": 0.5,
+     "xfpg": 1.61
+    },
+    "season_fpg": 1.93,
+    "week_news": {
+     "shift": 0.17,
+     "move": 0.039,
+     "why": [
+      "timeline up"
+     ]
+    },
+    "boost_week": 1.07,
+    "boost_week_move": 0.19,
+    "season_pts": 2.0,
+    "boost_dress": 0.65,
+    "boost_fpg": 1.96,
+    "espn_blend": 0.28,
+    "espn_proj": 2.14,
+    "age_adj": -0.05,
+    "season_range": [
+     0.89,
+     1.8
+    ],
+    "back": {
+     "games": "3"
+    },
+    "lineup_slack": 1.0
+   },
+   "cr_pct": 30,
+   "cr_season_pct": 70
+  },
+  {
    "id": 3114985,
    "name": "Ivan Barbashev",
    "team": "VGK",
@@ -38147,6 +38792,7 @@
    "proj_ppg": 1.55,
    "clears": "Fri 16",
    "dfo_out": false,
+   "proj_ppg_pre": 1.55,
    "cr": 1.48,
    "cr_fpg": 1.5,
    "cr_season": 1.3,
@@ -38176,13 +38822,14 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.4,
     "espn_blend": 0.19,
+    "espn_proj": 1.55,
     "season_range": [
      0.84,
      1.75
     ],
     "lineup_slack": 1.3
    },
-   "cr_pct": 30,
+   "cr_pct": 29,
    "cr_season_pct": 68
   },
   {
@@ -38344,7 +38991,7 @@
     ],
     "lineup_slack": 0.7
    },
-   "cr_pct": 30,
+   "cr_pct": 29,
    "cr_season_pct": 15
   },
   {
@@ -38542,6 +39189,7 @@
    "proj_ppg": 1.27,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.27,
    "cr": 1.45,
    "cr_fpg": 0.8,
    "cr_season": 0.77,
@@ -38577,6 +39225,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 0.92,
     "espn_blend": 0.2,
+    "espn_proj": 1.27,
     "season_range": [
      0.31,
      1.22
@@ -38700,6 +39349,7 @@
    "proj_ppg": 1.79,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.79,
    "cr": 1.45,
    "cr_fpg": 1.5,
    "cr_season": 1.35,
@@ -38729,96 +39379,13 @@
     "boost_dress": 0.82,
     "boost_fpg": 1.49,
     "espn_blend": 0.21,
+    "espn_proj": 1.79,
     "age_adj": -0.04,
     "season_range": [
      0.89,
      1.8
     ],
     "lineup_slack": 1.3
-   },
-   "cr_pct": 28,
-   "cr_season_pct": 70
-  },
-  {
-   "id": 5509,
-   "name": "Zach Hyman",
-   "team": "EDM",
-   "games": 3,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 7,
-   "today_start": null,
-   "pos": "RW",
-   "slots": [
-    "F",
-    "RW"
-   ],
-   "owner": "other",
-   "team_id": 11,
-   "ir": true,
-   "bench": false,
-   "injury": "DAY_TO_DAY",
-   "owned": 92.0,
-   "gp": 1,
-   "ppg": 2.09,
-   "cur_ppg": 0.5,
-   "last_ppg": 2.09,
-   "last_gp": 58,
-   "proj_ppg": 2.14,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 1.45,
-   "cr_fpg": 1.87,
-   "cr_season": 1.35,
-   "proj_gp": 53,
-   "cr_games": 0.77,
-   "cr_dress": 0.39,
-   "cr_dress_next": 0.34,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8475786,
-   "cr_why": {
-    "toi5": 20.55,
-    "toi": 20.55,
-    "pp5": 5.07,
-    "sog": 3.0,
-    "blk": 0.0,
-    "gp": 1,
-    "last_fpg": 2.09,
-    "xfp": {
-     "gp": 1,
-     "fpg": 0.5,
-     "xfpg": 1.61
-    },
-    "season_fpg": 1.93,
-    "week_news": {
-     "shift": 0.17,
-     "move": 0.039,
-     "why": [
-      "timeline up"
-     ]
-    },
-    "boost_week": 1.07,
-    "boost_week_move": 0.19,
-    "season_pts": 2.0,
-    "boost_dress": 0.65,
-    "boost_fpg": 1.96,
-    "espn_blend": 0.28,
-    "age_adj": -0.05,
-    "season_range": [
-     0.89,
-     1.8
-    ],
-    "back": {
-     "games": "3"
-    },
-    "lineup_slack": 1.0
    },
    "cr_pct": 28,
    "cr_season_pct": 70
@@ -38924,8 +39491,8 @@
    "injury": null,
    "owned": 7.4,
    "gp": 7,
-   "ppg": 1.54,
-   "cur_ppg": 1.41,
+   "ppg": 1.56,
+   "cur_ppg": 1.49,
    "last_ppg": 1.58,
    "last_gp": 73,
    "proj_ppg": null,
@@ -39064,6 +39631,7 @@
    "proj_ppg": 1.57,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.57,
    "cr": 1.44,
    "cr_fpg": 1.44,
    "cr_season": 1.21,
@@ -39101,6 +39669,7 @@
     "boost_dress": 0.78,
     "boost_fpg": 1.49,
     "espn_blend": 0.22,
+    "espn_proj": 1.57,
     "season_range": [
      0.75,
      1.66
@@ -39431,6 +40000,7 @@
    "proj_ppg": 1.46,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.46,
    "cr": 1.4,
    "cr_fpg": 1.44,
    "cr_season": 1.29,
@@ -39460,6 +40030,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.46,
     "espn_blend": 0.21,
+    "espn_proj": 1.46,
     "season_range": [
      0.82,
      1.85
@@ -39565,6 +40136,7 @@
    "proj_ppg": 1.38,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.38,
    "cr": 1.38,
    "cr_fpg": 0.79,
    "cr_season": 0.8,
@@ -39601,6 +40173,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 0.96,
     "espn_blend": 0.19,
+    "espn_proj": 1.38,
     "season_range": [
      0.34,
      1.25
@@ -39608,7 +40181,7 @@
     "lineup_slack": 1.3
    },
    "cr_pct": 27,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 3101,
@@ -39645,6 +40218,7 @@
    "proj_ppg": 1.97,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.97,
    "cr": 1.38,
    "cr_fpg": 1.45,
    "cr_season": 1.42,
@@ -39674,6 +40248,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.51,
     "espn_blend": 0.21,
+    "espn_proj": 1.97,
     "age_adj": -0.11,
     "season_range": [
      0.85,
@@ -39716,6 +40291,7 @@
    "proj_ppg": 3.74,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.74,
    "cr_g_nights": {
     "19": 0.52
    },
@@ -40041,8 +40617,8 @@
    "injury": null,
    "owned": 1.7,
    "gp": 3,
-   "ppg": 1.37,
-   "cur_ppg": 0.5,
+   "ppg": 1.38,
+   "cur_ppg": 0.53,
    "last_ppg": 1.46,
    "last_gp": 39,
    "proj_ppg": null,
@@ -40337,6 +40913,7 @@
    "proj_ppg": 1.46,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.46,
    "cr": 1.25,
    "cr_fpg": 1.3,
    "cr_season": 1.0,
@@ -40366,6 +40943,7 @@
     "boost_dress": 0.77,
     "boost_fpg": 1.09,
     "espn_blend": 0.21,
+    "espn_proj": 1.46,
     "age_adj": -0.05,
     "season_range": [
      0.54,
@@ -40402,8 +40980,8 @@
    "injury": null,
    "owned": 1.2,
    "gp": 7,
-   "ppg": 1.16,
-   "cur_ppg": 1.06,
+   "ppg": 1.18,
+   "cur_ppg": 1.16,
    "last_ppg": 1.19,
    "last_gp": 53,
    "proj_ppg": null,
@@ -40480,6 +41058,7 @@
    "proj_ppg": 1.23,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.23,
    "cr": 1.23,
    "cr_fpg": 1.25,
    "cr_season": 1.14,
@@ -40509,6 +41088,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.27,
     "espn_blend": 0.21,
+    "espn_proj": 1.23,
     "season_range": [
      0.68,
      1.59
@@ -40551,6 +41131,7 @@
    "proj_ppg": 2.02,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 2.02,
    "cr": 1.23,
    "cr_fpg": 1.75,
    "cr_season": 1.34,
@@ -40588,6 +41169,7 @@
     "boost_dress": 0.75,
     "boost_fpg": 1.8,
     "espn_blend": 0.24,
+    "espn_proj": 2.02,
     "season_range": [
      0.87,
      1.72
@@ -40822,12 +41404,13 @@
    "owned": 40.1,
    "gp": 7,
    "ppg": 1.47,
-   "cur_ppg": 1.19,
+   "cur_ppg": 1.2,
    "last_ppg": 1.48,
    "last_gp": 75,
    "proj_ppg": 1.54,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.54,
    "cr": 1.22,
    "cr_fpg": 1.26,
    "cr_season": 1.18,
@@ -40857,6 +41440,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.33,
     "espn_blend": 0.21,
+    "espn_proj": 1.54,
     "age_adj": -0.06,
     "season_range": [
      0.72,
@@ -40901,6 +41485,7 @@
    "proj_ppg": 1.6,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.6,
    "cr": 1.21,
    "cr_fpg": 0.79,
    "cr_season": 0.65,
@@ -40937,6 +41522,7 @@
     "boost_dress": 0.6,
     "boost_fpg": 0.82,
     "espn_blend": 0.22,
+    "espn_proj": 1.6,
     "season_range": [
      0.29,
      1.04
@@ -40980,6 +41566,7 @@
    "proj_ppg": 1.51,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.51,
    "cr": 1.2,
    "cr_fpg": 1.24,
    "cr_season": 1.24,
@@ -41009,6 +41596,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.37,
     "espn_blend": 0.21,
+    "espn_proj": 1.51,
     "season_range": [
      0.78,
      1.69
@@ -41046,8 +41634,8 @@
    "injury": null,
    "owned": 3.4,
    "gp": 7,
-   "ppg": 1.35,
-   "cur_ppg": 1.17,
+   "ppg": 1.36,
+   "cur_ppg": 1.19,
    "last_ppg": 1.4,
    "last_gp": 42,
    "proj_ppg": null,
@@ -41123,6 +41711,7 @@
    "proj_ppg": 1.36,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.36,
    "cr": 1.19,
    "cr_fpg": 1.22,
    "cr_season": 1.13,
@@ -41152,6 +41741,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.27,
     "espn_blend": 0.22,
+    "espn_proj": 1.36,
     "season_range": [
      0.67,
      1.58
@@ -41193,6 +41783,7 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.58,
    "cr": 1.18,
    "cr_fpg": 1.22,
    "cr_season": 1.03,
@@ -41222,6 +41813,7 @@
     "boost_dress": 0.76,
     "boost_fpg": 1.17,
     "espn_blend": 0.22,
+    "espn_proj": 1.58,
     "age_adj": -0.07,
     "season_range": [
      0.56,
@@ -41267,6 +41859,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.35,
    "cr": 1.17,
    "cr_fpg": 1.19,
    "cr_season": 1.14,
@@ -41296,6 +41889,7 @@
     "boost_dress": 0.9,
     "boost_fpg": 1.28,
     "espn_blend": 0.21,
+    "espn_proj": 1.35,
     "season_range": [
      0.68,
      1.59
@@ -41338,6 +41932,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.35,
    "cr": 1.16,
    "cr_fpg": 1.19,
    "cr_season": 1.11,
@@ -41367,6 +41962,7 @@
     "boost_dress": 0.89,
     "boost_fpg": 1.22,
     "espn_blend": 0.22,
+    "espn_proj": 1.35,
     "age_adj": -0.06,
     "season_range": [
      0.65,
@@ -41410,6 +42006,7 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.39,
    "cr": 1.14,
    "cr_fpg": 1.27,
    "cr_season": 0.99,
@@ -41439,6 +42036,7 @@
     "boost_dress": 0.75,
     "boost_fpg": 1.24,
     "espn_blend": 0.22,
+    "espn_proj": 1.39,
     "season_range": [
      0.52,
      1.37
@@ -41479,6 +42077,7 @@
    "proj_ppg": 2.34,
    "clears": "Fri 16",
    "dfo_out": null,
+   "proj_ppg_pre": 2.34,
    "cr_g_nights": {
     "17": 0.35,
     "19": 0.67
@@ -41566,7 +42165,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 60,
-   "cr_season_pct": 56
+   "cr_season_pct": 55
   },
   {
    "id": 4024998,
@@ -41603,6 +42202,7 @@
    "proj_ppg": 0.99,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 0.99,
    "cr": 1.13,
    "cr_fpg": 1.16,
    "cr_season": 0.94,
@@ -41632,6 +42232,7 @@
     "boost_dress": 0.88,
     "boost_fpg": 1.02,
     "espn_blend": 0.21,
+    "espn_proj": 0.99,
     "season_range": [
      0.48,
      1.39
@@ -41825,8 +42426,8 @@
    },
    "cr": 1.1,
    "cr_fpg": 2.92,
-   "cr_season": 0.0,
-   "proj_gp": 0,
+   "cr_season": 0.65,
+   "proj_gp": 14,
    "cr_games": 0.38,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -41845,7 +42446,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 59,
-   "cr_season_pct": 0
+   "cr_season_pct": 56
   },
   {
    "id": 2976848,
@@ -42259,6 +42860,7 @@
    "proj_ppg": 1.19,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.19,
    "cr": 1.04,
    "cr_fpg": 0.72,
    "cr_season": 0.67,
@@ -42295,6 +42897,7 @@
     "boost_dress": 0.66,
     "boost_fpg": 0.97,
     "espn_blend": 0.24,
+    "espn_proj": 1.19,
     "season_range": [
      0.31,
      1.06
@@ -42418,6 +43021,7 @@
    "proj_ppg": 1.07,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.07,
    "cr": 1.04,
    "cr_fpg": 1.06,
    "cr_season": 0.94,
@@ -42447,6 +43051,7 @@
     "boost_dress": 0.91,
     "boost_fpg": 1.01,
     "espn_blend": 0.21,
+    "espn_proj": 1.07,
     "age_adj": -0.07,
     "season_range": [
      0.48,
@@ -42638,6 +43243,7 @@
    "proj_ppg": 3.03,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.03,
    "cr_g_nights": {
     "19": 0.48
    },
@@ -42812,7 +43418,7 @@
     "lineup_slack": 0.6
    },
    "cr_pct": 23,
-   "cr_season_pct": 13
+   "cr_season_pct": 14
   },
   {
    "id": 5229176,
@@ -42993,6 +43599,7 @@
    "proj_ppg": 2.22,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 2.22,
    "cr": 1.0,
    "cr_fpg": 2.14,
    "cr_season": 1.69,
@@ -43029,6 +43636,7 @@
     "boost_dress": 0.68,
     "boost_fpg": 2.38,
     "espn_blend": 0.21,
+    "espn_proj": 2.22,
     "season_range": [
      1.13,
      2.09
@@ -43075,6 +43683,7 @@
    "proj_ppg": 1.18,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.18,
    "cr": 0.99,
    "cr_fpg": 1.05,
    "cr_season": 0.93,
@@ -43111,6 +43720,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.02,
     "espn_blend": 0.21,
+    "espn_proj": 1.18,
     "season_range": [
      0.46,
      1.49
@@ -43155,6 +43765,7 @@
    "proj_ppg": 1.78,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.78,
    "cr_g_nights": {
     "17": 0.08,
     "19": 0.29
@@ -43182,7 +43793,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 58,
-   "cr_season_pct": 52
+   "cr_season_pct": 51
   },
   {
    "id": 4697413,
@@ -43219,6 +43830,7 @@
    "proj_ppg": 1.16,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.16,
    "cr": 0.98,
    "cr_fpg": 1.02,
    "cr_season": 0.82,
@@ -43257,6 +43869,7 @@
     "boost_dress": 0.67,
     "boost_fpg": 1.12,
     "espn_blend": 0.24,
+    "espn_proj": 1.16,
     "season_range": [
      0.36,
      1.27
@@ -43446,6 +44059,7 @@
    "proj_ppg": 1.41,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.41,
    "cr": 0.96,
    "cr_fpg": 1.01,
    "cr_season": 0.93,
@@ -43475,6 +44089,7 @@
     "boost_dress": 0.83,
     "boost_fpg": 1.03,
     "espn_blend": 0.21,
+    "espn_proj": 1.41,
     "age_adj": -0.07,
     "season_range": [
      0.47,
@@ -43821,13 +44436,14 @@
    "injury": null,
    "owned": 64.0,
    "gp": 7,
-   "ppg": 1.58,
-   "cur_ppg": 1.04,
+   "ppg": 1.62,
+   "cur_ppg": 1.26,
    "last_ppg": 1.44,
    "last_gp": 72,
    "proj_ppg": 1.72,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.72,
    "cr": 0.92,
    "cr_fpg": 1.01,
    "cr_season": 1.06,
@@ -43864,6 +44480,7 @@
     "boost_dress": 0.86,
     "boost_fpg": 1.12,
     "espn_blend": 0.21,
+    "espn_proj": 1.72,
     "season_range": [
      0.6,
      1.51
@@ -43978,8 +44595,8 @@
    "injury": null,
    "owned": 1.7,
    "gp": 7,
-   "ppg": 1.53,
-   "cur_ppg": 0.53,
+   "ppg": 1.6,
+   "cur_ppg": 0.83,
    "last_ppg": 1.8,
    "last_gp": 4,
    "proj_ppg": null,
@@ -44059,6 +44676,7 @@
    "proj_ppg": 1.14,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.14,
    "cr": 0.84,
    "cr_fpg": 1.0,
    "cr_season": 0.77,
@@ -44095,6 +44713,7 @@
     "boost_dress": 0.69,
     "boost_fpg": 0.95,
     "espn_blend": 0.22,
+    "espn_proj": 1.14,
     "season_range": [
      0.31,
      1.22
@@ -44425,6 +45044,7 @@
    "proj_ppg": 3.46,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.46,
    "cr_g_nights": {
     "16": 1.0,
     "19": 0.26
@@ -44571,6 +45191,7 @@
    "proj_ppg": 2.36,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 2.36,
    "cr": 0.77,
    "cr_fpg": 2.02,
    "cr_season": 1.79,
@@ -44608,6 +45229,7 @@
     "boost_dress": 0.82,
     "boost_fpg": 2.07,
     "espn_blend": 0.22,
+    "espn_proj": 2.36,
     "season_range": [
      1.22,
      2.29
@@ -44725,8 +45347,8 @@
    "injury": null,
    "owned": 0.6,
    "gp": 7,
-   "ppg": 1.18,
-   "cur_ppg": 0.67,
+   "ppg": 1.19,
+   "cur_ppg": 0.69,
    "last_ppg": 1.32,
    "last_gp": 37,
    "proj_ppg": null,
@@ -44808,6 +45430,7 @@
    "proj_ppg": 1.11,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.11,
    "cr": 0.74,
    "cr_fpg": 0.8,
    "cr_season": 0.76,
@@ -44837,6 +45460,7 @@
     "boost_dress": 0.77,
     "boost_fpg": 0.92,
     "espn_blend": 0.24,
+    "espn_proj": 1.11,
     "age_adj": -0.11,
     "season_range": [
      0.3,
@@ -44846,6 +45470,91 @@
    },
    "cr_pct": 18,
    "cr_season_pct": 20
+  },
+  {
+   "id": 4697386,
+   "name": "Jake Sanderson",
+   "team": "OTT",
+   "games": 4,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 0,
+   "nights": [
+    14,
+    15,
+    17,
+    19
+   ],
+   "games_next2": 7,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 13,
+   "ir": false,
+   "bench": true,
+   "injury": "DAY_TO_DAY",
+   "owned": 90.0,
+   "gp": 1,
+   "ppg": 2.29,
+   "cur_ppg": 0.6,
+   "last_ppg": 2.4,
+   "last_gp": 67,
+   "proj_ppg": 2.34,
+   "clears": null,
+   "dfo_out": true,
+   "proj_ppg_pre": 2.34,
+   "cr": 0.72,
+   "cr_fpg": 1.65,
+   "cr_season": 0.84,
+   "proj_gp": 42,
+   "cr_games": 0.44,
+   "cr_dress": 0.22,
+   "cr_dress_next": 0.18,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482105,
+   "cr_why": {
+    "toi5": 4.48,
+    "toi": 4.48,
+    "pp5": 0.0,
+    "sog": 0.0,
+    "blk": 1.0,
+    "gp": 1,
+    "last_fpg": 2.4,
+    "xfp": {
+     "gp": 1,
+     "fpg": 0.6,
+     "xfpg": 0.6
+    },
+    "season_fpg": 1.47,
+    "week_news": {
+     "shift": 0.17,
+     "move": 0.027,
+     "why": [
+      "timeline up"
+     ]
+    },
+    "boost_week": 1.78,
+    "boost_week_move": 0.15,
+    "season_pts": 1.59,
+    "boost_dress": 0.71,
+    "boost_fpg": 1.27,
+    "espn_blend": 0.28,
+    "espn_proj": 2.34,
+    "season_range": [
+     0.37,
+     1.22
+    ],
+    "back": {
+     "games": "3"
+    },
+    "lineup_slack": 0.4
+   },
+   "cr_pct": 19,
+   "cr_season_pct": 28
   },
   {
    "id": 5524,
@@ -44887,8 +45596,8 @@
    },
    "cr": 0.69,
    "cr_fpg": 2.87,
-   "cr_season": 0.34,
-   "proj_gp": 2,
+   "cr_season": 0.37,
+   "proj_gp": 3,
    "cr_games": 0.24,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -44908,7 +45617,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 55,
-   "cr_season_pct": 50
+   "cr_season_pct": 49
   },
   {
    "id": 4697436,
@@ -44979,7 +45688,7 @@
     "lineup_slack": 0.4
    },
    "cr_pct": 19,
-   "cr_season_pct": 11
+   "cr_season_pct": 12
   },
   {
    "id": 4697820,
@@ -45132,89 +45841,6 @@
    "cr_season_pct": 15
   },
   {
-   "id": 4697386,
-   "name": "Jake Sanderson",
-   "team": "OTT",
-   "games": 4,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 0,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 7,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 13,
-   "ir": false,
-   "bench": true,
-   "injury": "DAY_TO_DAY",
-   "owned": 90.0,
-   "gp": 1,
-   "ppg": 2.29,
-   "cur_ppg": 0.6,
-   "last_ppg": 2.4,
-   "last_gp": 67,
-   "proj_ppg": 2.34,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 0.65,
-   "cr_fpg": 1.48,
-   "cr_season": 0.84,
-   "proj_gp": 42,
-   "cr_games": 0.44,
-   "cr_dress": 0.22,
-   "cr_dress_next": 0.18,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482105,
-   "cr_why": {
-    "toi5": 4.48,
-    "toi": 4.48,
-    "pp5": 0.0,
-    "sog": 0.0,
-    "blk": 1.0,
-    "gp": 1,
-    "last_fpg": 2.4,
-    "xfp": {
-     "gp": 1,
-     "fpg": 0.6,
-     "xfpg": 0.6
-    },
-    "season_fpg": 1.47,
-    "week_news": {
-     "shift": 0.17,
-     "move": 0.027,
-     "why": [
-      "timeline up"
-     ]
-    },
-    "boost_week": 1.78,
-    "boost_week_move": 0.15,
-    "season_pts": 1.59,
-    "boost_dress": 0.71,
-    "boost_fpg": 1.27,
-    "espn_blend": 0.28,
-    "season_range": [
-     0.37,
-     1.22
-    ],
-    "back": {
-     "games": "3"
-    },
-    "lineup_slack": 0.4
-   },
-   "cr_pct": 18,
-   "cr_season_pct": 28
-  },
-  {
    "id": 4024833,
    "name": "Pierre-Luc Dubois",
    "team": "WSH",
@@ -45248,6 +45874,7 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.58,
    "cr": 0.58,
    "cr_fpg": 1.65,
    "cr_season": 1.1,
@@ -45284,6 +45911,7 @@
     "boost_dress": 0.71,
     "boost_fpg": 1.49,
     "espn_blend": 0.24,
+    "espn_proj": 1.58,
     "season_range": [
      0.64,
      1.55
@@ -45411,6 +46039,7 @@
    "proj_ppg": 2.03,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.03,
    "cr": 0.54,
    "cr_fpg": 1.55,
    "cr_season": 1.4,
@@ -45448,6 +46077,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 1.62,
     "espn_blend": 0.22,
+    "espn_proj": 2.03,
     "age_adj": -0.03,
     "season_range": [
      0.84,
@@ -45577,6 +46207,7 @@
    "proj_ppg": 1.99,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.99,
    "cr": 0.49,
    "cr_fpg": 1.91,
    "cr_season": 1.53,
@@ -45613,6 +46244,7 @@
     "boost_dress": 0.75,
     "boost_fpg": 1.92,
     "espn_blend": 0.22,
+    "espn_proj": 1.99,
     "season_range": [
      0.96,
      2.03
@@ -45978,7 +46610,7 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.35,
-   "cr_fpg": 1.76,
+   "cr_fpg": 1.74,
    "cr_season": 0.77,
    "proj_gp": 35,
    "cr_games": 0.2,
@@ -46186,8 +46818,9 @@
    "proj_ppg": 1.62,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.62,
    "cr": 0.33,
-   "cr_fpg": 1.66,
+   "cr_fpg": 1.65,
    "cr_season": 0.72,
    "proj_gp": 35,
    "cr_games": 0.2,
@@ -46208,6 +46841,7 @@
     "season_fpg": 1.65,
     "season_pts": 1.61,
     "espn_blend": 0.29,
+    "espn_proj": 1.62,
     "season_share": 0.45,
     "age_adj": -0.04,
     "season_range": [
@@ -46459,7 +47093,7 @@
     "lineup_slack": 2.0
    },
    "cr_pct": 15,
-   "cr_season_pct": 24
+   "cr_season_pct": 23
   },
   {
    "id": 5172,
@@ -46579,6 +47213,7 @@
    "proj_ppg": 1.33,
    "clears": null,
    "dfo_out": false,
+   "proj_ppg_pre": 1.33,
    "cr": 0.3,
    "cr_fpg": 0.99,
    "cr_season": 0.92,
@@ -46608,6 +47243,7 @@
     "boost_dress": 0.75,
     "boost_fpg": 1.18,
     "espn_blend": 0.19,
+    "espn_proj": 1.33,
     "age_adj": -0.05,
     "season_range": [
      0.46,
@@ -46654,8 +47290,9 @@
    "proj_ppg": 1.49,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.49,
    "cr": 0.29,
-   "cr_fpg": 1.44,
+   "cr_fpg": 1.45,
    "cr_season": 0.14,
    "proj_gp": 8,
    "cr_games": 0.2,
@@ -46676,6 +47313,7 @@
     "season_fpg": 1.42,
     "season_pts": 1.44,
     "espn_blend": 0.29,
+    "espn_proj": 1.49,
     "season_range": [
      0.0,
      0.56
@@ -46719,6 +47357,7 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.39,
    "cr": 0.28,
    "cr_fpg": 1.41,
    "cr_season": 0.62,
@@ -46741,6 +47380,7 @@
     "season_fpg": 1.41,
     "season_pts": 1.39,
     "espn_blend": 0.29,
+    "espn_proj": 1.39,
     "season_share": 0.45,
     "season_range": [
      0.24,
@@ -46921,8 +47561,9 @@
    "proj_ppg": 1.56,
    "clears": null,
    "dfo_out": true,
-   "cr": 0.27,
-   "cr_fpg": 1.64,
+   "proj_ppg_pre": 1.56,
+   "cr": 0.26,
+   "cr_fpg": 1.6,
    "cr_season": 0.72,
    "proj_gp": 36,
    "cr_games": 0.17,
@@ -46950,6 +47591,7 @@
     },
     "season_pts": 1.61,
     "espn_blend": 0.29,
+    "espn_proj": 1.56,
     "season_share": 0.45,
     "season_range": [
      0.34,
@@ -46961,6 +47603,73 @@
    },
    "cr_pct": 13,
    "cr_season_pct": 20
+  },
+  {
+   "id": 4874748,
+   "name": "Logan Mailloux",
+   "team": "STL",
+   "games": 3,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 0.3,
+   "gp": 0,
+   "ppg": 0.97,
+   "cur_ppg": null,
+   "last_ppg": 0.97,
+   "last_gp": 67,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": true,
+   "cr": 0.24,
+   "cr_fpg": 1.19,
+   "cr_season": 0.54,
+   "proj_gp": 35,
+   "cr_games": 0.2,
+   "cr_dress": 0.1,
+   "cr_dress_next": 0.1,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482733,
+   "cr_why": {
+    "toi5": 16.77,
+    "toi": null,
+    "pp5": 0.64,
+    "sog": 1.21,
+    "blk": 0.84,
+    "gp": 0,
+    "last_fpg": 0.96,
+    "xfp": null,
+    "season_fpg": 1.19,
+    "season_pts": 1.19,
+    "season_share": 0.45,
+    "season_range": [
+     0.15,
+     0.96
+    ],
+    "exp": "year 2",
+    "back": {
+     "games": "10"
+    }
+   },
+   "cr_pct": 12,
+   "cr_season_pct": 14
   },
   {
    "id": 3067951,
@@ -46997,8 +47706,9 @@
    "proj_ppg": 1.19,
    "clears": null,
    "dfo_out": true,
-   "cr": 0.25,
-   "cr_fpg": 1.27,
+   "proj_ppg_pre": 1.19,
+   "cr": 0.23,
+   "cr_fpg": 1.17,
    "cr_season": 0.55,
    "proj_gp": 35,
    "cr_games": 0.2,
@@ -47026,6 +47736,7 @@
     },
     "season_pts": 1.22,
     "espn_blend": 0.29,
+    "espn_proj": 1.19,
     "season_share": 0.45,
     "age_adj": -0.03,
     "season_range": [
@@ -47036,75 +47747,8 @@
      "games": "10"
     }
    },
-   "cr_pct": 15,
+   "cr_pct": 14,
    "cr_season_pct": 12
-  },
-  {
-   "id": 4874748,
-   "name": "Logan Mailloux",
-   "team": "STL",
-   "games": 3,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 0.3,
-   "gp": 0,
-   "ppg": 0.97,
-   "cur_ppg": null,
-   "last_ppg": 0.97,
-   "last_gp": 67,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 0.24,
-   "cr_fpg": 1.2,
-   "cr_season": 0.54,
-   "proj_gp": 35,
-   "cr_games": 0.2,
-   "cr_dress": 0.1,
-   "cr_dress_next": 0.1,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482733,
-   "cr_why": {
-    "toi5": 16.77,
-    "toi": null,
-    "pp5": 0.64,
-    "sog": 1.21,
-    "blk": 0.84,
-    "gp": 0,
-    "last_fpg": 0.96,
-    "xfp": null,
-    "season_fpg": 1.19,
-    "season_pts": 1.19,
-    "season_share": 0.45,
-    "season_range": [
-     0.15,
-     0.96
-    ],
-    "exp": "year 2",
-    "back": {
-     "games": "10"
-    }
-   },
-   "cr_pct": 12,
-   "cr_season_pct": 13
   },
   {
    "id": 2265,
@@ -47397,6 +48041,72 @@
    },
    "cr_pct": 5,
    "cr_season_pct": 0
+  },
+  {
+   "id": 5714,
+   "name": "Marcus Johansson",
+   "team": "MIN",
+   "games": 4,
+   "games_left": 2,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    14,
+    15,
+    17,
+    20
+   ],
+   "games_next2": 7,
+   "today_start": null,
+   "pos": "LW",
+   "slots": [
+    "F",
+    "LW",
+    "RW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.5,
+   "gp": 0,
+   "ppg": 1.24,
+   "cur_ppg": null,
+   "last_ppg": 1.24,
+   "last_gp": 75,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": true,
+   "cr": 0.23,
+   "cr_fpg": 1.14,
+   "cr_season": 0.11,
+   "proj_gp": 8,
+   "cr_games": 0.2,
+   "cr_dress": 0.1,
+   "cr_dress_next": 0.1,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8475149,
+   "cr_why": {
+    "toi5": 15.42,
+    "toi": null,
+    "pp5": 1.26,
+    "sog": 1.41,
+    "blk": 0.27,
+    "gp": 0,
+    "last_fpg": 1.24,
+    "xfp": null,
+    "season_fpg": 1.15,
+    "season_pts": 1.09,
+    "age_adj": -0.06,
+    "season_range": [
+     0.0,
+     0.5
+    ]
+   },
+   "cr_pct": 14,
+   "cr_season_pct": 6
   },
   {
    "id": 5361655,
@@ -47924,20 +48634,20 @@
    "cr_season_pct": 0
   },
   {
-   "id": 5714,
-   "name": "Marcus Johansson",
-   "team": "MIN",
+   "id": 3852,
+   "name": "Brad Marchand",
+   "team": "FLA",
    "games": 4,
    "games_left": 2,
-   "light": 2,
-   "light_left": 1,
+   "light": 1,
+   "light_left": 0,
    "nights": [
     14,
     15,
     17,
-    20
+    19
    ],
-   "games_next2": 7,
+   "games_next2": 5,
    "today_start": null,
    "pos": "LW",
    "slots": [
@@ -47945,49 +48655,70 @@
     "LW",
     "RW"
    ],
-   "owner": "freeagent",
-   "team_id": null,
+   "owner": "other",
+   "team_id": 10,
    "ir": false,
    "bench": false,
-   "injury": null,
-   "owned": 0.5,
-   "gp": 0,
-   "ppg": 1.24,
-   "cur_ppg": null,
-   "last_ppg": 1.24,
-   "last_gp": 75,
-   "proj_ppg": null,
+   "injury": "INJURY_RESERVE",
+   "owned": 59.2,
+   "gp": 2,
+   "ppg": 1.89,
+   "cur_ppg": 1.35,
+   "last_ppg": 2.24,
+   "last_gp": 52,
+   "proj_ppg": 1.92,
    "clears": null,
    "dfo_out": true,
-   "cr": 0.22,
-   "cr_fpg": 1.11,
-   "cr_season": 0.11,
-   "proj_gp": 8,
-   "cr_games": 0.2,
-   "cr_dress": 0.1,
-   "cr_dress_next": 0.1,
+   "proj_ppg_pre": 1.96,
+   "cr": 0.23,
+   "cr_fpg": 1.24,
+   "cr_season": 0.8,
+   "proj_gp": 48,
+   "cr_games": 0.19,
+   "cr_dress": 0.09,
+   "cr_dress_next": 0.09,
    "sat_last": true,
    "cr_matched": true,
-   "nhl_id": 8475149,
+   "nhl_id": 8473419,
    "cr_why": {
-    "toi5": 15.42,
-    "toi": null,
-    "pp5": 1.26,
-    "sog": 1.41,
-    "blk": 0.27,
-    "gp": 0,
-    "last_fpg": 1.24,
-    "xfp": null,
+    "toi5": 11.38,
+    "toi": 11.38,
+    "pp5": 1.27,
+    "sog": 2.5,
+    "blk": 0.0,
+    "gp": 2,
+    "last_fpg": 2.24,
+    "xfp": {
+     "gp": 2,
+     "fpg": 1.35,
+     "xfpg": 1.04
+    },
     "season_fpg": 1.15,
-    "season_pts": 1.09,
-    "age_adj": -0.06,
+    "week_news": {
+     "shift": -1.25,
+     "move": -0.056,
+     "why": [
+      "timeline"
+     ]
+    },
+    "boost_week": 0.79,
+    "season_pts": 1.35,
+    "boost_dress": 0.58,
+    "boost_fpg": 1.15,
+    "espn_blend": 0.26,
+    "espn_proj": 1.96,
+    "age_adj": -0.08,
     "season_range": [
-     0.0,
-     0.5
-    ]
+     0.34,
+     1.25
+    ],
+    "back": {
+     "games": "10"
+    },
+    "lineup_slack": 1.3
    },
    "cr_pct": 14,
-   "cr_season_pct": 6
+   "cr_season_pct": 23
   },
   {
    "id": 3535,
@@ -48101,7 +48832,7 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.22,
-   "cr_fpg": 1.11,
+   "cr_fpg": 1.09,
    "cr_season": 0.1,
    "proj_gp": 7,
    "cr_games": 0.2,
@@ -48842,8 +49573,9 @@
    "proj_ppg": 1.63,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.63,
    "cr": 0.2,
-   "cr_fpg": 1.3,
+   "cr_fpg": 1.37,
    "cr_season": 1.05,
    "proj_gp": 60,
    "cr_games": 0.15,
@@ -48878,6 +49610,7 @@
     "boost_dress": 0.68,
     "boost_fpg": 1.43,
     "espn_blend": 0.25,
+    "espn_proj": 1.63,
     "age_adj": -0.09,
     "season_range": [
      0.59,
@@ -48890,91 +49623,6 @@
    },
    "cr_pct": 11,
    "cr_season_pct": 49
-  },
-  {
-   "id": 3852,
-   "name": "Brad Marchand",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 0,
-   "nights": [
-    14,
-    15,
-    17,
-    19
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "LW",
-   "slots": [
-    "F",
-    "LW",
-    "RW"
-   ],
-   "owner": "other",
-   "team_id": 10,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 59.2,
-   "gp": 2,
-   "ppg": 1.89,
-   "cur_ppg": 1.35,
-   "last_ppg": 2.24,
-   "last_gp": 52,
-   "proj_ppg": 1.92,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 0.2,
-   "cr_fpg": 1.07,
-   "cr_season": 0.8,
-   "proj_gp": 48,
-   "cr_games": 0.19,
-   "cr_dress": 0.09,
-   "cr_dress_next": 0.09,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8473419,
-   "cr_why": {
-    "toi5": 11.38,
-    "toi": 11.38,
-    "pp5": 1.27,
-    "sog": 2.5,
-    "blk": 0.0,
-    "gp": 2,
-    "last_fpg": 2.24,
-    "xfp": {
-     "gp": 2,
-     "fpg": 1.35,
-     "xfpg": 1.04
-    },
-    "season_fpg": 1.15,
-    "week_news": {
-     "shift": -1.25,
-     "move": -0.056,
-     "why": [
-      "timeline"
-     ]
-    },
-    "boost_week": 0.79,
-    "season_pts": 1.34,
-    "boost_dress": 0.58,
-    "boost_fpg": 1.15,
-    "espn_blend": 0.26,
-    "age_adj": -0.08,
-    "season_range": [
-     0.34,
-     1.25
-    ],
-    "back": {
-     "games": "10"
-    },
-    "lineup_slack": 1.4
-   },
-   "cr_pct": 11,
-   "cr_season_pct": 24
   },
   {
    "id": 5291937,
@@ -49075,6 +49723,7 @@
    "proj_ppg": 1.81,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.81,
    "cr": 0.17,
    "cr_fpg": 1.74,
    "cr_season": 0.79,
@@ -49097,6 +49746,7 @@
     "season_fpg": 1.75,
     "season_pts": 1.76,
     "espn_blend": 0.29,
+    "espn_proj": 1.81,
     "season_share": 0.45,
     "season_range": [
      0.33,
@@ -49206,8 +49856,9 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.43,
    "cr": 0.15,
-   "cr_fpg": 1.5,
+   "cr_fpg": 1.49,
    "cr_season": 1.01,
    "proj_gp": 58,
    "cr_games": 0.1,
@@ -49238,10 +49889,11 @@
      ]
     },
     "boost_week": 0.8,
-    "season_pts": 1.39,
+    "season_pts": 1.4,
     "boost_dress": 0.72,
     "boost_fpg": 1.35,
     "espn_blend": 0.26,
+    "espn_proj": 1.43,
     "age_adj": 0.03,
     "season_range": [
      0.54,
@@ -49333,6 +49985,70 @@
    "cr_season_pct": 7
   },
   {
+   "id": 5136660,
+   "name": "Quinn Hutson",
+   "team": "EDM",
+   "games": 3,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 7,
+   "today_start": null,
+   "pos": "RW",
+   "slots": [
+    "F",
+    "RW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.2,
+   "gp": 0,
+   "ppg": 0.7,
+   "cur_ppg": null,
+   "last_ppg": 0.7,
+   "last_gp": 4,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": true,
+   "cr": 0.14,
+   "cr_fpg": 0.69,
+   "cr_season": 0.06,
+   "proj_gp": 8,
+   "cr_games": 0.2,
+   "cr_dress": 0.1,
+   "cr_dress_next": 0.1,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8485511,
+   "cr_why": {
+    "toi5": 8.0,
+    "toi": null,
+    "pp5": 0.0,
+    "sog": 0.75,
+    "blk": 0.25,
+    "gp": 0,
+    "last_fpg": 0.7,
+    "xfp": null,
+    "season_fpg": 0.6,
+    "season_pts": 0.6,
+    "season_range": [
+     0.0,
+     0.57
+    ],
+    "exp": "rookie"
+   },
+   "cr_pct": 9,
+   "cr_season_pct": 0
+  },
+  {
    "id": 4874943,
    "name": "Oliver Kapanen",
    "team": "MTL",
@@ -49366,8 +50082,9 @@
    "proj_ppg": 1.29,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.29,
    "cr": 0.12,
-   "cr_fpg": 1.24,
+   "cr_fpg": 1.22,
    "cr_season": 0.56,
    "proj_gp": 35,
    "cr_games": 0.1,
@@ -49388,6 +50105,7 @@
     "season_fpg": 1.21,
     "season_pts": 1.24,
     "espn_blend": 0.29,
+    "espn_proj": 1.29,
     "season_share": 0.45,
     "season_range": [
      0.22,
@@ -49677,71 +50395,7 @@
     "exp": "rookie"
    },
    "cr_pct": 3,
-   "cr_season_pct": 10
-  },
-  {
-   "id": 5136660,
-   "name": "Quinn Hutson",
-   "team": "EDM",
-   "games": 3,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 7,
-   "today_start": null,
-   "pos": "RW",
-   "slots": [
-    "F",
-    "RW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.2,
-   "gp": 0,
-   "ppg": 0.7,
-   "cur_ppg": null,
-   "last_ppg": 0.7,
-   "last_gp": 4,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 0.12,
-   "cr_fpg": 0.62,
-   "cr_season": 0.06,
-   "proj_gp": 8,
-   "cr_games": 0.2,
-   "cr_dress": 0.1,
-   "cr_dress_next": 0.1,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8485511,
-   "cr_why": {
-    "toi5": 8.0,
-    "toi": null,
-    "pp5": 0.0,
-    "sog": 0.75,
-    "blk": 0.25,
-    "gp": 0,
-    "last_fpg": 0.7,
-    "xfp": null,
-    "season_fpg": 0.6,
-    "season_pts": 0.6,
-    "season_range": [
-     0.0,
-     0.57
-    ],
-    "exp": "rookie"
-   },
-   "cr_pct": 9,
-   "cr_season_pct": 0
+   "cr_season_pct": 11
   },
   {
    "id": 5149157,
@@ -50056,6 +50710,82 @@
    "cr_season_pct": 2
   },
   {
+   "id": 3988782,
+   "name": "Logan O'Connor",
+   "team": "COL",
+   "games": 3,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    15,
+    16,
+    18
+   ],
+   "games_next2": 6,
+   "today_start": "2026-10-14T23:30:00Z",
+   "pos": "RW",
+   "slots": [
+    "F",
+    "RW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 0.2,
+   "gp": 0,
+   "ppg": 0.45,
+   "cur_ppg": null,
+   "last_ppg": 0.45,
+   "last_gp": 13,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": true,
+   "cr": 0.09,
+   "cr_fpg": 0.92,
+   "cr_season": 0.35,
+   "proj_gp": 35,
+   "cr_games": 0.1,
+   "cr_dress": 0.1,
+   "cr_dress_next": 0.1,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8481186,
+   "cr_why": {
+    "toi5": 11.44,
+    "toi": null,
+    "pp5": 0.0,
+    "sog": 1.0,
+    "blk": 0.23,
+    "gp": 0,
+    "last_fpg": 0.45,
+    "xfp": null,
+    "season_fpg": 0.79,
+    "week_news": {
+     "shift": 2.42,
+     "move": 0.0,
+     "why": [
+      "practising",
+      "could return",
+      "set to return"
+     ]
+    },
+    "season_pts": 0.78,
+    "season_share": 0.45,
+    "season_range": [
+     0.0,
+     0.74
+    ],
+    "back": {
+     "games": "10"
+    }
+   },
+   "cr_pct": 7,
+   "cr_season_pct": 9
+  },
+  {
    "id": 3541,
    "name": "Jordan Staal",
    "team": "CAR",
@@ -50089,6 +50819,7 @@
    "proj_ppg": 1.35,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.35,
    "cr": 0.08,
    "cr_fpg": 1.18,
    "cr_season": 0.94,
@@ -50132,6 +50863,7 @@
     "boost_dress": 0.69,
     "boost_fpg": 1.29,
     "espn_blend": 0.21,
+    "espn_proj": 1.35,
     "age_adj": -0.08,
     "season_range": [
      0.48,
@@ -50144,82 +50876,6 @@
    },
    "cr_pct": 7,
    "cr_season_pct": 36
-  },
-  {
-   "id": 3988782,
-   "name": "Logan O'Connor",
-   "team": "COL",
-   "games": 3,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    15,
-    16,
-    18
-   ],
-   "games_next2": 6,
-   "today_start": "2026-10-14T23:30:00Z",
-   "pos": "RW",
-   "slots": [
-    "F",
-    "RW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 0.2,
-   "gp": 0,
-   "ppg": 0.45,
-   "cur_ppg": null,
-   "last_ppg": 0.45,
-   "last_gp": 13,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 0.08,
-   "cr_fpg": 0.8,
-   "cr_season": 0.35,
-   "proj_gp": 35,
-   "cr_games": 0.1,
-   "cr_dress": 0.1,
-   "cr_dress_next": 0.1,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8481186,
-   "cr_why": {
-    "toi5": 11.44,
-    "toi": null,
-    "pp5": 0.0,
-    "sog": 1.0,
-    "blk": 0.23,
-    "gp": 0,
-    "last_fpg": 0.45,
-    "xfp": null,
-    "season_fpg": 0.79,
-    "week_news": {
-     "shift": 2.42,
-     "move": 0.0,
-     "why": [
-      "practising",
-      "could return",
-      "set to return"
-     ]
-    },
-    "season_pts": 0.78,
-    "season_share": 0.45,
-    "season_range": [
-     0.0,
-     0.74
-    ],
-    "back": {
-     "games": "10"
-    }
-   },
-   "cr_pct": 7,
-   "cr_season_pct": 9
   },
   {
    "id": 5080158,
@@ -50256,7 +50912,7 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.07,
-   "cr_fpg": 0.95,
+   "cr_fpg": 0.99,
    "cr_season": 0.09,
    "proj_gp": 8,
    "cr_games": 0.07,
@@ -50432,90 +51088,6 @@
    "cr_season_pct": 0
   },
   {
-   "id": 4587854,
-   "name": "Alexander Romanov",
-   "team": "NYI",
-   "games": 3,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "OUT",
-   "owned": 0.3,
-   "gp": 3,
-   "ppg": 1.42,
-   "cur_ppg": 1.43,
-   "last_ppg": 1.42,
-   "last_gp": 15,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": true,
-   "cr": 0.01,
-   "cr_fpg": 1.36,
-   "cr_season": 0.57,
-   "proj_gp": 35,
-   "cr_games": 0.0,
-   "cr_dress": 0.0,
-   "cr_dress_next": 0.0,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8481014,
-   "cr_why": {
-    "toi5": 16.57,
-    "toi": 16.57,
-    "pp5": 0.07,
-    "sog": 1.0,
-    "blk": 2.33,
-    "gp": 3,
-    "last_fpg": 1.42,
-    "xfp": {
-     "gp": 3,
-     "fpg": 1.43,
-     "xfpg": 1.72
-    },
-    "season_fpg": 1.35,
-    "week_news": {
-     "shift": -1.25,
-     "move": -0.005,
-     "why": [
-      "timeline"
-     ]
-    },
-    "boost_week": -3.25,
-    "boost_week_move": -0.15,
-    "season_pts": 1.4,
-    "boost_dress": 0.46,
-    "boost_fpg": 1.44,
-    "season_news": [
-     "surgery"
-    ],
-    "season_range": [
-     0.19,
-     1.03
-    ],
-    "back": {
-     "games": "4"
-    },
-    "lineup_slack": 0.3
-   },
-   "cr_pct": 2,
-   "cr_season_pct": 15
-  },
-  {
    "id": 5161,
    "name": "Matt Duchene",
    "team": "DAL",
@@ -50548,8 +51120,9 @@
    "proj_ppg": 1.81,
    "clears": "Thu 15",
    "dfo_out": true,
+   "proj_ppg_pre": 1.81,
    "cr": 0.0,
-   "cr_fpg": 1.51,
+   "cr_fpg": 1.6,
    "cr_season": 0.47,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -50578,6 +51151,7 @@
     },
     "season_pts": 1.57,
     "espn_blend": 0.29,
+    "espn_proj": 1.81,
     "season_share": 0.3,
     "age_adj": -0.06,
     "season_range": [
@@ -50624,6 +51198,7 @@
    "proj_ppg": null,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.25,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.0
@@ -50685,8 +51260,9 @@
    "proj_ppg": 1.64,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.64,
    "cr": 0.0,
-   "cr_fpg": 1.77,
+   "cr_fpg": 1.75,
    "cr_season": 0.52,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -50714,6 +51290,7 @@
     },
     "season_pts": 1.74,
     "espn_blend": 0.29,
+    "espn_proj": 1.64,
     "season_share": 0.3,
     "season_range": [
      0.16,
@@ -50756,8 +51333,9 @@
    "proj_ppg": 1.47,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.47,
    "cr": 0.0,
-   "cr_fpg": 1.24,
+   "cr_fpg": 1.28,
    "cr_season": 0.13,
    "proj_gp": 8,
    "cr_games": 0,
@@ -50778,6 +51356,7 @@
     "season_fpg": 1.28,
     "season_pts": 1.3,
     "espn_blend": 0.29,
+    "espn_proj": 1.47,
     "age_adj": -0.05,
     "season_range": [
      0.0,
@@ -50822,8 +51401,9 @@
    "proj_ppg": 1.65,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.65,
    "cr": 0.0,
-   "cr_fpg": 1.53,
+   "cr_fpg": 1.57,
    "cr_season": 0.46,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -50844,6 +51424,7 @@
     "season_fpg": 1.55,
     "season_pts": 1.55,
     "espn_blend": 0.29,
+    "espn_proj": 1.65,
     "season_share": 0.3,
     "age_adj": -0.05,
     "season_range": [
@@ -50890,6 +51471,7 @@
    "proj_ppg": 1.84,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.84,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.0
@@ -50916,7 +51498,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 0,
-   "cr_season_pct": 57
+   "cr_season_pct": 56
   },
   {
    "id": 2562606,
@@ -50952,8 +51534,9 @@
    "proj_ppg": 1.58,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.58,
    "cr": 0.0,
-   "cr_fpg": 1.6,
+   "cr_fpg": 1.63,
    "cr_season": 0.47,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -50974,6 +51557,7 @@
     "season_fpg": 1.62,
     "season_pts": 1.58,
     "espn_blend": 0.29,
+    "espn_proj": 1.58,
     "season_share": 0.3,
     "age_adj": -0.04,
     "season_range": [
@@ -51021,8 +51605,9 @@
    "proj_ppg": 1.19,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.19,
    "cr": 0.0,
-   "cr_fpg": 1.12,
+   "cr_fpg": 1.13,
    "cr_season": 0.34,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -51051,6 +51636,7 @@
     },
     "season_pts": 1.12,
     "espn_blend": 0.29,
+    "espn_proj": 1.19,
     "season_share": 0.3,
     "season_range": [
      0.0,
@@ -51094,8 +51680,9 @@
    "proj_ppg": 1.32,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.32,
    "cr": 0.0,
-   "cr_fpg": 1.29,
+   "cr_fpg": 1.3,
    "cr_season": 0.13,
    "proj_gp": 8,
    "cr_games": 0,
@@ -51116,6 +51703,7 @@
     "season_fpg": 1.34,
     "season_pts": 1.3,
     "espn_blend": 0.29,
+    "espn_proj": 1.32,
     "age_adj": -0.06,
     "season_range": [
      0.0,
@@ -51158,14 +51746,15 @@
    "proj_ppg": 2.84,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.84,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.0
    },
    "cr": 0.0,
    "cr_fpg": 2.92,
-   "cr_season": 0.72,
-   "proj_gp": 16,
+   "cr_season": 0.65,
+   "proj_gp": 13,
    "cr_games": 0.0,
    "cr_dress": null,
    "cr_dress_next": null,
@@ -51184,7 +51773,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 0,
-   "cr_season_pct": 58
+   "cr_season_pct": 56
   },
   {
    "id": 3096217,
@@ -51219,6 +51808,7 @@
    "proj_ppg": 2.9,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.9,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.0
@@ -51279,8 +51869,9 @@
    "proj_ppg": 1.57,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.57,
    "cr": 0.0,
-   "cr_fpg": 1.51,
+   "cr_fpg": 1.52,
    "cr_season": 0.45,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -51301,6 +51892,7 @@
     "season_fpg": 1.46,
     "season_pts": 1.49,
     "espn_blend": 0.29,
+    "espn_proj": 1.57,
     "season_share": 0.3,
     "season_range": [
      0.07,
@@ -51346,6 +51938,7 @@
    "proj_ppg": 1.42,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.42,
    "cr": 0.0,
    "cr_fpg": 1.2,
    "cr_season": 0.93,
@@ -51382,6 +51975,7 @@
     "boost_dress": 0.73,
     "boost_fpg": 1.25,
     "espn_blend": 0.22,
+    "espn_proj": 1.42,
     "season_news": [
      "indefinite"
     ],
@@ -51459,7 +52053,7 @@
     "p_today_pre": 0.0
    },
    "cr_pct": 0,
-   "cr_season_pct": 51
+   "cr_season_pct": 50
   },
   {
    "id": 4063522,
@@ -51494,6 +52088,7 @@
    "proj_ppg": null,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 0.0,
    "cr_g_nights": {},
    "cr": 0.0,
    "cr_fpg": 2.84,
@@ -51609,6 +52204,7 @@
    "proj_ppg": 1.06,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.06,
    "cr": 0.0,
    "cr_fpg": 1.09,
    "cr_season": 0.76,
@@ -51645,6 +52241,7 @@
     "boost_dress": 0.73,
     "boost_fpg": 1.07,
     "espn_blend": 0.22,
+    "espn_proj": 1.06,
     "season_range": [
      0.3,
      1.21
@@ -51691,8 +52288,9 @@
    "proj_ppg": 1.44,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.44,
    "cr": 0.0,
-   "cr_fpg": 1.19,
+   "cr_fpg": 1.23,
    "cr_season": 0.38,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -51713,6 +52311,7 @@
     "season_fpg": 1.18,
     "season_pts": 1.26,
     "espn_blend": 0.29,
+    "espn_proj": 1.44,
     "season_share": 0.3,
     "season_range": [
      0.02,
@@ -51814,8 +52413,9 @@
    "proj_ppg": 1.05,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.05,
    "cr": 0.0,
-   "cr_fpg": 1.11,
+   "cr_fpg": 1.08,
    "cr_season": 0.33,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -51843,6 +52443,7 @@
     },
     "season_pts": 1.08,
     "espn_blend": 0.29,
+    "espn_proj": 1.05,
     "season_share": 0.3,
     "season_range": [
      0.0,
@@ -51888,6 +52489,7 @@
    "proj_ppg": 2.38,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 2.38,
    "cr_g_nights": {},
    "cr": 0.0,
    "cr_fpg": 2.84,
@@ -51946,8 +52548,9 @@
    "proj_ppg": 0.96,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 0.96,
    "cr": 0.0,
-   "cr_fpg": 1.12,
+   "cr_fpg": 1.08,
    "cr_season": 0.31,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -51968,6 +52571,7 @@
     "season_fpg": 1.14,
     "season_pts": 1.05,
     "espn_blend": 0.29,
+    "espn_proj": 0.96,
     "season_share": 0.3,
     "age_adj": -0.05,
     "season_range": [
@@ -52149,8 +52753,9 @@
    "proj_ppg": 1.23,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.23,
    "cr": 0.0,
-   "cr_fpg": 1.28,
+   "cr_fpg": 1.29,
    "cr_season": 0.13,
    "proj_gp": 8,
    "cr_games": 0,
@@ -52171,6 +52776,7 @@
     "season_fpg": 1.33,
     "season_pts": 1.28,
     "espn_blend": 0.29,
+    "espn_proj": 1.23,
     "season_range": [
      0.0,
      0.52
@@ -52263,8 +52869,9 @@
    "proj_ppg": 1.39,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 1.39,
    "cr": 0.0,
-   "cr_fpg": 1.03,
+   "cr_fpg": 1.16,
    "cr_season": 0.11,
    "proj_gp": 8,
    "cr_games": 0,
@@ -52285,6 +52892,7 @@
     "season_fpg": 1.06,
     "season_pts": 1.11,
     "espn_blend": 0.29,
+    "espn_proj": 1.39,
     "age_adj": -0.07,
     "season_range": [
      0.0,
@@ -52293,6 +52901,92 @@
    },
    "cr_pct": 0,
    "cr_season_pct": 6
+  },
+  {
+   "id": 4587854,
+   "name": "Alexander Romanov",
+   "team": "NYI",
+   "games": 3,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "OUT",
+   "owned": 0.3,
+   "gp": 3,
+   "ppg": 1.42,
+   "cur_ppg": 1.43,
+   "last_ppg": 1.42,
+   "last_gp": 15,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": true,
+   "cr": 0.0,
+   "cr_fpg": 1.36,
+   "cr_season": 0.21,
+   "proj_gp": 15,
+   "cr_games": 0.0,
+   "cr_dress": 0.0,
+   "cr_dress_next": 0.0,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8481014,
+   "cr_why": {
+    "toi5": 16.57,
+    "toi": 16.57,
+    "pp5": 0.07,
+    "sog": 1.0,
+    "blk": 2.33,
+    "gp": 3,
+    "last_fpg": 1.42,
+    "xfp": {
+     "gp": 3,
+     "fpg": 1.43,
+     "xfpg": 1.72
+    },
+    "season_fpg": 1.35,
+    "week_news": {
+     "shift": -1.95,
+     "move": -0.006,
+     "why": [
+      "long absence",
+      "timeline"
+     ]
+    },
+    "boost_week": -3.25,
+    "boost_week_move": -0.15,
+    "season_pts": 1.4,
+    "boost_dress": 0.46,
+    "boost_fpg": 1.44,
+    "season_news": [
+     "season-ending",
+     "surgery"
+    ],
+    "season_range": [
+     0.0,
+     0.67
+    ],
+    "back": {
+     "games": "4"
+    },
+    "lineup_slack": 0.6
+   },
+   "cr_pct": 0,
+   "cr_season_pct": 10
   },
   {
    "id": 4024820,
@@ -52325,7 +53019,7 @@
    "clears": null,
    "dfo_out": null,
    "cr": 0.0,
-   "cr_fpg": 0.87,
+   "cr_fpg": 1.01,
    "cr_season": 0.09,
    "proj_gp": 8,
    "cr_games": 0,
@@ -52441,7 +53135,7 @@
    "clears": null,
    "dfo_out": null,
    "cr": 0.0,
-   "cr_fpg": 0.89,
+   "cr_fpg": 0.9,
    "cr_season": 0.09,
    "proj_gp": 8,
    "cr_games": 0,
@@ -52875,7 +53569,7 @@
    "cr": 0.0,
    "cr_fpg": 0.9,
    "cr_season": 0.39,
-   "proj_gp": 37,
+   "proj_gp": 34,
    "cr_games": 0,
    "cr_dress": 0.27,
    "cr_dress_next": 0.27,
@@ -56322,8 +57016,9 @@
    "proj_ppg": 1.8,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.8,
    "cr": 0.0,
-   "cr_fpg": 1.96,
+   "cr_fpg": 1.92,
    "cr_season": 0.58,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -56353,6 +57048,7 @@
     },
     "season_pts": 1.93,
     "espn_blend": 0.29,
+    "espn_proj": 1.8,
     "season_share": 0.3,
     "season_range": [
      0.22,
@@ -56399,6 +57095,7 @@
    "proj_ppg": 1.92,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.92,
    "cr": 0.0,
    "cr_fpg": 1.66,
    "cr_season": 1.35,
@@ -56434,6 +57131,7 @@
     "boost_dress": 0.81,
     "boost_fpg": 1.69,
     "espn_blend": 0.22,
+    "espn_proj": 1.92,
     "season_range": [
      0.89,
      1.8
@@ -56480,8 +57178,9 @@
    "proj_ppg": 2.19,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 2.19,
    "cr": 0.0,
-   "cr_fpg": 2.16,
+   "cr_fpg": 2.17,
    "cr_season": 0.5,
    "proj_gp": 18,
    "cr_games": 0.0,
@@ -56510,6 +57209,7 @@
     },
     "season_pts": 2.15,
     "espn_blend": 0.29,
+    "espn_proj": 2.19,
     "season_share": 0.23,
     "season_range": [
      0.14,
@@ -56556,8 +57256,9 @@
    "proj_ppg": 1.94,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.94,
    "cr": 0.0,
-   "cr_fpg": 1.88,
+   "cr_fpg": 1.91,
    "cr_season": 0.56,
    "proj_gp": 23,
    "cr_games": 0.0,
@@ -56578,6 +57279,7 @@
     "season_fpg": 1.85,
     "season_pts": 1.87,
     "espn_blend": 0.29,
+    "espn_proj": 1.94,
     "season_share": 0.3,
     "season_range": [
      0.18,
@@ -56588,7 +57290,7 @@
     }
    },
    "cr_pct": 0,
-   "cr_season_pct": 14
+   "cr_season_pct": 15
   },
   {
    "id": 4272674,
@@ -56624,6 +57326,7 @@
    "proj_ppg": 3.45,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.45,
    "cr_g_nights": {
     "17": 0.0,
     "20": 0.0
@@ -56685,6 +57388,7 @@
    "proj_ppg": 3.41,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.41,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.0
@@ -56745,6 +57449,7 @@
    "proj_ppg": 3.65,
    "clears": null,
    "dfo_out": null,
+   "proj_ppg_pre": 3.65,
    "cr_g_nights": {
     "17": 0.0,
     "19": 0.0
@@ -56807,9 +57512,10 @@
    "proj_ppg": 1.51,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 1.6,
    "cr": 0.0,
    "cr_fpg": 1.33,
-   "cr_season": 0.84,
+   "cr_season": 0.85,
    "proj_gp": 52,
    "cr_games": 0.0,
    "cr_dress": 0.0,
@@ -56838,16 +57544,17 @@
       "long absence"
      ]
     },
-    "season_pts": 1.36,
+    "season_pts": 1.38,
     "boost_dress": 0.68,
     "boost_fpg": 1.28,
     "espn_blend": 0.24,
+    "espn_proj": 1.6,
     "season_news": [
      "indefinite"
     ],
     "season_range": [
-     0.38,
-     1.29
+     0.39,
+     1.3
     ],
     "back": {
      "games": "16"
@@ -56892,10 +57599,11 @@
    "proj_ppg": 2.2,
    "clears": null,
    "dfo_out": true,
+   "proj_ppg_pre": 2.23,
    "cr": 0.0,
-   "cr_fpg": 1.68,
-   "cr_season": 0.71,
-   "proj_gp": 37,
+   "cr_fpg": 1.78,
+   "cr_season": 0.81,
+   "proj_gp": 42,
    "cr_games": 0.0,
    "cr_dress": 0.0,
    "cr_dress_next": 0.0,
@@ -56925,24 +57633,22 @@
       "timeline"
      ]
     },
-    "season_pts": 1.58,
+    "season_pts": 1.59,
     "boost_dress": 0.37,
     "boost_fpg": 1.25,
     "espn_blend": 0.26,
-    "season_news": [
-     "surgery"
-    ],
+    "espn_proj": 2.23,
     "season_range": [
      0.35,
-     1.1
+     1.26
     ],
     "back": {
      "days": 41
     },
-    "lineup_slack": 1.4
+    "lineup_slack": 1.3
    },
    "cr_pct": 0,
-   "cr_season_pct": 17
+   "cr_season_pct": 25
   }
  ]
 }
