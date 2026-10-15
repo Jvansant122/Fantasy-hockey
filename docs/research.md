@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 170). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 173). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1217,6 +1217,18 @@ A healthy scratch whose last game, within the past 10 days, included at least 30
 ## 170. The depth player with the fewest minutes
 
 Among a team's healthy depth players, the forward (or defenseman) who played the fewest minutes at his position in the last game is the one most often taken out next. The other depth players keep their spots a little more often than the site expected. Measured on the site as it stands now, both gaps were about half what the first test found, so the site applies a small drop to the lowest-minutes player and a small lift to the other depth players, alongside the healthy-regular, fight, special-teams and power-play adjustments. Both seasons and every half-season improved.
+
+## 171. Betting lines only on tonight's games
+
+The Predicted winners tab shows the betting line's win chance next to the site's own. The line the site reads is for tonight's games only, but it was also being shown on the same teams' later games this week, so a weekend game could carry Thursday's line. Now only tonight's games show a line.
+
+## 172. A fresh injury listing after a one-game note
+
+When a player is listed as out for one game, the site lets him back in once that game is played. If ESPN listed him out again after that game, the site still read the old note and treated him as back. Now a new listing that comes after the noted game counts as a new absence.
+
+## 173. Daily Faceoff's "likely" starting goalies
+
+Daily Faceoff tags some goalies "Likely" before the team confirms. On the live days measured, the tagged goalie started nearly every time, more often than the site's own start chance said. The site now gives a goalie Daily Faceoff tags as likely at least a 90% chance to start that game, and lowers his teammates' chances to match. Later games are unchanged.
 
 ## What the independent review changed
 

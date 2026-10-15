@@ -214,6 +214,9 @@ INJURED_TAKER_WEIGHT = 0.5  # an injured partner's weight when a goalie's lost S
 # he starts next more often (0.47 against 0.58 after a pulled starter; third goalies and call-ups 0.23 against 0.47):
 # start-logit shifts for the next game and later games, plus more for one with 0-3 of the last 20 starts (findings 170)
 RELIEF_LOGITS, RELIEF_RARE_LOGIT, RELIEF_RARE_STARTS = (1.2, 0.9), 0.5, 3
+# Daily Faceoff's "Likely" starter starts that game at least this often: 23 of 23 live, Oct 8-14, while the site gave
+# 0.64-0.75 (findings 463 (6), handoff 617; live-only, no archive of the tags). Re-grade at the Oct 30 review
+LIKELY_START_FLOOR = 0.90
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -1557,7 +1560,17 @@ def one_game_out_over(note, team_game_dates, starts=None):
     if when is None:
         return False
     day = when.astimezone(ET).date().isoformat()
-    return any(game_after(when, day, d[:10], (starts or {}).get(d[:10])) for d in team_game_dates)
+    after = sorted(d[:10] for d in team_game_dates if game_after(when, day, d[:10], (starts or {}).get(d[:10])))
+    if not after:
+        return False
+    # ESPN listed him OUT again after that game (the bare 'out' that carried this note is dated later): a new absence,
+    # not the one game (handoff 616)
+    listed = parse_utc(note.get("listed"))
+    if listed is not None:
+        start = parse_utc((starts or {}).get(after[0]))
+        if (listed > start) if start is not None else listed.astimezone(ET).date().isoformat() > after[0]:
+            return False
+    return True
 
 
 def load_injury_notes():
@@ -1602,7 +1615,8 @@ def carry_injury_notes(notes, stored, status, played_since, today):
             continue
         if played_since(aid, str(old.get("date") or "")):
             continue
-        notes[aid] = {**note, **{k: old.get(k) for k in ("date", "short", "long")}, "name": note.get("name") or old.get("name")}
+        notes[aid] = {**note, **{k: old.get(k) for k in ("date", "short", "long")}, "name": note.get("name") or old.get("name"),
+                      "listed": note.get("date")}  # the bare word's own time (handoff 616)
         old["seen"] = today.isoformat()
         swapped.add(aid)
     return swapped
@@ -2086,7 +2100,7 @@ def repeating_pattern(seq, cands):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -2295,6 +2309,13 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             q = {gid: v if v <= 0 or v >= 1 else 1 / (1 + math.exp(-LATER_GAME_TEMP * math.log(v / (1 - v)))) for gid, v in p.items()}
             tot = sum(q.values()) or 1
             q = {gid: v / tot for gid, v in q.items()}
+        lk = (likely_dfo or {}).get(d)
+        if lk in q and q[lk] < LIKELY_START_FLOOR:
+            # Daily Faceoff's "Likely" starter: at least LIKELY_START_FLOOR for that game, the rest split by the model's
+            # odds; later games and the chain unchanged (handoff 617)
+            rest = sum(v for gid, v in q.items() if gid != lk)
+            q = {gid: LIKELY_START_FLOOR if gid == lk else (v / rest * (1 - LIKELY_START_FLOOR) if rest else 0.0)
+                 for gid, v in q.items()}
         if d in confirmed:
             p = q = {gid: float(gid == confirmed[d]) for gid in cands}
             if confirmed[d] == shift_gid:  # confirmed back in net: his last result no longer says anything
@@ -2386,7 +2407,7 @@ def line_win_probs(odds, today, now=None):
 
 
 def predicted_games(players, by_player, prev, rosters, team_games, team_dates, sched, goalie_nights, save_pcts, strength,
-                    week_games, week_starts, week_results, team_names, lines, now_utc, xgd=None):
+                    week_games, week_starts, week_results, team_names, lines, now_utc, xgd=None, line_date=None):
     """The week's NHL games with the home side's win chance, rolled up from the player projections (findings 450):
     each skater's points per game x his chance to dress (the site's own, or DEPTH_DRESS for depth players it doesn't rate),
     the starter's save% weighted by each goalie's chance to start, goal and expected-goal differential and back-to-backs."""
@@ -2413,7 +2434,7 @@ def predicted_games(players, by_player, prev, rosters, team_games, team_dates, s
         goalie_sv[team] = {d: a / b for d, (a, b) in by_day.items() if b > 0}
     play_dates = {t: set(team_dates.get(t, ())) | set(sched.get(t, ())) for t in set(team_dates) | set(sched)}
     return winners_model.nhl_games(week_games, week_starts, week_results, team_names, strength, play_dates, lineups,
-                                   goalie_sv, lines, now_utc, xgd)
+                                   goalie_sv, lines, now_utc, xgd, line_date)
 
 
 def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
@@ -2596,7 +2617,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         return None if p.get("team") == "FA" and pid in claimed else pid
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
-    confirmed, tonight = {}, {}
+    confirmed, tonight, likely = {}, {}, {}
     for page in starters:
         for g in page.get("games", []):
             cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")] \
@@ -2617,6 +2638,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 tonight[g["team"]] = (cands[0], g.get("status"))
             if g.get("status") == "Confirmed":
                 confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
+            elif g.get("status") == "Likely":  # handoff 617
+                likely.setdefault(g["team"], {})[page["date"]] = cands[0]
     # ESPN lists him as a free agent ('FA') but he has played this season and an NHL roster has him: his team's games
     # (Bunting, findings 230)
     roster_team = {pid: team for team, r in rosters.items() for pid, _, _ in r}
@@ -2686,7 +2709,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         exp = goalie_starts(model, team, roster_g, starts_by_team, prev_gs, dates, today, confirmed.get(team), tod, sea, goalie_inj,
                             last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
                             {d for d, _, home in week_games.get(team, []) if not home},
-                            {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []))
+                            {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
+                            likely.get(team))
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
@@ -3260,7 +3284,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     if winners is not None:
         try:  # the Predicted winners tab never blocks the ratings
             winners["games"] = predicted_games(players, by_player, prev, rosters, team_games, team_dates, sched, goalie_nights,
-                                               save_pcts, strength, week_games, week_starts, week_results, team_names, lines, now_utc, xgd)
+                                               save_pcts, strength, week_games, week_starts, week_results, team_names, lines, now_utc, xgd,
+                                               today.isoformat())
         except Exception as e:  # noqa: BLE001
             print(f"Predicted winners failed: {e!r}", file=sys.stderr)
     print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")
