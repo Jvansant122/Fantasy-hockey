@@ -258,6 +258,10 @@ LINEUP_SLACK = (1.34, 2.84)
 # Week: per team game, the same open spots from the per-game Week chances themselves; logit += over x min(s, 0) + room x
 # max(s, 0), s = open spots / 3 (handoff 489, findings 402: Brier -0.50 / -0.57 points, fits 2.23/1.14 and 1.98/0.96)
 WEEK_SLACK = (2.0, 1.0)
+# healthy regulars (dressed his team's last game at DEPTH_TOI+ minutes, no injury listing) dress more than the Week model
+# gives them: + this on the logit after the slack fit, outside its sums (handoff 355, findings 317: site 0.951 vs actual 0.981
+# live Oct 9-13; still ~0.96 after the boosted Week model and the slack fit)
+HEALTHY_REG_LOGIT = 0.5
 # before that: the first home game after WEEK_TRIP_MIN+ straight road games brings skaters who missed games back (+0.1) and
 # sits regulars a little (-0.6 x (1 - p)); out WEEK_OUT_LONG_GAMES+ straight games, +0.05 a game further into the week
 # (handoff 500, findings 402: Brier -0.085 / -0.111 points on top of the slack)
@@ -266,6 +270,9 @@ WEEK_OUT_LONG, WEEK_OUT_LONG_GAMES = 0.05, 3
 # ESPN's preseason projected FP/G blended into the Season FP/G (after the age term) with weight a + b g + c g^2,
 # g = min(GP, 40)/40: 0.29 at 0 games, about 0.07-0.08 from 30 games on (findings 360 (2), handoffs 331-332)
 ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
+# Season FP/G over-reacts to a change in ice time vs last season seen in a few games: pull it back, gone after 10 games
+# (handoff 507, findings 402: Season Spearman +0.0002 all / +0.0004 free agents, every test season)
+SEASON_TOI_CHG_C, SEASON_TOI_CHG_K, SEASON_TOI_CHG_GAMES = -0.28, 3, 10
 # boosted models trained on 16 seasons (model/train_boost.py, scripts/season_boost.py; findings 360 (3)-(4), handoff 332):
 # the Season dress logit moves BOOST_DRESS_W of the way to the boosted one, and the Season FP/G gains
 # (boosted - FP/G) x (a + b g). The ESPN weights above were refitted jointly with these, leaving one season out over 2021-26
@@ -737,7 +744,7 @@ def prev_points_pct(s, prev_season):
         end = next(x["standingsEnd"] for x in nhl_get(s, f"{NHL_WEB}/standings-season").json()["seasons"] if x["id"] == prev_season)
         return {r["teamAbbrev"]["default"]: (2 * r["wins"] + r["otLosses"]) / (2 * max(r["gamesPlayed"], 1))
                 for r in nhl_get(s, f"{NHL_WEB}/standings/{end}").json().get("standings", [])}
-    except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
+    except (requests.RequestException, KeyError, StopIteration, ValueError, TypeError) as e:  # a null field: handoff 508
         print(f"Last season's standings unavailable, goalie team changes not priced: {e!r}", file=sys.stderr)
         return {}
 
@@ -751,7 +758,7 @@ def opp_last_ga(s, prev_season):
         lg = sum(r["goalAgainst"] for r in rows) / max(sum(r["gamesPlayed"] for r in rows), 1)
         return {r["teamAbbrev"]["default"]: (r["goalAgainst"] + OPP_LAST_SHRINK * lg) / (r["gamesPlayed"] + OPP_LAST_SHRINK) / lg - 1
                 for r in rows} if lg else {}
-    except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
+    except (requests.RequestException, KeyError, StopIteration, ValueError, TypeError) as e:  # a null field: handoff 508
         print(f"Last season's goals against unavailable, no opponent term: {e!r}", file=sys.stderr)
         return {}
 
@@ -1125,7 +1132,7 @@ def team_strength(s, prev_season):
         last = {t: (r["goalFor"] - r["goalAgainst"]) / max(r["gamesPlayed"], 1) for t, r in rows(end).items()}
         return {t: (r["goalFor"] - r["goalAgainst"] + SCHED_SHRINK * 0.5 * last.get(t, 0.0)) / (r["gamesPlayed"] + SCHED_SHRINK)
                 for t, r in rows("now").items()}
-    except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
+    except (requests.RequestException, KeyError, StopIteration, ValueError, TypeError) as e:  # a null field: handoff 508
         print(f"Standings unavailable, goalie starts not priced by schedule: {e!r}", file=sys.stderr)
         return {}
 
@@ -1644,8 +1651,11 @@ def week_slack(rows, boost_x, boost_week):
                 sums[key + (d,)] += b
     for r in rows:
         p = r["p"]
+        reg = HEALTHY_REG_LOGIT if r.get("regular") else 0.0  # handoff 355, not in the sums above
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
+            if reg:
+                r["per_game"] = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + reg))), c) for q, c in zip(r["per_game"], r["caps"])]
             if r["per_game"] != r.get("before", r["per_game"]):  # ... but keep the trip and absence shifts
                 p["cr_games"] = round(sum(r["per_game"]), 2)
                 p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
@@ -1653,7 +1663,7 @@ def week_slack(rows, boost_x, boost_week):
                 p["cr_dress_next"] = round(r["per_game"][0], 2)
             continue
         slack = [(LINEUP_SPOTS[r["isD"]] - sums[(r["team"], r["isD"], d)]) / 3 for d in r["dates"]]
-        per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0)))), c)
+        per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0) + reg))), c)
                     for q, s, c in zip(r["per_game"], slack, r["caps"])]
         games = sum(per_game)
         p["cr_why"]["week_slack"] = round(3 * slack[0], 1)
@@ -2755,9 +2765,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # his team has played a game (handoff 506: the opening week was worse with it in all 6 seasons)
             opp_left = [o for d, o, _ in week_games.get(espn_team) or week_games.get(team, [])
                         if d > today.isoformat() or (d == today.isoformat() and not game_started(p))]
+            opp_last, toi_chg = None, None
             if pid and tg and opp_ga and opp_left:
-                fpg *= 1 + OPP_LAST_C * sum(OPP_LAST_K / (OPP_LAST_K + len(team_games.get(o, []))) * opp_ga.get(o, 0.0)
+                opp_move = OPP_LAST_C * sum(OPP_LAST_K / (OPP_LAST_K + len(team_games.get(o, []))) * opp_ga.get(o, 0.0)
                                             for o in opp_left) / len(opp_left)
+                fpg *= 1 + opp_move
+                # for the details: how many more (fewer) goals a game this week's opponents allowed last season (handoff 508)
+                opp_last = {"ga": round(sum(opp_ga.get(o, 0.0) for o in opp_left) / len(opp_left), 3), "move": round(opp_move, 3)}
             df_, base_dress, cap = None, None, 1.0
             if pid is None or (not gl and p["team"] == "FA"):  # not in NHL stats, or unsigned and yet to play (findings 216)
                 p_dress = NOT_PLAYING_DRESS
@@ -2857,6 +2871,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if boost_fpg and pid in boost_x:
                     boost_f = season_boost.predict(boost_fpg, boost_x[pid])
                     shift += (boost_f - fpg_t) * (BOOST_FPG_BLEND[0] + BOOST_FPG_BLEND[1] * g)
+                # early season: ice time changed vs last season, shrunk while it rests on few games (handoff 507)
+                pv = (prev.get(pid) or {}) if pid else {}
+                if (1 <= len(gl) <= SEASON_TOI_CHG_GAMES and pv.get("toi") and (pv.get("gp") or 0) >= 10
+                        and not pv.get("season_label") and f.get("std_toi") is not None):
+                    toi_chg = SEASON_TOI_CHG_C * (f["std_toi"] - pv["toi"]) * len(gl) / (len(gl) + 3) \
+                        * (SEASON_TOI_CHG_K / (SEASON_TOI_CHG_K + len(gl))) ** 3
+                    shift += toi_chg
                 season = rest_share * max(fpg_t + shift, 0.0)
             season_pts = season / rest_share if rest_share > 0 else None
             if n.get("apply"):
@@ -2964,7 +2985,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     caps[0] = min(caps[0], OUT_TODAY_CAP)
                 week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                   "dates": wk_dates, "per_game": list(per_game), "before": list(per_game), "caps": caps,
-                                  "missed": missed, "after_trip": after_trip(venue.get(espn_team, {}), wk_dates)})
+                                  "missed": missed, "after_trip": after_trip(venue.get(espn_team, {}), wk_dates),
+                                  # a healthy regular: dressed his team's last game at regular minutes, no injury listing or
+                                  # Daily Faceoff news since (handoff 355)
+                                  "regular": not sat_last and not traded and not early and not p.get("injury") and not wk_why
+                                  and base_dress is not None
+                                  and gl[-1]["toi"] >= DEPTH_TOI["D" if p["pos"] == "D" else "F"]})
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
@@ -2972,6 +2998,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]
             why["season_fpg"] = round(fpg_s, 2)  # the Season rating's points a game, its own ridge (findings 320 (2))
+            if opp_last:
+                why["opp_last"] = opp_last  # this week's opponents' goals against last season (handoffs 504, 508)
+            if toi_chg is not None:
+                why["toi_chg"] = round(toi_chg, 3)  # the Season pull-back on an early ice-time change (handoff 507)
             if called_up:
                 why["called_up"] = True  # just called up, no NHL game yet: 0.25 a game (handoff 502)
             if filled and base_dress is not None:

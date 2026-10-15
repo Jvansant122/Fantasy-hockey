@@ -1946,6 +1946,7 @@ def test_week_news_lands_on_top_of_the_weekly_boosted_model(monkeypatch, tmp_pat
     monkeypatch.setattr(rating, "load_news", lambda: {})
     real = season_boost.load
     monkeypatch.setattr(rating.season_boost, "load", lambda n: {"features": [], "baseline": 0.5, "trees": []} if n == "week" else real(n))
+    monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", 0.0)  # news players don't get it; keep both runs alike (handoff 355)
 
     def run(z):
         monkeypatch.setattr(rating, "week_news_logit", lambda news, pid, last, sat, st, dates, *a: ([z] * len(dates), 0.0, False, ["day-to-day"] if z else []))
@@ -2307,3 +2308,73 @@ def test_early_opponents_who_leaked_goals_last_season_lift_the_week(monkeypatch,
     fake = FakeSession()
     table = rating.opp_last_ga(fake, 20252026)
     assert table and abs(sum(table.values())) < 0.5  # a fraction above or below the league, around 0
+
+
+def test_standings_readers_survive_null_fields():
+    """A null goalAgainst / gamesPlayed / wins in NHL standings leaves each standings reader empty instead of raising into
+    add_ratings, which would publish the site with no ratings (handoff 508)."""
+    class Resp:
+        def __init__(self, body):
+            self.body = body
+        def raise_for_status(self):
+            pass
+        def json(self):
+            return self.body
+
+    class NullStandings:
+        def get(self, url, **kw):
+            if url.endswith("standings-season"):
+                return Resp({"seasons": [{"id": 20252026, "standingsEnd": "2026-04-16"}]})
+            return Resp({"standings": [{"teamAbbrev": {"default": "TOR"}, "goalAgainst": None, "goalFor": None,
+                                        "gamesPlayed": None, "wins": None, "otLosses": None}]})
+    for reader in (rating.opp_last_ga, rating.prev_points_pct, rating.team_strength):
+        assert reader(NullStandings(), 20252026) == {}, reader.__name__
+
+
+def test_early_ice_time_change_is_pulled_back(monkeypatch, tmp_path):
+    """In a skater's first 10 games, the Season FP/G gives back part of a change in his ice time vs last season (handoff
+    507): the details carry the shift, and the Season rating moves the opposite way to the ice-time change."""
+    def rate(c):
+        monkeypatch.setattr(rating, "SEASON_TOI_CHG_C", c)
+        class LessIceLastSeason(FakeSession):  # last season's ice time 3 minutes under this season's
+            def get(self, url, params=None, **kw):
+                r = super().get(url, params, **kw)
+                exp = (params or {}).get("cayenneExp", "")
+                if "skater/" in url and "seasonId=20252026" in exp and "gameDate" not in exp:
+                    for row in r.payload["data"]:
+                        row["timeOnIcePerGame"] -= 180
+                return r
+        fake = LessIceLastSeason()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p for p in players}
+    c = rating.SEASON_TOI_CHG_C
+    off, on = rate(0.0), rate(c)
+    moved = [n for n, p in on.items() if p["cr_why"].get("toi_chg")]
+    assert moved
+    for n in moved:
+        tc = on[n]["cr_why"]["toi_chg"]
+        assert -0.5 < tc < 0 and 1 <= on[n]["cr_why"]["gp"] <= rating.SEASON_TOI_CHG_GAMES
+        assert (on[n]["cr_season"] - off[n]["cr_season"]) * tc >= 0, n
+
+
+def test_healthy_regulars_dress_a_little_more(monkeypatch, tmp_path):
+    """A skater with no injury listing who dressed his team's last game at regular minutes gets HEALTHY_REG_LOGIT on his
+    Week chances after the slack fit; a skater who sat the last game is untouched (handoff 355)."""
+    def rate(z):
+        monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", z)
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p for p in players}
+    z = rating.HEALTHY_REG_LOGIT
+    off, on = rate(0.0), rate(z)
+    assert on["Auston Matthews"]["cr_games"] >= off["Auston Matthews"]["cr_games"]
+    assert on["Auston Matthews"]["cr_dress"] > off["Auston Matthews"]["cr_dress"] or off["Auston Matthews"]["cr_dress"] >= 0.99
+    assert on["Charlie McAvoy"]["cr_games"] == off["Charlie McAvoy"]["cr_games"]
