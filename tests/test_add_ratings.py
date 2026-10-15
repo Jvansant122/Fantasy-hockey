@@ -593,6 +593,9 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
     # a full-game loss is cut deeper the more he let in, short of a bad start (findings 225)
     graded = [rating.last_start_shift({"ga": ga, "toi": 3600, "wins": 0, "losses": 1, "otl": 0})[0] for ga in (2, 3, 4)]
     assert graded[0] > graded[1] > graded[2] > bad[0]
+    # a 3-4 goal loss also lowers his game after next (handoff 625); 2 against doesn't
+    assert [rating.last_start_shift({"ga": ga, "toi": 3600, "wins": 0, "losses": 1, "otl": 0})[1] for ga in (2, 3, 4)] \
+        == [0.0, rating.LOSS_34_LOGIT_2, rating.LOSS_34_LOGIT_2]
     shutout = rating.last_start_shift({"ga": 0, "toi": 3600, "wins": 1, "losses": 0, "otl": 0})
     hurt = rating.last_start_shift({"ga": 1, "toi": 1500, "wins": 0, "losses": 0, "otl": 0})
     assert shutout[0] > win[0] and hurt[0] < bad[0]
@@ -1067,6 +1070,23 @@ def test_three_goalie_teams_cut_the_idle_goalie(monkeypatch):
         return out
     on, off = p(-1.0), p(0.0)
     assert on[2] < off[2] and on[3] < off[3] and on[1] > off[1]
+
+
+def test_three_goalie_teams_lift_the_no1_after_the_next_game(monkeypatch):
+    """Handoff 626: three goalies in the last 10 lift the no. 1 in every game after the next, not the next one."""
+    model = rating.Model()
+
+    def starts(lift):
+        monkeypatch.setattr(rating, "THREE_GOALIE_NO1_LOGIT", lift)
+        seq = [1, 1, 3, 1, 2, 1, 2, 1, 1, 1]
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        first = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        days = [(first + timedelta(days=2 * i)).isoformat() for i in range(3)]
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2, 3], {"TOR": hist}, {1: 50, 2: 20, 3: 12}, days, first, by_date=out)
+        return [out[1][d] for d in days]
+    on, off = starts(0.5), starts(0.0)
+    assert on[0] == pytest.approx(off[0]) and on[1] > off[1] and on[2] > off[2]
 
 
 def test_later_game_shifts_on_the_last_starter(monkeypatch):
@@ -1960,6 +1980,7 @@ def test_week_news_lands_on_top_of_the_weekly_boosted_model(monkeypatch, tmp_pat
     real = season_boost.load
     monkeypatch.setattr(rating.season_boost, "load", lambda n: {"features": [], "baseline": 0.5, "trees": []} if n == "week" else real(n))
     monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", 0.0)  # news players don't get it; keep both runs alike (handoff 355)
+    monkeypatch.setattr(rating, "DTD_NEXT_LOGIT", 0.0)  # the label below would add handoff 624's next-game cut
 
     def run(z):
         monkeypatch.setattr(rating, "week_news_logit", lambda news, pid, last, sat, st, dates, *a: ([z] * len(dates), 0.0, False, ["day-to-day"] if z else []))
@@ -2300,6 +2321,19 @@ def test_home_after_a_road_trip_and_long_absences_move_week_chances():
     assert regular["cr_dress_next"] < 0.9 and back["cr_dress_next"] > 0.3
     assert long_out["cr_dress_next"] == 0.3 and long_out["cr_games"] > 0.6
     assert regular["cr"] == round(2.0 * regular["cr_games"], 2)
+
+
+
+def test_missed_last_game_with_no_status_and_day_to_day_news_cut_the_week():
+    """Handoff 623: missed the last game, no scratch listing, status or news: -0.5 every game. Handoff 624: Daily Faceoff
+    day-to-day news: a further -0.4 on the next game only."""
+    def row(**kw):
+        return {"p": {"cr_fpg": 2.0, "cr_why": {}}, "pid": 1, "team": "TOR", "isD": False, "dates": ["2026-10-07", "2026-10-09"],
+                "per_game": [0.3, 0.3], "before": [0.3, 0.3], "caps": [1.0, 1.0], "missed": 1, "after_trip": [False, False], **kw}
+    base, gone, dtd = row(), row(no_status_out=True), row(dtd_next=True)
+    rating.week_slack([base, gone, dtd], {}, None)  # too few for the slack: only these shifts move them
+    assert gone["per_game"][0] == pytest.approx(gone["per_game"][1]) and gone["per_game"][0] < base["per_game"][0]
+    assert dtd["per_game"][0] < base["per_game"][0] and dtd["per_game"][1] == pytest.approx(base["per_game"][1])
 
 
 def test_early_opponents_who_leaked_goals_last_season_lift_the_week(monkeypatch, tmp_path):

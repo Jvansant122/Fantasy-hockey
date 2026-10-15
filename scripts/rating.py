@@ -159,6 +159,9 @@ LAST6_OTHER_LOGITS = {"110101": -0.6, "11101": -1.0, "00111": -1.2}
 # three goalies started the last 10: the next start goes to the recent ones more than the model sees; a cut to each of
 # the three whose latest start was 3+ team games ago (findings 247: 0.20 against 0.12 actual, Brier -1.8%, every season)
 THREE_GOALIE_IDLE_LOGIT = -1.0
+# the no. 1 on a team where 3+ goalies started the last 10, every game after the next (handoff 626): his week starts were
+# 1.315 against 1.454 actual on such teams, 2021-26
+THREE_GOALIE_NO1_LOGIT = 0.5
 # the rest of the week after those next-game rules: the last starter read high in two later games (findings 249, every
 # season): a strict rotation's third game (0.48 against 0.37 actual) and, when no rotation, pattern, last-6 or
 # three-goalie rule fires, the game after next (0.56 against 0.51)
@@ -198,6 +201,7 @@ def last_six_cut(seq):
 # already fits there (68% against 63%, and a larger one scores worse) (findings 213, handoff 105)
 EARLY_GAMES, B2B_NIGHT2_NO1_EARLY = 10, -1.0
 WIN_LOGIT, LOSS_LOGIT = 0.25, -0.2  # next-game start logit after any other win, or loss in regulation or OT (findings 133)
+LOSS_34_LOGIT_2 = -0.2  # ... and a 3-4 goal loss also lowers his game after next (handoff 625; bad starts keep theirs)
 LOSS_LOGITS = {3: -0.35, 4: -0.65}  # ... graded by goals against when the loss wasn't a bad start: 3 or 4 against cut deeper (findings 225)
 LOW_GA_WIN_LOGIT = 0.3  # ... plus this after a win allowing 0-1 goals (findings 163)
 # a starter who got no decision left early, nearly always hurt: next-game start 0.45 against 0.12 actual (findings 163),
@@ -327,7 +331,7 @@ def last_start_shift(g):
     if g.get("wins"):
         return (WIN_LOGIT + (LOW_GA_WIN_LOGIT if g["ga"] <= 1 else 0.0), 0.0)
     if g.get("losses") or g.get("otl"):
-        return (LOSS_LOGITS.get(g["ga"], LOSS_LOGIT), 0.0)
+        return (LOSS_LOGITS.get(g["ga"], LOSS_LOGIT), LOSS_34_LOGIT_2 if g["ga"] in (3, 4) else 0.0)
     # started, but another goalie got the decision
     return (NO_DECISION_LOGIT, NO_DECISION_LATER[0]) + (NO_DECISION_LATER[1],) * (NO_DECISION_GAMES - 2)
 
@@ -364,6 +368,12 @@ PP_SCRATCH_LOGIT, PP_SCRATCH_MIN, PP_SCRATCH_DAYS = -0.1, 0.5, 10
 # other depth skaters less (findings 335-336, handoff 360); measured on the current stack at -0.1 / +0.1 with the lifts
 # above, not the row's -0.15 / +0.15 (hunt13/toi_rank_post)
 DEPTH_RANK_LOGIT = {"lowest": -0.1, "other": 0.1}
+# missed his team's last game, not on its healthy-scratch list, no ESPN injury status, no Daily Faceoff injury or
+# roster-move item since that game (hunt14/week, findings 475, handoff 623): 0.10 predicted vs 0.06 dressed
+NO_STATUS_OUT_LOGIT = -0.5
+# a Daily Faceoff day-to-day item counts more against his team's next game: the news terms are flat over the week and
+# over-call game 1, 0.24 predicted vs 0.18 dressed (handoff 624)
+DTD_NEXT_LOGIT = -0.4
 # the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
 # model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
@@ -1740,11 +1750,14 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         # handoffs 355 and 356, not in the sums above
         reg = (HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0) \
             + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch")) \
-            + DEPTH_RANK_LOGIT.get(r.get("toi_rank"), 0.0)  # handoffs 358-360
+            + DEPTH_RANK_LOGIT.get(r.get("toi_rank"), 0.0) \
+            + NO_STATUS_OUT_LOGIT * bool(r.get("no_status_out"))  # handoffs 358-360, 623
+        # handoff 624: his team's next game only
+        regs = [reg + (DTD_NEXT_LOGIT if j == 0 and r.get("dtd_next") else 0.0) for j in range(len(r["per_game"]))]
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
-            if reg:
-                r["per_game"] = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + reg))), c) for q, c in zip(r["per_game"], r["caps"])]
+            if any(regs):
+                r["per_game"] = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), c) for q, z, c in zip(r["per_game"], regs, r["caps"])]
             if r["per_game"] != r.get("before", r["per_game"]):  # ... but keep the trip and absence shifts
                 p["cr_games"] = round(sum(r["per_game"]), 2)
                 p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
@@ -1752,8 +1765,8 @@ def week_slack(rows, boost_x, boost_week, missing=None):
                 p["cr_dress_next"] = round(r["per_game"][0], 2)
             continue
         slack = [(LINEUP_SPOTS[r["isD"]] - sums[(r["team"], r["isD"], d)]) / 3 for d in r["dates"]]
-        per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0) + reg))), c)
-                    for q, s, c in zip(r["per_game"], slack, r["caps"])]
+        per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0) + z))), c)
+                    for q, s, z, c in zip(r["per_game"], slack, regs, r["caps"])]
         games = sum(per_game)
         p["cr_why"]["week_slack"] = round(3 * slack[0], 1)
         p["cr_games"] = round(games, 2)
@@ -2295,6 +2308,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     + NO1_AFTER_BACKUP_WIN * bool(backup and 2 <= len(seq) - backup[-1] <= 3 and start_wins[backup[-1]])
             if ahead == 0 and gid in idle3:
                 z += THREE_GOALIE_IDLE_LOGIT
+            # three or more goalies started the last 10: the no. 1 gets more of the games after the next (handoff 626; the
+            # next game is the idle cut's)
+            if ahead >= 1 and gid == no1 and len(set(seq[-10:])) >= 3:
+                z += THREE_GOALIE_NO1_LOGIT
             if seq and gid == seq[-1] and (rotating and ahead == 2 or plain and ahead == 1):
                 z += ROTATION_THIRD_LOGIT if rotating else PLAIN_SECOND_LOGIT
             if gid in relieved:
@@ -3128,7 +3145,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   and base_dress is not None
                                   and gl[-1]["toi"] >= DEPTH_TOI["D" if p["pos"] == "D" else "F"],
                                   "fought": fought, "st_role": st_role, "pp_scratch": pp_scratch,
-                                  "toi_rank": toi_rank})
+                                  "toi_rank": toi_rank,
+                                  # missed the last game with no listing, status or news (623); DFO day-to-day news (624)
+                                  "no_status_out": sat_last and not p.get("injury") and not scratch and not (any(wk_news) or wk_down),
+                                  "dtd_next": "day-to-day" in wk_why})
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
