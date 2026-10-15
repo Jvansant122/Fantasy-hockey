@@ -1186,6 +1186,10 @@ Regulars due back. The Week chance to play now also counts last season's regular
 
 Left a game hurt. The early ice-time adjustment from section 160 read a game a player left hurt as lost ice time. That lifted Jake Sanderson's Season rating by about 40% after one short game. Those games are now skipped, and any ice-time change counts at most 5 minutes. The details also never show a 100% chance to play; the most shown is 99%.
 
+## 163. Depth players who fought
+
+A depth skater who dropped the gloves in his last game without being cut short now gets a slightly higher chance to play each game this week. The details name the reason. In replays of the last two seasons, these players dressed about 7 to 9 points more often than the site gave them, on roughly 410 such games a season. Plus-minus, minor penalties and ice time showed nothing similar. The gap comes mainly from the last game itself: coaches tend to keep a player in after a fight. Games where the fight cut his minutes short are left out, since those players already sit more.
+
 ## What the independent review changed
 
 | Review point | Outcome |

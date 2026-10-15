@@ -2425,3 +2425,33 @@ def test_ice_time_change_skips_a_game_he_left_hurt(monkeypatch, tmp_path):
     players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     assert "toi_chg" not in players[0]["cr_why"]
+
+
+def test_depth_skaters_who_fought_keep_their_spot(monkeypatch, tmp_path):
+    """A healthy depth skater with a fighting major (5+ PIM) in his last game gets FIGHT_LOGIT on his Week chances; a
+    regular-minutes skater with the same penalty doesn't (handoff 356)."""
+    class Fight(FakeSession):  # Bolduc on depth minutes, a fight in the last game; Pastrnak too, on his usual minutes
+        def get(self, url, params=None, **kw):
+            r = super().get(url, params, **kw)
+            exp = (params or {}).get("cayenneExp", "")
+            if "skater/summary" in url and "gameDate" in exp:
+                for row in r.payload["data"]:
+                    if row["playerId"] == 7:
+                        row["timeOnIcePerGame"] = 600
+                    if row["playerId"] in (3, 7) and row["gameDate"] == PAST[-1]:
+                        row["penaltyMinutes"] = 5
+            return r
+
+    def rate(z):
+        monkeypatch.setattr(rating, "FIGHT_LOGIT", z)
+        fake = Fight()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p for p in players}
+    z = rating.FIGHT_LOGIT
+    off, on = rate(0.0), rate(z)
+    assert on["Zack Bolduc"]["cr_why"].get("fought") and on["Zack Bolduc"]["cr_games"] > off["Zack Bolduc"]["cr_games"]
+    assert "fought" not in on["David Pastrnak"]["cr_why"] and on["David Pastrnak"]["cr_games"] == off["David Pastrnak"]["cr_games"]
