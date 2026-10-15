@@ -260,6 +260,10 @@ LINEUP_SLACK = (1.34, 2.84)
 # games), W = their last-season TOI/G / 15 min (F) or 20 min (D), summed per current team; team MISSING_REG_MIN_TG+ games
 # (handoff 509, findings 402: Season Spearman +0.0003 all / +0.0007 free agents, every test season)
 MISSING_REG_C, MISSING_REG_K, MISSING_REG_GP, MISSING_REG_MIN_TG = -0.08, 20, 40, 3
+# Week: those regulars with a Daily Faceoff injury or roster-move item in the last WEEK_MISSING_NEWS_DAYS count in the Week
+# slack sums as WEEK_MISSING_A x K/(K + team games) x last-season TOI/G / (15 F, 20 D) players on every date, from the team's
+# 3rd game (handoff 510, findings 402: Brier -0.023/-0.036 points, both held-out seasons)
+WEEK_MISSING_A, WEEK_MISSING_K, WEEK_MISSING_GP, WEEK_MISSING_NEWS_DAYS, WEEK_MISSING_MIN_TG = 0.5, 20, 40, 30, 3
 # Week: per team game, the same open spots from the per-game Week chances themselves; logit += over x min(s, 0) + room x
 # max(s, 0), s = open spots / 3 (handoff 489, findings 402: Brier -0.50 / -0.57 points, fits 2.23/1.14 and 1.98/0.96)
 WEEK_SLACK = (2.0, 1.0)
@@ -278,6 +282,7 @@ ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
 # Season FP/G over-reacts to a change in ice time vs last season seen in a few games: pull it back, gone after 10 games
 # (handoff 507, findings 402: Season Spearman +0.0002 all / +0.0004 free agents, every test season)
 SEASON_TOI_CHG_C, SEASON_TOI_CHG_K, SEASON_TOI_CHG_GAMES = -0.28, 3, 10
+SEASON_TOI_CHG_CAP = 5.0  # minutes (handoff 512)
 # boosted models trained on 16 seasons (model/train_boost.py, scripts/season_boost.py; findings 360 (3)-(4), handoff 332):
 # the Season dress logit moves BOOST_DRESS_W of the way to the boosted one, and the Season FP/G gains
 # (boosted - FP/G) x (a + b g). The ESPN weights above were refitted jointly with these, leaving one season out over 2021-26
@@ -1616,7 +1621,27 @@ def after_trip(venue, dates):
     return out
 
 
-def week_slack(rows, boost_x, boost_week):
+def week_missing_regulars(prev, by_player, team_games, dfo_news, now_utc, now_team):
+    """{(team, isD): expected players} for week_slack: last season's regulars with no game yet this season, on his current
+    team (now_team), who are in recent Daily Faceoff news (handoff 510)."""
+    floor = (now_utc - timedelta(days=WEEK_MISSING_NEWS_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    inj, mv = (dfo_news or {}).get("injuries") or {}, (dfo_news or {}).get("roster-moves") or {}
+    out = {}
+    for pid, pv in prev.items():
+        team = now_team.get(pid)
+        if not team or pv.get("season_label") or (pv.get("gp") or 0) < WEEK_MISSING_GP or by_player.get(pid) or pv.get("pos") == "G":
+            continue
+        ts = max((inj.get(str(pid)) or {}).get("ts", ""), (mv.get(str(pid)) or {}).get("ts", ""))
+        tg = len(team_games.get(team, []))
+        if ts < floor or tg < WEEK_MISSING_MIN_TG:
+            continue
+        isD = pv.get("pos") == "D"
+        w = (pv.get("toi") or 0) / (20 if isD else 15) * WEEK_MISSING_A * WEEK_MISSING_K / (WEEK_MISSING_K + tg)
+        out[(team, isD)] = out.get((team, isD), 0.0) + w
+    return out
+
+
+def week_slack(rows, boost_x, boost_week, missing=None):
     """Open lineup spots per team game in the Week (handoff 489, findings 402): per NHL team, position group and remaining
     game date, LINEUP_SPOTS minus the summed per-game Week chances of its skaters with games this season (team = his
     latest). Skaters not on the site count with the boosted next-week share on each of those dates. Each listed skater's
@@ -1654,6 +1679,8 @@ def week_slack(rows, boost_x, boost_week):
             counts[key] = counts.get(key, 0) + 1
             for d in dates[key]:
                 sums[key + (d,)] += b
+    for key in list(sums):  # regulars due back soon (handoff 510): in the sums, not the counts
+        sums[key] += (missing or {}).get(key[:2], 0.0)
     for r in rows:
         p = r["p"]
         reg = HEALTHY_REG_LOGIT if r.get("regular") else 0.0  # handoff 355, not in the sums above
@@ -2886,9 +2913,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     shift += (boost_f - fpg_t) * (BOOST_FPG_BLEND[0] + BOOST_FPG_BLEND[1] * g)
                 # early season: ice time changed vs last season, shrunk while it rests on few games (handoff 507)
                 pv = (prev.get(pid) or {}) if pid else {}
-                if (1 <= len(gl) <= SEASON_TOI_CHG_GAMES and pv.get("toi") and (pv.get("gp") or 0) >= 10
-                        and not pv.get("season_label") and f.get("std_toi") is not None):
-                    toi_chg = SEASON_TOI_CHG_C * (f["std_toi"] - pv["toi"]) * len(gl) / (len(gl) + 3) \
+                # not after a game he left hurt, which isn't lost ice time (handoff 512); the change capped at 5 minutes
+                if (1 <= len(gl) <= SEASON_TOI_CHG_GAMES and pv.get("toi") and (pv.get("gp") or 0) >= 10 and kept is None
+                        and not early and not pv.get("season_label") and f.get("std_toi") is not None):
+                    d_toi = min(max(f["std_toi"] - pv["toi"], -SEASON_TOI_CHG_CAP), SEASON_TOI_CHG_CAP)
+                    toi_chg = SEASON_TOI_CHG_C * d_toi * len(gl) / (len(gl) + 3) \
                         * (SEASON_TOI_CHG_K / (SEASON_TOI_CHG_K + len(gl))) ** 3
                     shift += toi_chg
                 season = rest_share * max(fpg_t + shift, 0.0)
@@ -3094,7 +3123,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     missing = {tm: MISSING_REG_C * w * MISSING_REG_K / (MISSING_REG_K + len(team_games.get(tm, [])))
                for tm, w in missing_w.items() if len(team_games.get(tm, [])) >= MISSING_REG_MIN_TG}
     lineup_slack(lineup, boost_x, boost_dress, model, missing)
-    week_slack(week_rows, boost_x, boost_week)
+    week_slack(week_rows, boost_x, boost_week, week_missing_regulars(prev, by_player, team_games, dfo_news, now_utc, now_team))
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)
     by_nhl = {p["nhl_id"]: p for p in players if p.get("nhl_id") and p["pos"] != "G"}

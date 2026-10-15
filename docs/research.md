@@ -1180,6 +1180,12 @@ Safer standings read. If NHL standings ever come back with a blank goals or game
 
 When a team's regulars from last season haven't played a game yet this season, usually because they are hurt, they will take games back from the players filling in when they return. The Season rating's lineup check only counted players with games this season, so it couldn't see them. Each team's Season chance to play now dips a little for its skaters by the size of that group, weighted by last season's ice time, and the dip fades as the season goes on. It starts once the team has played 3 games. A returning regular counts for his current team, and only while he is on an NHL roster, so summer trades and players who left for Europe don't count. It improved the Season rating's ranking in every test season, most for free agents in October and November.
 
+## 162. Regulars due back this week, and a fix for players who left a game hurt
+
+Regulars due back. The Week chance to play now also counts last season's regulars who haven't played yet but have been in Daily Faceoff's injury or roster news in the last 30 days, since most of them return that season. They take up part of a lineup spot in their current team's weekly count, which lowers the chances of the players filling in. It is a small gain, mostly from October to December, in both held-out seasons.
+
+Left a game hurt. The early ice-time adjustment from section 160 read a game a player left hurt as lost ice time. That lifted Jake Sanderson's Season rating by about 40% after one short game. Those games are now skipped, and any ice-time change counts at most 5 minutes. The details also never show a 100% chance to play; the most shown is 99%.
+
 ## What the independent review changed
 
 | Review point | Outcome |
