@@ -58,6 +58,20 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
+# ESPN-listed with an illness note at most 3 days old: OUT dressed 0.77 / 0.74 vs the 0.35 cap (hunt14/phrases, findings 502)
+ILLNESS_WORDS = re.compile(r"illness|\bill\b|\bsick|\bflu\b|virus", re.I)
+ILLNESS_CAP, ILLNESS_DAYS = 0.75, 3
+# ESPN return words about him ("will play", "expected to return", "was activated", "practiced"), no illness word: the cap
+# lifts to 0.5 and each game gains 0.5 logit (handoff 677, findings 502 (3))
+RETURN_WORDS = re.compile(
+    r"expected to (?:return|play|suit up|dress|be (?:in the lineup|available|good to go|ready to go))"
+    r"|will (?:play|suit up|dress|draw (?:back )?into|be in the lineup|be available|return to (?:the lineup|action|game action|play))"
+    r"|(?:set|slated|poised|on track|cleared|in line) to (?:return|play|suit up|dress|make his return)|back in the lineup|good to go"
+    r"|(?:participated|took part) in [\w' -]{0,25}(?:practice|skate|session)|\bpracticed\b|full[- ]contact|full practice|returned to practice"
+    r"|(?:was|been|has been|got) (?:activated|reinstated|removed from injured reserve)", re.I)
+RETURN_NEG = re.compile(r"(?:\bnot|n't|unclear|uncertain|whether|\bif|before|until|once|unless|when|whenever|need to|can be|eligible to"
+                        r"|no longer|hop(?:e|es|ing)|think|doubt)\W+(?:\w+\W+){0,4}$", re.I)
+RETURN_CAP, RETURN_LOGIT = 0.5, 0.5
 # a suspension counts only for its length (handoff 631, findings 476 (3)): N from ESPN's note, the team's games since the
 # listing served; no stated length: game j since the listing capped at 0.85 x the share of 25 spells (2021-26) shorter than j
 SUSP_LEN = re.compile(r"\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)[- ]game suspension|suspended (?:for )?"
@@ -1596,6 +1610,32 @@ def injury_note(note, today):
     return {"long": long_abs, "season": season, "days_left": left, "long_why": why}
 
 
+def note_words(note):
+    """Illness and return words in ESPN's note (handoffs 676-677, hunt14/phrases/p10b_subject.py): (illness, return), each
+    from the headline or his own sentences of the longer comment (naming him, no other "Name (injury)"). A match preceded by
+    a negation or hedge ("not", "unclear", "hopes", "before", ...) doesn't count; a return match also needs his last name or
+    "he" in the 70 characters before it, with no clause break."""
+    short, long_ = note.get("short") or "", note.get("long") or ""
+    last = (note.get("name") or "").split()[-1:]
+    ln = last[0] if last else None
+    long_ = long_.replace(short, "", 1).strip() if short else long_
+    own = " ".join(x for x in re.split(r"(?<=[.!?])\s+", long_)
+                   if ln and re.search(r"\b" + re.escape(ln) + r"\b", x) and not re.search(r"[A-Z][\w'.-]+ \([a-z -]+\)", x.replace(ln, "")))
+
+    def hit(text, words, name=None):
+        for m in words.finditer(text):
+            pre = text[max(0, m.start() - 70):m.start()]
+            if RETURN_NEG.search(pre[-50:]):
+                continue
+            if name and not re.search(r"(?:\b" + re.escape(name) + r"\b|\b[Hh]e\b)(?:'s)?(?: \([^)]*\))?[^.;,]{0,55}$", pre):
+                continue
+            return True
+        return False
+    ill = hit(short, ILLNESS_WORDS) or hit(own, ILLNESS_WORDS)
+    ret = bool(ln) and not ill and (hit(short, RETURN_WORDS, ln) or hit(own, RETURN_WORDS, ln))
+    return ill, ret
+
+
 def note_date(text):
     """The ET calendar date of an ESPN note's timestamp (a note posted after 8 PM ET carries the next UTC date), a plain
     date as written, or None."""
@@ -1853,6 +1893,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         # handoff 624: his team's next game only
         regs = [reg + (DTD_NEXT_LOGIT if j == 0 and r.get("dtd_next") else 0.0)
                 + (BEFORE_RETURN_LOGIT if j < len(r.get("before_return") or ()) and r["before_return"][j] else 0.0)  # handoff 670
+                + RETURN_LOGIT * bool(r.get("return_words"))  # handoff 677
                 for j in range(len(r["per_game"]))]
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
@@ -3199,6 +3240,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     inj = next(c for top, c in DTD_PLAYED_CAPS if share < top)
                 elif share < DTD_PLAYED_CAPS[0][0]:
                     inj = min(inj, OUT_LEFT_EARLY_CAP)
+            # a fresh illness note (handoff 676) or return words (677) lift the cap; IR's game today keeps its cap
+            word_floor, return_words = None, False
+            if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and p["id"] in notes and not (note and note["long"]):
+                ill, return_words = note_words(notes[p["id"]])
+                nd = note_date(notes[p["id"]].get("date"))
+                word_floor = ILLNESS_CAP if ill and nd and (today - nd).days <= ILLNESS_DAYS else RETURN_CAP if return_words else None
+                if word_floor is not None:
+                    inj = max(inj, word_floor)
             if p.get("injury") in SKATER_INJURY_CAP:
                 injury_log.append({"date": today.isoformat(), "espn_id": p["id"], "nhl_id": pid, "name": p["name"],
                                    "status": p["injury"], "long_note": bool(note and note["long"]),
@@ -3295,7 +3344,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 per_game[0] = min(per_game[0], OUT_TODAY_CAP)
                 dress_next = per_game[0]
             if game_caps == "ir":
-                game_caps = None if practising else [IR_DAY_CAPS[min((date.fromisoformat(d) - today).days, 2)] for d in wk_dates]
+                game_caps = None if practising else [
+                    (lambda k: max(IR_DAY_CAPS[k], word_floor) if k and word_floor is not None else IR_DAY_CAPS[k])(
+                        min((date.fromisoformat(d) - today).days, 2)) for d in wk_dates]
             elif game_caps == "long":
                 game_caps = [long_caps[0] if (date.fromisoformat(d) - today).days <= 1 else long_caps[1] for d in wk_dates]
             if game_caps and per_game:
@@ -3330,6 +3381,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   "before_return": [(date.fromisoformat(d) - today).days < note["days_left"] for d in wk_dates]
                                   if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and note and not note["long"]
                                   and note["days_left"] is not None and 0 <= note["days_left"] <= 7 else None,
+                                  "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
                                   "low_scorer": toi_rank == "lowest" and scored})  # handoff 362
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),

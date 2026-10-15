@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 198). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 199). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1329,6 +1329,10 @@ When ESPN's note puts a player's return within the week, he was given too much o
 ## 198. Better ice-time forecasts
 
 Knowing next week's minutes exactly would lift the weekly ranking a lot, so ice time is now forecast better. The Season rating's forecast of each skater's ice time and power-play time uses boosted trees, which cut the forecast error about 1.3% in every season and nudge the Season rating's ranking up (most for free agents). The Week rating's own forecast reads a few more inputs. Separately, an ESPN note whose only long word is "unclear when he'll return" no longer zeroes a player's week (such players dressed 25-30% of games), and a long-term IR note keeps its small chance even when it names another long word.
+
+## 199. Sick players and "will play" notes
+
+ESPN lists a player who's sick the same way it lists one who's hurt, so the Week rating used to cap him at the injured player's chance (35% a game for OUT). Sick players come back fast: in 2024-26, skaters listed with an illness note at most three days old dressed 74-77% of their next games. The Week rating now caps them at 75% instead. Likewise, when ESPN's note says he "will play", is "expected to return", "practiced" or "was activated" (about him, not hedged with "hopes" or "unclear"), the cap rises to 50% and each game gets a small lift. Together they cut the chance-to-play error for listed players by about 0.2-0.4 points of relative Brier score in both seasons tested, every half-season, with the sizes kept below what the held-out fits chose. A game today for a player on IR still counts at most 5%.
 
 ## What the independent review changed
 
