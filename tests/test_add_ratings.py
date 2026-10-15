@@ -700,7 +700,8 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
         rating.add_ratings(players, 2027, TODAY, MONDAY)
         return players[0]
     listed, unlisted, no_list = mcavoy(), mcavoy(scratched=()), mcavoy(rail_ok=False)
-    assert listed["sat_last"] and listed["cr_dress_next"] > unlisted["cr_dress_next"] + 0.03
+    # half the old logit since it moved after the boosted Week model (handoff 516)
+    assert listed["sat_last"] and listed["cr_dress_next"] > unlisted["cr_dress_next"] + 0.02
     assert no_list["cr_dress_next"] == listed["cr_dress_next"]
     assert listed["cr_games"] > unlisted["cr_games"]
     base = rating.dress_by_game(0.25, 3, True, 1.0)
@@ -2455,3 +2456,21 @@ def test_depth_skaters_who_fought_keep_their_spot(monkeypatch, tmp_path):
     off, on = rate(0.0), rate(z)
     assert on["Zack Bolduc"]["cr_why"].get("fought") and on["Zack Bolduc"]["cr_games"] > off["Zack Bolduc"]["cr_games"]
     assert "fought" not in on["David Pastrnak"]["cr_why"] and on["David Pastrnak"]["cr_games"] == off["David Pastrnak"]["cr_games"]
+
+
+def test_scratch_lifts_keep_their_size_after_the_weekly_model(monkeypatch, tmp_path):
+    """A healthy scratch whose same-position teammate left the last game under 40% of his minutes gets that lift after the
+    boosted Week model, so it keeps its size instead of the ~10% left when the boost was measured after it (handoff 515)."""
+    def rate(left):
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        monkeypatch.setattr(rating, "left_early_teammates", lambda *a: {("BOS", True): {999: 0}} if left else {})
+        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return players[0]
+    off, on = rate(False), rate(True)
+    assert on["cr_why"].get("fills_in")
+    lift = rating.logit(on["cr_dress_next"]) - rating.logit(off["cr_dress_next"])
+    assert lift > 0.5 * rating.TEAMMATE_LEFT_BANDS[0][1]["D"], lift

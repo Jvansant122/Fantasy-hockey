@@ -1190,6 +1190,10 @@ Left a game hurt. The early ice-time adjustment from section 160 read a game a p
 
 A depth skater who dropped the gloves in his last game without being cut short now gets a slightly higher chance to play each game this week. The details name the reason. In replays of the last two seasons, these players dressed about 7 to 9 points more often than the site gave them, on roughly 410 such games a season. Plus-minus, minor penalties and ice time showed nothing similar. The gap comes mainly from the last game itself: coaches tend to keep a player in after a fight. Games where the fight cut his minutes short are left out, since those players already sit more.
 
+## 164. Scratch adjustments that keep their full size
+
+Several adjustments to a healthy scratch's chance to play this week were applied before the 16-season weekly lineup model, which then undid about 90% of each. They cover a teammate at his position leaving the last game early, his team's last result, and the basic "scratches come back" lift. Those now apply after that model, alongside the Daily Faceoff news. The basic scratch lift applies at half its old size, the size that tested best in that position. Together they improved the Week chance to play in both test seasons, most for players who are out now. Other adjustments, such as the depth-scorer lift and the team-form shifts, tested better where they were and stay put.
+
 ## What the independent review changed
 
 | Review point | Outcome |
