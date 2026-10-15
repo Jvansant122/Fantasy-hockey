@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 154). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 155). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1121,6 +1121,20 @@ Two lineup shifts for healthy scratches. When a teammate at the same position le
 Feeds. When the NHL's betting-odds feed times out, ESPN's lines now stand in, so tonight's goalies are still priced with lines (one run on Oct 12 had none). The run log now records the lines the rating actually used. Retired and minor-league names that ESPN still lists with an NHL team (Josh Gorges, Ryan Suter, Marc-Andre Fleury) no longer get a small rating from that team's games: a player with no NHL match, no ESPN games this season or last and no ESPN projection is rated 0. A goalie traded or claimed before his first game for his new team now keeps a confirmed Daily Faceoff start, which used to match nobody and set every goalie on that team to 0 for the game. The free-agent list also takes in the 200 free agents with the most fantasy points this season, so a 0%-owned player dressing on a top power play is no longer cut off by the 400-by-ownership limit.
 
 Trade check. It no longer moves a player to IR and then names the same player as the drop. A forced drop never leaves you fewer than two healthy goalies. A goalie shortfall you already have is no longer charged to the trade. A player you get and park on IR now counts the roster spot he needs once he's back, valued at the best free agent at his position for the games he'd play, instead of a free agent filling his spot all season. The note about the other team having to drop a player now counts their open IR slots and players who qualify for IR. The drop note shows keep value next to "your lowest keep value", and Trade ideas that offer the same player say only one can happen.
+
+## 155. Move advice re-tuned, tests for whole kinds of bug, and a clearer page
+
+Move advice. Best moves now offers every skater worth at least 3.5 keep points over your weakest at his position, up to 4 a day, and holds one move for each night still to come up to 3 (6 in a two-week round) instead of 5. On the move simulator with today's ratings (552 paired runs) that gained about 0.9 points a week, and it was better in every season tested.
+
+Card fixes. The Goalies cards never suggest dropping or replacing tonight's starting goalie before his game. Mid-week swaps only names a sub who scores more this week and keeps as much value as the player who sat. The Stream card's move now comes out of Best moves' budget. On the matchup's last call, the last move goes to whichever gains more. When the roster is full, the Stream card names the drop, and after the first puck it's titled "Stream a goalie from tomorrow".
+
+Scoring. ESPN scores relief appearances 0 in this league, so last season's goalie points per start now count started games only. The "pts/game this season" in the details uses the NHL's points, since MoneyPuck's power-play split misses some power-play and short-handed points.
+
+Updates. Backup runs stand down once the latest scheduled slot has published, using Eastern time and current main, so the clock change can't make one run before a slot. Branch test runs no longer cancel waiting main runs. The page says when a scheduled update is overdue, names a slot as due until its numbers land, and reloads a tab left open across a slot or midnight.
+
+Tests. New tests check rules across every team and clock, so they catch whole kinds of bug rather than one case. Cards never offer more adds than moves left and never drop tonight's starting goalie. Swap subs beat the player they replace, and the page's numbers keep the publish rules after the first puck. New publish checks catch an unmatched name with no record that still gets a rating, a healthy goalie expected to start with a Season of 0, and a team night whose goalie start chances don't add up.
+
+Readability. Column headers now carry units and hover explanations, ESPN's columns are labelled as ESPN's, and a one-line key explains Week, Season and the badge. The nights strip says what the big number is and greys out nights that are over. Played games show as hollow dots. Card lines use one format with units, the Drop list names each replacement once, and the details panel is broken into labelled lines. The footer leads with a short key and folds the formulas. Predicted winners shows games still to play first and folds finished days, and matchup cards label their numbers.
 
 ## What the independent review changed
 

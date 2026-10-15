@@ -141,7 +141,7 @@ def test_page_works_without_ratings(browser, server, data):
             del p[k]
     ctx, page, errors = open_page(browser, server, data=unrated)
     assert rows(page) > 0
-    assert "Week" not in [t.strip() for t in page.locator("#head th").all_inner_texts()]
+    assert "Week pts" not in [t.strip() for t in page.locator("#head th").all_inner_texts()]
     page.select_option("#team", str(data["teams"][0]["id"]))
     page.locator("#rows tr[data-id]").first.click()
     assert errors == [], errors
@@ -464,7 +464,7 @@ def test_phone_table_fits_and_cards_fold(browser, server, data):
         assert page.evaluate("""[...document.querySelectorAll('#upgrades .upg')].every(c => {
           const t = c.querySelector(':scope > b, :scope > details > summary > b')?.textContent || '';
           return !!c.querySelector(':scope > .drop') !== /^(Mid-week swaps|Best|Drop list|Activate from IR|Two-week)/.test(t)
-            || c.classList.contains('fold') || !c.querySelector('.drop'); })""")
+            || c.classList.contains('fold') || c.classList.contains('nofold') || !c.querySelector('.drop'); })""")
         # tags wrap below the name instead of being cut off (findings 232)
         cut = page.evaluate("""[...document.querySelectorAll('#rows td:first-child .tags')].filter(t => {
           const td = t.closest('td').getBoundingClientRect(); return [...t.children].some(c => c.getBoundingClientRect().right > td.right + 1); }).length""")
@@ -560,7 +560,7 @@ def test_last_night_before_first_puck_uses_every_move(browser, server, data):
             most = max(most, card.locator(":scope > div:not(.sub)").count())
         assert seen
         if used == 1 and not phone:
-            assert (most > 2) == want_note, most
+            assert most > 2 if want_note else most <= 4, most  # mid-week: up to 4 adds a day (handoff 488)
         if used == 6:
             assert most <= 1
         assert errors == []
@@ -758,7 +758,7 @@ def test_playoff_round_and_final_wording(browser, server, data):
             p["cr_why"]["p_today"] = p["cr_why"]["p_today_pre"] = 0  # pre: a game already started on the real clock
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(d["teams"][0]["id"]))
-    assert "nothing added now counts" in _card(page, "Stream a goalie tonight")
+    assert "nothing added now counts" in _card(page, "Stream a goalie from tomorrow")
     assert errors == []
     ctx.close()
 
@@ -793,6 +793,13 @@ def test_open_tab_reloads(browser, server, data):
     with page.expect_navigation():
         page.evaluate("loadedAt -= 11 * 60e3; document.dispatchEvent(new Event('visibilitychange'))")
     page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
+    # a tab open across a scheduled run (15 minutes after it) or across midnight ET reloads too (handoff 469)
+    assert page.evaluate("""(() => {
+      const at = new Date('2026-10-15T13:00:00Z').getTime();  // 9 AM ET, before the 9:10 run
+      const was = loadedAt; loadedAt = at;
+      const out = [reloadDue(at + 20 * 60e3), reloadDue(at + 26 * 60e3), reloadDue(new Date('2026-10-16T04:30:00Z').getTime())];
+      loadedAt = was; return out;
+    })()""") == [False, True, True]
     assert errors == []
     ctx.close()
 
@@ -819,7 +826,7 @@ def test_table_fixes(browser, server, data):
     page.select_option("#team", str(team["id"]))
     shown = set(page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].map(r => +r.dataset.id)"))
     assert {p["id"] for p in mine} <= shown
-    assert "more from the roster" in page.locator("#count").inner_text()
+    assert "of yours" in page.locator("#count").inner_text()
     # details
     page.select_option("#who", "fa")
     page.fill("#q", waiver["name"])
@@ -878,9 +885,27 @@ def test_stale_note_and_monday_rollover(browser, server, data):
     assert "last matchup's numbers" in page.locator("#stale").inner_text()
     assert errors == []
     ctx.close()
-    # the next numbers after 1 PM ET come about 5:10 PM
+    # 1 PM ET with no 12:40 numbers yet: that run is due now (handoff 469); by 1:30 PM the next is about 5:10 PM
     ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 12, 17, 0, tzinfo=timezone.utc))
+    assert page.evaluate("nextRun()") == "12:40 PM"
+    ctx.close()
+    ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 12, 17, 30, tzinfo=timezone.utc))
     assert page.evaluate("nextRun()") == "5:10 PM"
+    ctx.close()
+
+
+def test_missed_update_today_says_so(browser, server, data):
+    """Data from 9:12 AM ET with the 12:40 run 45+ minutes overdue: a soft note names the missing update (handoff 465)."""
+    from datetime import datetime, timezone
+    d = json.loads(json.dumps(data))
+    d.update(updated_date="2026-10-15", updated="Thu Oct 15, 9:12 AM ET", updated_utc="2026-10-15T13:12:00Z")
+    ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 15, 18, 0, tzinfo=timezone.utc))  # 2 PM ET
+    note = page.locator("#stale")
+    assert note.is_visible() and "Today's 12:40 PM update hasn't landed yet" in note.inner_text() and "9:12 AM" in note.inner_text()
+    ctx.close()
+    ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 15, 15, 0, tzinfo=timezone.utc))  # 11 AM: fine
+    assert not page.locator("#stale").is_visible()
+    assert errors == []
     ctx.close()
 
 
@@ -916,8 +941,8 @@ def test_drop_list_and_goalie_cards(browser, server, data):
     page.select_option("#team", str(team["id"]))
     card = _card(page, "Goalies · your third")
     assert card and gs[0]["name"] not in card.split("drop ", 1)[1].split(" for ")[0]
-    stream = bool(_card(page, "Stream a goalie tonight"))
-    assert ("see Stream a goalie tonight" in card) == stream
+    stream = bool(_card(page, "Stream a goalie"))
+    assert ("see Stream a goalie" in card) == stream
     gcard = _card(page, "Goalies · your weakest")
     if gcard:
         assert "keep" in gcard.split("\n")[0]
@@ -1227,7 +1252,7 @@ def test_column_order(browser, server):
     """Proj/G, This yr/G and Proj GP follow Games, Last yr GP sits before Last yr/G; phones still show Player, Week, Season, Nights, Open (findings 300)."""
     ctx, page, errors = open_page(browser, server)
     heads = page.locator("#head th").all_inner_texts()
-    assert [h.rstrip(" ▾▴") for h in heads] == ["Player", "Team", "Pos", "Week", "Season", "Nights", "Games", "Proj/G", "This yr/G",
+    assert [h.rstrip(" ▾▴") for h in heads] == ["Player", "Team", "Pos", "Week pts", "Season /gm", "Nights", "Games", "ESPN/G", "Actual/G",
                                                 "Proj GP", "Open", "Light", "ESPN week", "Last yr GP", "Last yr/G", "% Own"]
     ctx.close()
     ctx, page, errors2 = open_page(browser, server, phone=True)
@@ -1526,14 +1551,15 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
-    for used, shown in ((0, True), (4, False)):  # 7 left: room for it; 3 left, one held for Sunday: Best moves takes the other 2
+    for used in (0, 4):  # 7 left: room for it; 3 left, one held for Sunday: Best moves takes up to the other 2
         team["moves_used"] = team["moves_used_next"] = used  # after Sunday's first puck adds use next week's moves (handoff 263)
         d["move_limit_next"] = 7
         ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
         page.select_option("#team", str(team["id"]))
         best = [l for l in _card(page, "Best").split("\n")[1:] if l.strip()]
-        assert len(best) == 2, best
-        assert bool(_card(page, "IR stash")) == shown, (used, _card(page, "IR stash"))
+        assert best and len(best) <= (4 if used == 0 else 2), best  # up to 4 adds a day (handoff 488)
+        shown = used == 0 or len(best) < 2
+        assert bool(_card(page, "IR stash")) == shown, (used, best, _card(page, "IR stash"))
         assert errors == []
         ctx.close()
 
@@ -1602,10 +1628,11 @@ def _weekday(data, day, puck_hour=19):
 
 
 def test_best_moves_hold_moves_for_the_week(browser, server, data):
-    """Best moves offers 2 on Monday, then holds a move for each night still to come instead of 2 more every update (handoff 207)."""
+    """Best moves holds a move for each night still to come, up to 3 of 7, and offers up to 4 adds a day (handoffs 207, 488)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    for day, used, most in ((0, 0, 2), (0, 2, 0), (2, 2, 1), (4, 2, 2)):  # Mon: 2 then hold 5; Wed: 5 left, 4 held; Fri: 2 held
+    # Mon: 7 left, 3 held, 4 a day at most; then 3 left, all held; Wed: 5 left, 3 held; Fri: 5 left, 2 held (2 nights after)
+    for day, used, most in ((0, 0, 4), (0, 4, 0), (2, 2, 2), (4, 2, 3)):
         d = _weekday(data, day)
         for t in d["teams"]:
             t["moves_used"] = used
@@ -1618,10 +1645,10 @@ def test_best_moves_hold_moves_for_the_week(browser, server, data):
             page.select_option("#team", str(t["id"]))
             best = _card(page, "Best")
             counts.append(len([l for l in best.split("\n")[1:] if l.strip()]))
-            if "one is held for each night still to come" in best:
+            if "none today" in best and "one for each night still to come" in best:
                 held += 1
                 assert f"You have {7 - used} moves left" in best, best
-        assert max(counts) == most, (day, used, counts)
+        assert max(counts) <= most and (max(counts) > 0 or most == 0), (day, used, counts)
         assert (held > 0) == (most == 0), (day, used, held)
         assert errors == []
         ctx.close()
@@ -1640,7 +1667,8 @@ def test_last_night_skips_claims_that_go_through_monday(browser, server, data):
         for t in d["teams"]:
             page.select_option("#team", str(t["id"]))
             best = _card(page, "Best")
-            assert "expire tonight" in page.locator("#upgrades").inner_text(), t["id"]
+            # with the 3.5-point floor (handoff 488) a team with no add worth it gets no Best moves card
+            assert not best or "expire tonight" in page.locator("#upgrades").inner_text(), t["id"]
             shown += star["name"] in best
         assert (shown > 0) == listed, (clears, shown)
         assert errors == []
@@ -1842,13 +1870,13 @@ def test_overnight_monday_counts_the_new_matchups_moves(browser, server, data):
     ctx.close()
 
 
-def test_next_weeks_moves_hold_all_but_two(browser, server, data):
-    """From Sunday's first puck to Monday's first run, Best moves offers next week's 2 Monday moves once, not 2 more at every
-    update; Mid-week swaps offers subs for next week (handoff 416)."""
+def test_next_weeks_moves_hold_three(browser, server, data):
+    """From Sunday's first puck to Monday's first run, Best moves offers next week's Monday moves once (holding 3 of 7), not
+    more at every update; Mid-week swaps offers subs for next week (handoffs 416, 488)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
     for clock in (SUN_6PM, _et(10, 12, 5, 30)):  # Sunday night, and Monday after ESPN's rollover before the first run
-        for used, most in ((0, 2), (2, 0)):
+        for used, most in ((0, 4), (4, 0)):
             d = _sunday(data)
             d["move_limit_next"] = 7
             for t in d["teams"]:
@@ -1861,8 +1889,8 @@ def test_next_weeks_moves_hold_all_but_two(browser, server, data):
             for t in d["teams"]:
                 page.select_option("#team", str(t["id"]))
                 best = _card(page, "Best")
-                counts.append(0 if "is held for each night" in best else len([l for l in best.split("\n")[1:] if l.strip()]))
-            assert max(counts) == most, (clock, used, counts)
+                counts.append(0 if "none today" in best else len([l for l in best.split("\n")[1:] if l.strip()]))
+            assert max(counts) <= most and (max(counts) > 0 or most == 0), (clock, used, counts)
             assert errors == []
             ctx.close()
     # a player who sat Sunday's game gets a sub for next week, though no free agent has a game left this week
@@ -2058,5 +2086,22 @@ def test_trade_check_goalie_rules(browser, server, data):
     page.evaluate(f"state.data.players.filter(p => {json.dumps([g['id'] for g in gs[1:]])}.includes(p.id)).forEach(p => p.injury = 'DAY_TO_DAY')")
     text = _trade(page, [sk[0]["id"]], [theirs[0]["id"]])
     assert "with or without this trade" in text and "add " not in text, text
+    assert errors == []
+    ctx.close()
+
+
+def test_predicted_winners_put_games_to_come_first(browser, server, data):
+    """A finished day folds to one line after the days still to play, with its picks' record (handoff 480); the matchup's
+    pick chip sits outside the name (handoff 481)."""
+    d = with_winners(data)
+    early = dict(d["winners"]["games"][0], date="2020-01-01", p_home=0.6, home_won=True)
+    d["winners"]["games"].insert(0, early)
+    ctx, page, errors = open_page(browser, server, d, phone=True)
+    page.click("#tab-win")
+    first = page.locator("#nhlgames > *").first
+    assert "dayfold" not in (first.get_attribute("class") or "")  # the day with a game to come leads
+    fold = page.locator("#nhlgames details.dayfold")
+    assert fold.count() == 1 and "all final" in fold.inner_text() and "picks 1 of 1 right" in fold.inner_text()
+    assert page.locator("#fantasy .side .tm .chip").count() == 0 and page.locator("#fantasy .side > .chip").count() == 2
     assert errors == []
     ctx.close()

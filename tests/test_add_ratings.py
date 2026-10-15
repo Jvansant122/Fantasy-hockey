@@ -132,6 +132,10 @@ class FakeSession:
         if report == "skater/bios":  # birth dates: Matthews 29 on the run date, Bolduc 20, the D Pettersson 38
             births = {1: "1997-09-17", 7: "2006-01-01", 6: "1988-05-11"}
             return Resp({"data": [{"playerId": pid, "birthDate": births.get(pid)} for pid, *_ in SKATERS]})
+        if "gamesStarted=0" in exp:  # last season's relief appearances: Woll won one in relief
+            rows = [{"playerId": 11, "gamesStarted": 0, "wins": 1, "losses": 0, "otLosses": 0, "goalsAgainst": 1, "saves": 12,
+                     "shotsAgainst": 13, "shutouts": 0}] if season == 20252026 else []
+            return Resp({"data": rows})
         dates = re.findall(r'gameDate[<>]="([\d-]+)"', exp)
         if not dates:  # season totals: only last season has any (and the one before, for away_last players)
             if season != 20252026 and not (season == 20242025 and self.away_last):
@@ -2194,3 +2198,12 @@ def test_traded_goalie_keeps_his_confirmed_start(monkeypatch, tmp_path):
     woll, stolarz, sway = players
     assert sway["cr_why"]["tonight"]["starting"] is True and sway["cr_why"]["p_today"] == 1.0
     assert woll["cr_why"]["p_today"] == 0 and stolarz["cr_why"]["p_today"] == 0
+
+
+def test_prev_goalie_points_leave_out_relief_appearances():
+    """Handoff 486: ESPN scores relief appearances 0 here, so last season's points per start count started games only."""
+    prev = rating.load_prev_goalie_season(FakeSession(), 20252026)
+    woll, stolarz = prev[11], prev[12]
+    relief = 2 * 1 - 1 + 0.2 * 12  # the relief win: W 2, GA -1, 12 saves
+    assert stolarz[1] - woll[1] == pytest.approx(relief)
+    assert woll[0] == stolarz[0] == 40 and woll[2] == stolarz[2]  # starts and save% inputs unchanged

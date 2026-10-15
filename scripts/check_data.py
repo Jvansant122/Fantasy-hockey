@@ -153,7 +153,7 @@ def rules(data):
         teams = sum(n["sp"] in v for k, v in team_nights.items() if k != "FA")
         if teams > 2 * n["games"]:
             out.append(f"N2 {n['date']}: {teams} teams play but {n['games']} games")
-    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2")}
+    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2", "P7", "G4")}
     for p in players:
         nm = f"{p['name']} ({p['team']})"
         pn = p.get("nights") or []
@@ -187,8 +187,18 @@ def rules(data):
         for k in ("cr_dress", "cr_dress_next"):
             if p.get(k) is not None and not 0 <= p[k] <= 1:
                 bad["P6"].append(f"{nm} {k} {p[k]}")
-        # G1 a goalie's expected starts never above his games left or his team's games
+        # P7 a name with no NHL match and no ESPN record (no games this season or last, no projection) isn't rated:
+        # a retired or minor-league player ESPN still lists on a team (handoff 453)
+        if not p.get("cr_matched") and not p.get("nhl_id") and (cr > 0 or (p.get("cr_season") or 0) > 0) \
+                and not (p.get("cur_ppg") or p.get("last_ppg") or p.get("proj_ppg") or p.get("gp") or p.get("last_gp")):
+            bad["P7"].append(f"{nm} unmatched, no record, cr {cr} Season {p.get('cr_season')}")
+        # G4 a healthy, matched goalie the Week expects to start keeps a Season rating above 0 (handoff 446: a save% term
+        # clipped a backup's share to 0)
         why = p.get("cr_why") or {}
+        if p["pos"] == "G" and p["team"] != "FA" and not p.get("injury") and p.get("cr_matched") \
+                and (why.get("exp_starts") or 0) >= 0.05 and p.get("cr_season") is not None and not p["cr_season"] > 0:
+            bad["G4"].append(f"{nm} exp_starts {why.get('exp_starts')} but Season {p['cr_season']}")
+        # G1 a goalie's expected starts never above his games left or his team's games
         es = why.get("exp_starts") if p["pos"] == "G" else None
         if es is not None and (es > p["games_left"] + EPS or why.get("team_games", p["games_left"]) < es - EPS):
             bad["G1"].append(f"{nm} exp_starts {es} of {why.get('team_games')} team games, {p['games_left']} left")
@@ -289,6 +299,17 @@ def warnings(data, prev):
                        and {sp for sp in p.get("nights") or [] if sp in ahead} != {sp for sp in tn[p["team"]] if sp in ahead}})
     if mismatch:
         out.append(f"W2 teams whose nights differ from their players' nights this matchup: {mismatch[:6]}")
+    # G5 each NHL team's goalies' start chances on each night still to come sum to about 1: a confirmed starter matched
+    # to nobody zeroes the whole team's night (handoff 454); a double count goes over. 170 versions to Oct 15: 0.69-1.00
+    g_night = {}
+    for p in players:
+        if p["pos"] == "G" and p["team"] != "FA":
+            for sp, q in (p.get("cr_g_nights") or {}).items():
+                if int(sp) in ahead:
+                    g_night[(p["team"], sp)] = g_night.get((p["team"], sp), 0.0) + q
+    off = sorted((t, sp, round(v, 2)) for (t, sp), v in g_night.items() if not 0.6 <= v <= 1.02)
+    if off:
+        out.append(f"G5 team nights whose goalie start chances don't sum to about 1: {off[:5]}")
     # S3 a team's summed skater Season shares far above its lineup spots (12 F, 6 D; handoff 444)
     sums = {}
     for p in players:

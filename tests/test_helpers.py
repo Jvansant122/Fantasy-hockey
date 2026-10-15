@@ -510,3 +510,29 @@ def test_preseason_projection_keeps_the_first_one_seen(tmp_path):
     nxt = [{"id": 1, "proj_ppg": 1.5}]  # a new season starts from scratch
     fetch.preseason_projections(nxt, 2028, seed, path)
     assert nxt[0]["proj_ppg_pre"] == 1.5 and json.loads(path.read_text()) == {"season": 2028, "proj": {"1": 1.5}}
+
+
+def test_expected_points_note_uses_nhl_points():
+    """Handoff 487: the note's pts/game is the NHL's (MoneyPuck's strength split undercounts PP and SH points); the
+    expected number moves with it, so the hot/cold gap stays."""
+    x = {"gp": 10, "fpg": 2.0, "xfpg": 1.5, "luck": "hot"}
+    out = rating.nhl_xfp(x, [{"fp": 2.5}, {"fp": 1.9}])
+    assert out["fpg"] == 2.2 and out["xfpg"] == 1.7 and out["luck"] == "hot"
+    assert rating.nhl_xfp(None, [{"fp": 1}]) is None and rating.nhl_xfp(x, []) is x
+
+
+def test_backup_run_skips_once_the_latest_slot_published():
+    """Handoffs 466-467: a scheduled backup stands down when main's data is newer than the latest ET slot, in both
+    daylight and standard time; a missed slot still runs."""
+    import slot_gate
+    from datetime import timezone as tz
+    utc = lambda *a: datetime(*a, tzinfo=tz.utc)
+    # Oct 15 (EDT): 6:10 ET slot published at 6:13 ET; the 6:41 backup skips, a run at 9:20 ET (9:10 slot) doesn't
+    assert slot_gate.should_skip("2026-10-15T10:13:00Z", utc(2026, 10, 15, 10, 41)) is True
+    assert slot_gate.should_skip("2026-10-15T10:13:00Z", utc(2026, 10, 15, 13, 20)) is False
+    # the 6:10 slot never published (data from 5:10 PM yesterday): the backup runs
+    assert slot_gate.should_skip("2026-10-14T21:12:00Z", utc(2026, 10, 15, 10, 41)) is False
+    # Nov 2 (EST): the 10:41 UTC cron is 5:41 ET, before the 6:10 slot; yesterday's 5:10 PM data is current, so it skips
+    assert slot_gate.should_skip("2026-11-01T22:12:00Z", utc(2026, 11, 2, 10, 41)) is True
+    assert slot_gate.latest_slot(utc(2026, 11, 2, 11, 15)).strftime("%H:%M") == "06:10"
+    assert slot_gate.should_skip(None, utc(2026, 11, 2, 11, 15)) is False

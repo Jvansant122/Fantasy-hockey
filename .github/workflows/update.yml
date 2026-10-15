@@ -16,22 +16,26 @@ permissions:
   contents: write
 
 concurrency:
-  group: update-data
+  # one queue per branch: a branch test run never cancels a waiting main run (handoff 468)
+  group: update-data-${{ github.ref }}
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # GitHub runs scheduled backups late and in bunches (12:15, 12:25 and 12:41 PM on Oct 11): a backup that lands
-      # within 20 minutes of the last published data has nothing new to add (findings 210)
-      - name: Skip a backup run right after another
+      # GitHub runs scheduled backups late and in bunches (12:15, 12:25 and 12:41 PM on Oct 11): a backup has nothing new
+      # to add once the latest ET slot's numbers are published (findings 210). Slots are computed in America/New_York, so
+      # the UTC crons can't run ahead of a slot after the clock change (handoff 466), and the check reads current main,
+      # not this run's own checkout, which may be older if the run waited in the queue (handoff 467).
+      - name: Skip a backup run once the latest slot has published
         id: gate
         if: github.event_name == 'schedule'
         run: |
-          age=$(python3 -c "import json, datetime as dt; u = json.load(open('data/players.json'))['updated_utc']; print(int((dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(u.replace('Z', '+00:00'))).total_seconds() // 60))" || echo 999)
-          echo "Published data is $age minutes old"
-          if [ "$age" -lt 20 ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+          git fetch -q origin main
+          git show origin/main:data/players.json > /tmp/main-players.json || echo '{}' > /tmp/main-players.json
+          skip=$(python3 scripts/slot_gate.py /tmp/main-players.json || echo false)
+          if [ "$skip" = "true" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-python@v5
         if: steps.gate.outputs.skip != 'true'
         with:
