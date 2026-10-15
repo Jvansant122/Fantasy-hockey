@@ -1576,14 +1576,16 @@ def season_drift(rows, model):
             why["season_range"] = rng
 
 
-def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates):
+def week_news_logit(news, nhl_id, last_game, sat_last, espn_status, game_dates, last_start=None):
     """Per-game Week dress logit shifts from Daily Faceoff items since his last game (posted after 03:00 UTC on its date, as
     in the research), whether he is practising (his OUT / IR cap becomes day-to-day's), and labels for the why panel.
     Out now (handoff 406): practising, skating, could-return, return / day-to-day / week-to-week, long wording and a stated
     timeline running 7+ days past the game, or already run out (428). Sent down by his latest roster move (407). Dressed last game, no ESPN status,
-    and news since says he is out or day-to-day (408)."""
+    and news since says he is out or day-to-day (408). "Since" = after that game's puck drop (last_start, UTC ISO), or 23:00
+    UTC on its date when the schedule doesn't give it (handoff 438: a morning game-time decision before a game he played
+    no longer counts)."""
     items = ((news or {}).get("recent") or {}).get(str(nhl_id)) if nhl_id and last_game else None
-    since = f"{last_game[:10]}T03:00" if last_game else ""
+    since = (last_start or "").rstrip("Z")[:19] or (f"{last_game[:10]}T23:00" if last_game else "")
     items = [r for r in items or () if r["ts"] > since]
     inj = [r for r in items if r["cat"] == "inj"]
     moves = [r for r in items if r["cat"] == "move"]
@@ -2610,7 +2612,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             wk_dates = (wk_dates + wk_dates[-1:] * gn)[:gn] if wk_dates else [today.isoformat()] * gn
             # no game yet this season: news since the season's first game counts (handoff 427)
             wk_news, wk_down, practising, wk_why = week_news_logit(dfo_news, pid, gl[-1]["date"] if gl else season_open, sat_last,
-                                                          p.get("injury"), wk_dates)
+                                                          p.get("injury"), wk_dates,
+                                                          week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
             if practising and p.get("injury") in ("OUT", "INJURY_RESERVE") and not (note and note["long"]):
                 inj = max(inj, SKATER_INJURY_CAP["DAY_TO_DAY"])  # practising: day-to-day's cap (handoff 406)
             p_dress = min(p_dress, inj)
@@ -2642,24 +2645,28 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why_form = {"shift": round(fshift, 3), "why": fwhy}
             else:
                 why_form = None
-            # Daily Faceoff injury news since his last game (handoffs 406, 408), then the boosted model, then a send-down and the
-            # caps (handoff 412)
-            if per_game and any(wk_news) and base_dress is not None:
-                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), cap, inj) for q, z in zip(per_game, wk_news)]
-            # the 16-season boosted next-week dress share (handoff 411), still under his injury caps; not for a skater ESPN
-            # lists on a team he hasn't played for yet, whose inputs describe his old team
-            boost_wk = boost_move = None
+            # the 16-season boosted next-week dress share (handoff 411), measured against his chances before the news, then
+            # Daily Faceoff injury news since his last game (406, 408) and a send-down (407) on top, then the caps (handoff
+            # 434: measured after the news, the boost took back ~90% of it). Not for a skater ESPN lists on a team he hasn't
+            # played for yet, whose inputs describe his old team
+            boost_wk = boost_move = news_move = None
             if boost_week and base_dress is not None and pid in boost_x and per_game and not traded:
                 live = [q for q in per_game if q > 0.001]
                 if live:
-                    before = sum(per_game) / len(per_game)
                     b = min(max(season_boost.predict(boost_week, boost_x[pid]), BOOST_WEEK_CLIP[0]), BOOST_WEEK_CLIP[1])
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
-                    per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + boost_wk))), cap, inj)
-                                for q in per_game]
-                    boost_move = sum(per_game) / len(per_game) - before
-            if per_game and wk_down and base_dress is not None:  # sent down: the boosted model can't see it (handoff 407)
-                per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + wk_down))), cap, inj) for q in per_game]
+            has_news = bool(wk_news) and (any(wk_news) or bool(wk_down))
+            if per_game and base_dress is not None and (boost_wk is not None or has_news):
+                shift = lambda news, down: [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + (boost_wk or 0.0) + z + down))), cap, inj)
+                                            for q, z in zip(per_game, news)]
+                mean = lambda xs: sum(xs) / len(xs)
+                boosted = shift([0.0] * len(per_game), 0.0) if boost_wk is not None else per_game
+                final = shift(wk_news, wk_down) if has_news else boosted
+                if boost_wk is not None:
+                    boost_move = mean(boosted) - mean(per_game)
+                if has_news:
+                    news_move = mean(final) - mean(boosted)  # the news's real effect after the caps (handoff 435)
+                per_game = final
             dress_next = per_game[0] if per_game else CLEARED_NEW_NEXT if cleared_new else p_dress
             if in_lines and per_game:  # no game left: nothing to lift (findings 182)
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
@@ -2682,8 +2689,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
-            if wk_why and wk_news and (any(wk_news) or wk_down) and base_dress is not None:  # no games left: nothing moved
-                why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "why": wk_why}  # handoffs 406-408
+            if wk_why and news_move is not None:  # handoffs 406-408; its effect on his chance, shown from 2 points (435)
+                why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "move": round(news_move, 3), "why": wk_why}
             if boost_wk is not None:
                 why["boost_week"] = round(boost_wk, 2)  # the 16-season boosted next-week dress shift (handoff 411)
             if boost_move is not None and abs(boost_move) >= 0.05:

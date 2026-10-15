@@ -112,10 +112,14 @@ def nhl_games(week_games, starts, results, names, strength, play_dates, lineups,
     return sorted(out, key=lambda g: (g["date"], g["start"] or "", g["home"]))
 
 
-def freeze(games, previous):
+def freeze(games, previous, week_start=None):
     """Once a game starts, keep the last win chance published before puck drop (a game that started before this tab
-    existed has none, and is shown without a pick)."""
+    existed has none, and is shown without a pick). A started game this week that the new list lacks (a run whose NHL
+    games failed) is carried over as last published (handoff 436)."""
     old = {(g.get("home"), g.get("date")): g for g in previous or [] if isinstance(g, dict)}
+    have = {(g["home"], g["date"]) for g in games}
+    keep = [o for k, o in old.items() if k not in have and o.get("started") and o.get("date")
+            and (week_start is None or o["date"] >= week_start)]
     for g in games:
         if not g["started"]:
             continue
@@ -127,7 +131,7 @@ def freeze(games, previous):
         else:
             g["p_home"] = None
         g["frozen"] = g["p_home"] is not None
-    return games
+    return sorted(games + keep, key=lambda g: (g["date"], g.get("start") or "", g["home"])) if keep else games
 
 
 def record(games):

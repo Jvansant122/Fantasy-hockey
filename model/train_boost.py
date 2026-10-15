@@ -13,7 +13,8 @@ Rebuild the panel first with the research scripts (hunt11b/compact.py, mp_prev.p
 
   week:  next Monday-Sunday dress share (handoffs 411, 413, 414; ideas 1142, 1162, 1168; hunt13/p_boost_wk_news.py, early1.py):
          games he played that week / his team's games that week, weight = team games, features FW = FD (exp clipped at 5 as
-         the site builds it) + the latest Daily Faceoff injury item's flags (news_inputs), all 16 seasons plus early weeks,
+         the site builds it) + the latest Daily Faceoff injury item's flags (news_inputs, its timeline read by the site's
+         leads.news_timeline, handoff 439), all 16 seasons plus early weeks,
          HistGBM up to 400 x 0.05 (sklearn's default early stopping, as the research ran it), 31 leaves, 200 rows a leaf. Needs hunt13/data/wk_targets.parquet and hunt13/feats.py.
          Exported to season_boost_week.json.
 
@@ -75,6 +76,16 @@ def news_inputs(c):
     hunt11b/news.py parses it; its flags count only when it came after his last game (posted after 03:00 UTC that day)."""
     sys.path.insert(0, f"{R}/hunt11b")
     import news  # research parser for the 2011-26 Daily Faceoff archive
+    # the stated timeline as the site reads it (handoff 439: leads.news_timeline, which skips stat lines since handoff 428)
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent / "scripts"))
+    import leads
+    research_parse = news.parse
+
+    def parse(txt):
+        out, tl = research_parse(txt), leads.news_timeline(txt or "")
+        out["tl_days"] = np.nan if tl is None else tl
+        return out
+    news.parse = parse
     a = pd.read_parquet(f"{R}/data/skater_games.parquet", columns=["playerId", "gameDate"])
     b = pd.read_parquet(f"{H}/skater_games_old.parquet", columns=["playerId", "gameDate"])
     g = pd.concat([a, b]); g["gameDate"] = pd.to_datetime(g.gameDate); g = g.sort_values("gameDate")

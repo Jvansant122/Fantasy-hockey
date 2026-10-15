@@ -1079,6 +1079,10 @@ Four follow-ups to sections 145 and 146 from a second audit. The practising, ska
 
 The news reader took a player's stat line, such as "52 points in 58 games", as a 128-day absence. That was true of 95% of the 40-plus-day timelines in Daily Faceoff's archive, so the timeline signal was mostly noise. Counts after words like "in", "over" or "his last" are now skipped, and a game count needs a word about missing time nearby. With real timelines, the signal is strong: an injured player whose stated timeline runs 7 or more days past a game is much less likely to play it, and one whose timeline has already run out is a little more likely. The practising, skating, game-time, day-to-day and week-to-week terms were refit alongside. On the 2024-25 and 2025-26 seasons, the weekly chance-to-play error fell from 5.1% and 9.6% below the old version to 5.2% and 9.8% below it. Zach Hyman goes back up, and a player out 6-8 months after surgery comes down.
 
+## 150. News on top of the weekly lineup model, and Predicted winners fixes
+
+A third audit found that the 16-season weekly lineup model was measured against each player's chance to play after the Daily Faceoff news, so it took back about 90% of what the news said. It is now measured against his chance before the news, and the news adds on top, as the research fit it. That wins back 30-50% of the news's gain on the 2024-25 and 2025-26 seasons. The weekly model was also retrained so its injury-timeline input is read the same way as on the site since section 149. News posted on the day of a game now counts only after puck drop, so a morning game-time decision before a game he played no longer pulls him down. The details mention news only when it moved his chance to play by 2 points or more after ESPN's caps. On the Predicted winners tab, a run that fails to get the NHL schedule no longer wipes the week's locked picks, and the two win chances always add to 100%. The page's explanations now match what the ratings do.
+
 ## What the independent review changed
 
 | Review point | Outcome |

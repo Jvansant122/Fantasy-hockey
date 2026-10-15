@@ -1903,6 +1903,27 @@ def test_weekly_boosted_dress_model_moves_the_week_toward_its_share(monkeypatch,
     assert run(0.99, injury="DAY_TO_DAY")["cr_dress"] == pytest.approx(rating.DTD_PLAYED_CAPS[-1][1])
 
 
+def test_week_news_lands_on_top_of_the_weekly_boosted_model(monkeypatch, tmp_path):
+    """Handoff 434: the boost is measured against his chances before the news, so the news keeps its full logit shift;
+    435: week_news records the news's real effect on his chance."""
+    import season_boost
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    real = season_boost.load
+    monkeypatch.setattr(rating.season_boost, "load", lambda n: {"features": [], "baseline": 0.5, "trees": []} if n == "week" else real(n))
+
+    def run(z):
+        monkeypatch.setattr(rating, "week_news_logit", lambda news, pid, last, sat, st, dates, *a: ([z] * len(dates), 0.0, False, ["day-to-day"] if z else []))
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    off, on = run(0.0), run(-1.0)
+    assert "week_news" not in off["cr_why"] and off["cr_why"]["boost_week"] == on["cr_why"]["boost_week"]
+    assert rating.logit(off["cr_dress"]) - rating.logit(on["cr_dress"]) == pytest.approx(1.0, abs=0.05)
+    assert on["cr_why"]["week_news"]["move"] == pytest.approx(on["cr_dress"] - off["cr_dress"], abs=0.002)
+
+
 def test_boosted_inputs_follow_the_research_panel():
     """compact.py's inputs rebuilt from this season's games: games out, last 3/10, absences, lineup crunch."""
     import season_boost
@@ -2015,6 +2036,10 @@ def test_week_news_shifts_from_daily_faceoff_items_since_his_last_game():
     assert rating.week_news_logit(news, 4, "2026-10-10", False, "DAY_TO_DAY", dates)[0] == [0.0] * 3  # ESPN's cap covers it
     assert rating.week_news_logit(news, 4, "2026-10-12", False, None, dates)[0] == [0.0] * 3  # news older than his last game
     assert rating.week_news_logit(None, 4, "2026-10-10", False, None, dates)[0] == [0.0] * 3
+    # handoff 438: a game-day item counts only after puck drop (23:00 UTC when the schedule has no start time)
+    morning = {"recent": {"5": [item("2026-10-10T17:00:00", "inj", "out")]}}
+    assert rating.week_news_logit(morning, 5, "2026-10-10", False, None, dates)[0] == [0.0] * 3
+    assert rating.week_news_logit(morning, 5, "2026-10-10", False, None, dates, "2026-10-10T16:00:00Z")[0] == [w["hurt_out"]] * 3
 
 
 def test_week_model_news_inputs_from_the_latest_injury_item():
