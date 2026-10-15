@@ -1694,7 +1694,8 @@ def test_stream_card_names_only_rechecks_before_the_puck(browser, server, data):
     """'No free-agent goalie confirmed yet' names only the updates before tonight's first game (handoff 209)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    for puck, now, want in ((19, (10, 0), "rechecks at about 12:40 and 5 PM ET."),
+    for puck, now, want in ((19, (7, 0), "rechecks at about 9 AM, 12:40 and 5 PM ET."),
+                            (19, (10, 0), "rechecks at about 12:40 and 5 PM ET."),
                             (13, (10, 0), "rechecks at about 12:40 PM ET."),
                             (19, (13, 0), "rechecks at about 5 PM ET."),
                             (13, (12, 50), "The next update comes after tonight's first game at 1:00 PM ET, so a goalie confirmed later can't be added for tonight."),

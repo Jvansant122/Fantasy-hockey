@@ -3,6 +3,7 @@ version must keep, rather than one bug's exact numbers, so it also catches the n
 import ast
 import copy
 import json
+import re
 
 import pytest
 
@@ -300,5 +301,104 @@ def test_details_round_like_the_table_and_blanks_sort_last(browser, server, data
             vals = page.evaluate(f"[...document.querySelectorAll('#rows tr[data-id]')].map(r => state.data.players.find(p => p.id === +r.dataset.id)).map(p => val(p, '{k}'))")
             blank = [v is None for v in vals]
             assert blank == sorted(blank), (k, page.evaluate("state.dir"))  # every blank after every number
+    assert errors == []
+    ctx.close()
+
+
+def _card_drops(page):
+    """{card title: [players the card says to drop]} from Stream, Best moves and Mid-week swaps."""
+    return page.evaluate(r"""() => {
+      const out = {};
+      for (const c of document.querySelectorAll('#upgrades .upg')) {
+        const t = c.querySelector('b')?.textContent || '', txt = c.textContent.replace(/\s+/g, ' ');
+        const names = [];
+        if (t.startsWith('Stream')) { const m = txt.match(/Your roster is full: drop (.+?) to add him/); if (m) names.push(m[1]); }
+        if (t.startsWith('Best')) for (const l of c.querySelectorAll(':scope > div:not(.sub)')) {
+          const m = l.textContent.replace(/\s+/g, ' ').match(/ for (.+?) \+/); if (m) names.push(m[1]); }
+        if (t.startsWith('Mid-week')) for (const l of c.querySelectorAll(':scope > div')) {
+          if (l.textContent.includes('→')) names.push(l.firstChild.textContent.trim()); }
+        if (names.length) out[t] = names;
+      }
+      return out;
+    }""")
+
+
+def test_no_player_is_dropped_by_two_cards(browser, server, data):
+    """One roster spot, one drop: Stream a goalie, Best moves and Mid-week swaps never name the same player to drop
+    (hunt 14: on Thu Oct 15 the Stream card said 'drop Kaapo Kakko to add him' and Best move said 'Tyson Foerster for
+    Kaapo Kakko')."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d, tonight = _thursday(data)
+    for t in d["teams"]:  # 6 of 7 moves left: room for a stream and Best moves
+        t["moves_used"] = 1
+    fa_g = next(p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")
+                and tonight in (p.get("nights") or []))
+    fa_g.update(injury=None, games_left=max(fa_g["games_left"], 1), today_start=d["first_start"])
+    fa_g["cr_why"]["tonight"] = {"starting": True, "status": "Confirmed"}
+    for p in d["players"]:  # every rostered goalie sits tonight: every team has an open G slot
+        if p["pos"] == "G" and p is not fa_g and p.get("cr_why"):
+            p["cr_why"].pop("tonight", None)
+            p["cr_why"]["p_today"] = 0
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 16))
+    twice = []
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        seen = {}
+        for title, names in _card_drops(page).items():
+            for n in names:
+                if n in seen:
+                    twice.append((t["id"], n, seen[n], title))
+                seen[n] = title
+    assert not twice, f"same player dropped by two cards: {twice[:4]}"
+    assert errors == []
+    ctx.close()
+
+
+def test_stream_card_drops_the_third_goalie(browser, server, data):
+    """A team carrying 3 healthy goalies streams with its third goalie spot (the Goalies card says so): a full roster's
+    Stream card names that goalie as the drop, not a skater."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d, tonight = _thursday(data)
+    fa_g = next(p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")
+                and tonight in (p.get("nights") or []))
+    fa_g.update(injury=None, games_left=max(fa_g["games_left"], 1), today_start=d["first_start"])
+    fa_g["cr_why"]["tonight"] = {"starting": True, "status": "Confirmed"}
+    for p in d["players"]:
+        if p["pos"] == "G" and p is not fa_g and p.get("cr_why"):
+            p["cr_why"].pop("tonight", None)
+            p["cr_why"]["p_today"] = 0
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 16))
+    bad = []
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        txt = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.textContent.replace(/\\s+/g, ' '))")
+        g3 = next((c for c in txt if c.startswith("Goalies") and "third goalie spot" in c), None)
+        st = next((c for c in txt if c.startswith("Stream")), None)
+        m = st and re.search(r"Your roster is full: drop (.+?) to add him", st)
+        if g3 and m:
+            gname = re.search(r"drop (.+?) for a confirmed starter", g3).group(1)
+            if m.group(1) != gname:
+                bad.append((t["id"], m.group(1), gname))
+    assert not bad, f"Stream card drops a skater while the Goalies card names the third goalie: {bad[:4]}"
+    assert errors == []
+    ctx.close()
+
+
+def test_stream_recheck_names_every_run_before_the_puck(browser, server, data):
+    """Before 9:10 AM the Stream card's 'rechecks at about ...' lists the 9:10 AM update too (RUNS has 4 runs a day)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d, tonight = _thursday(data, run_hour=6)
+    for p in d["players"]:
+        if p["pos"] == "G" and p.get("cr_why"):
+            p["cr_why"].pop("tonight", None)
+            p["cr_why"]["p_today"] = 0
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 7))
+    page.select_option("#team", str(d["teams"][0]["id"]))
+    st = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.textContent).find(t => t.includes('No free-agent goalie is confirmed')) || ''")
+    assert "rechecks" in st, st
+    assert "9" in st.split("rechecks")[1].split("ET")[0], st
     assert errors == []
     ctx.close()

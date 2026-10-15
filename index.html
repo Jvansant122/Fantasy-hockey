@@ -856,20 +856,26 @@ function renderUpgrades() {
       const recheck = () => {
         const etMin = t => { const [h, m] = t.toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour12: false }).split(":").map(Number); return (h % 24) * 60 + m; };
         const now = etMin(new Date()), puckMin = puck ? etMin(puck) : 24 * 60;
-        const runs = [[760, "12:40 PM"], [1030, "5 PM"]].filter(([m]) => m > now && m < puckMin).map(([, t]) => t);
-        if (runs.length) return `, and the site rechecks at about ${runs.join(" and ").replace("12:40 PM and", "12:40 and")} ET.`;
+        const runs = [[550, "9 AM"], [760, "12:40 PM"], [1030, "5 PM"]].filter(([m]) => m > now && m < puckMin).map(([, t]) => t);
+        // "9 AM, 12:40 and 5 PM": the earlier PM times drop their PM, which the last one carries (handoff 602)
+        const list = runs.length > 1 ? runs.slice(0, -1).map(t => t.replace(/ PM$/, "")).join(", ") + " and " + runs.at(-1) : runs[0];
+        if (runs.length) return `, and the site rechecks at about ${list} ET.`;
         return puck ? `. The next update comes after tonight's first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET, so a goalie confirmed later can't be added for tonight.`
           : ". The site doesn't update again before tonight's games.";
       };
       streamIdx = cards.length;
-      // a full roster needs a drop for the stream: name it (handoff 463)
-      const sDrop = freeSpots <= 0 && streams.length && !locked ? dropOrder.find(p => !swapDrops.has(p.id)) : null;
-      const sDropTxt = sDrop ? ` Your roster is full: drop ${sDrop.name} to add him.` : "";
-      streamCard = note => `<div class="upg"><b>${streamTitle}</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(slotNight.date)}, ${esc(left)}.${esc(before)}${esc(sDropTxt)}${esc(cap)}</span>
+      // a full roster needs a drop for the stream: name it (handoff 463); with 3 healthy goalies, the third goalie, as the
+      // Goalies card says (handoff 601); else the lowest skater no other card drops, so the stream is built again after
+      // Best moves picks its drops (handoff 600)
+      const goalies3 = roster.filter(p => !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
+      const sDropPick = () => freeSpots > 0 || !streams.length || locked ? null
+        : goalies3.length === 3 ? goalies3.find(p => !startsTonight(p)) ?? goalies3[0]
+        : dropOrder.find(p => !swapDrops.has(p.id) && !dropped.has(p.id));
+      streamCard = (note, sDrop = sDropPick()) => { const sDropTxt = sDrop ? ` Your roster is full: drop ${sDrop.name} to add him.` : ""; return `<div class="upg"><b>${streamTitle}</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(slotNight.date)}, ${esc(left)}.${esc(before)}${esc(sDropTxt)}${esc(cap)}</span>
         ${note ? `<div class="sub">${esc(note)}</div>` : locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
           : locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
           : streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
-          : `<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon${esc(recheck())}</div>`}</div>`;
+          : `<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon${esc(recheck())}</div>`}</div>`; };
       cards.push(streamCard());
     }
   }
@@ -973,6 +979,8 @@ function renderUpgrades() {
         cards[streamIdx] = streamCard("Your last move gains more on the Best move below than on a goalie tonight, so it goes there.");
       }
     }
+    // the stream's drop, now that Best moves has picked its own (handoff 600)
+    if (streamIdx >= 0 && streamNeed) cards[streamIdx] = streamCard();
     // every move left is held for the nights to come, though a free agent would gain: say so instead of going quiet
     if (!best.length && !lastCall && realLeft != null && movesLeft > 0 && spare === 0 && pick())
       // one moves-left count, the same as the Stream card's, and never folded away on phones (handoff 471)
