@@ -2495,3 +2495,35 @@ def test_last_result_scratch_shift_is_by_game(monkeypatch, tmp_path):
     assert flat["sat_last"] and flat["games_left"] >= 2
     assert first["cr_dress_next"] > flat["cr_dress_next"] + 0.05
     assert first["cr_games"] - flat["cr_games"] == pytest.approx(first["cr_dress_next"] - flat["cr_dress_next"], abs=0.02)
+
+
+def test_depth_forwards_special_teams_role(monkeypatch, tmp_path):
+    """A healthy depth forward who killed penalties for 1:00+ in his last game dresses a little more, one with no PP or PK
+    time a little less; a regular-minutes forward is untouched (handoff 358)."""
+    def rate(sh, pp, on=True):
+        class Role(FakeSession):  # Bolduc on depth minutes; his last game's special-teams time
+            def get(self, url, params=None, **kw):
+                r = super().get(url, params, **kw)
+                exp = (params or {}).get("cayenneExp", "")
+                if "skater/summary" in url and "gameDate" in exp:
+                    for row in r.payload["data"]:
+                        if row["playerId"] == 7:
+                            row["timeOnIcePerGame"] = 600
+                if "skater/timeonice" in url and "gameDate" in exp:
+                    for row in r.payload["data"]:
+                        if row["playerId"] in (3, 7) and row["gameDate"] == PAST[-1]:
+                            row["shTimeOnIce"], row["ppTimeOnIce"] = sh, pp
+                return r
+        monkeypatch.setattr(rating, "ST_ROLE_LOGIT", {"pk": 0.2, "none": -0.1} if on else {"pk": 0.0, "none": 0.0})
+        fake = Role()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p for p in players}
+    pk, pk_off = rate(90, 0), rate(90, 0, on=False)
+    none, none_off = rate(0, 0), rate(0, 0, on=False)
+    assert pk["Zack Bolduc"]["cr_why"].get("st_role") == "pk" and pk["Zack Bolduc"]["cr_games"] > pk_off["Zack Bolduc"]["cr_games"]
+    assert none["Zack Bolduc"]["cr_why"].get("st_role") == "none" and none["Zack Bolduc"]["cr_games"] < none_off["Zack Bolduc"]["cr_games"]
+    assert "st_role" not in pk["David Pastrnak"]["cr_why"] and "st_role" not in none["David Pastrnak"]["cr_why"]
