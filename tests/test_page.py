@@ -1566,6 +1566,10 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
+    for p in d["players"]:  # no goalie stream tonight: it would take a move of its own
+        if p["pos"] == "G" and p.get("cr_why"):
+            p["cr_why"].pop("tonight", None)
+            p["cr_why"]["p_today"] = 0
     for used in (0, 4):  # 7 left: room for it; 3 left, one held for Sunday: Best moves takes up to the other 2
         team["moves_used"] = team["moves_used_next"] = used  # after Sunday's first puck adds use next week's moves (handoff 263)
         d["move_limit_next"] = 7

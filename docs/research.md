@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 196). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 197). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1321,6 +1321,10 @@ Players on a new team since last season had their Week points a game cut 3.5%; t
 ## 196. Rested starting goalies
 
 A team's no. 1 goalie on a night that isn't the second half of a back-to-back started a little more often than the site said (62% against 59% for his next game). His chance on those nights now gets a small lift. Better in all 15 seasons tested, with the three-goalie rule (section 180) already in place.
+
+## 197. Games before a stated return date
+
+When ESPN's note puts a player's return within the week, he was given too much of a chance in the games before that date (he dressed about 18% of the time against 24-28% predicted). Those games now count a little less. Separately, the details now say an OUT player who has already missed a game usually misses about 2 more, not 4.
 
 ## What the independent review changed
 
