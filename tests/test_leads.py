@@ -302,3 +302,15 @@ def test_news_flags_season_level_and_indefinite_wording():
               "He avoided surgery.", "Surgery is not required."):
         assert not f(t)["surgery"], t
     assert f("He underwent surgery on Tuesday.")["surgery"] and f("He needs surgery and is out.")["surgery"]
+
+
+def test_past_surgery_and_this_season_wording():
+    """Handoffs 440-441: a surgery in a past season isn't this injury's; "the remainder of this season" is season-ending
+    even after a "last season" earlier in the sentence."""
+    f = lambda d, fd="": leads.news_flags({"details": d, "fantasyDetails": fd})
+    assert not f("Barkov is expected to miss six to eight weeks.",
+                 "He missed the entire 2025-26 season after undergoing surgery to repair his ACL.")["surgery"]
+    assert f("He underwent surgery Tuesday and will miss 4-6 weeks.")["surgery"]
+    assert f("He is likely to miss the remainder of this season.")["season"]
+    assert f("After missing most of last season, he will miss 6-8 months and likely the remainder of this season.")["season"]
+    assert not f("He missed time last season, but is healthy for the season.")["season"]

@@ -305,6 +305,8 @@ function dropStarted(d) {
       p.cr = Math.max(0, +(p.cr - gone * (p.pos === "G" ? (p.cr_why?.line?.pps ?? p.cr_fpg) : p.cr_fpg)).toFixed(2));
       p.cr_games = +(p.cr_games - gone).toFixed(2);
       if (p.games_left === 0) p.cr = p.cr_games = 0;  // no rounding leftovers once nothing is left to play
+      // a goalie's tonight was priced at its own line: the rest of his week's points per start is what's left (handoff 448)
+      if (p.pos === "G" && p.cr_games > 0) p.cr_fpg = +(p.cr / p.cr_games).toFixed(2);
       if (p.cr_why?.exp_starts != null) p.cr_why.exp_starts = Math.max(0, +(p.cr_why.exp_starts - gone).toFixed(2));
       if (p.cr_why) { p.cr_why.p_today_pre ??= p.cr_why.p_today; p.cr_why.p_today = 0; }
     }
@@ -506,13 +508,15 @@ function why(p) {
     const NEWS_TXT = {"sent down": "sent to the AHL since his last game", "called up": "called up recently and in the lineup",
       "season-ending": "latest injury news says season-ending", "surgery": "latest injury news mentions surgery",
       "indefinite": "injury news says out indefinitely or long-term"};
-    if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(p.proj_ppg)}); the pull fades as he plays games`);
+    if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(w.espn_proj ?? p.proj_ppg)}); the pull fades as he plays games`);
     if (w.lineup_slack != null && Math.abs(w.lineup_slack) >= 0.5) parts.push(w.lineup_slack > 0
       ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so his Season share goes up${newsCut ? " a little, which only partly offsets the news below" : ""}`
       : `His team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so his Season share goes down`);
     if (w.boost_dress != null || w.boost_fpg != null) parts.push(`A model trained on 16 seasons of game logs expects ` +
       [w.boost_dress != null ? `him in about ${Math.round(w.boost_dress * 100)}% of the rest of the season` : "",
        w.boost_fpg != null ? `${n(w.boost_fpg)} pts/game from here` : ""].filter(Boolean).join(" and ") + "; the Season rating moves part of the way toward it");
+    // the league-wide forward / defense scoring shift in his Season pts/game (handoffs 405, 444)
+    if (w.drift && Math.abs(w.drift) >= 0.01) parts.push(`Season pts/game ${w.drift > 0 ? "+" : "\u2212"}${Math.abs(w.drift).toFixed(2)} for a league-wide ${p.pos === "D" ? "defense" : "forward"} scoring shift this season`);
     if (w.season_news?.length) parts.push(`Season share uses Daily Faceoff news: ${w.season_news.map(k => NEWS_TXT[k] || k).join("; ")}`);
     if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
     else parts.push("No NHL games yet this season");

@@ -38,6 +38,11 @@ GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goa
 # where he ranks in his team-game's PP time and ice time, this season's windows only (findings section 201)
 RANK_RATES = ["pp_rank", "toi_rank", "pp1", "top_line"]
 P2_RATES = ["fp", "toi", "pptoi", "shots", "hits", "blockedShots", "points"]  # two seasons ago (model/train.py P2_RATES)
+# a skater with no game yet: the Week's this-season windows from both seasons (handoff 429, idea 1187), and FP/G moves
+# EARLY_WEEK_ESPN of the way to ESPN's preseason projection at 0 GP / 1-3 GP (early-Monday Spearman +0.003 / +0.019 / +0.005
+# in 2023-26, free agents +0.001 / +0.012 / +0.008, MSE lower every season; hunt13/early_wk)
+TWO_SEASON_RATES = P2_RATES + ["goals", "assists"]
+EARLY_WEEK_ESPN = ((0, 0.25), (3, 0.19))
 # position x usage and squared ice time inputs (findings section 201); same as model/train.py
 D_X = ["std_toi", "std_pptoi", "l5_toi", "l5_pptoi", "std_blockedShots", "std_hits"]
 SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
@@ -207,6 +212,9 @@ SEASON_SHARE_SCALE = 0.88
 # start-weighted save% of the team's other starters this season, x 100), both shrunk as in shrunk_save_pcts; refit on
 # this function's own shares, 2023-26 goalie-Mondays (findings 330 (1), handoff 270)
 SAVE_GAP_SEASON = (0.008, 0.0485)
+# a healthy goalie's Season share after the save% gap stays at least min(his share, 0.03), and a healthy goalie taking over
+# an out-for-season one's share weighs at least 0.1 (handoff 446)
+GOALIE_SEASON_FLOOR, GOALIE_TAKER_MIN = 0.03, 0.1
 SAVE_SHRINK, LEAGUE_SAVE_PCT = (600, 1000), 0.902
 # goalie Season values ran wider than what goalies went on to score (top eighth 2.55 against 2.14, bottom 0.21 against 0.33),
 # while skaters' are calibrated: intercept + slope x (Season share x pts/start) for a goalie with any share puts them on the
@@ -1157,10 +1165,12 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
 
-def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=None, context=None, age=None):
+def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=None, context=None, age=None, two_season=False):
     """Inputs for one skater. games: his games this season, oldest first. team_games: his team's game ids, oldest first.
     p2: his per-game rates two seasons ago (findings 310 (4)), None if he didn't play then. context: his lineup_context
-    entry (None before his first game). age: his age in years on the matchup Monday, None if unknown."""
+    entry (None before his first game). age: his age in years on the matchup Monday, None if unknown. two_season: with no
+    game yet, the this-season windows fall back to last season and two seasons ago, each game counting equally (the
+    Week's FP/G, handoff 429), instead of last season alone."""
     f = {"is_D": 1.0 if is_d else 0.0, "age_m": age}
     for k in ("missed_last", "out_above_toi", "out_above_pp", "out_run", "back_last"):
         f[k] = (context or {}).get(k) if games else None
@@ -1217,6 +1227,14 @@ def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=Non
     if not games and prev:  # no game yet this season: last season stands in for the last-game inputs too (findings 213, 291 (2))
         f["last_toi"] = f["toi_l3"] = prev.get("toi")
         f["pp_l1"] = f["pp_l3"] = prev.get("pptoi")
+        if two_season and p2 and p2.get("gp") and prev.get("gp"):  # handoff 429: both seasons, GP-weighted
+            both = lambda r: (prev[r] * prev["gp"] + p2[r] * p2["gp"]) / (prev["gp"] + p2["gp"]) \
+                if prev.get(r) is not None and p2.get(r) is not None else prev.get(r)
+            for r in TWO_SEASON_RATES:
+                for w in ("l5", "l10", "l20", "std"):
+                    f[f"{w}_{r}"] = both(r)
+            f["last_toi"] = f["toi_l3"] = both("toi")
+            f["pp_l1"] = f["pp_l3"] = both("pptoi")
         for c in ("pp_rank", "toi_rank", "pp1", "top_line", "pp_share"):
             if prev.get(c) is not None:
                 f[f"r1_{c}"] = f[f"r3_{c}"] = prev[c]
@@ -1869,7 +1887,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             for gid in cands:
                 others = {x: seq.count(x) for x in set(seq) if x != gid}  # no other starter yet: no gap
                 gap = (sv.get(gid, lg) - sum(sv.get(x, lg) * n for x, n in others.items()) / sum(others.values())) * 100 if others else 0.0
-                season_share[gid] = min(max(season_share[gid] + SAVE_GAP_SEASON[0] + SAVE_GAP_SEASON[1] * gap, 0.0), 1.0)
+                # a healthy goalie keeps at least min(his share, GOALIE_SEASON_FLOOR): a weak save% can't zero a working
+                # backup (handoff 446, Spencer Martin NYR)
+                floor = min(season_share[gid], GOALIE_SEASON_FLOOR) if injury.get(gid, 1.0) > 0 else 0.0
+                season_share[gid] = min(max(season_share[gid] + SAVE_GAP_SEASON[0] + SAVE_GAP_SEASON[1] * gap, floor), 1.0)
         # out for the season, or left his last start without a decision and not yet confirmed back in net (findings 167),
         # unless ESPN already has him out: the share he loses goes to the team's other goalies, a short-term injured one
         # (out, IR) at half weight, since he is back for most of the rest (findings 216-217, 234)
@@ -1884,7 +1905,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 moved += season_share[gid] * cut
                 season_share[gid] *= 1 - cut
                 takers = [g for g in takers if g != gid]
-        wt = {g: season_share[g] * (INJURED_TAKER_WEIGHT if injury.get(g, 1.0) <= 0 else 1.0) for g in takers}
+        # a healthy taker with any share weighs at least GOALIE_TAKER_MIN (handoff 446)
+        wt = {g: season_share[g] * INJURED_TAKER_WEIGHT if injury.get(g, 1.0) <= 0
+              else max(season_share[g], GOALIE_TAKER_MIN) if season_share[g] > 0 else 0.0 for g in takers}
         tot = sum(wt.values())
         for g in takers:
             season_share[g] += moved * wt[g] / tot if tot else 0.0
@@ -1960,9 +1983,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 prv = [x for x in dates_sorted if x < d and (last_date is None or x > last_date)]
                 n1 = nxt is not None and (date.fromisoformat(nxt) - day).days == 1
                 n2 = bool(prv) and (day - date.fromisoformat(prv[-1])).days == 1
-                if n1:  # every night 1 still ahead this week, not only the next game (findings 277, handoff 339)
+                # the pair's other night already confirmed by Daily Faceoff: the rule's guess about it is settled (handoff 447)
+                if n1 and nxt not in confirmed:  # every night 1 still ahead this week, not only the next game (findings 277, handoff 339)
                     z += B2B_AHEAD_NIGHT1
-                if n2:
+                if n2 and prv[-1] not in confirmed:
                     z += B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER
                 if not n1 and not n2 and not (ahead == 0 and gap == 1):
                     z += NO1_ORDINARY_LOGIT
@@ -2478,6 +2502,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             fpg_s = model.fpg(f, season=True) if pid else fpg  # the Season rating's ridge (findings 320 (2))
+            if pid and not gl and p2 and prev.get(pid):  # no game yet: the Week leans on both past seasons (handoff 429)
+                fw = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2,
+                                     context=context.get(pid), age=age, two_season=True)
+                fw.update(ux_features(fw, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
+                fpg = model.fpg(fw)
             # opening games cut short: average with his points a game leaving those games out (findings 171)
             kept = short_opening(gl, prev.get(pid)) if pid else None
             if kept is not None:
@@ -2491,6 +2520,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if last_team and team in rosters and last_team != team and not traded and len({g["team"] for g in gl}) <= 1:
                 fpg *= OFFSEASON_MOVER_MULT
                 fpg_s *= OFFSEASON_MOVER_MULT
+            # 0-3 games: part of the way to ESPN's preseason projection (handoff 429)
+            early_w = next((w for top, w in EARLY_WEEK_ESPN if len(gl) <= top), 0.0) if pid else 0.0
+            proj_pre = p.get("proj_ppg_pre", p.get("proj_ppg"))
+            if early_w and proj_pre is not None:
+                fpg += early_w * (proj_pre - fpg)
             df_, base_dress, cap = None, None, 1.0
             if pid is None or (not gl and p["team"] == "FA"):  # not in NHL stats, or unsigned and yet to play (findings 216)
                 p_dress = NOT_PLAYING_DRESS
@@ -2538,7 +2572,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 news_z, news_why = news_season_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sx["os_k"], sx["gp_now"], now_utc)
                 z = model.season_dress_logit(sx, NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                              + CLEARED_SEASON_LOGIT * cleared_out)
-                if boost_dress and pid in boost_x:  # part of the way to the 16-season boosted share (findings 360 (3))
+                # part of the way to the 16-season boosted share (findings 360 (3)); not for a skater ESPN lists on a team he
+                # hasn't played for yet, whose inputs count his old team's games since the trade as absences (handoff 442)
+                if boost_dress and pid in boost_x and not traded:
                     q = min(max(season_boost.predict(boost_dress, boost_x[pid]), 0.01), 0.99)
                     z += BOOST_DRESS_W * (math.log(q / (1 - q)) - z)
                     boost_q = q
@@ -2561,8 +2597,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 season, rest_share = fpg_s * p_dress, p_dress
             if season_share is not None:
                 season, rest_share = fpg_s * season_share, season_share
-            # Proj GP: NHL games so far + the Season share of his ESPN team's games still to play
-            proj_gp = len(gl) + rest_share * max(SEASON_GAMES - len(team_games.get(espn_team, [])), 0)
+            # Proj GP: NHL games so far + the Season share of his ESPN team's games still to play (his NHL team's for an ESPN
+            # free agent with games, handoff 443)
+            games_left_season = max(SEASON_GAMES - len(team_games.get(espn_team) or team_games.get(team, [])), 0)
+            proj_gp = len(gl) + rest_share * games_left_season
             age_adj = season_age_adj(births.get(pid), today) if pid else 0.0
             if fpg_s > 0:
                 season *= max(fpg_s + age_adj, 0.0) / fpg_s
@@ -2574,9 +2612,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 g = min(len(gl), 40) / 40
                 fpg_t = season / rest_share
                 shift = 0.0
-                if p.get("proj_ppg") is not None:
+                proj = p.get("proj_ppg_pre", p.get("proj_ppg"))  # his first-seen projection this season (handoff 445)
+                if proj is not None:
                     espn_w = ESPN_PROJ_BLEND[0] + ESPN_PROJ_BLEND[1] * g + ESPN_PROJ_BLEND[2] * g * g
-                    shift += (p["proj_ppg"] - fpg_t) * espn_w
+                    shift += (proj - fpg_t) * espn_w
                 if boost_fpg and pid in boost_x:
                     boost_f = season_boost.predict(boost_fpg, boost_x[pid])
                     shift += (boost_f - fpg_t) * (BOOST_FPG_BLEND[0] + BOOST_FPG_BLEND[1] * g)
@@ -2705,6 +2744,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["boost_fpg"] = round(boost_f, 2)  # the 16-season boosted FP/G (findings 360 (4))
             if espn_w:
                 why["espn_blend"] = round(espn_w, 2)  # share of the gap to ESPN's preseason projection (findings 360 (2))
+                if p.get("proj_ppg_pre") is not None:
+                    why["espn_proj"] = p["proj_ppg_pre"]  # the first-seen projection the blend used (handoff 445)
             if news_why:
                 why["season_news"] = news_why  # Daily Faceoff news in the Season share (findings 360 (1))
             if season_share is not None:
@@ -2715,8 +2756,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             rng, exp = model.season_range(season, p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
                                           (today - births[pid]).days / 365.25 if pid in births else None) if pid else (None, None)
             if gl and pid:  # his team's open lineup spots, once every share is known (findings 370, below)
-                lineup.append({"p": p, "pid": pid, "team": gl[-1]["team"], "isD": gl[-1].get("pos") == "D", "share": rest_share,
-                               "pts": season_pts, "gp": len(gl), "left": max(SEASON_GAMES - len(team_games.get(espn_team, [])), 0),
+                # a traded skater yet to play for his new team counts in the new team's lineup (handoff 442)
+                lineup.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
+                               "share": rest_share, "pts": season_pts, "gp": len(gl), "left": games_left_season,
                                "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
                                          (today - births[pid]).days / 365.25 if pid in births else None)})
             if pid and season_pts is not None:  # the league-wide F/D scoring drift, once every Season FP/G is known (handoff 405)
