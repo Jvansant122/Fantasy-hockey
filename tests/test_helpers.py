@@ -536,3 +536,13 @@ def test_backup_run_skips_once_the_latest_slot_published():
     assert slot_gate.should_skip("2026-11-01T22:12:00Z", utc(2026, 11, 2, 10, 41)) is True
     assert slot_gate.latest_slot(utc(2026, 11, 2, 11, 15)).strftime("%H:%M") == "06:10"
     assert slot_gate.should_skip(None, utc(2026, 11, 2, 11, 15)) is False
+
+
+def test_lineup_cutoff_is_the_last_finished_game_not_the_one_on_now():
+    """A game in progress isn't the team's last game yet: its lineup, posted before its puck drop, still counts, and the
+    cutoff is the game before it (handoff 491: Makar flagged as sat last game 22 minutes after DFO listed him)."""
+    teams = {1: {"abbrev": "Col", "starts": {15: "2026-10-13T01:00:00Z", 17: "2026-10-15T01:00:00Z", 19: "2026-10-17T01:00:00Z"}},
+             2: {"abbrev": "TOR", "starts": {17: "2026-10-14T23:00:00Z"}}}
+    out = fetch.last_finished_starts(teams, "2026-10-15T02:20:00Z")
+    assert out == {"COL": "2026-10-13T01:00:00Z"}  # COL's game started 80 minutes ago; TOR's only game is still on
+    assert fetch.last_finished_starts(teams, "2026-10-15T05:30:00Z") == {"COL": "2026-10-15T01:00:00Z", "TOR": "2026-10-14T23:00:00Z"}

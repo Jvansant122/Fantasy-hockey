@@ -1136,6 +1136,16 @@ Tests. New tests check rules across every team and clock, so they catch whole ki
 
 Readability. Column headers now carry units and hover explanations, ESPN's columns are labelled as ESPN's, and a one-line key explains Week, Season and the badge. The nights strip says what the big number is and greys out nights that are over. Played games show as hollow dots. Card lines use one format with units, the Drop list names each replacement once, and the details panel is broken into labelled lines. The footer leads with a short key and folds the formulas. Predicted winners shows games still to play first and folds finished days, and matchup cards label their numbers.
 
+## 156. Lineups during a game, waiver goalies, a per-game lineup fit and a tighter rookie range
+
+Week lineups add up per game. A team dresses 12 forwards and 6 defencemen every night, so each team game's chances to dress now add up to that. When a team's listed skaters sum to more than its spots for a game, each one's chance for that game comes down a little; when there's room (injuries, a call-up still to arrive), the fringe players come up. Replayed over two seasons (117,700 player-games), fitting on one and scoring on the other, it cut the Week's dress-chance error by about half a point in both seasons, and by more for players out right now.
+
+Lineups during a game. While a team's game is on, its Daily Faceoff lineup for that game now still counts. Before, the update treated it as stale the moment the puck dropped, so a regular like Cale Makar, listed on the top pair 22 minutes before puck drop, showed as "sat last game" and lost chance to dress.
+
+Waiver goalies. A goalie on waivers gets start chances only on the nights after he clears, and his Week games are those chances added up. Before, he kept chances on nights he can't play for you. A new publish check stops any goalie whose chances by night don't add up to his Week games.
+
+Rookie range. The Season 80% range for low-rated rookies is narrower: forwards -28% to +38% (was -38% to +51%), defencemen -31% to +47% (was -44% to +50%). In every held-out season the band now covers closer to 80%, and about 10% of these rookies finish above the top of it, as intended. Ratings don't move.
+
 ## What the independent review changed
 
 | Review point | Outcome |

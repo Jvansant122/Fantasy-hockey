@@ -153,7 +153,7 @@ def rules(data):
         teams = sum(n["sp"] in v for k, v in team_nights.items() if k != "FA")
         if teams > 2 * n["games"]:
             out.append(f"N2 {n['date']}: {teams} teams play but {n['games']} games")
-    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2", "P7", "G4")}
+    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2", "P7", "G4", "G6")}
     for p in players:
         nm = f"{p['name']} ({p['team']})"
         pn = p.get("nights") or []
@@ -198,6 +198,13 @@ def rules(data):
         if p["pos"] == "G" and p["team"] != "FA" and not p.get("injury") and p.get("cr_matched") \
                 and (why.get("exp_starts") or 0) >= 0.05 and p.get("cr_season") is not None and not p["cr_season"] > 0:
             bad["G4"].append(f"{nm} exp_starts {why.get('exp_starts')} but Season {p['cr_season']}")
+        # G6 a goalie's start chances on the matchup's nights still to come sum to his expected games: a waiver goalie
+        # kept chances on nights before he clears (handoff 492). Tonight's game drops out once it starts.
+        if p["pos"] == "G" and p.get("cr_g_nights") is not None and p.get("cr_games") is not None:
+            started = p.get("today_start") and data.get("updated_utc") and p["today_start"] <= data["updated_utc"]
+            qs = [q for sp, q in p["cr_g_nights"].items() if int(sp) in ahead and not (started and int(sp) == today_sp)]
+            if abs(sum(qs) - g) > 0.011 + 0.005 * len(qs):
+                bad["G6"].append(f"{nm} nights {p['cr_g_nights']} sum {round(sum(qs), 2)} != cr_games {g}")
         # G1 a goalie's expected starts never above his games left or his team's games
         es = why.get("exp_starts") if p["pos"] == "G" else None
         if es is not None and (es > p["games_left"] + EPS or why.get("team_games", p["games_left"]) < es - EPS):
@@ -302,8 +309,10 @@ def warnings(data, prev):
     # G5 each NHL team's goalies' start chances on each night still to come sum to about 1: a confirmed starter matched
     # to nobody zeroes the whole team's night (handoff 454); a double count goes over. 170 versions to Oct 15: 0.69-1.00
     g_night = {}
+    # a waiver goalie has no chances on nights before he clears (handoff 492), so his team's nights can't be summed
+    waiver_teams = {p["team"] for p in players if p["pos"] == "G" and p.get("owner") == "waivers"}
     for p in players:
-        if p["pos"] == "G" and p["team"] != "FA":
+        if p["pos"] == "G" and p["team"] != "FA" and p["team"] not in waiver_teams:
             for sp, q in (p.get("cr_g_nights") or {}).items():
                 if int(sp) in ahead:
                     g_night[(p["team"], sp)] = g_night.get((p["team"], sp), 0.0) + q

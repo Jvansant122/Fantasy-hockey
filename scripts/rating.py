@@ -248,6 +248,9 @@ NEWS_STALE_DAYS = 2
 # lineup spots per team (12 F, 6 D) and the slack weights on the Season dress logit (findings 370, handoff 350)
 LINEUP_SPOTS = {False: 12, True: 6}
 LINEUP_SLACK = (1.34, 2.84)
+# Week: per team game, the same open spots from the per-game Week chances themselves; logit += over x min(s, 0) + room x
+# max(s, 0), s = open spots / 3 (handoff 489, findings 402: Brier -0.50 / -0.57 points, fits 2.23/1.14 and 1.98/0.96)
+WEEK_SLACK = (2.0, 1.0)
 # ESPN's preseason projected FP/G blended into the Season FP/G (after the age term) with weight a + b g + c g^2,
 # g = min(GP, 40)/40: 0.29 at 0 games, about 0.07-0.08 from 30 games on (findings 360 (2), handoffs 331-332)
 ESPN_PROJ_BLEND = (0.29, -0.57, 0.35)
@@ -1560,6 +1563,49 @@ def lineup_chain_share(k, p_out, h, n):
     return tot / max(n, 1)
 
 
+def week_slack(rows, boost_x, boost_week):
+    """Open lineup spots per team game in the Week (handoff 489, findings 402): per NHL team, position group and remaining
+    game date, LINEUP_SPOTS minus the summed per-game Week chances of its skaters with games this season (team = his
+    latest). Skaters not on the site count with the boosted next-week share on each of those dates. Each listed skater's
+    chance for that game moves by WEEK_SLACK[0] x min(s, 0) + WEEK_SLACK[1] x max(s, 0) on the logit, s = open spots / 3,
+    under his caps; chances at or under 0.001 stay. One pass, from the chances before this step; then games, the week's
+    average, the next game and the Week rating follow."""
+    sums, counts, seen = {}, {}, set()
+    for r in rows:
+        if r["pid"] in seen:
+            continue
+        seen.add(r["pid"])
+        counts[(r["team"], r["isD"])] = counts.get((r["team"], r["isD"]), 0) + 1
+        for d, q in zip(r["dates"], r["per_game"]):
+            sums[(r["team"], r["isD"], d)] = sums.get((r["team"], r["isD"], d), 0.0) + q
+    if boost_week:
+        dates = {}
+        for team, isD, d in sums:
+            dates.setdefault((team, isD), set()).add(d)
+        for pid, x in boost_x.items():
+            key = (x["team"], x["isD"] == 1.0)
+            if pid in seen or key not in dates:
+                continue
+            b = min(max(season_boost.predict(boost_week, x), BOOST_WEEK_CLIP[0]), BOOST_WEEK_CLIP[1])
+            counts[key] = counts.get(key, 0) + 1
+            for d in dates[key]:
+                sums[key + (d,)] += b
+    for r in rows:
+        # fewer players than spots means missing game logs, not open spots: leave that group alone
+        if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
+            continue
+        p = r["p"]
+        slack = [(LINEUP_SPOTS[r["isD"]] - sums[(r["team"], r["isD"], d)]) / 3 for d in r["dates"]]
+        per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0)))), c)
+                    for q, s, c in zip(r["per_game"], slack, r["caps"])]
+        games = sum(per_game)
+        p["cr_why"]["week_slack"] = round(3 * slack[0], 1)
+        p["cr_games"] = round(games, 2)
+        p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+        p["cr_dress"] = round(games / len(per_game), 2)
+        p["cr_dress_next"] = round(per_game[0], 2)
+
+
 def lineup_slack(lineup, boost_x, boost_dress, model):
     """Open lineup spots (findings 370, handoff 350): per NHL team and position group, LINEUP_SPOTS minus the summed Season
     dress shares of its skaters with games this season (team = his latest). Skaters not on the site count with the boosted
@@ -2480,6 +2526,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
 
     unmatched = 0
     lineup = []  # skaters with games this season, for the lineup-slot step (findings 370)
+    week_rows = []  # skaters' per-game Week chances by date, for the per-game lineup step (handoff 489)
     drift_rows = []  # every skater's Season FP/G, for the league-wide scoring drift (handoff 405)
     season_open = min((g["date"] for g in games), default=None)
     injury_log = []
@@ -2509,9 +2556,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if started:
                 starts = max(0.0, starts - goalie_today.get(pid, 0.0)) if pid else 0.0
             # on waivers he misses his team's games before he clears (findings 122): keep that share of the starts
-            team_left = len([d for d in sched.get(team, []) if d > today.isoformat() or (d == today.isoformat() and not started)])
-            if p.get("owner") == "waivers" and team_left > p["games_left"]:
-                starts *= p["games_left"] / team_left
+            left_dates = [d for d in sched.get(team, []) if d > today.isoformat() or (d == today.isoformat() and not started)]
+            team_left = len(left_dates)
+            # on waivers, only the nights after he clears are his (handoff 492)
+            playable = (set(left_dates[max(team_left - p["games_left"], 0):]) if p["games_left"] else set()) \
+                if p.get("owner") == "waivers" else None
+            if playable is not None and team_left > p["games_left"]:
+                # his share of the starts on those nights, by each night's start chance
+                by_night = goalie_nights.get(pid, {}) if pid else {}
+                total = sum(by_night.get(d, 0.0) for d in left_dates)
+                starts *= (sum(by_night.get(d, 0.0) for d in playable) / total) if total > 0 else p["games_left"] / team_left
             # dropped after today's first puck: his team keeps him only until ESPN's overnight rollover (findings 241 (3))
             if p.get("pending_drop"):
                 starts = min(starts, goalie_today.get(pid, 0.0) if pid and p["games_left"] else 0.0)
@@ -2534,7 +2588,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 + (goalie_season.get(pid, 0.0) if pid else 0.0) * max(SEASON_GAMES - len(team_games.get(team, [])), 0)
             # start chance per game from today, for the page's open-slot count (findings 236)
             p["cr_g_nights"] = {d: round(q, 2) for d, q in sorted(goalie_nights.get(pid, {}).items())
-                                if not p.get("pending_drop") or d <= today.isoformat()} if pid else {}
+                                if (not p.get("pending_drop") or d <= today.isoformat()) and (playable is None or d in playable)} if pid else {}
             # this week's starts: 0.4 of his gap to the league rate, then the line or the schedule (findings 231 (8))
             fpg = league_pps + WEEK_PPS_KEEP * (fpg - league_pps)
             # tonight's game priced by the betting line: that + 4.1 x (win probability - 0.5) per start
@@ -2802,6 +2856,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             exp_games = sum(per_game)
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
+            if gl and pid and per_game:
+                caps = [min(cap, inj)] * len(per_game)
+                if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p):
+                    caps[0] = min(caps[0], OUT_TODAY_CAP)
+                week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
+                                  "dates": wk_dates, "per_game": list(per_game), "caps": caps})
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
@@ -2873,6 +2933,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
 
     season_drift(drift_rows, model)
     lineup_slack(lineup, boost_x, boost_dress, model)
+    week_slack(week_rows, boost_x, boost_week)
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)
     by_nhl = {p["nhl_id"]: p for p in players if p.get("nhl_id") and p["pos"] != "G"}

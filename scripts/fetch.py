@@ -219,6 +219,21 @@ def schedule_fields(team, sched, first_sp, today_start, run_utc, last_sp=None):
             "today_start": today_start}
 
 
+GAME_HOURS = 4  # a game that started less than this long ago may still be on (handoff 491)
+
+
+def last_finished_starts(teams, run_utc):
+    """{NHL abbrev: UTC ISO start of the team's last finished game}. A game in progress doesn't count: its lineup was
+    posted before its puck drop, and the rating's "sat last game" still means the game before it (handoff 491)."""
+    cutoff = utc_iso(datetime.fromisoformat(run_utc.replace("Z", "+00:00")) - timedelta(hours=GAME_HOURS))
+    out = {}
+    for t in teams.values():
+        done = [v for v in t.get("starts", {}).values() if v and v <= cutoff]
+        if done:
+            out[ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper())] = max(done)
+    return out
+
+
 def nights_by_sp(by_date, today_et, today_sp):
     """{date ISO: value} -> {scoring period: value}; one scoring period is one day."""
     out = {}
@@ -678,8 +693,7 @@ def main():
         lineups = leads.last_logged("lineups", datetime.now(ET).replace(tzinfo=None))  # last good copy (findings 230)
         if lineups is not None:
             lead_errors["lineups"] += " (used the last logged copy)"
-    last_start = {ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()): max(v for v in t["starts"].values() if v <= run_utc)
-                  for t in teams.values() if any(v <= run_utc for v in t.get("starts", {}).values())}
+    last_start = last_finished_starts(teams, run_utc)
     leads.mark_lineups(players, lineups, ESPN_TO_NHL, last_start)
     injuries = None
     try:  # ESPN injury notes: long absences go to 0 in the weekly rating (findings section 58)
@@ -713,7 +727,9 @@ def main():
                     reschedule=reschedule, dfo_news=news, winners=winners)
         for p in players:  # goalie start chances by night, keyed like nights (findings 236)
             if p["pos"] == "G" and "cr_g_nights" in p:
-                p["cr_g_nights"] = nights_by_sp(p["cr_g_nights"], today_et, today_sp)
+                # only nights he counts for: a waiver goalie's nights before he clears aren't his (handoff 492)
+                p["cr_g_nights"] = {sp: q for sp, q in nights_by_sp(p["cr_g_nights"], today_et, today_sp).items()
+                                    if sp in p.get("nights", ())}
         rated = True
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
