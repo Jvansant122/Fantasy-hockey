@@ -62,6 +62,7 @@ How good is it overall? Ranking skaters on next week's points per game, the rati
 - two seasons ago (PR #111), and forecasts of next week's ice time and power-play time from small models of his recent games, last season, who missed his team's last game and his line and PP-unit slot in it (PRs #110, #114);
 - 66 products of the 12 strongest inputs, so a role change counts more for an efficient scorer and the model can bend (PR #110).
 
+- Ice-time forecasts (handoffs 668-669): the Season rating forecasts next week's ice time and power-play time with boosted trees (`model/season_boost_toi.json`, `season_boost_pptoi.json`) before its per-minute scoring inputs are built; the Week rating keeps linear forecasts, with more recent-usage windows, squares and defenseman × ice-time inputs.
 Week only (PR #115, #118, #122): the 12 strongest inputs also enter as bends at five levels each (60 hinge inputs), the goals target is 80% goals and 20% next week's expected goals, with "finishing luck" inputs (goals above expected this season and last), flags for a fresh top-line or PP1 promotion, bends for players under 24 and over 29, and a small cut for players back from missed games. Season only (PRs #110, #116): an age adjustment (+0.01 a game per year under 24, -0.009 per year over 29) and 24 inputs that build points from parts: per-minute scoring rates × forecast ice time, his share of on-ice goals × on-ice expected goals, and forecast penalty-kill time. Measured in two steps, each on top of the model before it and better in every season: the forecasts, products and two-seasons-ago inputs lifted the weekly ranking +0.0016 (free agents +0.0032), and the Week-only bends, luck, promotion, age and return terms a further +0.0018 (+0.0032). The Season decomposition is worth +0.16 points a week in the hold-or-drop simulation.
 
 **Season points per game after the model.** Four more steps move the Season number (not the Week), each measured from the same starting value. Let g = his games this season (capped at 40) / 40:
@@ -182,10 +183,10 @@ Fallbacks: before his team has played, 90% if he played last season (50% if not)
 | Injured reserve | 5% for a game the same day, 15% the next day, 25% after that (PR #199) |
 | OUT or IR, and Daily Faceoff says he is practising (PR #164) | 50%, like day-to-day |
 | Suspended | 0 for the games still to serve (length from ESPN's note, counting his team's games since it); no stated length: 0 / 17% / 44% / 61% / 68% / 82% for games 1-6+ since the listing (PR #199); a note saying indefinitely or rest of the season with no length stays 0 |
-| Note says surgery, season-ending, month-to-month, indefinitely or no timetable | 0 |
+| Note says surgery, season-ending, month-to-month, indefinitely or no timetable | 0 ("unclear when he'll return" alone keeps the status cap, handoff 672) |
 | Note's only long word is week-to-week | 5% for a game today or tomorrow, 20% after that (handoff 657) |
 | Note's only long reason is "several" or "a few weeks", or a return 14+ days away | 10% today or tomorrow, 30% after that (handoff 657) |
-| Note's only long word is LTIR | 5% |
+| Note says LTIR (with any other long word but surgery or season-ending) | 5% (handoff 673) |
 
 The softer OUT and IR caps shipped in PR #24; before that OUT and IR were 0.
 
@@ -205,7 +206,7 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 
 **How much it matters:** ESPN's flag removes the lag in the dress model, which is built from games already played (on Oct 8, six OUT players were still rated 87-95% likely to dress). The softer caps lifted the weekly ranking by +0.007 overall and +0.009 in the free-agent pool (an independent rebuild found +0.011 to +0.013). The minutes-based day-to-day caps cut prediction error by a third in both seasons (players who left their last game hurt dressed 8-24% of the next games; full minutes 79-97%). The gain is mostly in how your own injured players are projected: drop list, Mid-week swaps, who to bench.
 
-**What it doesn't affect:** the Season rating (ESPN's status doesn't cut it, so an injured star still rates as a star there, though Daily Faceoff news of surgery, a season-ending injury or a send-down does; part 4), points per game. A detailed model by body part and stated timeline did worse than the simple caps, and caps rising by game number tested worse too.
+**What it doesn't affect:** the Season rating (ESPN's status doesn't cut it, so an injured star still rates as a star there, though Daily Faceoff news of surgery, a season-ending injury or a send-down does; since PR #202 so does ESPN's own stated timeline or out-for-the-season note for a skater out now; part 4), points per game. A detailed model by body part and stated timeline did worse than the simple caps, and caps rising by game number tested worse too.
 
 ## 4. Rest-of-season availability (Season rating, skaters)
 
@@ -219,6 +220,8 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 - **New and part-time skaters who stick (PR #142):** a player with no NHL games last season, or 1-40, who has stuck this season keeps his spot (up to 40 games); one new to the NHL with 5 or fewer games is expected back down more often.
 
 **Daily Faceoff news (PRs #144, #149).** On the log-odds scale, from Daily Faceoff items since his last game: sent down and out since, −0.82 + 0.18 × ln(1 + team games out); called up in the last 60 days and in the lineup, −0.18 + 0.18 × (games this season, capped at 40) / 40; season-ending wording −1.5 (otherwise "out indefinitely", "long-term" or "several months" −0.3); surgery −0.33. If the news can't be read for two days these switch off. Tested on 2023-26, the news ranks rest-of-season points 0.0018 better in every season (free agents 0.003).
+
+**ESPN's note for a skater out now (PR #202).** He missed his team's last game with an ESPN status: −0.6 × min(stated days left / 2.2 / his team's games left, 1) on the log-odds; an out-for-the-season note −3.0 unless Daily Faceoff's season-ending item already applied (findings 488).
 
 **A boosted model trained on 16 seasons (PRs #146, #165).** A gradient-boosted model fitted offline on 2010-26 game logs (games and ice time, recent absences, last season, age, draft slot, NHL seasons, teammates out at his position; `model/season_boost_dress.json`) predicts his share of the rest of the season. The Season log-odds move 56% of the way to its answer; the news above is added after this step. It also trains on each season's first two weeks, which lifted the early-season Season dress ranking from 0.452 to 0.471.
 

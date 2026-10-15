@@ -1583,11 +1583,16 @@ def injury_note(note, today):
     for m in [*LONG_ABSENCE.finditer(short), *LONG_OWN.finditer(mine)]:
         w = m.group(0).lower()
         kinds.add("wtw" if w == "week-to-week" else "ltir" if "injured reserve" in w or w == "ltir"
-                  else "timeline" if w.endswith("weeks") else "words")
+                  else "timeline" if w.endswith("weeks") else "unclear" if w.startswith("unclear") else "words")
     if left is not None and left >= 14:
         kinds.add("timeline")
-    why = None if not long_abs else "words" if season or "words" in kinds or ("ltir" in kinds and len(kinds) > 1) \
-        else "ltir" if "ltir" in kinds else "wtw" if "wtw" in kinds else "timeline"
+    # "unclear when he'll return" is the only long reason: the Week reads the note as not long (hunt14/audit5, t_site_long3.py)
+    k2 = kinds - {"unclear"}
+    # LTIR wins over the other long words but surgery and the season, as the replay grouped it (hunt14/audit5, t_ltir_mix.py)
+    surgery = bool(re.search(r"surgery|surgical|\boperation\b", short, re.I))
+    why = None if not long_abs else "unclear" if not k2 and not season \
+        else "words" if season or surgery else "ltir" if "ltir" in k2 \
+        else "words" if "words" in k2 else "wtw" if "wtw" in k2 else "timeline"
     return {"long": long_abs, "season": season, "days_left": left, "long_why": why}
 
 
@@ -3162,6 +3167,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if n.get("fpg_mult") is not None:
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
+            if note and note["long_why"] == "unclear":  # only "unclear when he'll return": dressed 25-30% of games (audit5)
+                note = {**note, "long": False, "long_why": None}
             long_caps = LONG_NOTE_CAPS.get(note.get("long_why")) if note and note["long"] else None
             inj = (max(long_caps) if long_caps else 0.0) if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
             # OUT for one named game that his team has since played: day-to-day, as ESPN has him by the next morning (findings 236)
