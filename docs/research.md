@@ -1284,7 +1284,7 @@ Section 170 lowers the chance of the depth player with the fewest minutes at his
 
 ## 187. Older goalies' share of the rest of the season
 
-Goalies over 30 hand more of their team's remaining starts to their partner as the season goes on than their share so far suggests. The Season rating now trims an older goalie's share a little for each year over 30, scaled by how many team games are left. Better in every season tested.
+Goalies over 30 hand more of their team's remaining starts to their partner as the season goes on than their share so far suggests. The Season rating now trims an older goalie's share a little for each year over 30, scaled by how many team games are left, keeping the small floor a working backup always has. Better in every season tested.
 
 ## 188. Goalie points per start, by experience
 

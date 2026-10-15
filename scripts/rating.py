@@ -2252,10 +2252,12 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 # backup (handoff 446, Spencer Martin NYR)
                 floor = min(season_share[gid], GOALIE_SEASON_FLOOR) if injury.get(gid, 1.0) > 0 else 0.0
                 season_share[gid] = min(max(season_share[gid] + SAVE_GAP_SEASON[0] + SAVE_GAP_SEASON[1] * gap, floor), 1.0)
-        # older goalies lose share with games left, not handed to partners (handoff 640); ages: {id: years}
+        # older goalies lose share with games left, not handed to partners (handoff 640); ages: {id: years}. A healthy
+        # one keeps the same floor as the save% term, so a working backup the Week expects to start isn't zeroed (rule G4)
         for gid in cands:
             if (ages or {}).get(gid) is not None:
-                season_share[gid] = max(season_share[gid] - GOALIE_AGE_SEASON * (team_left / 82) * max(ages[gid] - 30, 0), 0.0)
+                floor = min(season_share[gid], GOALIE_SEASON_FLOOR) if injury.get(gid, 1.0) > 0 else 0.0
+                season_share[gid] = max(season_share[gid] - GOALIE_AGE_SEASON * (team_left / 82) * max(ages[gid] - 30, 0), floor)
         # out for the season, or left his last start without a decision and not yet confirmed back in net (findings 167),
         # unless ESPN already has him out: the share he loses goes to the team's other goalies, a short-term injured one
         # (out, IR) at half weight, since he is back for most of the rest (findings 216-217, 234)
