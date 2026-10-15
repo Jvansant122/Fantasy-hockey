@@ -1,8 +1,8 @@
 {
- "updated": "Thu Oct 15, 6:55 PM ET",
+ "updated": "Thu Oct 15, 6:59 PM ET",
  "updated_date": "2026-10-15",
  "first_start": "2026-10-15T23:00:00Z",
- "updated_utc": "2026-10-15T22:55:41Z",
+ "updated_utc": "2026-10-15T22:59:22Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -4012,7 +4012,7 @@
     "p_home": null,
     "inputs": {
      "pts": [
-      8.47,
+      8.67,
       10.37
      ],
      "gd": [
@@ -4915,11 +4915,11 @@
     "away": "DAL",
     "home_name": "Blackhawks",
     "away_name": "Stars",
-    "p_home": 0.386,
+    "p_home": 0.378,
     "inputs": {
      "pts": [
       7.44,
-      8.47
+      8.67
      ],
      "gd": [
       -0.8,
@@ -5326,10 +5326,10 @@
      "id": 3,
      "name": "6 Foot Kings Only",
      "now": 38.2,
-     "rest": 69.9,
-     "total": 108.1
+     "rest": 70.0,
+     "total": 108.2
     },
-    "p_home": 0.707,
+    "p_home": 0.704,
     "sd": 14.9
    },
    {
@@ -28830,7 +28830,7 @@
     "missing_regs_pp": -0.01,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 59,
    "cr_season_pct": 94
@@ -31517,7 +31517,7 @@
     "missing_regs_pp": -0.016,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 54,
    "cr_season_pct": 92
@@ -40046,7 +40046,7 @@
     "missing_regs_pp": -0.02,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 36,
    "cr_season_pct": 79
@@ -41514,6 +41514,101 @@
    "cr_season_pct": 18
   },
   {
+   "id": 4874740,
+   "name": "Wyatt Johnston",
+   "team": "DAL",
+   "games": 3,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 0,
+   "nights": [
+    15,
+    16,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "C",
+   "slots": [
+    "C",
+    "F",
+    "RW"
+   ],
+   "owner": "other",
+   "team_id": 3,
+   "ir": false,
+   "bench": true,
+   "injury": "DAY_TO_DAY",
+   "owned": 97.1,
+   "gp": 5,
+   "ppg": 2.24,
+   "cur_ppg": 1.58,
+   "last_ppg": 2.51,
+   "last_gp": 82,
+   "proj_ppg": 2.36,
+   "clears": null,
+   "dfo_out": true,
+   "proj_ppg_pre": 2.36,
+   "cr": 1.56,
+   "cr_fpg": 2.08,
+   "cr_season": 1.69,
+   "proj_gp": 66,
+   "cr_games": 0.75,
+   "cr_dress": 0.75,
+   "cr_dress_next": 0.75,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482740,
+   "cr_why": {
+    "toi5": 19.97,
+    "toi": 19.97,
+    "pp5": 3.77,
+    "sog": 2.2,
+    "blk": 0.8,
+    "gp": 5,
+    "last_fpg": 2.51,
+    "xfp": {
+     "gp": 5,
+     "fpg": 1.58,
+     "xfpg": 2.31
+    },
+    "season_fpg": 2.1,
+    "opp_last": {
+     "ga": 0.065,
+     "move": 0.012
+    },
+    "toi_chg": 0.001,
+    "week_news": {
+     "shift": 0.87,
+     "move": 0.001,
+     "why": [
+      "could return",
+      "set to return"
+     ]
+    },
+    "boost_week": 1.43,
+    "boost_week_move": 0.33,
+    "season_pts": 2.14,
+    "boost_dress": 0.82,
+    "boost_fpg": 2.07,
+    "espn_blend": 0.22,
+    "espn_proj": 2.36,
+    "season_range": [
+     1.12,
+     2.19
+    ],
+    "back": {
+     "games": "3"
+    },
+    "missing_regs_pp": -0.031,
+    "lineup_slack": 1.3,
+    "missing_regs": -0.2,
+    "week_slack": 0.3
+   },
+   "cr_pct": 33,
+   "cr_season_pct": 86
+  },
+  {
    "id": 4565263,
    "name": "Nils Hoglander",
    "team": "NSH",
@@ -42371,7 +42466,7 @@
     "missing_regs": -0.14,
     "week_slack": 0.0
    },
-   "cr_pct": 32,
+   "cr_pct": 31,
    "cr_season_pct": 15
   },
   {
@@ -42959,7 +43054,7 @@
     "missing_regs": -0.12,
     "week_slack": -0.2
    },
-   "cr_pct": 31,
+   "cr_pct": 30,
    "cr_season_pct": 68
   },
   {
@@ -43217,7 +43312,7 @@
     "missing_regs": -0.28,
     "week_slack": -0.4
    },
-   "cr_pct": 30,
+   "cr_pct": 29,
    "cr_season_pct": 14
   },
   {
@@ -43387,7 +43482,7 @@
     "missing_regs": -0.03,
     "week_slack": 1.1
    },
-   "cr_pct": 30,
+   "cr_pct": 29,
    "cr_season_pct": 65
   },
   {
@@ -43471,7 +43566,7 @@
     "missing_regs": -0.12,
     "week_slack": -0.2
    },
-   "cr_pct": 30,
+   "cr_pct": 29,
    "cr_season_pct": 73
   },
   {
@@ -44840,7 +44935,7 @@
     "missing_regs_pp": -0.031,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 28,
    "cr_season_pct": 44
@@ -45012,7 +45107,7 @@
     "missing_regs": -0.06,
     "week_slack": 0.2
    },
-   "cr_pct": 28,
+   "cr_pct": 27,
    "cr_season_pct": 53
   },
   {
@@ -45577,7 +45672,7 @@
     "missing_regs": -0.16,
     "week_slack": 0.8
    },
-   "cr_pct": 27,
+   "cr_pct": 26,
    "cr_season_pct": 57
   },
   {
@@ -45738,7 +45833,7 @@
     "missing_regs_pp": -0.02,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 26,
    "cr_season_pct": 47
@@ -46076,9 +46171,9 @@
     "missing_regs_pp": -0.019,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
-   "cr_pct": 26,
+   "cr_pct": 25,
    "cr_season_pct": 37
   },
   {
@@ -46166,7 +46261,7 @@
     "missing_regs": -0.05,
     "week_slack": -1.1
    },
-   "cr_pct": 26,
+   "cr_pct": 25,
    "cr_season_pct": 17
   },
   {
@@ -46910,7 +47005,7 @@
     "missing_regs": -0.12,
     "week_slack": -0.4
    },
-   "cr_pct": 24,
+   "cr_pct": 23,
    "cr_season_pct": 27
   },
   {
@@ -47203,105 +47298,10 @@
     "missing_regs_pp": -0.031,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 23,
    "cr_season_pct": 25
-  },
-  {
-   "id": 4874740,
-   "name": "Wyatt Johnston",
-   "team": "DAL",
-   "games": 3,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 0,
-   "nights": [
-    15,
-    16,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "C",
-   "slots": [
-    "C",
-    "F",
-    "RW"
-   ],
-   "owner": "other",
-   "team_id": 3,
-   "ir": false,
-   "bench": true,
-   "injury": "DAY_TO_DAY",
-   "owned": 97.1,
-   "gp": 5,
-   "ppg": 2.24,
-   "cur_ppg": 1.58,
-   "last_ppg": 2.51,
-   "last_gp": 82,
-   "proj_ppg": 2.36,
-   "clears": null,
-   "dfo_out": true,
-   "proj_ppg_pre": 2.36,
-   "cr": 1.04,
-   "cr_fpg": 2.08,
-   "cr_season": 1.69,
-   "proj_gp": 66,
-   "cr_games": 0.5,
-   "cr_dress": 0.5,
-   "cr_dress_next": 0.5,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482740,
-   "cr_why": {
-    "toi5": 19.97,
-    "toi": 19.97,
-    "pp5": 3.77,
-    "sog": 2.2,
-    "blk": 0.8,
-    "gp": 5,
-    "last_fpg": 2.51,
-    "xfp": {
-     "gp": 5,
-     "fpg": 1.58,
-     "xfpg": 2.31
-    },
-    "season_fpg": 2.1,
-    "opp_last": {
-     "ga": 0.065,
-     "move": 0.012
-    },
-    "toi_chg": 0.001,
-    "week_news": {
-     "shift": 0.87,
-     "move": 0.0,
-     "why": [
-      "could return",
-      "set to return"
-     ]
-    },
-    "boost_week": 1.43,
-    "boost_week_move": 0.08,
-    "season_pts": 2.14,
-    "boost_dress": 0.82,
-    "boost_fpg": 2.07,
-    "espn_blend": 0.22,
-    "espn_proj": 2.36,
-    "season_range": [
-     1.12,
-     2.19
-    ],
-    "back": {
-     "games": "3"
-    },
-    "missing_regs_pp": -0.031,
-    "lineup_slack": 1.3,
-    "missing_regs": -0.2,
-    "week_slack": 0.5
-   },
-   "cr_pct": 23,
-   "cr_season_pct": 86
   },
   {
    "id": 2562602,
@@ -48514,7 +48514,7 @@
     "missing_regs_pp": -0.028,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 21,
    "cr_season_pct": 34
@@ -49266,7 +49266,7 @@
     "missing_regs_pp": -0.03,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 20,
    "cr_season_pct": 15
@@ -56057,7 +56057,7 @@
     "missing_regs_pp": -0.034,
     "lineup_slack": 1.3,
     "missing_regs": -0.2,
-    "week_slack": 0.5
+    "week_slack": 0.3
    },
    "cr_pct": 8,
    "cr_season_pct": 13
