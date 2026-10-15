@@ -399,6 +399,9 @@ NO_STATUS_OUT_LOGIT = -0.5
 # a Daily Faceoff day-to-day item counts more against his team's next game: the news terms are flat over the week and
 # over-call game 1, 0.24 predicted vs 0.18 dressed (handoff 624)
 DTD_NEXT_LOGIT = -0.4
+# ESPN-listed, note's stated return 0-7 days away: games before it dressed 0.18 / 0.19 vs 0.28 / 0.24 predicted
+# (hunt14/returns2, findings 496, handoff 670)
+BEFORE_RETURN_LOGIT = -0.6
 # the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
 # model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
@@ -1734,7 +1737,7 @@ def usually_back(status, missed, note):
         return {"days": round(note["days_left"])}
     if note and note["long"]:
         return {"games": "16"}
-    return {"INJURY_RESERVE": {"games": "10"}, "OUT": {"games": "4"},
+    return {"INJURY_RESERVE": {"games": "10"}, "OUT": {"games": "2" if missed else "4"},  # OUT and missed: median 2 left (671)
             "DAY_TO_DAY": {"games": "3" if missed else "0-1"}}.get(status)
 
 
@@ -1840,7 +1843,9 @@ def week_slack(rows, boost_x, boost_week, missing=None):
             + DEPTH_RANK_LOGIT.get(r.get("toi_rank"), 0.0) \
             + NO_STATUS_OUT_LOGIT * bool(r.get("no_status_out")) + LOW_SCORER_LOGIT * bool(r.get("low_scorer"))  # 358-360, 623, 362
         # handoff 624: his team's next game only
-        regs = [reg + (DTD_NEXT_LOGIT if j == 0 and r.get("dtd_next") else 0.0) for j in range(len(r["per_game"]))]
+        regs = [reg + (DTD_NEXT_LOGIT if j == 0 and r.get("dtd_next") else 0.0)
+                + (BEFORE_RETURN_LOGIT if j < len(r.get("before_return") or ()) and r["before_return"][j] else 0.0)  # handoff 670
+                for j in range(len(r["per_game"]))]
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
             if any(regs):
@@ -3286,6 +3291,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   # missed the last game with no listing, status or news (623); DFO day-to-day news (624)
                                   "no_status_out": sat_last and not p.get("injury") and not scratch and not (any(wk_news) or wk_down),
                                   "dtd_next": "day-to-day" in wk_why,
+                                  # games before ESPN's stated return date, when it is 0-7 days away (handoff 670)
+                                  "before_return": [(date.fromisoformat(d) - today).days < note["days_left"] for d in wk_dates]
+                                  if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and note and not note["long"]
+                                  and note["days_left"] is not None and 0 <= note["days_left"] <= 7 else None,
                                   "low_scorer": toi_rank == "lowest" and scored})  # handoff 362
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),

@@ -485,7 +485,8 @@ def test_injury_caps_and_notes():
     assert note("Smith was placed on long-term injured reserve.")["long"]
     assert note("Smith will miss the remainder of the season.")["season"]
     assert not note("Smith returned to practice.", "He had surgery last summer.")["long"]  # recaps don't count
-    assert rating.usually_back("OUT", True, None) == {"games": "4"}
+    assert rating.usually_back("OUT", True, None) == {"games": "2"}  # missed a game already (handoff 671)
+    assert rating.usually_back("OUT", False, None) == {"games": "4"}
     assert rating.usually_back("DAY_TO_DAY", False, None) == {"games": "0-1"}
     assert rating.usually_back("OUT", True, note("Smith is expected to miss 4-6 weeks."))["days"] == 34
 
@@ -1385,6 +1386,8 @@ def test_injury_note_wording_for_long_absences():
 
 def test_one_game_out_note_expires_once_that_game_is_played(monkeypatch, tmp_path):
     """OUT for one named game: once his team has played after the note, the day-to-day cap (findings 236)."""
+    monkeypatch.setattr(rating, "BEFORE_RETURN_LOGIT", 0.0)  # the caps alone; the stated-return cut is tested on its own
+
     def pasta(when, short="Pastrnak won't play Tuesday against Toronto."):
         inj = [{"athlete_id": 103, "name": "David Pastrnak", "short": short, "long": "", "date": when}]
         return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="OUT")], injuries=inj)["David Pastrnak"]
@@ -2850,3 +2853,13 @@ def test_rested_no1_gets_a_small_lift_but_not_on_night_2(monkeypatch):
         assert b[1][d] > a[1][d] and b[1][d] + b[2][d] == pytest.approx(a[1][d] + a[2][d])
     b2b = ["2026-10-22", "2026-10-23"]
     assert nights(0.05, b2b)[1]["2026-10-23"] == pytest.approx(nights(0.0, b2b)[1]["2026-10-23"])
+
+
+def test_games_before_stated_return_count_less(monkeypatch, tmp_path):
+    """Handoff 670: an ESPN-listed skater whose note's return is 0-7 days away dresses less in the games before it."""
+    def pasta(lift):
+        monkeypatch.setattr(rating, "BEFORE_RETURN_LOGIT", lift)
+        inj = [{"athlete_id": 103, "name": "David Pastrnak", "short": "Pastrnak is expected to miss 3-5 days.", "long": "",
+                "date": "2026-10-08T14:00Z"}]
+        return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="DAY_TO_DAY")], injuries=inj)["David Pastrnak"]
+    assert pasta(-0.6)["cr_games"] < pasta(0.0)["cr_games"]
