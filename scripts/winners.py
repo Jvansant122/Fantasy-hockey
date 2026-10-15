@@ -84,12 +84,13 @@ def depth_dress(gl, team_games):
     return DEPTH_DRESS[1] if mine & set(team_games[-5:]) else DEPTH_DRESS[2]
 
 
-def nhl_games(week_games, starts, results, names, strength, play_dates, lineups, goalie_sv, lines, now=None, xgd=None):
+def nhl_games(week_games, starts, results, names, strength, play_dates, lineups, goalie_sv, lines, now=None, xgd=None,
+              line_date=None):
     """The week's NHL games, one per game, home side first, with the model's home win chance.
 
     week_games: {team: [(date, opp, home)]}; starts: {(team, date): UTC ISO}; results: {(home, date): {...}} from
     rating.week_schedule; lineups: {team: expected lineup points}; goalie_sv: {team: {date: expected starter save%}};
-    play_dates: {team: set of ISO dates it plays}; lines: tonight's de-vigged moneyline {team: p}, shown for reference;
+    play_dates: {team: set of ISO dates it plays}; lines: tonight's de-vigged moneyline {team: p}, shown for reference on line_date's games only;
     xgd: {team: expected-goal differential per game} (rating.team_xgd), empty to price on goal differential alone."""
     xgd = xgd or {}
     now = now or datetime.now(timezone.utc)
@@ -114,7 +115,8 @@ def nhl_games(week_games, starts, results, names, strength, play_dates, lineups,
                             "sv": [round(h["sv"], 3), round(a["sv"], 3)], "b2b": [int(h["b2b"]), int(a["b2b"])],
                             **({"xgd": [round(h["xgd"], 2), round(a["xgd"], 2)]} if h["xgd"] is not None and a["xgd"] is not None else {})},
                  "state": res.get("state") or ("LIVE" if started else "FUT"), "started": started or res.get("state") in FINAL_STATES}
-            if home in lines and not g["started"]:
+            # tonight's line belongs to tonight's game only, not the team's later games (handoff 614)
+            if home in lines and not g["started"] and (line_date is None or day == line_date):
                 g["p_line"] = round(lines[home], 3)
             if res.get("state") in FINAL_STATES and res.get("home_score") is not None:
                 g.update(home_score=res["home_score"], away_score=res["away_score"], last=res.get("last"),

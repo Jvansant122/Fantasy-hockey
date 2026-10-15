@@ -89,6 +89,10 @@ def test_nhl_games_marks_started_finished_and_lines():
     assert first["started"] and first["home_won"] and first["last"] == "OT" and "p_line" not in first
     assert not second["started"] and second["p_line"] == 0.45
     assert second["inputs"]["b2b"] == [0, 1]  # Toronto played the night before
+    # tonight's line (dated Oct 14) never lands on a later game of the same team (handoff 614)
+    later = winners.nhl_games(week, starts, results, {}, {}, {"TOR": {"2026-10-14"}}, lineups, {"_league": 0.9},
+                              {"MTL": 0.45, "TOR": 0.55}, now, line_date="2026-10-14")
+    assert all("p_line" not in g for g in later if g["date"] != "2026-10-14")
 
 
 def fa(pid, pos, cr, nights, team_id=1, **kw):

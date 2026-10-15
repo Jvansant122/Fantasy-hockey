@@ -1483,6 +1483,17 @@ def test_one_game_out_rule_uses_real_start_times(monkeypatch, tmp_path):
     assert over(late, {"2026-10-07"}, {"2026-10-07": "2026-10-07T23:00:00Z"})
     assert not over(late, {"2026-10-07"}, {"2026-10-07": "2026-10-07T22:30:00Z"})
     assert over(dict(late, date="2026-10-07T14:00Z"), {"2026-10-07"}, {})  # no start: before 5 PM counts as before
+    # ESPN listed him OUT again after that game: a fresh absence, not the one game (handoff 616); a bare 'out' that only
+    # lagged (dated before the game) still counts as over
+    starts = {"2026-10-07": "2026-10-07T23:00:00Z", "2026-10-09": "2026-10-09T23:00:00Z"}
+    note = {"short": "Dahlin won't play Tuesday.", "date": "2026-10-07T15:00Z"}
+    assert not over(dict(note, listed="2026-10-08T14:00Z"), {"2026-10-07"}, starts)
+    assert over(dict(note, listed="2026-10-07T18:00Z"), {"2026-10-07"}, starts)
+    assert not over(dict(note, listed="2026-10-08T14:00Z"), {"2026-10-07"}, {})  # no start: a later day is after
+    stored = {"1": {"date": note["date"], "short": note["short"], "long": "", "status": "OUT"}}
+    notes = {"1": {"date": "2026-10-08T14:00Z", "short": "out", "status": "OUT"}}
+    rating.carry_injury_notes(notes, stored, {"1": "OUT"}, lambda *a: False, date(2026, 10, 8))
+    assert notes["1"]["short"] == note["short"] and notes["1"]["listed"] == "2026-10-08T14:00Z"
 
 
 def test_unsigned_free_agent_with_a_rostered_players_name_isnt_matched(monkeypatch, tmp_path):
@@ -2580,3 +2591,24 @@ def test_lowest_minutes_depth_skater_sits_more(monkeypatch, tmp_path):
     other, other_off = rate(300), rate(300, on=False)  # Pastrnak played 5 minutes: Bolduc is no longer the lowest
     assert low["cr_why"].get("toi_rank") == "lowest" and low["cr_games"] < low_off["cr_games"]
     assert other["cr_why"].get("toi_rank") == "other" and other["cr_games"] > other_off["cr_games"]
+
+
+def test_daily_faceoffs_likely_starter_starts_that_game_at_least_90_percent():
+    """A goalie Daily Faceoff tags 'Likely' for a game starts it at least LIKELY_START_FLOOR, his partner gets the rest;
+    the other games keep the model's split (handoff 617)."""
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 6 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24"]
+
+    def run(likely=None):
+        tod, nights = {}, {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 60, 2: 22}, dates, date(2026, 10, 22), today_p=tod,
+                             by_date=nights, likely_dfo=likely)
+        return tod, nights
+    base_tod, base = run()
+    tod, nights = run({"2026-10-22": 2})  # the backup is the likely starter tonight
+    assert base_tod[2] < rating.LIKELY_START_FLOOR and tod[2] == pytest.approx(rating.LIKELY_START_FLOOR)
+    assert tod[1] + tod[2] == pytest.approx(1.0)
+    assert nights[1]["2026-10-24"] == pytest.approx(base[1]["2026-10-24"])  # the later game is unchanged
+    hi, _ = run({"2026-10-22": 1})  # the no. 1 too, from his model chance
+    assert base_tod[1] < hi[1] == pytest.approx(max(base_tod[1], rating.LIKELY_START_FLOOR))
