@@ -576,6 +576,7 @@ def test_last_start_result_shifts_the_next_games(monkeypatch):
     monkeypatch.setattr(rating, "NO1_ORDINARY_LOGIT", 0.0)  # this test is about the last-start shifts alone
     monkeypatch.setattr(rating, "LAST6_OTHER_LOGITS", {})  # the history ends 1 1 1 0 1 (findings 246)
     monkeypatch.setattr(rating, "PLAIN_SECOND_LOGIT", 0.0)  # its game-after-next cut is tested on its own (findings 249)
+    monkeypatch.setattr(rating, "RESTED_NO1_LOGIT", 0.0)  # its rested-night lift is tested on its own (handoff 363)
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26"]
@@ -2831,3 +2832,21 @@ def test_first_round_rookie_gets_more_of_the_season(monkeypatch, tmp_path):
     off, late_off = _bolduc4(monkeypatch, tmp_path, bios=bios), _bolduc4(monkeypatch, tmp_path, bios=late_bios)
     assert on["cr_season"] > off["cr_season"] and on["proj_gp"] >= off["proj_gp"]
     assert late["cr_season"] == late_off["cr_season"]  # picked 40th: no lift
+
+
+def test_rested_no1_gets_a_small_lift_but_not_on_night_2(monkeypatch):
+    """Handoff 363: the no. 1's reported chance +0.05 logit on nights that aren't night 2 of a back-to-back; the chain is unchanged."""
+    order = [1, 1, 2, 1, 1, 2, 1, 1, 2, 1]
+    hist = [(f"2026-10-{2 * i + 1:02d}", g) for i, g in enumerate(order)]
+
+    def nights(lift, dates):
+        monkeypatch.setattr(rating, "RESTED_NO1_LOGIT", lift)
+        out = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 20}, dates, date(2026, 10, 22), by_date=out)
+        return out
+    rest = ["2026-10-22", "2026-10-25"]
+    a, b = nights(0.0, rest), nights(0.05, rest)
+    for d in rest:
+        assert b[1][d] > a[1][d] and b[1][d] + b[2][d] == pytest.approx(a[1][d] + a[2][d])
+    b2b = ["2026-10-22", "2026-10-23"]
+    assert nights(0.05, b2b)[1]["2026-10-23"] == pytest.approx(nights(0.0, b2b)[1]["2026-10-23"])

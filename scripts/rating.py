@@ -175,6 +175,9 @@ THREE_GOALIE_IDLE_LOGIT = -1.0
 # the no. 1 on a team where 3+ goalies started the last 10, every game after the next (handoff 626): his week starts were
 # 1.315 against 1.454 actual on such teams, 2021-26
 THREE_GOALIE_NO1_LOGIT = 0.5
+# the no. 1 on any night that isn't night 2 of a back-to-back: rested no. 1s started 0.615 of next games vs 0.586 given; on the
+# reported chance, not the chain (handoff 363, ledger 1455: 15 of 15 seasons better at +0.05, worse in 2023-24 in the chain)
+RESTED_NO1_LOGIT = 0.05
 # the rest of the week after those next-game rules: the last starter read high in two later games (findings 249, every
 # season): a strict rotation's third game (0.48 against 0.37 actual) and, when no rotation, pattern, last-6 or
 # three-goalie rule fires, the game after next (0.56 against 0.51)
@@ -2419,12 +2422,17 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + early)))
             p = {gid: now if gid == seq[-1] else v * (1 - now) / (1 - was) for gid, v in p.items()}
         ahead += 1
-        prev_d = day
+        prev_day, prev_d = prev_d, day
         q = p
         if ahead > 1:  # games after the next one are softened and split across the team's goalies again; the chain keeps p
             q = {gid: v if v <= 0 or v >= 1 else 1 / (1 + math.exp(-LATER_GAME_TEMP * math.log(v / (1 - v)))) for gid, v in p.items()}
             tot = sum(q.values()) or 1
             q = {gid: v / tot for gid, v in q.items()}
+        night2 = (ahead == 1 and gap == 1) or (ahead >= 2 and prev_day is not None and (day - prev_day).days == 1)
+        if no1 in q and 0 < q[no1] < 1 and not night2:  # handoff 363
+            was = q[no1]
+            now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + RESTED_NO1_LOGIT)))
+            q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
         lk = (likely_dfo or {}).get(d)
         if lk in q and q[lk] < LIKELY_START_FLOOR:
             # Daily Faceoff's "Likely" starter: at least LIKELY_START_FLOOR for that game, the rest split by the model's
