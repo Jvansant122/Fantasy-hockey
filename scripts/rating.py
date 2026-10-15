@@ -335,9 +335,11 @@ DRESS_SHIFT_IN, DRESS_SHIFT_OUT = (0.6, 0.2, -0.1, -0.3), (-0.55, -0.15, 0.1, 0.
 # a healthy scratch in his team's last game comes back far more often than an injured player: +0.5 on top of the
 # missed-game shift, every game (0.25 to 0.34 per game against 0.345 actual, findings 153); split by position, since
 # scratched defensemen come back more often than forwards (findings 291, handoff 345)
-SCRATCH_LOGIT = {"F": 0.3, "D": 0.65}
-# ... and a healthy scratch who has missed 5+ straight games gets a turn: +0.75, F and D alike (findings 293, handoff 347)
-SCRATCH_LONG_LOGIT, SCRATCH_LONG_GAMES = 0.75, 5
+# Since handoff 516 it is applied after the boosted Week model at half the old size (F 0.3, D 0.65, long 0.75 before it;
+# after it at full size the fit was worse; LOSO scale 0.5 / 0.375, hunt13/lift_order)
+SCRATCH_LOGIT = {"F": 0.15, "D": 0.325}
+# ... and a healthy scratch who has missed 5+ straight games gets a turn, F and D alike (findings 293, handoff 347)
+SCRATCH_LONG_LOGIT, SCRATCH_LONG_GAMES = 0.375, 5
 # ... and a teammate at his position (5+ games) left the team's last game early, under 40% of his average minutes: the
 # scratch fills in, D most (0.6 dressed against the site's 0.3, findings 307, handoff 352)
 # Handoff 353 (findings 308): a second band, 40-55% of his minutes, and D +1.8 under 40%: (share below, {F, D} logit)
@@ -345,6 +347,8 @@ TEAMMATE_LEFT_BANDS, TEAMMATE_LEFT_GP = ((0.40, {"F": 0.5, "D": 1.8}), (0.55, {"
 # a healthy scratch after his team's last game: -0.15 after a win (any kind), +0.15 after a non-win, on top of the win-run
 # shift (findings 312, handoff 354)
 SCRATCH_LAST_RESULT_LOGIT = 0.15
+# the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
+# model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
 DEPTH_POINT_LOGIT = 0.3
 # team form (findings 281-283, 289, 292, handoffs 340-342, 344): additive on each game's dress chance this week.
@@ -2966,14 +2970,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             in_lines = sat_last and not p.get("injury") and p.get("dfo_out") is False
             # straight team games he has missed (any reason), for the long-scratch turn and the win-run shift
             missed = next((k for k, g in enumerate(reversed(tg)) if g in {x["game"] for x in gl}), len(tg)) if gl and sat_last else 0
-            scratch_z = (SCRATCH_LONG_LOGIT if missed >= SCRATCH_LONG_GAMES else SCRATCH_LOGIT["D" if p["pos"] == "D" else "F"]) * scratch
+            # healthy-scratch lifts, added after the boosted Week model (handoffs 515-516)
+            scratch_z = 0.0
+            post_z = (SCRATCH_LONG_LOGIT if missed >= SCRATCH_LONG_GAMES else SCRATCH_LOGIT["D" if p["pos"] == "D" else "F"]) * scratch
             # a scratch whose same-position teammate left the last game early fills in (handoff 352)
             bands = [b for q, b in (left_teammates.get((team, p["pos"] == "D")) or {}).items() if q != pid]
             filled = scratch and bool(bands)
             if filled:  # the teammate who played least of his minutes sets the lift (handoff 353)
-                scratch_z += TEAMMATE_LEFT_BANDS[min(bands)][1]["D" if p["pos"] == "D" else "F"]
+                post_z += TEAMMATE_LEFT_BANDS[min(bands)][1]["D" if p["pos"] == "D" else "F"]
             if scratch and forms.get(team):  # his team's last result (handoff 354)
-                scratch_z += -SCRATCH_LAST_RESULT_LOGIT if forms[team][1] > 0 else SCRATCH_LAST_RESULT_LOGIT
+                post_z += -SCRATCH_LAST_RESULT_LOGIT if forms[team][1] > 0 else SCRATCH_LAST_RESULT_LOGIT
             # a depth skater who scored in the last game keeps his spot more (handoff 351)
             scored = bool(gl) and not sat_last and not traded and not early and not p.get("injury") \
                 and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("points", 0) > 0
@@ -3004,14 +3010,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     b = min(max(season_boost.predict(boost_week, boost_x[pid]), BOOST_WEEK_CLIP[0]), BOOST_WEEK_CLIP[1])
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
             has_news = bool(wk_news) and (any(wk_news) or bool(wk_down))
-            if per_game and base_dress is not None and (boost_wk is not None or has_news):
-                shift = lambda news, down: [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + (boost_wk or 0.0) + z + down))), cap, inj)
-                                            for q, z in zip(per_game, news)]
+            if per_game and base_dress is not None and (boost_wk is not None or has_news or post_z):
+                shift = lambda news, down, extra=post_z: [
+                    q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + (boost_wk or 0.0) + extra + z + down))), cap, inj)
+                    for q, z in zip(per_game, news)]
                 mean = lambda xs: sum(xs) / len(xs)
-                boosted = shift([0.0] * len(per_game), 0.0) if boost_wk is not None else per_game
+                boosted = shift([0.0] * len(per_game), 0.0)  # the boost and the scratch lifts (handoffs 515-516)
                 final = shift(wk_news, wk_down) if has_news else boosted
                 if boost_wk is not None:
-                    boost_move = mean(boosted) - mean(per_game)
+                    boost_move = mean(shift([0.0] * len(per_game), 0.0, 0.0)) - mean(per_game)  # the boost alone (425)
                 if has_news:
                     news_move = mean(final) - mean(boosted)  # the news's real effect after the caps (handoff 435)
                 per_game = final
