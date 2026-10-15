@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parent.parent
 NHL_STATS = "https://api.nhle.com/stats/rest/en"
 NHL_WEB = "https://api-web.nhle.com/v1"
 MONEYPUCK = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/regular/skaters.csv"
+MONEYPUCK_TEAMS = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/regular/teams.csv"
 UA = {"User-Agent": "Mozilla/5.0 (fantasy-hockey-lookup)"}
 WEIGHTS = {"goals": 2, "assists": 1, "ppPoints": 0.5, "shPoints": 0.5, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 GAME_RATES = ["fp", "toi", "pptoi", "shots", "iCF", "hits", "blockedShots", "goals", "assists", "ppPoints", "points"]
@@ -129,6 +130,11 @@ B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
 # shipped night-2 case above. 2021-26 replay of 12,960 team-game mornings: Brier -0.6%, no. 1 week-sum error -0.7%, better
 # in 5 of 5 seasons (findings 231, handoffs 133 and 190)
 B2B_AHEAD_NIGHT1, B2B_AHEAD_NIGHT2_NEXT, B2B_AHEAD_NIGHT2_LATER, NO1_ORDINARY_LOGIT = -0.4, -1.2, -0.6, 0.15
+# ... at half size in an even tandem (top two goalies within one start of the team's last 20; findings 402, handoff 451)
+EVEN_TANDEM_B2B_SCALE = 0.5
+# early season (team under EARLY_SHARE_GAMES games): a roster goalie with no start for the team yet, every game this week
+# (third goalies read 0.21 against 0.07 actual, night 2 0.33 against 0.15; 15 seasons, findings 402, handoff 450)
+EARLY_NO_START_LOGIT = -0.75
 # the no. 1 started night 1 and rests night 2: the chain logs his backup as night 2's starter, which carries him into the
 # game after it (no. 1 0.687 there vs 0.804 actual). Every other goalie's logit for that game; held-out Brier -4.4%,
 # 5 of 5 seasons, calibrated after (findings 222, handoff 223)
@@ -299,7 +305,11 @@ SCRATCH_LOGIT = {"F": 0.3, "D": 0.65}
 SCRATCH_LONG_LOGIT, SCRATCH_LONG_GAMES = 0.75, 5
 # ... and a teammate at his position (5+ games) left the team's last game early, under 40% of his average minutes: the
 # scratch fills in, D most (0.6 dressed against the site's 0.3, findings 307, handoff 352)
-TEAMMATE_LEFT_LOGIT, TEAMMATE_LEFT_SHARE, TEAMMATE_LEFT_GP = {"F": 0.5, "D": 1.6}, 0.40, 5
+# Handoff 353 (findings 308): a second band, 40-55% of his minutes, and D +1.8 under 40%: (share below, {F, D} logit)
+TEAMMATE_LEFT_BANDS, TEAMMATE_LEFT_GP = ((0.40, {"F": 0.5, "D": 1.8}), (0.55, {"F": 0.25, "D": 1.2})), 5
+# a healthy scratch after his team's last game: -0.15 after a win (any kind), +0.15 after a non-win, on top of the win-run
+# shift (findings 312, handoff 354)
+SCRATCH_LAST_RESULT_LOGIT = 0.15
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
 DEPTH_POINT_LOGIT = 0.3
 # team form (findings 281-283, 289, 292, handoffs 340-342, 344): additive on each game's dress chance this week.
@@ -756,16 +766,17 @@ def team_form(goalie_games):
 
 
 def left_early_teammates(by_player, team_games):
-    """{(team, is D): NHL ids of skaters with TEAMMATE_LEFT_GP+ games who played the team's last game on under
-    TEAMMATE_LEFT_SHARE of their average minutes} (findings 307)."""
+    """{(team, is D): {NHL id: band}} for skaters with TEAMMATE_LEFT_GP+ games who played the team's last game on under
+    a TEAMMATE_LEFT_BANDS share of their average minutes; band 0 = under 40%, 1 = 40-55% (findings 307-308)."""
     out = {}
     for pid, gl in by_player.items():
         tg = team_games.get(gl[-1]["team"]) if gl else None
         if not tg or len(gl) < TEAMMATE_LEFT_GP or gl[-1]["game"] != tg[-1]:
             continue
         avg = sum(g["toi"] for g in gl) / len(gl)
-        if avg and gl[-1]["toi"] < TEAMMATE_LEFT_SHARE * avg:
-            out.setdefault((gl[-1]["team"], gl[-1].get("pos") == "D"), set()).add(pid)
+        band = next((k for k, (cut, _) in enumerate(TEAMMATE_LEFT_BANDS) if gl[-1]["toi"] < cut * avg), None) if avg else None
+        if band is not None:
+            out.setdefault((gl[-1]["team"], gl[-1].get("pos") == "D"), {})[pid] = band
     return out
 
 
@@ -1062,6 +1073,42 @@ def team_strength(s, prev_season):
     except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
         print(f"Standings unavailable, goalie starts not priced by schedule: {e!r}", file=sys.stderr)
         return {}
+
+
+def team_xgd_rows(s, year):
+    """{team: (xGF, xGA, games)} from MoneyPuck's team file, all situations; None if it can't be read."""
+    try:
+        lines = nhl_get(s, MONEYPUCK_TEAMS.format(year=year)).text.splitlines()
+    except requests.RequestException as e:
+        print(f"MoneyPuck teams {year} unavailable: {e}", file=sys.stderr)
+        return None
+    head = lines[0].split(",") if lines else []
+    need = ("team", "situation", "games_played", "xGoalsFor", "xGoalsAgainst")
+    if any(c not in head for c in need):
+        print(f"MoneyPuck teams {year} returned no table", file=sys.stderr)
+        return None
+    ix = {c: head.index(c) for c in need}  # the file names "team" twice; the first is the abbreviation
+    out = {}
+    try:
+        for line in lines[1:]:
+            f = line.split(",")
+            if len(f) >= len(head) and f[ix["situation"]] == "all":
+                out[f[ix["team"]]] = tuple(float(f[ix[c]] or 0) for c in ("xGoalsFor", "xGoalsAgainst", "games_played"))
+    except ValueError as e:
+        print(f"MoneyPuck teams {year} unreadable: {e}", file=sys.stderr)
+        return None
+    return out
+
+
+def team_xgd(s, year):
+    """Expected-goal differential per game, shrunk over 15 games toward half of last season's, for the Predicted winners
+    picks (handoff 449, findings 402). Empty when either season's file can't be read: the picks then use goal differential."""
+    now, last = team_xgd_rows(s, year), team_xgd_rows(s, year - 1)
+    if now is None or not last:
+        return {}
+    prior = {t: (f - a) / g for t, (f, a, g) in last.items() if g}
+    return {t: (f - a + SCHED_SHRINK * 0.5 * prior.get(t, 0.0)) / (g + SCHED_SHRINK)
+            for t, (f, a, g) in {**{t: (0.0, 0.0, 0.0) for t in prior}, **now}.items()}
 
 
 def model_win_prob(gd_team, gd_opp, home):
@@ -1935,6 +1982,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     prev_d = None
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
+    # an even tandem (top two within one start of the last 20): the no. 1's back-to-back shifts at half size (handoff 451)
+    top2 = sorted((recent20.count(g) for g in set(recent20)), reverse=True) + [0, 0]
+    b2b_scale = EVEN_TANDEM_B2B_SCALE if recent20 and top2[0] - top2[1] <= 1 else 1.0
     dates_sorted = sorted(game_dates)
     after_rest = False
     relieved = {gid: RELIEF_RARE_LOGIT if seq[-20:].count(gid) <= RELIEF_RARE_STARTS else 0.0 for gid in relief if gid in cands}
@@ -1985,9 +2035,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 n2 = bool(prv) and (day - date.fromisoformat(prv[-1])).days == 1
                 # the pair's other night already confirmed by Daily Faceoff: the rule's guess about it is settled (handoff 447)
                 if n1 and nxt not in confirmed:  # every night 1 still ahead this week, not only the next game (findings 277, handoff 339)
-                    z += B2B_AHEAD_NIGHT1
+                    z += B2B_AHEAD_NIGHT1 * b2b_scale
                 if n2 and prv[-1] not in confirmed:
-                    z += B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER
+                    z += (B2B_AHEAD_NIGHT2_NEXT if ahead == 1 else B2B_AHEAD_NIGHT2_LATER) * b2b_scale
                 if not n1 and not n2 and not (ahead == 0 and gap == 1):
                     z += NO1_ORDINARY_LOGIT
                 if ahead == 0 and gap == 2 and day.weekday() in (6, 0):
@@ -2011,6 +2061,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 z += ROTATION_THIRD_LOGIT if rotating else PLAIN_SECOND_LOGIT
             if gid in relieved:
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
+            if len(seq) < EARLY_SHARE_GAMES and gid not in seq:  # no start for this team yet, early season (handoff 450)
+                z += EARLY_NO_START_LOGIT
             if z and 0 < raw[gid] < 1:
                 raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + z)))
             raw[gid] *= injury.get(gid, 1.0)
@@ -2119,10 +2171,10 @@ def line_win_probs(odds, today, now=None):
 
 
 def predicted_games(players, by_player, prev, rosters, team_games, team_dates, sched, goalie_nights, save_pcts, strength,
-                    week_games, week_starts, week_results, team_names, lines, now_utc):
+                    week_games, week_starts, week_results, team_names, lines, now_utc, xgd=None):
     """The week's NHL games with the home side's win chance, rolled up from the player projections (findings 450):
     each skater's points per game x his chance to dress (the site's own, or DEPTH_DRESS for depth players it doesn't rate),
-    the starter's save% weighted by each goalie's chance to start, goal differential and back-to-backs."""
+    the starter's save% weighted by each goalie's chance to start, goal and expected-goal differential and back-to-backs."""
     rate, depth = winners_model.skater_rates(by_player, prev)
     dress = {}
     for p in players:
@@ -2146,7 +2198,7 @@ def predicted_games(players, by_player, prev, rosters, team_games, team_dates, s
         goalie_sv[team] = {d: a / b for d, (a, b) in by_day.items() if b > 0}
     play_dates = {t: set(team_dates.get(t, ())) | set(sched.get(t, ())) for t in set(team_dates) | set(sched)}
     return winners_model.nhl_games(week_games, week_starts, week_results, team_names, strength, play_dates, lineups,
-                                   goalie_sv, lines, now_utc)
+                                   goalie_sv, lines, now_utc, xgd)
 
 
 def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
@@ -2173,7 +2225,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     week_games, week_starts, week_results, team_names = {}, {}, {}, {}
     bios = {}  # {id: (birth, draft, first season)}, filled by load_birthdates for the boosted models
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
-    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct = pmap(lambda f: f(), [
+    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct, xgd = pmap(lambda f: f(), [
         lambda: load_skater_games(s, season, today),
         lambda: load_goalie_games(s, season, today),
         lambda: load_prev_season(s, prev_season),
@@ -2185,6 +2237,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         lambda: week_schedule(s, monday, week_games, weeks, week_starts, week_results, team_names),
         lambda: team_strength(s, prev_season),
         lambda: prev_points_pct(s, prev_season),
+        lambda: team_xgd(s, season // 10000) if winners is not None else {},
     ], workers=4)
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
@@ -2662,9 +2715,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             missed = next((k for k, g in enumerate(reversed(tg)) if g in {x["game"] for x in gl}), len(tg)) if gl and sat_last else 0
             scratch_z = (SCRATCH_LONG_LOGIT if missed >= SCRATCH_LONG_GAMES else SCRATCH_LOGIT["D" if p["pos"] == "D" else "F"]) * scratch
             # a scratch whose same-position teammate left the last game early fills in (handoff 352)
-            filled = scratch and bool(left_teammates.get((team, p["pos"] == "D"), set()) - {pid})
-            if filled:
-                scratch_z += TEAMMATE_LEFT_LOGIT["D" if p["pos"] == "D" else "F"]
+            bands = [b for q, b in (left_teammates.get((team, p["pos"] == "D")) or {}).items() if q != pid]
+            filled = scratch and bool(bands)
+            if filled:  # the teammate who played least of his minutes sets the lift (handoff 353)
+                scratch_z += TEAMMATE_LEFT_BANDS[min(bands)][1]["D" if p["pos"] == "D" else "F"]
+            if scratch and forms.get(team):  # his team's last result (handoff 354)
+                scratch_z += -SCRATCH_LAST_RESULT_LOGIT if forms[team][1] > 0 else SCRATCH_LAST_RESULT_LOGIT
             # a depth skater who scored in the last game keeps his spot more (handoff 351)
             scored = bool(gl) and not sat_last and not traded and not early and not p.get("injury") \
                 and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("points", 0) > 0
@@ -2847,7 +2903,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     if winners is not None:
         try:  # the Predicted winners tab never blocks the ratings
             winners["games"] = predicted_games(players, by_player, prev, rosters, team_games, team_dates, sched, goalie_nights,
-                                               save_pcts, strength, week_games, week_starts, week_results, team_names, lines, now_utc)
+                                               save_pcts, strength, week_games, week_starts, week_results, team_names, lines, now_utc, xgd)
         except Exception as e:  # noqa: BLE001
             print(f"Predicted winners failed: {e!r}", file=sys.stderr)
     print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")

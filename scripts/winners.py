@@ -8,6 +8,11 @@ from datetime import date, datetime, timedelta, timezone
 # Out of sample 60.0% right, log loss 0.662 (home team always 53.7%, 0.691; goal differential alone 59.0%, 0.667; closing
 # moneylines on 1,651 games 63.1%, 0.648 vs this model's 63.2%, 0.649).
 WIN_COEF = {"home": 0.1184, "pts": 0.1781, "gd": 0.3508, "sv": 0.0273, "b2b_home": -0.2955, "b2b_away": 0.3489}
+# With MoneyPuck's team expected-goal differential per game (handoff 449, findings 402): forward fit 2011-26, log loss -0.0026
+# in 2021-26 (better all 5 seasons, 11 of 12 since 2014-15), 60.1% -> 60.5% right; 0.6452 on the 1,651 lined games vs the
+# market's 0.6480. xG takes over most of goal differential's weight and the starter's save% carries the goaltending.
+# WIN_COEF stays the fallback when MoneyPuck can't be read.
+WIN_COEF_XG = {"home": 0.1475, "pts": 0.1567, "gd": 0.0548, "sv": 0.2150, "xgd": 0.4913, "b2b_home": -0.2668, "b2b_away": 0.2608}
 PTS_SHRINK = 40  # games of last season's points per game in each skater's rate (K 10 / 20 / 40: 0.6632 / 0.6623 / 0.6616)
 PREV_MIN_GP = 10
 LINEUP = {"F": 12, "D": 6}
@@ -59,10 +64,12 @@ def lineup_points(skaters, rate, dress, depth):
 
 
 def win_prob(home, away):
-    """Home team's win chance from each side's {pts, gd, sv, b2b}."""
-    c = WIN_COEF
+    """Home team's win chance from each side's {pts, gd, sv, b2b} and, when both have it, xgd (expected-goal differential)."""
+    xg = home.get("xgd") is not None and away.get("xgd") is not None
+    c = WIN_COEF_XG if xg else WIN_COEF
     z = (c["home"] + c["pts"] * (home["pts"] - away["pts"]) + c["gd"] * (home["gd"] - away["gd"])
-         + c["sv"] * SHOTS * (home["sv"] - away["sv"]) + c["b2b_home"] * home["b2b"] + c["b2b_away"] * away["b2b"])
+         + c["sv"] * SHOTS * (home["sv"] - away["sv"]) + c["b2b_home"] * home["b2b"] + c["b2b_away"] * away["b2b"]
+         + (c["xgd"] * (home["xgd"] - away["xgd"]) if xg else 0.0))
     return 1 / (1 + math.exp(-z))
 
 
@@ -76,12 +83,14 @@ def depth_dress(gl, team_games):
     return DEPTH_DRESS[1] if mine & set(team_games[-5:]) else DEPTH_DRESS[2]
 
 
-def nhl_games(week_games, starts, results, names, strength, play_dates, lineups, goalie_sv, lines, now=None):
+def nhl_games(week_games, starts, results, names, strength, play_dates, lineups, goalie_sv, lines, now=None, xgd=None):
     """The week's NHL games, one per game, home side first, with the model's home win chance.
 
     week_games: {team: [(date, opp, home)]}; starts: {(team, date): UTC ISO}; results: {(home, date): {...}} from
     rating.week_schedule; lineups: {team: expected lineup points}; goalie_sv: {team: {date: expected starter save%}};
-    play_dates: {team: set of ISO dates it plays}; lines: tonight's de-vigged moneyline {team: p}, shown for reference."""
+    play_dates: {team: set of ISO dates it plays}; lines: tonight's de-vigged moneyline {team: p}, shown for reference;
+    xgd: {team: expected-goal differential per game} (rating.team_xgd), empty to price on goal differential alone."""
+    xgd = xgd or {}
     now = now or datetime.now(timezone.utc)
     out = []
     for home, gl in sorted(week_games.items()):
@@ -93,7 +102,7 @@ def nhl_games(week_games, starts, results, names, strength, play_dates, lineups,
             prev_day = (date.fromisoformat(day) - timedelta(days=1)).isoformat()
             side = lambda t: {"pts": lineups.get(t, 0.0), "gd": strength.get(t, 0.0),
                               "sv": (goalie_sv.get(t) or {}).get(day) or goalie_sv.get("_league", 0.9),
-                              "b2b": 1.0 if prev_day in play_dates.get(t, ()) else 0.0}
+                              "b2b": 1.0 if prev_day in play_dates.get(t, ()) else 0.0, "xgd": xgd.get(t)}
             h, a = side(home), side(away)
             p = win_prob(h, a) if home in lineups and away in lineups else None
             started = bool(start) and datetime.fromisoformat(start.replace("Z", "+00:00")) <= now
@@ -101,7 +110,8 @@ def nhl_games(week_games, starts, results, names, strength, play_dates, lineups,
                  "home_name": names.get(home), "away_name": names.get(away),
                  "p_home": None if p is None else round(p, 3),
                  "inputs": {"pts": [round(h["pts"], 2), round(a["pts"], 2)], "gd": [round(h["gd"], 2), round(a["gd"], 2)],
-                            "sv": [round(h["sv"], 3), round(a["sv"], 3)], "b2b": [int(h["b2b"]), int(a["b2b"])]},
+                            "sv": [round(h["sv"], 3), round(a["sv"], 3)], "b2b": [int(h["b2b"]), int(a["b2b"])],
+                            **({"xgd": [round(h["xgd"], 2), round(a["xgd"], 2)]} if h["xgd"] is not None and a["xgd"] is not None else {})},
                  "state": res.get("state") or ("LIVE" if started else "FUT"), "started": started or res.get("state") in FINAL_STATES}
             if home in lines and not g["started"]:
                 g["p_line"] = round(lines[home], 3)

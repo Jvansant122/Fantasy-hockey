@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 152). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 153). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1107,6 +1107,14 @@ A Season audit on live data found six things. A surgery mentioned only as backgr
 A goalie audit found three more. A healthy backup with a weak save% could have his Season share pushed to zero (Spencer Martin), and he could then get none of an injured starter's share. His share now keeps a small floor, and a healthy goalie taking over an out-for-season starter's share always gets some of it. When Daily Faceoff has confirmed the backup for night 1 of a back-to-back, the no. 1 is no longer marked down for night 2. After a goalie's game tonight starts, his details now price the rest of the week correctly.
 
 For skaters who haven't played yet this season, the Week's points per game now draws on both of the last two seasons, each game counting equally, and leans 25% toward ESPN's preseason projection (19% after 1-3 games, none after that). On the 2023-24 to 2025-26 seasons' first two Mondays, that improved the ranking of points per game, free agents and Week value in every season.
+
+## 153. Sharper Predicted winners picks, steadier goalie starts, and scratched players who fill a gap
+
+The Predicted winners picks now use each team's expected-goal differential from MoneyPuck (shots weighted by how likely each is to go in), shrunk over 15 games toward half of last season's. Goal differential mixes shot quality with finishing and goaltending luck; expected goals is the repeatable part. Fit forward on 2011-26 (each season tested on a model trained only on the seasons before), the picks got sharper in all five of the last five seasons and 11 of 12 since 2014-15, right 60.5% of the time instead of 60.1%. On 1,651 games with closing betting lines, the new model scored slightly better than the line. If MoneyPuck can't be reached, the picks fall back to the old model.
+
+Two goalie start fixes, replayed on 15 seasons with every season better. Early in the season (the team's first 10 games), a goalie who hasn't started for his team yet was getting too many starts, most of them on the second night of a back-to-back (third goalies like Black, Poirier and Spencer Martin read 25-33% for Oct 13 and started none). His start chance is now cut until he gets one. And when a team's two goalies have split the last 20 starts evenly, the no. 1's back-to-back adjustments are half size, since there is no clear no. 1 to rest.
+
+Two lineup shifts for healthy scratches. When a teammate at the same position left the team's last game early (40-55% of his usual ice time is now a second, smaller band next to the under-40% one), a scratched forward or defenseman at that position is more likely to draw back in. And a scratched skater is a little more likely to play after his team lost its last game, and a little less after a win.
 
 ## What the independent review changed
 
