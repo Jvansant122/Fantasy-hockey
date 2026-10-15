@@ -306,7 +306,7 @@ def test_details_round_like_the_table_and_blanks_sort_last(browser, server, data
 
 
 def _card_drops(page):
-    """{card title: [players the card says to drop]} from Stream, Best moves and Mid-week swaps."""
+    """{card title: [players the card says to drop]} from Stream, Best moves, IR stash and Mid-week swaps."""
     return page.evaluate(r"""() => {
       const out = {};
       for (const c of document.querySelectorAll('#upgrades .upg')) {
@@ -315,6 +315,7 @@ def _card_drops(page):
         if (t.startsWith('Stream')) { const m = txt.match(/Your roster is full: drop (.+?) to add him/); if (m) names.push(m[1]); }
         if (t.startsWith('Best')) for (const l of c.querySelectorAll(':scope > div:not(.sub)')) {
           const m = l.textContent.replace(/\s+/g, ' ').match(/ for (.+?) \+/); if (m) names.push(m[1]); }
+        if (t.startsWith('IR stash')) { const m = txt.match(/Your roster is full: drop (.+?), add him/); if (m) names.push(m[1]); }
         if (t.startsWith('Mid-week')) for (const l of c.querySelectorAll(':scope > div')) {
           if (l.textContent.includes('→')) names.push(l.firstChild.textContent.trim()); }
         if (names.length) out[t] = names;
@@ -374,11 +375,12 @@ def test_stream_card_drops_the_third_goalie(browser, server, data):
     for t in d["teams"]:
         page.select_option("#team", str(t["id"]))
         txt = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.textContent.replace(/\\s+/g, ' '))")
-        g3 = next((c for c in txt if c.startswith("Goalies") and "third goalie spot" in c), None)
+        g3 = next((c for c in txt if c.startswith("Goalies") and ("third goalie spot" in c or "you carry" in c)), None)
         st = next((c for c in txt if c.startswith("Stream")), None)
         m = st and re.search(r"Your roster is full: drop (.+?) to add him", st)
-        if g3 and m:
-            gname = re.search(r"drop (.+?) for a confirmed starter", g3).group(1)
+        if g3 and m:  # 3 goalies: the stream slot's goalie; 4+: the first the card lists (handoff 633)
+            gm = re.search(r"drop (.+?) for a confirmed starter", g3) or re.search(r"skater\. (.+?) [A-Z]{2,3}, ", g3)
+            gname = gm.group(1)
             if m.group(1) != gname:
                 bad.append((t["id"], m.group(1), gname))
     assert not bad, f"Stream card drops a skater while the Goalies card names the third goalie: {bad[:4]}"

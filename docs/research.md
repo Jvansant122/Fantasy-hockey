@@ -14,7 +14,7 @@ Last updated Oct 15, 2026 (sections through 181). The research is ongoing; new f
 2. **Whether a player dresses matters more than anything else.** Scratches, injuries and trips to the AHL mean zero points. Accounting for that is worth more than any modeling trick.
 3. **Goalies are all about starts.** Ranking goalies by points per game × team games is no better than picking at random. Ranking by expected starts is about 60% better.
 4. **Blocks matter for defensemen only. Hits predict nothing useful for forwards.**
-5. **Use all 7 moves each week: on Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep 3 moves (6 in a two-week round) for injury swaps and streaming goalies with a confirmed start** on nights your goalies leave a slot open (sections 31-33, 37 and 155). Carry 2 goalies, not 3. Re-pick for the schedule rather than holding a pickup.
+5. **Use all 7 moves each week: on Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep 3 moves (2 in the 6-day first matchup, 6 in the two-week final) for injury swaps and streaming goalies with a confirmed start** on nights your goalies leave a slot open (sections 31-33, 37 and 155). Carry 2 goalies, not 3. Re-pick for the schedule rather than holding a pickup.
 6. **Drop the player with the lowest keep value**: his projected points this week plus 7 × his Season rating (about two more weeks of games). Ranking drops by the projected week instead of the season total doubled what each move gains, and adding the 7 × Season part on top gained another 1.75 points a week, since it stops you dropping a good player who just has a light week (section 35).
 7. **Empty lineup slots on light nights are the biggest pool of points left**, and the simple Monday plan captures them: the Monday pickups from point 5 go to the best projected weeks, dropping your lowest, with the other moves kept for injury swaps and goalie streams (sections 19, 37). Chasing single nights one at a time loses points.
 
@@ -293,7 +293,7 @@ The biggest gain left in the research was knowing tonight's starting goalie (sec
 
 - The site updates at **9 AM, 12:30 PM and 5 PM ET**. Starters are usually confirmed after the morning skate, so the midday run is the one that matters. (A 6 AM run was added later, section 50.)
 - A goalie Daily Faceoff marks **Confirmed** for tonight or tomorrow gets that game as a certain start, and his partner gets zero. A confirmed start on the first night of a back-to-back also lowers his chance of starting the second night. The row shows a "starts tonight" or "sits tonight" tag.
-- "Likely" and unconfirmed goalies are shown when you tap the row but don't change the rating yet, until the log shows how often they're right.
+- "Likely" and unconfirmed goalies are shown when you tap the row but don't change the rating yet, until the log shows how often they're right. (Changed later: a "Likely" starter now counts as at least 90% to start that game, section 173.)
 
 Every update also saves a log (in `data/log`) of things that might help but need live data to test:
 
