@@ -494,3 +494,19 @@ def test_next_matchup_length():
     assert fetch.next_matchup_days({"21": [22, 23], "20": [21]}, 20) == 14
     assert fetch.next_matchup_days({"2": [2], "1": [1]}, 1) == 7
     assert fetch.next_matchup_days(None, 5) == 7
+
+
+def test_preseason_projection_keeps_the_first_one_seen(tmp_path):
+    """Handoff 445: ESPN revises its projection in season; the blend keeps each player's first-seen number."""
+    import json
+    seed, path = tmp_path / "seed.json", tmp_path / "pre.json"
+    seed.write_text(json.dumps({"season": 2027, "proj": {"1": 2.0}}))
+    players = [{"id": 1, "proj_ppg": 1.5}, {"id": 2, "proj_ppg": 1.1}, {"id": 3, "proj_ppg": None}]
+    fetch.preseason_projections(players, 2027, seed, path)
+    assert [p.get("proj_ppg_pre") for p in players] == [2.0, 1.1, None]
+    later = [{"id": 2, "proj_ppg": 0.9}]
+    fetch.preseason_projections(later, 2027, seed, path)
+    assert later[0]["proj_ppg_pre"] == 1.1 and json.loads(path.read_text())["proj"] == {"2": 1.1}
+    nxt = [{"id": 1, "proj_ppg": 1.5}]  # a new season starts from scratch
+    fetch.preseason_projections(nxt, 2028, seed, path)
+    assert nxt[0]["proj_ppg_pre"] == 1.5 and json.loads(path.read_text()) == {"season": 2028, "proj": {"1": 1.5}}

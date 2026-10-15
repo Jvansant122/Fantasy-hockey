@@ -146,8 +146,8 @@ NEWS_FILE = Path(__file__).resolve().parent.parent / "data" / "dfo_news.json"
 NEWS_DAYS, NEWS_KEEP_DAYS, NEWS_MAX_PAGES = 60, 365, 60
 # season-level wording (findings 360, 371): hunt 11b's flag, or a season phrase tied to an absence (handoff 401, idea 1114,
 # hunt13/n_fix.py): "fully healthy for the playoffs" and "ready for the season opener" no longer count
-NEWS_SEASON_907 = re.compile(r"(out for|miss|remainder of|rest of) the (regular )?season|season[- ]ending|out for the year", re.I)
-NEWS_SEASON = re.compile(r"(out|miss|sidelined|shut down|done|sit out)[^.]{0,40}(for the (rest of the |remainder of the )?(\d{4}-\d{2} )?(regular )?season|for the year|rest of the (\d{4}-\d{2} )?(regular )?season|remainder of the (\d{4}-\d{2} )?(regular )?season)"
+NEWS_SEASON_907 = re.compile(r"(out for|miss|remainder of|rest of) (the|this|his) (regular )?season|season[- ]ending|out for the year", re.I)
+NEWS_SEASON = re.compile(r"(out|miss|sidelined|shut down|done|sit out)[^.]{0,40}(for (the|this|his) (rest of (the|this|his) |remainder of (the|this|his) )?(\d{4}-\d{2} )?(regular )?(season|campaign)|for the year|rest of (the|this|his) (\d{4}-\d{2} )?(regular )?(season|campaign)|remainder of (the|this|his) (\d{4}-\d{2} )?(regular )?(season|campaign))"
                          r"|until (at least )?the playoffs|(?<!healthy )(?<!ready )(?<!back )(?<!available )(?<!return )(?<!in time )(?<!time )(before|for) the (start of the )?playoffs\b(?![^.]{0,30}(healthy|ready))|(not|won.t|will not|isn.t expected to) (return|play|be back)[^.]{0,30}(this season|this year|regular season|before the playoffs)"
                          r"|season[- ]ending|season is over|end of the (regular )?season", re.I)
 NEWS_INDEFINITE = re.compile(r"indefinit|long[- ]term|extended period|foreseeable|significant (amount of )?time|considerable time|several months|multiple months", re.I)
@@ -158,8 +158,9 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 8  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 9  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
+NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
 NEWS_SURGERY_NEG = re.compile(r"\b(no|not|without|avoid(ed|s)?)\b|n't", re.I)
 NEWS_SURGERY_NOT_NEEDED = re.compile(r"^\W*(is |was |will be )?(not|n't) (required|needed|necessary)", re.I)
@@ -236,7 +237,10 @@ def news_wording(text, pat, neg=True):
                 continue
             if neg and NEWS_NEG.search(sent[max(0, m.start() - 30):m.start()]):
                 continue
-            if NEWS_PAST.search(sent[max(0, m.start() - 60):m.end() + 40]):
+            # season wording: only a past phrase in or just before the match vetoes it ("remainder of this season"
+            # after "missed most of last season" still counts, handoff 441)
+            near = sent[max(0, m.start() - 20):m.end()] if pat is NEWS_SEASON else sent[max(0, m.start() - 60):m.end() + 40]
+            if NEWS_PAST.search(near):
                 continue
             return True
     return False
@@ -244,9 +248,16 @@ def news_wording(text, pat, neg=True):
 
 def news_surgery(text):
     """A surgery mention that isn't negated: nothing like "no" / "won't need" / "avoided" in the 25 characters before it,
-    and no "not required" / "not needed" after it (handoff 404)."""
-    return any(not NEWS_SURGERY_NEG.search(text[max(0, m.start() - 25):m.start()])
-               and not NEWS_SURGERY_NOT_NEEDED.search(text[m.end():m.end() + 30]) for m in NEWS_SURGERY.finditer(text))
+    and no "not required" / "not needed" after it (handoff 404); and not a past one: no past season or offseason
+    around it in its sentence (handoff 440, Barkov's 2025-26 surgery in the background paragraph)."""
+    for sent in re.split(r"(?<=[.!?])\s+", text):
+        for m in NEWS_SURGERY.finditer(sent):
+            if NEWS_SURGERY_NEG.search(sent[max(0, m.start() - 25):m.start()]) or NEWS_SURGERY_NOT_NEEDED.search(sent[m.end():m.end() + 30]):
+                continue
+            if NEWS_PAST.search(sent[max(0, m.start() - 60):m.end() + 40]) or NEWS_SURGERY_PAST.search(sent):
+                continue
+            return True
+    return False
 
 
 def news_return(text):

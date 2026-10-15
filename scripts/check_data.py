@@ -23,6 +23,7 @@ RATED_GOALIE_FIELDS = {"cr_g_nights"}  # goalies only: start chance by night, fo
 MIN_PLAYERS = 100  # rosters alone are ~200 players; far fewer means ESPN sent a partial answer
 MIN_FREE_AGENTS, MIN_INJURED = 100, 10
 EPS = 0.02  # rounding slack: values are rounded to 2 decimals
+SEASON_GAMES = 84  # NHL games a team plays
 # ESPN scoring period 1 of the 2027 season (sp 7 = Mon Oct 5, 2026): the day-0 the nights' sp count from, used only when
 # the data has no sp1_date (fetch.py publishes ESPN's own); the check is skipped once the data is 300+ days past it
 SP1 = date(2026, 9, 29)
@@ -152,7 +153,7 @@ def rules(data):
         teams = sum(n["sp"] in v for k, v in team_nights.items() if k != "FA")
         if teams > 2 * n["games"]:
             out.append(f"N2 {n['date']}: {teams} teams play but {n['games']} games")
-    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1")}
+    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2")}
     for p in players:
         nm = f"{p['name']} ({p['team']})"
         pn = p.get("nights") or []
@@ -176,6 +177,12 @@ def rules(data):
         top = (p.get("cr_why") or {}).get("season_pts", fpg) if p["pos"] != "G" else fpg
         if p["pos"] != "G" and p.get("cr_season") is not None and p["cr_season"] > top + EPS:
             bad["P5"].append(f"{nm} cr_season {p['cr_season']} > {'season_pts' if top is not fpg else 'cr_fpg'} {top}")
+        # S1 a Season rating is never negative, and a skater's share (Season / its own points a game) is at most 1 (handoff 444)
+        if p.get("cr_season") is not None and p["cr_season"] < -EPS:
+            bad["S1"].append(f"{nm} cr_season {p['cr_season']}")
+        # S2 Proj GP between his games so far and 84 (handoff 443-444)
+        if p.get("proj_gp") is not None and not (_gp(p) - 1 <= p["proj_gp"] <= SEASON_GAMES + 1 if p["pos"] != "G" else 0 <= p["proj_gp"] <= SEASON_GAMES + 1):
+            bad["S2"].append(f"{nm} proj_gp {p['proj_gp']} with {_gp(p)} GP")
         # P6 dress chances are probabilities
         for k in ("cr_dress", "cr_dress_next"):
             if p.get(k) is not None and not 0 <= p[k] <= 1:
@@ -282,6 +289,21 @@ def warnings(data, prev):
                        and {sp for sp in p.get("nights") or [] if sp in ahead} != {sp for sp in tn[p["team"]] if sp in ahead}})
     if mismatch:
         out.append(f"W2 teams whose nights differ from their players' nights this matchup: {mismatch[:6]}")
+    # S3 a team's summed skater Season shares far above its lineup spots (12 F, 6 D; handoff 444)
+    sums = {}
+    for p in players:
+        sp = (p.get("cr_why") or {}).get("season_pts")
+        if p["pos"] != "G" and p["team"] != "FA" and sp and p.get("cr_season") is not None:
+            k = (p["team"], p["pos"] == "D")
+            sums[k] = sums.get(k, 0.0) + p["cr_season"] / sp
+    high = sorted((t, "D" if d else "F", round(v, 1)) for (t, d), v in sums.items() if v > (7 if d else 13))
+    if high:
+        out.append(f"S3 team Season shares above the lineup: {high[:5]}")
+    # S4 Daily Faceoff says season-ending, yet the share stays above 0.3
+    big = [p["name"] for p in players if "season-ending" in ((p.get("cr_why") or {}).get("season_news") or ())
+           and (p.get("cr_why") or {}).get("season_pts") and p.get("cr_season", 0) / p["cr_why"]["season_pts"] > 0.3]
+    if big:
+        out.append(f"S4 {len(big)} skaters with season-ending news keep a Season share above 30%: {big[:5]}")
     if not (prev and prev.get("rated")):
         return out
     old = {p["id"]: p for p in prev["players"]}
@@ -297,6 +319,14 @@ def warnings(data, prev):
         zero = [abs(p["cr_fpg"] - o["cr_fpg"]) for p, o in quiet if not _gp(p)]
         if len(zero) >= 10 and statistics.median(zero) > 0.02:
             out.append(f"X3b {len(zero)} skaters with no NHL games moved: median {statistics.median(zero):.3f}")
+    # X3s the same for the Season: skaters with no new game since the last version (handoff 444)
+    quiet_s = [abs(p["cr_season"] - o["cr_season"]) for p, o in same if p.get("cr_matched") and _gp(p) == _gp(o)
+               and p.get("cr_season") is not None and o.get("cr_season") is not None]
+    if len(quiet_s) >= 50:
+        d = sorted(quiet_s)
+        med, p90 = statistics.median(d), d[int(0.9 * len(d))]
+        if med > 0.02 or p90 > 0.05:
+            out.append(f"X3s {len(d)} skaters without a new game moved Season: median {med:.3f}, 90th percentile {p90:.3f}")
     # X4 next-game dress up more than 0.15 with no game and no status change (a misfiring boost, findings 183 and 213)
     jumps = [p["name"] for p, o in same if p.get("cr_dress_next") is not None and o.get("cr_dress_next") is not None
              and p["cr_dress_next"] - o["cr_dress_next"] > 0.15 and p.get("injury") == o.get("injury")

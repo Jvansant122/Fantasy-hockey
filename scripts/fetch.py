@@ -273,6 +273,38 @@ def utc_iso(dt):
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "players.json"
 
 
+PRESEASON_SEED = Path(__file__).resolve().parent.parent / "model" / "espn_preseason.json"
+PRESEASON_FILE = DATA_PATH.parent / "espn_preseason.json"
+
+
+def preseason_projections(players, season, seed=PRESEASON_SEED, path=PRESEASON_FILE):
+    """ESPN revises its "preseason" projection in season, folding in his games, but the Season blend (handoff 331) was
+    fit on the stored preseason numbers: keep the first projection seen for each player this season (the committed seed,
+    then data/espn_preseason.json for players seen later) as proj_ppg_pre (handoff 445)."""
+    first = {}
+    for f in (seed, path):
+        try:
+            d = json.loads(Path(f).read_text())
+        except (OSError, ValueError):
+            continue
+        if d.get("season") == season:
+            first.update({k: v for k, v in (d.get("proj") or {}).items() if k not in first})
+    added = {}
+    for p in players:
+        k = str(p["id"])
+        if p.get("proj_ppg") is not None and k not in first:
+            first[k] = added[k] = p["proj_ppg"]
+        if k in first:
+            p["proj_ppg_pre"] = first[k]
+    if added or not Path(path).exists():
+        try:
+            old = json.loads(Path(path).read_text())
+        except (OSError, ValueError):
+            old = {}
+        keep = (old.get("proj") or {}) if old.get("season") == season else {}
+        Path(path).write_text(json.dumps({"season": season, "proj": {**keep, **added}}, separators=(",", ":"), sort_keys=True))
+
+
 def previous_winners(path=DATA_PATH):
     """The last published NHL games, for the win chances frozen at puck drop."""
     try:
@@ -655,6 +687,10 @@ def main():
         odds = leads.fetch_odds(web, now, ESPN_TO_NHL)
     except Exception as e:  # noqa: BLE001
         lead_errors["odds"] = repr(e)
+    try:  # each player's first-seen ESPN projection, for the rating's blends (handoff 445)
+        preseason_projections(players, season)
+    except Exception as e:  # noqa: BLE001 - the rating falls back to today's projection
+        print(f"Preseason projections failed, using today's: {e!r}", file=sys.stderr)
     winners = {}
     try:
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)

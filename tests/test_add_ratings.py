@@ -2103,3 +2103,16 @@ def test_predicted_winners_cover_the_week(monkeypatch, tmp_path):
     assert all(g["home"] == "TOR" and g["away"] == "BOS" for g in games)
     assert all(0.5 < g["p_home"] < 0.95 for g in games), [g["p_home"] for g in games]
     assert all(g["inputs"]["pts"][0] > 0 and g["inputs"]["pts"][1] > 0 for g in games)
+
+
+def test_week_inputs_for_a_skater_with_no_game_lean_on_two_seasons():
+    """Handoff 429: with no game yet, the Week's windows are the GP-weighted mean of last season and the one before."""
+    prev = {r: 1.0 for r in rating.GAME_RATES} | {"gp": 60, "toi": 18.0, "pptoi": 2.0}
+    p2 = {r: 2.0 for r in rating.TWO_SEASON_RATES} | {"gp": 20, "toi": 14.0, "pptoi": 1.0}
+    one = rating.skater_features([], prev, None, None, ["g1"], p2=p2)
+    two = rating.skater_features([], prev, None, None, ["g1"], p2=p2, two_season=True)
+    assert one["l5_fp"] == 1.0 and one["last_toi"] == 18.0
+    assert two["l5_fp"] == two["std_fp"] == pytest.approx(1.25) and two["last_toi"] == two["toi_l3"] == pytest.approx(17.0)
+    assert two["pp_l1"] == pytest.approx(1.75) and two["prev_fp"] == 1.0  # last season's own inputs stay
+    assert rating.skater_features([], prev, None, None, ["g1"], p2=None, two_season=True)["l5_fp"] == 1.0
+    assert [w for _, w in rating.EARLY_WEEK_ESPN] == [0.25, 0.19]
