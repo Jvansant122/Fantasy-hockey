@@ -257,8 +257,8 @@ LINEUP_SPOTS = {False: 12, True: 6}
 LINEUP_SLACK = (1.34, 2.84)
 # last season's regulars (MISSING_REG_GP+ games) with no NHL game yet this season: they come back and take games from the
 # skaters filling in, which the slack (skaters with games this season) can't see. Season dress logit += c x W x K/(K + team
-# games), W = their last-season TOI/G / 15 min (F) or 20 min (D), summed per current team; team MISSING_REG_MIN_TG+ games
-# (handoff 509, findings 402: Season Spearman +0.0003 all / +0.0007 free agents, every test season)
+# games), W = their last-season TOI/G / 15 min (F) or 20 min (D), summed per last season's team; team MISSING_REG_MIN_TG+
+# games (handoffs 509, 513, findings 402: Season Spearman +0.0003 all / +0.0007 free agents, every test season)
 MISSING_REG_C, MISSING_REG_K, MISSING_REG_GP, MISSING_REG_MIN_TG = -0.08, 20, 40, 3
 # Week: those regulars with a Daily Faceoff injury or roster-move item in the last WEEK_MISSING_NEWS_DAYS count in the Week
 # slack sums as WEEK_MISSING_A x K/(K + team games) x last-season TOI/G / (15 F, 20 D) players on every date, from the team's
@@ -3109,17 +3109,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
 
     season_drift(drift_rows, model)
-    # each team's last-season regulars with no NHL game yet this season, on his current team (NHL roster, else ESPN's), and
-    # only while on an NHL roster or an ESPN NHL team, so summer moves and departures don't count (handoff 509)
-    now_team = {p["nhl_id"]: ESPN_TO_NHL.get(p["team"], p["team"]) for p in players
-                if p.get("nhl_id") and p.get("team") and p["team"] != "FA"}
-    now_team.update({pid: team for team, r in rosters.items() for pid, _, _ in r})
+    # each team's last-season regulars with no NHL game yet this season, on his LAST-SEASON team, whatever his status now
+    # (handoff 509 as researched; 513: current-team attribution and a roster filter tested worse)
     missing_w = {}
     for mid, pv in prev.items():
-        tm = now_team.get(mid)
+        tm = pv.get("team")
         if tm and (pv.get("gp") or 0) >= MISSING_REG_GP and mid not in by_player and not pv.get("season_label") \
                 and pv.get("pos") != "G":
             missing_w[tm] = missing_w.get(tm, 0.0) + (pv.get("toi") or 0) / (20 if pv.get("pos") == "D" else 15)
+    # the Week's regulars due back (handoff 510): his current team (NHL roster, else ESPN's), as tested
+    now_team = {p["nhl_id"]: ESPN_TO_NHL.get(p["team"], p["team"]) for p in players
+                if p.get("nhl_id") and p.get("team") and p["team"] != "FA"}
+    now_team.update({pid: team for team, r in rosters.items() for pid, _, _ in r})
     missing = {tm: MISSING_REG_C * w * MISSING_REG_K / (MISSING_REG_K + len(team_games.get(tm, [])))
                for tm, w in missing_w.items() if len(team_games.get(tm, [])) >= MISSING_REG_MIN_TG}
     lineup_slack(lineup, boost_x, boost_dress, model, missing)
