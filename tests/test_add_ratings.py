@@ -2286,3 +2286,24 @@ def test_home_after_a_road_trip_and_long_absences_move_week_chances():
     assert regular["cr_dress_next"] < 0.9 and back["cr_dress_next"] > 0.3
     assert long_out["cr_dress_next"] == 0.3 and long_out["cr_games"] > 0.6
     assert regular["cr"] == round(2.0 * regular["cr_games"], 2)
+
+
+def test_early_opponents_who_leaked_goals_last_season_lift_the_week(monkeypatch, tmp_path):
+    """Opponents with last season's goals against above the league lift a skater's Week FP/G by at most OPP_LAST_C x their
+    excess, applied once on top of the ESPN early blend (handoff 504); unreadable standings change nothing."""
+    def rate(opp):
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        monkeypatch.setattr(rating, "opp_last_ga", lambda s, season: opp)
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+        return {p["name"]: p["cr_fpg"] for p in players}
+    base, leaky = rate({}), rate({"TOR": 0.2, "BOS": 0.2, "MTL": 0.2})
+    for name in base:
+        assert base[name] < leaky[name] <= round(base[name] * (1 + rating.OPP_LAST_C * 0.2), 2) + 0.01, name
+    assert rate({"TOR": 0.0, "BOS": 0.0, "MTL": 0.0}) == base
+    fake = FakeSession()
+    table = rating.opp_last_ga(fake, 20252026)
+    assert table and abs(sum(table.values())) < 0.5  # a fraction above or below the league, around 0

@@ -807,8 +807,9 @@ def test_open_tab_reloads(browser, server, data):
 def test_table_fixes(browser, server, data):
     """Waiver note in details, own players past row 300, rostered 'FA' players, tonight tags after puck drop, no badge on
     Week 0.0, punctuation-free and NHL-code search, Min games up to the nights, Pos sort (handoffs 142-145, 151, 152)."""
-    from datetime import timedelta
-    now, _ = _now_et()
+    from datetime import datetime, timedelta
+    # the page's clock 30 minutes after the data's run, so the data is never a day old (it failed after midnight ET)
+    now = datetime.fromisoformat(data["updated_utc"].replace("Z", "+00:00")) + timedelta(minutes=30)
     d = json.loads(json.dumps(data))
     team = d["teams"][0]
     mine = _mine(d, team)
@@ -822,7 +823,7 @@ def test_table_fixes(browser, server, data):
     g["today_start"] = _iso(now - timedelta(minutes=10))
     zero = next(p for p in d["players"] if p["id"] not in (g["id"], waiver["id"]) and p["owner"] == "freeagent")
     zero.update(cr=0.01, cr_pct=87)
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=now)
     page.select_option("#team", str(team["id"]))
     shown = set(page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].map(r => +r.dataset.id)"))
     assert {p["id"] for p in mine} <= shown
@@ -1770,6 +1771,8 @@ def test_update_now_opens_the_workflow_and_reloads_when_new_numbers_land(browser
     """Update now (Jack's ask, Oct 12) opens the workflow on GitHub, shows the run starting, and reloads on fresh data."""
     import datetime as dt
     ctx, page, errors = open_page(browser, server, data=data, clock="install")
+    # waits on the page's own messages, with room for a busy machine: under -n auto the 30 s default timed out (handoff 503)
+    until = lambda js: page.wait_for_function(js, timeout=120_000)
     now = page.evaluate("new Date().toISOString()")
     run = {"status": "in_progress", "conclusion": None, "created_at": now, "updated_at": now, "html_url": "https://github.com/x"}
     page.route("https://api.github.com/**", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps({"workflow_runs": [run]})))
@@ -1782,20 +1785,20 @@ def test_update_now_opens_the_workflow_and_reloads_when_new_numbers_land(browser
     page.click("#iamowner")
     assert page.evaluate("localStorage.getItem('faf_owner')") == "1"
     assert page.evaluate("window.opened") == ["https://github.com/Jvansant122/Fantasy-hockey/actions/workflows/update.yml"]
-    page.wait_for_function("document.getElementById('refreshmsg').textContent.includes('is running')")
+    until("document.getElementById('refreshmsg').textContent.includes('is running')")
     assert page.evaluate("localStorage.getItem('faf_refresh')")
     # the run fails: the page says so, keeps its numbers and stops watching
     run.update(status="completed", conclusion="failure")
     page.clock.run_for(31_000)
-    page.wait_for_function("document.getElementById('refreshmsg').textContent.includes(\"didn't finish\")")
+    until("document.getElementById('refreshmsg').textContent.includes(\"didn't finish\")")
     assert page.evaluate("localStorage.getItem('faf_refresh')") is None
     # pressed again and new numbers are published: the page reloads with them
     page.click("#refresh")
     fresh = dict(data, updated_utc=(dt.datetime.fromisoformat(now.replace("Z", "+00:00")) + dt.timedelta(minutes=2)).isoformat())
     page.route("**/data/players.json", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(fresh)))
-    with page.expect_navigation():
+    with page.expect_navigation(timeout=120_000):
         page.clock.run_for(31_000)
-    page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
+    until("document.getElementById('updated').textContent.startsWith('Matchup')")
     assert page.evaluate("localStorage.getItem('faf_refresh')") is None
     assert page.locator("#refresh").inner_text() == "Update now"
     assert errors == []

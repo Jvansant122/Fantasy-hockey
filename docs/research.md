@@ -1156,6 +1156,12 @@ Road trips and long absences. On a team's first home game after two or more road
 
 Page fixes. After the first puck, the Stream card counts tomorrow's open goalie slots and names tomorrow, and it hides when there are none. A free-agent forward can use an empty UTL, so his Open games and green dots count it. The details round numbers the same way the table does. Phones no longer show the "yours" tag on every row of your own team. Season figures line up when a rookie's upside badge shows. Blanks sort last both ways. Phone tap targets are at least 32 px.
 
+## 158. Early-season opponents and a steadier test
+
+Early-season opponents. In the first weeks of the season, a skater facing teams that gave up a lot of goals last season gets a small boost to his Week points per game. The boost fades as those teams play this season and their current results take over. In every held-out season, this improved the Week rating's ranking in weeks 2 to 8, mostly in weeks 3 and 4. It applies once, after the pull toward ESPN's preseason projection, which doesn't know this week's opponents.
+
+Steadier test. The "Update now" test now waits on the page's own messages with more time, so it no longer times out when the whole suite runs in parallel. A player the NHL moved first is now matched against his new teammates in Daily Faceoff's lineup.
+
 ## What the independent review changed
 
 | Review point | Outcome |
