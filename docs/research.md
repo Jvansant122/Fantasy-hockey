@@ -1194,6 +1194,10 @@ A depth skater who dropped the gloves in his last game without being cut short n
 
 Several adjustments to a healthy scratch's chance to play this week were applied before the 16-season weekly lineup model, which then undid about 90% of each. They cover a teammate at his position leaving the last game early, his team's last result, and the basic "scratches come back" lift. Those now apply after that model, alongside the Daily Faceoff news. The basic scratch lift applies at half its old size, the size that tested best in that position. Together they improved the Week chance to play in both test seasons, most for players who are out now. Other adjustments, such as the depth-scorer lift and the team-form shifts, tested better where they were and stay put.
 
+## 165. A refit after the move
+
+With the scratch adjustments now applied after the weekly lineup model (section 164), every adjustment applied after that model was refit together. Two changed. When a team has more likely players than lineup spots, everyone's chance to play is now pulled down a little harder. And a healthy scratch's lift from his team's last result is half again as large. Both held-out seasons agreed on those two and on nothing else. The pair was picked after looking at both seasons, so the measured gain is a little optimistic, but every nearby setting also improved.
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -692,6 +692,7 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     the list doesn't; if the list can't be read, missing the game with no ESPN injury counts (findings 153)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
+    monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_LOGIT", 0.0)  # ... and without the last-result lift (handoff 354)
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(**kw):
         fake = FakeSession(**kw)
