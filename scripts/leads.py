@@ -474,8 +474,11 @@ def write_log(now, players, starters, errors, s, odds=None, injuries=None, leagu
         except Exception as e:  # noqa: BLE001 - the log is best-effort
             rec["errors"][key] = repr(e)
     # findings section 25: the rating vs. ESPN's projection, scored against actual points later
-    rec["players"] = [{k: p.get(k) for k in ("id", "nhl_id", "name", "team", "pos", "owner", "owned", "injury", "proj_ppg",
-                                             "games", "games_left", "cr", "cr_fpg", "cr_dress", "cr_games")}
+    # and the per-game numbers, so live grading can score each later game, goalie start and the Season rating (handoff 618)
+    rec["players"] = [{**{k: p.get(k) for k in ("id", "nhl_id", "name", "team", "pos", "owner", "owned", "injury", "proj_ppg",
+                                                "games", "games_left", "cr", "cr_fpg", "cr_dress", "cr_games", "cr_dress_next",
+                                                "cr_g_nights", "cr_season", "proj_gp", "sat_last", "today_start")},
+                       **({"p_today": (p.get("cr_why") or {}).get("p_today")} if p.get("pos") == "G" else {})}
                       for p in players]
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     path = LOG_DIR / f"{now.strftime('%Y-%m-%d-%H%M')}.json.gz"

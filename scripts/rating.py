@@ -920,11 +920,12 @@ def shrunk_save_pcts(goalie_games, prev_goalies):
     return {**{gid: v for gid, v in prior.items() if gid not in out}, **out}, lg
 
 
-def displaced_skaters(by_player, team_games, healthy):
+def displaced_skaters(by_player, team_games, healthy, pickable=None):
     """When a regular (dressed 80%+ of his team's 5-20 games before the gap) has missed 3+ straight team games and
     ESPN now lists him healthy or day-to-day, the team's skater at his position (F or D) with the least ice time in
     the last game is the one who sits, among those ESPN lists healthy too (handoff 403). healthy: NHL ids ESPN lists
-    without a longer injury.
+    without a longer injury. pickable: NHL ids the cut may land on (handoff 620: healthy plus skaters ESPN's pool here
+    doesn't carry, who have no status), healthy when None.
     Returns {nhl id of the displaced player: (cut to P(dresses), regular's name)}."""
     last = {}
     for pid, gl in by_player.items():
@@ -940,7 +941,7 @@ def displaced_skaters(by_player, team_games, healthy):
             continue
         grp = "D" if g["pos"] == "D" else "F"
         depth = [(h["toi"], hid) for hid, (h, htg, _, hs) in last.items() if hs == 0 and h["team"] == g["team"]
-                 and h["game"] == tg[-1] and ("D" if h["pos"] == "D" else "F") == grp and hid in healthy]
+                 and h["game"] == tg[-1] and ("D" if h["pos"] == "D" else "F") == grp and hid in (healthy if pickable is None else pickable)]
         if depth:
             out[min(depth)[1]] = (DISPLACED_CUT[grp], g["name"])
     return out
@@ -1256,10 +1257,11 @@ class Model:
         sr = ROOT / "model" / "season_range.json"
         self.season_range_table = json.loads(sr.read_text()) if sr.exists() else None
 
-    def season_range(self, season, is_d, gp_last, gp_before, age=None):
+    def season_range(self, season, is_d, gp_last, gp_before, age=None, gp_now=0):
         """80% range of the Season rating and his experience group (findings 345): rookies and second-year players finish
         further above their Season rating than veterans do. gp_last / gp_before: NHL games last season / two seasons ago; age in
-        years (28+ is a veteran whatever his recent games: back from the AHL, Europe or injury)."""
+        years (28+ is a veteran whatever his recent games: back from the AHL, Europe or injury). gp_now: his NHL games this
+        season; late in the season both ends widen, and early on a low-tier player's low end comes in (handoff 619)."""
         t = self.season_range_table
         if not t:
             return None, None
@@ -1270,6 +1272,11 @@ class Model:
         lo_cut, hi_cut = t["cuts"][pos]
         tier = "low" if season < lo_cut else "mid" if season < hi_cut else "top"
         lo, hi = t["cells"][f"{pos}|{tier}|{exp}"]
+        ph = t.get("phase") or {}
+        if ph and gp_now >= ph["late_gp"]:
+            lo, hi = lo * ph["late_scale"], hi * ph["late_scale"]
+        elif ph and 1 <= gp_now <= ph["early_gp"] and tier == "low":
+            lo *= ph["early_low_tier_lo_scale"]
         return [round(max(season + lo, 0.0), 2), round(season + hi, 2)], exp
 
     def season_dress(self, x, shift=0.0):
@@ -1791,6 +1798,8 @@ def lineup_slack(lineup, boost_x, boost_dress, model, missing=None):
             z += (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
         share = 1 / (1 + math.exp(-z))
         p, why = e["p"], e["p"]["cr_why"]
+        if back:  # what the regulars yet to play cost his share, for the page (handoff 604)
+            why["missing_regs_pp"] = round(share - 1 / (1 + math.exp(-(z - back))), 3)
         season = share * e["pts"]
         p["cr_season"] = round(season, 2)
         p["proj_gp"] = round(e["gp"] + share * e["left"])
@@ -2783,6 +2792,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             else:
                 fpg_s = fpg
             raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
+            if pid:
+                why["g_season_share"] = round(goalie_season.get(pid, 0.0), 2)  # for the page's Season line (handoff 605)
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
             # Proj GP: NHL starts so far + his share of his team's starts still to play (the Season rating's share)
             proj_gp = (own.get(pid, [0, 0])[1] if pid else 0) \
@@ -3169,17 +3180,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["age_adj"] = round(age_adj, 2)
             gp_last = 0 if (prev.get(pid) or {}).get("season_label") else (prev.get(pid) or {}).get("gp", 0)
             rng, exp = model.season_range(season, p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
-                                          (today - births[pid]).days / 365.25 if pid in births else None) if pid else (None, None)
+                                          (today - births[pid]).days / 365.25 if pid in births else None, len(gl or ())) if pid else (None, None)
             if gl and pid:  # his team's open lineup spots, once every share is known (findings 370, below)
                 # a traded skater yet to play for his new team counts in the new team's lineup (handoff 442)
                 lineup.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                "share": rest_share, "pts": season_pts, "gp": len(gl), "left": games_left_season,
                                "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
-                                         (today - births[pid]).days / 365.25 if pid in births else None)})
+                                         (today - births[pid]).days / 365.25 if pid in births else None, len(gl))})
             if pid and season_pts is not None:  # the league-wide F/D scoring drift, once every Season FP/G is known (handoff 405)
                 drift_rows.append({"p": p, "D": p["pos"] == "D", "pts": season_pts, "share": rest_share, "fp": [g["fp"] for g in gl],
                                    "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
-                                             (today - births[pid]).days / 365.25 if pid in births else None),
+                                             (today - births[pid]).days / 365.25 if pid in births else None, len(gl or ())),
                                    "lineup": lineup[-1] if gl else None})
             if rng:
                 why["season_range"] = rng
@@ -3222,7 +3233,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)
     by_nhl = {p["nhl_id"]: p for p in players if p.get("nhl_id") and p["pos"] != "G"}
     healthy = {pid for pid, p in by_nhl.items() if p.get("injury") in (None, "", "DAY_TO_DAY")}
-    for pid, (cut, regular) in displaced_skaters(by_player, team_games, healthy).items():
+    # the cut can land on a skater ESPN's pool here doesn't carry: he has no status (handoff 620)
+    pickable = healthy | (set(by_player) - set(by_nhl))
+    for pid, (cut, regular) in displaced_skaters(by_player, team_games, healthy, pickable).items():
         p = by_nhl.get(pid)
         if p and p["cr_dress"]:
             dress = max(0.0, p["cr_dress"] - cut)
@@ -3233,7 +3246,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_why"]["displaced"] = regular
     # trades and claims: a newcomer at his position sits the least-used skater; a departed D brings a sitting D in
     listed = {pid: ESPN_TO_NHL.get(p["team"], p["team"]) for pid, p in by_nhl.items() if p.get("team")}
-    cuts, lifts = roster_moves(by_player, team_games, listed, {pid for pid, p in by_nhl.items() if not p.get("injury")}, healthy)
+    cuts, lifts = roster_moves(by_player, team_games, listed, {pid for pid, p in by_nhl.items() if not p.get("injury")}, pickable)
     for pid, (cut, newcomer) in cuts.items():
         p = by_nhl.get(pid)
         if p and p["cr_dress"] and "displaced" not in p["cr_why"]:  # the same cut as a returning regular, not stacked

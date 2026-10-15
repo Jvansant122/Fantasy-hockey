@@ -1133,11 +1133,10 @@ def test_table_only_changes_leave_the_cards_alone(browser, server, data):
     page.fill("#ming", "1")
     page.click("#healthy")
     page.select_option("#who", "every")
+    page.click("#left")  # the cards always count games still to play (handoff 608)
     assert page.evaluate("window.redraws") == 0
-    page.click("#left")  # Remaining games only changes the games the cards count
-    assert page.evaluate("window.redraws") > 0
     page.select_option("#team", str(data["teams"][1]["id"]))
-    assert page.evaluate("window.redraws") > 2
+    assert page.evaluate("window.redraws") >= 2
     assert errors == []
     ctx.close()
 
@@ -2016,6 +2015,37 @@ def test_details_wording_for_news_cuts_and_small_samples(browser, server, data):
     ctx.close()
 
 
+def test_details_explain_week_fit_goalie_season_and_game_dates(browser, server, data):
+    """Hunt 14 rows 603-607: this week's lineup fit beside the Season one, the regulars-due-back line only when it moves his
+    Season chance a point, the goalie's Season make-up, the games left with a goalie's start chance, and unrated wording."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    sk = [p for p in d["players"] if p["pos"] != "G" and p.get("cr_season") is not None and p.get("cr_why") and p["games_left"]]
+    a, b = sk[0], sk[1]
+    a["cr_why"].update(week_slack=-1.0, lineup_slack=1.0, missing_regs=-0.1, missing_regs_pp=-0.004)
+    b["cr_why"].update(week_slack=0.2, missing_regs=-0.3, missing_regs_pp=-0.023)
+    g = next(p for p in d["players"] if p["pos"] == "G" and p.get("cr_matched") and p.get("cr_season") and p["games_left"])
+    g["cr_why"].update(g_season_share=0.42, own_pps=2.5, mover_pps=2.7)
+    nt = next(n for n in d["nights"] if not n["past"] and n["sp"] in g["nights"])
+    g["cr_g_nights"] = {str(nt["sp"]): 0.18}
+    u = next(p for p in d["players"] if p["pos"] == "G" and p is not g)
+    u.update(cr_matched=False)
+    u["cr_why"] = {k: v for k, v in u["cr_why"].items() if k != "no_record"}
+    ctx, page, errors = open_page(browser, server, data=d)
+    whyof = lambda p: page.evaluate(f"why(state.data.players.find(p => p.id === {p['id']}))")
+    wa, wb, wg, wu = whyof(a), whyof(b), whyof(g), whyof(u)
+    assert "This week his team has about 1.0 more likely" in wa and "For the rest of the season, his team has about 1.0" in wa
+    assert "Regulars from last season" not in wa  # under a point
+    assert "This week his team" not in wb and "Season chance to play is about 2 points lower" in wb
+    assert "his expected share of his team's remaining starts (42%) × 2.70 pts per start (his last-season rate adjusted" in wg
+    assert "not on an NHL roster and no NHL game this season" in wu and "pts per start (" not in wu
+    det = page.evaluate(f"details(state.data.players.find(p => p.id === {g['id']}))")
+    assert f"Games left this matchup: " in det and f"{nt['date']} (18% to start)" in det
+    assert errors == []
+    ctx.close()
+
+
 def with_winners(data):
     """The committed data plus a Predicted winners section: a finished game with a pick, one without, one to come with a
     betting line, and two fantasy matchups (the first data run after the tab shipped writes the real one)."""
@@ -2122,5 +2152,51 @@ def test_predicted_winners_put_games_to_come_first(browser, server, data):
     fold = page.locator("#nhlgames details.dayfold")
     assert fold.count() == 1 and "all final" in fold.inner_text() and "picks 1 of 1 right" in fold.inner_text()
     assert page.locator("#fantasy .side .tm .chip").count() == 0 and page.locator("#fantasy .side > .chip").count() == 2
+    assert errors == []
+    ctx.close()
+
+
+def test_no_stream_card_on_the_matchups_last_night_after_the_puck(browser, server, data):
+    """Sunday after the first puck (not the final): tonight's G slots can't be filled and an add counts from Monday in the
+    next matchup, so no 'Stream a goalie' card with tonight's open slots (hunt 14 audit: '1 open G slot on Sun 11')."""
+    if not any(not n["past"] for n in data["nights"]):
+        pytest.skip("needs a night to come")
+    now, _ = _now_et()
+    d = _fresh(data)
+    from datetime import timedelta
+    d["final_matchup"], d["first_start"] = False, _iso(now - timedelta(hours=1))
+    for n in d["nights"]:
+        n["past"] = n is not d["nights"][-1]
+    ctx, page, errors = open_page(browser, server, data=d)
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        assert not _card(page, "Stream a goalie"), t["id"]
+    assert errors == []
+    ctx.close()
+
+
+def test_three_goalies_starting_tonight_names_one_to_bench(browser, server, data):
+    """Handoff 622: three of my goalies likely to start tonight for 2 G slots: a card names the one to bench (lowest start
+    chance x pts per start), never a confirmed starter while another can sit."""
+    if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
+        pytest.skip("needs rated data and a night to come")
+    d = _fresh(data)
+    tonight = next(n for n in d["nights"] if not n["past"])
+    d["first_start"] = "2099-01-01T00:00:00Z"
+    team = d["teams"][0]
+    gs = [p for p in d["players"] if p["pos"] == "G" and p.get("cr_why")][:3]
+    for i, (g, pt) in enumerate(zip(gs, (0.9, 0.6, 0.8))):
+        g.update(team_id=team["id"], owner="mine" if g["owner"] == "freeagent" else g["owner"], injury=None, ir=False,
+                 nights=sorted(set(g["nights"]) | {tonight["sp"]}), today_start=None, cr_fpg=3.0, pending_drop=False)
+        g["cr_why"]["p_today"] = pt
+        g["cr_why"].pop("tonight", None)
+    gs[1]["cr_why"]["tonight"] = {"starting": True, "status": "Confirmed"}  # lowest chance, but confirmed: not benched
+    for p in _mine(d, team, "G"):
+        if p not in gs:
+            p["team_id"] = -1
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    card = _card(page, "Tonight's goalies")
+    assert gs[2]["name"] in card and gs[1]["name"] not in card and gs[0]["name"] not in card, card
     assert errors == []
     ctx.close()

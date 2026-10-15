@@ -267,12 +267,13 @@
   <!-- a short plain key first, the formulas folded (handoff 479) -->
   <p class="sub faonly"><b>Week</b> = projected points left this matchup (the Claude Rating): use it for this week's pickups. <b>Season</b> = projected points per game for the rest of the season: use it for trades and players you'd hold. <b>Open</b> = his games on nights you have an empty lineup slot. The green badge ranks him against his position (100 = best). <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
   <details class="sub faonly footfold"><summary>How the numbers are made</summary>
-  <p class="sub faonly"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, though Daily Faceoff news of surgery, a season-ending injury or a send-down lowers it; a player hurt before his first game is expected in only part of the rest). Goalies: 0.32 + 0.72 × his share of his team's starts × his points per start (rescaled so goalies and skaters compare on one board; a goalie who changed teams has his last-season rate adjusted for the gap between the teams). Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last; early in the season, a small boost against opponents that allowed a lot of goals last season) × games left × chance he dresses, from his lineup history, a 16-season lineup model, his team's recent results, how many lineup spots his team has open each game (counting regulars due back), Daily Faceoff injury and roster news, and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early, and 3% for a game the same day; IR at 15%; out or IR at 50% when Daily Faceoff says he is practising; suspended 0; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, week-to-week, month-to-month, indefinitely, out for the season or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why.</p>
+  <p class="sub faonly"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, though Daily Faceoff news of surgery, a season-ending injury or a send-down lowers it; a player hurt before his first game is expected in only part of the rest; last season's regulars who haven't played yet lower his teammates' share a little, and an early change in ice time is partly held back). Goalies: 0.32 + 0.72 × his share of his team's starts × his points per start (rescaled so goalies and skaters compare on one board; a goalie who changed teams has his last-season rate adjusted for the gap between the teams). Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last; early in the season, a small boost against opponents that allowed a lot of goals last season) × games left × chance he dresses, from his lineup history, a 16-season lineup model, his team's recent results, his last game (regular minutes, or for a depth player a point, a fight, penalty killing or no special teams, and the fewest minutes at his position; a healthy scratch who had power-play time comes back a little less often), how many lineup spots his team has open each game (counting regulars due back), Daily Faceoff injury and roster news, and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early, and 3% for a game the same day; IR at 15%; out or IR at 50% when Daily Faceoff says he is practising; suspended 0; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, week-to-week, month-to-month, indefinitely, out for the season or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why.</p>
   <p class="sub faonly"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D, 2 G, and the UTL, which a forward or a defenseman can fill when it is empty). Most of the value of empty slots is on light nights. <b>Light night</b> = 5 or fewer NHL games, when most teams have open lineup spots. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. <b>Last yr GP</b> = NHL games played last season. <b>Proj GP</b> = projected games this season (84 per team): games played so far plus the Season rating's share of his team's games still to play; for goalies, starts so far plus his projected share of the rest. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
   </details>
 </main>
 <script>
-// UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
+// UTL takes a forward or a defenseman: counted here as a sixth D slot (the 6th D usually outscores the 10th F, research
+// section 19) unless a tenth forward fills it, and an empty UTL is room for either (handoff 499)
 const SLOTS = { F: 9, D: 6, G: 2 };
 const OUT = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
 // tgive, tget: Trade check's picks, so the timed reload doesn't wipe a half-built trade (findings 240)
@@ -391,6 +392,11 @@ const goneTonight = (p, n) => started(p) && n === state.data.nights.find(m => !m
 function openGames(p) {
   if (!isFA(p) || !state.team) return null;
   return state.data.nights.filter(n => activeNight(n) && !($("left").checked && goneTonight(p, n)) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
+}
+// the cards' open nights: always the ones still to play, whatever the table's checkbox (handoff 608)
+function openLeft(p) {
+  if (!isFA(p) || !state.team) return null;
+  return state.data.nights.filter(n => !n.past && !goneTonight(p, n) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
 }
 function hasRoom(sp, g) {
   return room(state.openSlots[sp], g);
@@ -530,29 +536,38 @@ function why(p) {
     // his own number before tonight's line and the schedule, then what this week's starts are priced at (findings 232)
     const fpg = (+p.cr_fpg || 0).toFixed(2), own = w.own_pps != null ? (+w.own_pps).toFixed(2) : null;
     const by = [w.line && !started(p) && "tonight's line", w.sched != null && Math.abs(w.sched) >= 0.01 && "the schedule"].filter(Boolean).join(" and ");
-    parts.push(own == null ? `× ${fpg} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward his last-season rate, or 2.9 without one)` : "")
+    // a goalie with no NHL roster spot has only the league's prior: no per-start line (handoff 607)
+    if (p.cr_matched) parts.push(own == null ? `× ${fpg} pts per start` + (w.gs != null ? ` (his ${w.gs} starts this season, pulled toward his last-season rate, or 2.9 without one)` : "")
       : `his own ${own} pts per start` + (w.gs != null ? ` (${w.gs} start${w.gs === 1 ? "" : "s"} this season, pulled toward his last-season rate, or 2.9 without one)` : "")
         // this week's starts keep 0.4 of his gap to the league rate before the line or schedule (findings 231, 242)
         + (own !== fpg ? `; this week priced at ${fpg}: pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)${by ? `, then ${by}` : ""}` : ""));
+    // what the Season rating is made of (handoff 605)
+    if (p.cr_season != null && w.g_season_share != null && (w.mover_pps ?? w.own_pps) != null) parts.push(`Season: ${n(p.cr_season)} pts per team game = 0.32 + 0.72 × his expected share of his team's remaining starts (${Math.round(w.g_season_share * 100)}%) × ${(+(w.mover_pps ?? w.own_pps)).toFixed(2)} pts per start` + (w.mover_pps != null ? " (his last-season rate adjusted for his new team)" : ""));
   } else {
-    parts.push(`Week: ${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.min(Math.round((p.cr_dress ?? 0) * 100), 99)}% chance he plays = ${n(p.cr)}`);
+    // no NHL record: rated 0 and said so below, not a formula with a 0% chance (handoff 607)
+    if (!w.no_record) parts.push(`Week: ${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.min(Math.round((p.cr_dress ?? 0) * 100), 99)}% chance he plays = ${n(p.cr)}`);
     // a player yet to play takes a fixed share of the rest, which isn't "no injury discount" when he was hurt (findings 232)
     // nor when Daily Faceoff news cut his share (handoff 420)
     const newsCut = (w.season_news || []).some(k => k !== "called up");
     if (p.cr_season != null) parts.push(`Season: ${n(p.cr_season)} pts per team game ` + (w.season_share != null
       ? `(expects him in about ${Math.round(w.season_share * 100)}% of the rest: ${p.injury ? "hurt before his first game" : "yet to play this season"})`
-      : newsCut ? "(share cut by the Daily Faceoff news below)" : "(no injury discount)") + (w.age_adj ? `; ${w.age_adj > 0 ? "+" : ""}${w.age_adj.toFixed(2)} pts/game for age: ${w.age_adj > 0
+      : newsCut ? "(share cut by the Daily Faceoff news below)" : w.no_record ? "" : "(no injury discount)") + (w.age_adj ? `; ${w.age_adj > 0 ? "+" : ""}${w.age_adj.toFixed(2)} pts/game for age: ${w.age_adj > 0
       ? "young players tend to improve through the season" : "players over 30 tend to fade through the season"}` : "") + seasonRange(w));
     // Daily Faceoff news lowers or raises his Season share (findings 360 (1))
     const NEWS_TXT = {"sent down": "sent to the AHL since his last game", "called up": "called up recently and in the lineup",
       "season-ending": "latest injury news says season-ending", "surgery": "latest injury news mentions surgery",
       "indefinite": "injury news says out indefinitely or long-term"};
     if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(w.espn_proj ?? p.proj_ppg)}); the pull fades as he plays games`);
+    // this week's lineup fit, next game (handoff 603); the Season line below is the rest of the season's
+    if (w.week_slack != null && Math.abs(w.week_slack) >= 0.5) parts.push(w.week_slack > 0
+      ? `This week his team has about ${n(w.week_slack)} open ${p.pos === "D" ? "defense" : "forward"} spots in its next game, so he should play more`
+      : `This week his team has about ${n(-w.week_slack)} more likely ${p.pos === "D" ? "defensemen" : "forwards"} than lineup spots in its next game (counting regulars due back), so he may sit more`);
     if (w.lineup_slack != null && Math.abs(w.lineup_slack) >= 0.5) parts.push(w.lineup_slack > 0
-      ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so he should play more${newsCut ? " a little, which only partly offsets the news below" : ""}`
-      : `His team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so he may play less`);
+      ? `For the rest of the season, his team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so he should play more${newsCut ? " a little, which only partly offsets the news below" : ""}`
+      : `For the rest of the season, his team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so he may play less`);
     // last season's regulars on his team who haven't played yet this season (handoff 509), when they move his logit 0.02+
-    if (w.missing_regs && Math.abs(w.missing_regs) >= 0.02) parts.push("Regulars from last season on his team haven't played yet, and when they return they take games from the players filling in, so his Season chance to play is a little lower");
+    // ... shown when they move his Season chance to play a point or more (handoff 604)
+    if (w.missing_regs_pp != null && Math.abs(w.missing_regs_pp) >= 0.01) parts.push(`Regulars from last season on his team haven't played yet, and when they return they take games from the players filling in, so his Season chance to play is about ${Math.round(Math.abs(w.missing_regs_pp) * 100)} points lower`);
     if (w.boost_dress != null || w.boost_fpg != null) parts.push(`A model trained on 16 seasons of game logs expects ` +
       [w.boost_dress != null ? `him in about ${Math.round(w.boost_dress * 100)}% of the rest of the season` : "",
        w.boost_fpg != null ? `${n(w.boost_fpg)} pts/game from here` : ""].filter(Boolean).join(" and ") + "; the Season rating moves part of the way toward it");
@@ -622,7 +637,7 @@ function why(p) {
   const bwm = p.cr_why?.boost_week_move;
   if (bwm) parts.push(`players with his record and recent absences usually play ${bwm > 0 ? "more" : "less"} than his own trend says (${bwm > 0 ? "+" : "\u2212"}${Math.round(Math.abs(bwm) * 100)} percentage points on his chance to play this week)`);
   if (p.cr_why?.displaced) parts.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
-  if (!p.cr_matched) parts.push(p.cr_why?.no_record ? "not found in NHL stats and no games this season or last, so rated 0 (likely retired or in the minors)" : "not found in NHL stats, so treated as unlikely to play");
+  if (!p.cr_matched) parts.push(p.cr_why?.no_record ? "not found in NHL stats and no games this season or last, so rated 0 (likely retired or in the minors)" : "not on an NHL roster and no NHL game this season, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);
   return parts.join("\n");
 }
@@ -631,6 +646,9 @@ function details(p) {
   const extra = [`${p.team} · ${p.slots.filter(s => s !== "F").join("/") || p.pos}`, `owned ${fmt(p.owned)}%`];
   // why a waiver player's games and starts look short (findings 232)
   if (p.owner === "waivers") extra.unshift(`on waivers: he can't play until he clears${p.clears ? ` ${p.clears}` : ""}, so only games from then count`);
+  // when he plays, readable on a phone too, with a goalie's start chance each game (handoff 606)
+  const left = state.data.nights.filter(nt => !nt.past && !goneTonight(p, nt) && p.nights.includes(nt.sp));
+  if (left.length) extra.push(`Games left this matchup: ${left.map(nt => nt.date + (p.pos === "G" && p.cr_g_nights?.[nt.sp] != null ? ` (${Math.round(p.cr_g_nights[nt.sp] * 100)}% to start)` : "")).join(", ")}`);
   if (og != null) extra.push(`${og} of ${tGames(p)} games${state.tw ? ` in the week of ${state.tw.w.label}` : ""} on nights you have an open slot`);
   return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join("\n");
 }
@@ -820,7 +838,7 @@ function renderUpgrades() {
       // a player who only sat (not out) is swapped only for a sub who scores more this week and keeps as much value (handoff 462)
       if (sub && !OUT.includes(p.injury) && !nextWeek && !(score(sub) > score(p) && keep(sub) >= keep(p))) sub = null;
       if (sub) { swapSubs.add(sub.id); swapDrops.add(p.id); }
-      const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
+      const why = OUT.includes(p.injury) ? injLabel(p) : p.injury ? `${injLabel(p)}, sat last game` : "sat last game";
       const ir = irMove.includes(p) ? " (IR-eligible: move him to IR)" : "";
       return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} ${nextWeek
         ? `<span class="sub">${esc(sub.team)}</span> <span class="up">Season ${fmt(sub.cr_season)}</span>`
@@ -840,7 +858,9 @@ function renderUpgrades() {
     // after the first puck an added goalie plays from tomorrow: that night's open G slots and date (handoff 493)
     // (the matchup's last night keeps tonight's, for the "counts next matchup" and "nothing counts" notes)
     const fromNext = locked && !lastNight, slotNight = fromNext ? d.nights[d.nights.indexOf(tonight) + 1] : tonight;
-    const open = fromNext ? (state.openSlots[slotNight?.sp]?.G ?? 0) : 2 - myG.filter(startsTonight).length;
+    // the matchup's last night after the puck: tonight's slots can't be filled and Monday's aren't known yet, so no card
+    // (the Goalies card says an add counts next matchup); the final keeps it for its "nothing counts" note (handoff 621)
+    const open = fromNext ? (state.openSlots[slotNight?.sp]?.G ?? 0) : locked && lastNight && !d.final_matchup ? 0 : 2 - myG.filter(startsTonight).length;
     const limit = cnt.limit, used = cnt.used;  // null when ESPN gives no usable limit: show the card anyway
     if (open > 0 && !(limit && used >= limit)) {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
@@ -899,6 +919,16 @@ function renderUpgrades() {
     const crowded = Math.max(0, nF - 9) + Math.max(0, nD - 5) > 1;  // more playing than 9 F + 5 D + 1 UTL can hold
     if (crowded && bench.length) cards.push(`<div class="upg"><b>Tonight</b> <span class="drop">· ${nF} forwards play ${esc(tonight.date)} for 9 F spots and ${nD} D for 5, plus the UTL: start the best per-game ratings, bench these</span>
       ${bench.map(p => `<div>${esc(p.name)}${flagged(p) ? `<span class="tag inj">${p.dfo_out ? "not in Daily Faceoff's lineup" : "sat last game"}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game</span></div>`).join("")}</div>`);
+  }
+  // more of my goalies start tonight than there are G slots (handoff 622): bench the lowest expected points, a Daily Faceoff
+  // confirmed starter last
+  if (d.rated && tonight && !stale(d)) {
+    const conf = p => p.cr_why?.tonight?.status === "Confirmed";
+    const gStart = tonightMine.filter(p => p.pos === "G" && p.nights.includes(tonight.sp) && !started(p) && startsTonight(p));
+    const gv = p => (conf(p) ? 1 : (p.cr_why?.p_today ?? 0)) * (p.cr_fpg || 0);
+    const sit = [...gStart].sort((a, b) => conf(a) - conf(b) || gv(a) - gv(b)).slice(0, Math.max(0, gStart.length - 2));
+    if (sit.length) cards.push(`<div class="upg"><b>Tonight's goalies</b> <span class="drop">· ${gStart.length} of your goalies are likely to start ${esc(tonight.date)} for 2 G slots: bench the lowest expected points</span>
+      ${sit.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)} · ${conf(p) ? "confirmed" : `${Math.round((p.cr_why?.p_today ?? 0) * 100)}% to start`}</span> <b>${fmt(gv(p))}</b><span class="sub"> expected pts tonight</span></div>`).join("")}</div>`);
   }
   // Trade ideas (research findings 103): another team's skater whom ESPN projects the same as mine but the Season rating has 0.3+
   // pts per team game higher. Both healthy with 40+ NHL games last season, since ESPN may know more about rookies and new arrivals.
@@ -1005,7 +1035,7 @@ function renderUpgrades() {
     const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
     if (!better.length) continue;
     cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.</span>
-      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(games(p))} (${openGames(p)} on open nights)</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))} pts this week${kv(p)}`}, ${gainTxt(addVal(p) - addVal(worst))} over ${esc(worst.name)}</span></div>`).join("")}</div>`);
+      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(p.games_left)} (${openLeft(p)} on open nights)</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))} pts this week${kv(p)}`}, ${gainTxt(addVal(p) - addVal(worst))} over ${esc(worst.name)}</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap && !seasonDone) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
   // the best free agent at his position, by the cards' own measure (findings 68, 233), one the other cards don't already add,
@@ -1021,7 +1051,7 @@ function renderUpgrades() {
   if (!seasonDone && (drops.length || irMove.length)) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· ${d.final_matchup ? "your lowest points left: this is the final, so nothing after it counts"
       : noMoves ? "your lowest Season ratings, since adds now wait for the next matchup" : "your lowest keep value: this week plus about two more weeks of points per game"}</span>
     ${irMove.map(p => `<div>${esc(p.name)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <span class="up">Move to IR</span><span class="sub"> (free, keeps him, opens a roster spot)</span></div>`).join("")}
-    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(games(p))}</span> <b>${fmt(score(p))}</b><span class="sub"> pts${noMoves && d.rated ? ` · Season ${fmt(p.cr_season)}` : kv(p)}${upside(p) != null ? ` · ${EXP_TXT[p.cr_why.exp]}, upside ${fmt(upside(p))} a game` : ""}${dropGain(p)}</span>${d.rated && !d.final_matchup && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
+    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(p.games_left)}</span> <b>${fmt(score(p))}</b><span class="sub"> pts${noMoves && d.rated ? ` · Season ${fmt(p.cr_season)}` : kv(p)}${upside(p) != null ? ` · ${EXP_TXT[p.cr_why.exp]}, upside ${fmt(upside(p))} a game` : ""}${dropGain(p)}</span>${d.rated && !d.final_matchup && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only. Not in the final: no later weeks
   // with a full roster it takes a drop and a second move (findings 231)
   // IR slots the Drop list's IR moves leave, and a drop no other card already uses (findings 240)
@@ -1038,7 +1068,7 @@ function renderUpgrades() {
     ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies plus a stream slot (research sections 37 and 144): a third goalie spot is the stream slot, a fourth is spare
   const myGoalies = roster.filter(p => !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
-  const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? `${kv(p) || " ·"}${kv(p) ? "," : ""} Season ${fmt(p.cr_season)}` : ""} · lowest ${d.final_matchup ? "points left" : "keep value"}</span></div>`;
+  const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${p.games_left} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? `${kv(p) || " ·"}${kv(p) ? "," : ""} Season ${fmt(p.cr_season)}` : ""} · lowest ${d.final_matchup ? "points left" : "keep value"}</span></div>`;
   if (myGoalies.length > 3 && !seasonDone) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
     ${[...myGoalies.filter(p => locked || !startsTonight(p)), ...myGoalies.filter(p => !locked && startsTonight(p))].slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
   // nothing to stream for once the final's moves or nights are gone (findings 232)
@@ -1048,7 +1078,8 @@ function renderUpgrades() {
     cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from ${nextStart}, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
       : locked && lastNight ? `tonight's first game has started and it's the matchup's last night, so an add now counts in the next matchup: from Monday, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
       : locked ? `tonight's first game has started, so an add now counts from tomorrow: when a G slot is open tomorrow, drop ${esc(gDrop.name)} for a confirmed starter.`
-      : stale(d) || !tonight ? `when a G slot is open on a night, drop ${esc(gDrop.name)} for a confirmed starter.`
+      // no G slot open tonight when two of them start (handoff 622)
+      : stale(d) || !tonight || myGoalies.filter(startsTonight).length >= 2 ? `when a G slot is open on a night, drop ${esc(gDrop.name)} for a confirmed starter.`
       : `when a G slot is open tonight, drop ${esc(gDrop.name)} for a confirmed starter${streamShown ? ` (see ${streamTitle})` : ""}.`}</span>
     ${gLine(gDrop)}</div>`);
   }
@@ -1320,7 +1351,7 @@ function wire() {
   $("allcols").addEventListener("input", () => { document.body.classList.toggle("allcols", $("allcols").checked); render(false); });
   // Remaining games only changes the games Upgrades counts, so it redraws everything
   ["q", "pos", "ming", "minr", "healthy", "addfa"].forEach(id => $(id)?.addEventListener("input", () => render(false)));
-  $("left").addEventListener("input", () => render());
+  $("left").addEventListener("input", () => render(false));  // the cards always count games still to play (handoff 608)
 }
 
 function restore() {
@@ -1490,7 +1521,7 @@ function renderWinners() {
     return;
   }
   const games = w.games || [], rec = w.record || {};
-  $("nhlhead").innerHTML = "Claude's win chance for each game: each skater's NHL points (goals + assists) per game × his chance to dress from the player projections, the likely starting goalie's save%, each team's expected-goal differential from MoneyPuck (with goal differential as the fallback if MoneyPuck is unavailable), home ice and back-to-backs. In tests on past seasons, where each season was predicted only from the seasons before it, it picked the winner about 60.5% of the time (always picking the home team: 54%). On the 1,651 games with archived betting lines, its win chances were slightly more accurate than the closing line's."
+  $("nhlhead").innerHTML = "Claude's win chance for each game: each skater's NHL points (goals + assists) per game × his chance to dress from the player projections, the likely starting goalie's save%, each team's expected-goal differential from MoneyPuck (with goal differential as the fallback if MoneyPuck is unavailable), home ice and back-to-backs. In tests on past seasons, where each season was predicted only from the seasons before it, it picked the winner about 60% of the time (always picking the home team: 54%). On the 1,651 games with archived betting lines, its win chances were about as accurate as the closing line's."
     + (rec.games ? ` <b>This week: ${rec.right} of ${rec.games} right</b> (the home team won ${rec.home_right}).` : "");
   // days with games still to play first; finished days after them, folded to one line each (handoff 480)
   const days = [...new Set(games.map(g => g.date))];

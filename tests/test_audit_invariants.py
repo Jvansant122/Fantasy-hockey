@@ -402,3 +402,15 @@ def test_stream_recheck_names_every_run_before_the_puck(browser, server, data):
     assert "9" in st.split("rechecks")[1].split("ET")[0], st
     assert errors == []
     ctx.close()
+
+
+def test_every_rating_why_key_is_read_by_the_page():
+    """Every cr_why key rating.py writes is read by index.html's details, or listed here as internal (handoff 613). Hunt 14:
+    week_slack and mover_pps were written but never shown, while the Season slack line said the opposite for 35 players."""
+    r = (ROOT / "scripts" / "rating.py").read_text()
+    h = (ROOT / "index.html").read_text()
+    keys = set(re.findall(r'why\[["\'](\w+)["\']\]', r)) | set(re.findall(r'cr_why["\']\]\[["\'](\w+)["\']\]', r))
+    used = set(re.findall(r'(?:cr_why\??\.|\bw\.|why\??\.)(\w+)', h))
+    # shown through boost_week_move / used by check_data / the logit move, shown as missing_regs_pp (handoff 604)
+    internal = {"boost_week", "season_pts", "missing_regs"}
+    assert not keys - used - internal, sorted(keys - used - internal)

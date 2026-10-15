@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 173). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 176). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1110,7 +1110,7 @@ For skaters who haven't played yet this season, the Week's points per game now d
 
 ## 153. Sharper Predicted winners picks, steadier goalie starts, and scratched players who fill a gap
 
-The Predicted winners picks now use each team's expected-goal differential from MoneyPuck (shots weighted by how likely each is to go in), shrunk over 15 games toward half of last season's. Goal differential mixes shot quality with finishing and goaltending luck; expected goals is the repeatable part. Fit forward on 2011-26 (each season tested on a model trained only on the seasons before), the picks got sharper in all five of the last five seasons and 11 of 12 since 2014-15, right 60.5% of the time instead of 60.1%. On 1,651 games with closing betting lines, the new model scored slightly better than the line. If MoneyPuck can't be reached, the picks fall back to the old model.
+The Predicted winners picks now use each team's expected-goal differential from MoneyPuck (shots weighted by how likely each is to go in), shrunk over 15 games toward half of last season's. Goal differential mixes shot quality with finishing and goaltending luck; expected goals is the repeatable part. Fit forward on 2011-26 (each season tested on a model trained only on the seasons before), the picks got sharper in all five of the last five seasons and 11 of 12 since 2014-15, right 60.5% of the time instead of 60.1%. On 1,651 games with closing betting lines, the new model scored about level with the closing line once the lineup and starter are the expected ones the site has before the game (slightly better with the players who actually played; with the expected lineup and starter it picked the winner 59.8% of the time). If MoneyPuck can't be reached, the picks fall back to the old model.
 
 Two goalie start fixes, replayed on 15 seasons with every season better. Early in the season (the team's first 10 games), a goalie who hasn't started for his team yet was getting too many starts, most of them on the second night of a back-to-back (third goalies like Black, Poirier and Spencer Martin read 25-33% for Oct 13 and started none). His start chance is now cut until he gets one. And when a team's two goalies have split the last 20 starts evenly, the no. 1's back-to-back adjustments are half size, since there is no clear no. 1 to rest.
 
@@ -1229,6 +1229,18 @@ When a player is listed as out for one game, the site lets him back in once that
 ## 173. Daily Faceoff's "likely" starting goalies
 
 Daily Faceoff tags some goalies "Likely" before the team confirms. On the live days measured, the tagged goalie started nearly every time, more often than the site's own start chance said. The site now gives a goalie Daily Faceoff tags as likely at least a 90% chance to start that game, and lowers his teammates' chances to match. Later games are unchanged.
+
+## 174. The Season range by time of season
+
+The Season rating's 80% range was one table for the whole season. Late in the season (41+ games played), finishes spread a little wider around the rating than the table said, and in a player's first few games a low-rated player rarely finished as far below as the table allowed. The range now widens both ends by 10% from a player's 41st game, and pulls a low-tier player's low end in by 30% over his first six games. This changes only the range shown, not the rating.
+
+## 175. Who sits when a newcomer arrives
+
+When a team adds a player or a regular comes back, the skater at his position with the fewest minutes in the last game is expected to sit more. The site picked that skater only from players on ESPN's list, so a depth skater ESPN's player pool doesn't carry could never be the one, and the drop landed on the next player up (on Oct 15, Nicolas Hague in Nashville and Trent Frederic in Edmonton). Now any skater who played that game can be the one who sits.
+
+## 176. Clearer player details
+
+The details now show this week's lineup fit beside the rest-of-season one, say how many points the regulars yet to play take off a player's Season chance (only when it is at least a point), explain a goalie's Season rating, list the games left in the matchup with a goalie's start chance for each, and word unrated players plainly. The upgrade cards always count games still to play, a day-to-day player in Mid-week swaps shows that status, and when three of your goalies are likely to start tonight a card names the one to bench.
 
 ## What the independent review changed
 
