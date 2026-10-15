@@ -2200,3 +2200,13 @@ def test_three_goalies_starting_tonight_names_one_to_bench(browser, server, data
     assert gs[2]["name"] in card and gs[1]["name"] not in card and gs[0]["name"] not in card, card
     assert errors == []
     ctx.close()
+
+
+def test_moves_held_by_matchup_kind(browser, server, data):
+    """Handoffs 627-628 (move simulator): hold 3 of 7, 3 of the first playoff round's 14, 2 of the 6-day opener's 6, and
+    6 of the final's 14."""
+    ctx, page, errors = open_page(browser, server)
+    assert page.evaluate("[holdCap(7, false), holdCap(14, false), holdCap(6, false), holdCap(14, true), holdCap(7, true)]") \
+        == [3, 3, 2, 6, 3]
+    assert errors == []
+    ctx.close()
