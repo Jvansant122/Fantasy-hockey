@@ -22,6 +22,7 @@ DEPTH_DRESS = (0.85, 0.4, 0.1)  # played the team's last game / one of its last 
 # Fantasy matchups: game-to-game spread of fantasy points (2021-26 player-games around each player's own mean, findings 451)
 SKATER_SD = (0.4, 0.5)  # sd = 0.4 + 0.5 x his FP per dressed game
 GOALIE_SD = 3.33  # per start
+MATCHUP_SD_SCALE = 1.04  # league matchup margins run ~8% wider than the summed player spreads (handoff 505)
 FANTASY_SLOTS = {"F": 9, "D": 5, "UTL": 1, "G": 2}
 FINAL_STATES = ("OFF", "FINAL")
 
@@ -227,7 +228,7 @@ def fantasy_matchups(schedule, period, players, team_names, today_sp, sps, now_i
             sides.append({"id": tid, "name": team_names.get(tid), "now": round(now, 1), "rest": round(mean, 1),
                           "total": round(now + mean, 1), "var": var})
         h, a = sides
-        sd = math.sqrt(h["var"] + a["var"])
+        sd = MATCHUP_SD_SCALE * math.sqrt(h["var"] + a["var"])
         diff = h["total"] - a["total"]
         p = _phi(diff / sd) if sd > 0 else (1.0 if diff > 0 else 0.0 if diff < 0 else 0.5)
         for s in sides:

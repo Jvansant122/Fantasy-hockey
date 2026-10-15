@@ -2751,10 +2751,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             proj_pre = p.get("proj_ppg_pre", p.get("proj_ppg"))
             if early_w and proj_pre is not None:
                 fpg += early_w * (proj_pre - fpg)
-            # early season: opponents who leaked goals last season, faded as they play this season (handoff 504)
+            # early season: opponents who leaked goals last season, faded as they play this season (handoff 504); off until
+            # his team has played a game (handoff 506: the opening week was worse with it in all 6 seasons)
             opp_left = [o for d, o, _ in week_games.get(espn_team) or week_games.get(team, [])
                         if d > today.isoformat() or (d == today.isoformat() and not game_started(p))]
-            if pid and opp_ga and opp_left:
+            if pid and tg and opp_ga and opp_left:
                 fpg *= 1 + OPP_LAST_C * sum(OPP_LAST_K / (OPP_LAST_K + len(team_games.get(o, []))) * opp_ga.get(o, 0.0)
                                             for o in opp_left) / len(opp_left)
             df_, base_dress, cap = None, None, 1.0

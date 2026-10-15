@@ -808,8 +808,10 @@ def test_table_fixes(browser, server, data):
     """Waiver note in details, own players past row 300, rostered 'FA' players, tonight tags after puck drop, no badge on
     Week 0.0, punctuation-free and NHL-code search, Min games up to the nights, Pos sort (handoffs 142-145, 151, 152)."""
     from datetime import datetime, timedelta
-    # the page's clock 30 minutes after the data's run, so the data is never a day old (it failed after midnight ET)
-    now = datetime.fromisoformat(data["updated_utc"].replace("Z", "+00:00")) + timedelta(minutes=30)
+    # the page's clock late on the data's own ESPN day, so the data is never a day old (it failed after midnight ET, when
+    # overnight data still carries yesterday's date)
+    from datetime import timezone
+    now = datetime.fromisoformat(data["updated_date"] + "T23:50:00").replace(tzinfo=timezone(timedelta(hours=-4)))
     d = json.loads(json.dumps(data))
     team = d["teams"][0]
     mine = _mine(d, team)

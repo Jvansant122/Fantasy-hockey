@@ -1162,6 +1162,12 @@ Early-season opponents. In the first weeks of the season, a skater facing teams 
 
 Steadier test. The "Update now" test now waits on the page's own messages with more time, so it no longer times out when the whole suite runs in parallel. A player the NHL moved first is now matched against his new teammates in Daily Faceoff's lineup.
 
+## 159. Wider league odds and an opening-week fix
+
+League matchup odds. The Predicted winners tab's league matchups now allow for slightly bigger swings, 4% more spread. In made-up 12-team leagues from three seasons of real games, final margins ran about 8% wider than the summed player spreads, and the wider spread scored better in every held-out season. A team that is ahead now shows a slightly less certain win chance.
+
+Opening week. The early-season opponent adjustment (section 158) now stays off until a player's team has played a game. In all six seasons it made the opening week slightly worse, and with that week left out it helps every week. Nothing changes until next season's opener.
+
 ## What the independent review changed
 
 | Review point | Outcome |
