@@ -44,6 +44,10 @@ P2_RATES = ["fp", "toi", "pptoi", "shots", "hits", "blockedShots", "points"]  # 
 # in 2023-26, free agents +0.001 / +0.012 / +0.008, MSE lower every season; hunt13/early_wk)
 TWO_SEASON_RATES = P2_RATES + ["goals", "assists"]
 EARLY_WEEK_ESPN = ((0, 0.25), (3, 0.19))
+# opponents' last-season goals against per game (shrunk OPP_LAST_SHRINK games to the league, as a fraction above it), faded
+# by OPP_LAST_K / (OPP_LAST_K + the opponent's games this season), x his Week FP/G (handoff 504, findings 402: Week Spearman
+# +0.0007 weeks 2-8 in every test season)
+OPP_LAST_C, OPP_LAST_K, OPP_LAST_SHRINK = 0.45, 5, 10
 # position x usage and squared ice time inputs (findings section 201); same as model/train.py
 D_X = ["std_toi", "std_pptoi", "l5_toi", "l5_pptoi", "std_blockedShots", "std_hits"]
 SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
@@ -735,6 +739,20 @@ def prev_points_pct(s, prev_season):
                 for r in nhl_get(s, f"{NHL_WEB}/standings/{end}").json().get("standings", [])}
     except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
         print(f"Last season's standings unavailable, goalie team changes not priced: {e!r}", file=sys.stderr)
+        return {}
+
+
+def opp_last_ga(s, prev_season):
+    """{team: last season's goals against per game, shrunk OPP_LAST_SHRINK games toward the league's, / league - 1}. Empty if
+    the standings can't be read (handoff 504)."""
+    try:
+        end = next(x["standingsEnd"] for x in nhl_get(s, f"{NHL_WEB}/standings-season").json()["seasons"] if x["id"] == prev_season)
+        rows = nhl_get(s, f"{NHL_WEB}/standings/{end}").json().get("standings", [])
+        lg = sum(r["goalAgainst"] for r in rows) / max(sum(r["gamesPlayed"] for r in rows), 1)
+        return {r["teamAbbrev"]["default"]: (r["goalAgainst"] + OPP_LAST_SHRINK * lg) / (r["gamesPlayed"] + OPP_LAST_SHRINK) / lg - 1
+                for r in rows} if lg else {}
+    except (requests.RequestException, KeyError, StopIteration, ValueError) as e:
+        print(f"Last season's goals against unavailable, no opponent term: {e!r}", file=sys.stderr)
         return {}
 
 
@@ -2337,7 +2355,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     week_games, week_starts, week_results, team_names = {}, {}, {}, {}
     bios = {}  # {id: (birth, draft, first season)}, filled by load_birthdates for the boosted models
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
-    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct, xgd = pmap(lambda f: f(), [
+    games, goalie_games, prev, prev2, prev_goalies, xg_now, xg_prev, births, sched, strength, prev_pct, xgd, opp_ga = pmap(lambda f: f(), [
         lambda: load_skater_games(s, season, today),
         lambda: load_goalie_games(s, season, today),
         lambda: load_prev_season(s, prev_season),
@@ -2350,6 +2368,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         lambda: team_strength(s, prev_season),
         lambda: prev_points_pct(s, prev_season),
         lambda: team_xgd(s, season // 10000) if winners is not None else {},
+        lambda: opp_last_ga(s, prev_season),
     ], workers=4)
     prev_gs = {gid: t[0] for gid, t in prev_goalies.items()}
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
@@ -2732,6 +2751,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             proj_pre = p.get("proj_ppg_pre", p.get("proj_ppg"))
             if early_w and proj_pre is not None:
                 fpg += early_w * (proj_pre - fpg)
+            # early season: opponents who leaked goals last season, faded as they play this season (handoff 504)
+            opp_left = [o for d, o, _ in week_games.get(espn_team) or week_games.get(team, [])
+                        if d > today.isoformat() or (d == today.isoformat() and not game_started(p))]
+            if pid and opp_ga and opp_left:
+                fpg *= 1 + OPP_LAST_C * sum(OPP_LAST_K / (OPP_LAST_K + len(team_games.get(o, []))) * opp_ga.get(o, 0.0)
+                                            for o in opp_left) / len(opp_left)
             df_, base_dress, cap = None, None, 1.0
             if pid is None or (not gl and p["team"] == "FA"):  # not in NHL stats, or unsigned and yet to play (findings 216)
                 p_dress = NOT_PLAYING_DRESS

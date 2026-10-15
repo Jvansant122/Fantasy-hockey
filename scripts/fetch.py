@@ -673,8 +673,8 @@ def main():
         was = p.get("team")
         own = tm.get("starts", {}).get(today_sp) if today_sp in tm["periods"] else None
         p.update(schedule_fields(tm, sched_info, 0, counts_until(own, p.get("owner"), first_start), run_utc))
-        if p["pos"] != "G":
-            leads.mark_lineups([p], lineups, ESPN_TO_NHL, last_start)
+        if p["pos"] != "G":  # with his new teammates, so a near-match name can't take a teammate's line (handoff 503)
+            leads.mark_lineups([q for q in players if q["pos"] != "G" and q.get("team") == p["team"]], lineups, ESPN_TO_NHL, last_start)
         print(f"{p['name']} is {was!r} on ESPN but plays for {nhl_team}: given its games")
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
