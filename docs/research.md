@@ -1168,6 +1168,14 @@ League matchup odds. The Predicted winners tab's league matchups now allow for s
 
 Opening week. The early-season opponent adjustment (section 158) now stays off until a player's team has played a game. In all six seasons it made the opening week slightly worse, and with that week left out it helps every week. Nothing changes until next season's opener.
 
+## 160. Healthy regulars, early ice-time changes, and a safer standings read
+
+Healthy regulars. A skater with no injury listing who played his team's last game on regular minutes (13+ for a forward, 16+ for a defenseman) now gets a slightly higher chance to play each game this week, about 95% to 97%. Over Oct 9-13 these players dressed for 98% of games while the site gave them about 95%, every day, and the site's output still sat near 96% after the newer lineup models.
+
+Early ice-time changes. When a skater's ice time this season differs from last season over only a few games, the Season rating now leans on that change a little less, fading to nothing by his 10th game. It improved the Season rating's ranking in every test season, most in October and November.
+
+Safer standings read. If NHL standings ever come back with a blank goals or games field, the three places that read them now skip that input instead of stopping the ratings. The player details also say when this week's opponents gave up more or fewer goals than average last season (section 158), and when the early ice-time change moved the Season rating.
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -575,6 +575,12 @@ function why(p) {
   if (p.cr_why?.pp_d_out) parts.push(`top power-play defenseman ${p.cr_why.pp_d_out} is out: more power-play time (+0.15 pts/game this week)`);
   if (p.cr_why?.newcomer) parts.push(`His team just added ${p.cr_why.newcomer} at his position, so he may sit (he had the least ice time at his position last game)`);
   if (p.cr_why?.d_departed) parts.push(`${p.cr_why.d_departed} has left his team's defense, so he is more likely back in the lineup`);
+  // this week's opponents' goals against last season, when it moves his points a game by 1%+ (handoffs 504, 508)
+  const ol = p.cr_why?.opp_last;
+  if (ol && Math.abs(ol.move) >= 0.01) parts.push(`this week's opponents allowed ${Math.round(Math.abs(ol.ga) * 100)}% ${ol.ga >= 0 ? "more" : "fewer"} goals a game than average last season (${ol.move > 0 ? "+" : "\u2212"}${Math.round(Math.abs(ol.move) * 100)}% on his points a game this week)`);
+  // an early-season change in ice time vs last season, pulled back while it rests on a few games (handoff 507)
+  const tc = p.cr_why?.toi_chg;
+  if (tc != null && Math.abs(tc) >= 0.01) parts.push(`his ice time is ${tc < 0 ? "up" : "down"} on last season over only a few games, and early changes like that partly fade, so his Season points a game ${tc < 0 ? "hold back part of the rise" : "hold back part of the drop"} (${tc > 0 ? "+" : "\u2212"}${Math.abs(tc).toFixed(2)})`);
   if (p.cr_why?.called_up) parts.push("called up in the last week with no NHL game yet: recent call-ups play about 1 game in 4 that week");
   if (p.cr_why?.fills_in) parts.push("a teammate at his position left the last game early, and scratches like him usually fill in");
   if (p.cr_why?.depth_point) parts.push("scored in his last game on depth minutes, and coaches tend to keep those players in");
