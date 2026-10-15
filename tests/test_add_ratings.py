@@ -2646,3 +2646,37 @@ def test_daily_faceoffs_likely_starter_starts_that_game_at_least_90_percent():
     assert nights[1]["2026-10-24"] == pytest.approx(base[1]["2026-10-24"])  # the later game is unchanged
     hi, _ = run({"2026-10-22": 1})  # the no. 1 too, from his model chance
     assert base_tod[1] < hi[1] == pytest.approx(max(base_tod[1], rating.LIKELY_START_FLOOR))
+
+
+def _goalie_nights(hist, last=None, dates=("2026-10-22", "2026-10-24", "2026-10-26")):
+    tod, nights = {}, {}
+    rating.goalie_starts(rating.Model(), "TOR", sorted({g for _, g in hist}), {"TOR": hist}, {g: 20 for _, g in hist},
+                         list(dates), date(2026, 10, 22), today_p=tod, by_date=nights, last_start=last)
+    return nights
+
+
+def test_a_three_or_four_goal_loss_also_lowers_the_game_after_next(monkeypatch):
+    """Handoff 625, pinned on the shipped constant (handoff 638): after a 3-4 goal loss (not a bad start) the goalie's
+    start chance in the game after next is lower."""
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    loss = {"losses": 1, "ga": 3, "toi": 60 * 60}
+    assert rating.last_start_shift(loss)[1] == rating.LOSS_34_LOGIT_2 < 0
+    with_cut = _goalie_nights(hist, (1, rating.last_start_shift(loss)))
+    monkeypatch.setattr(rating, "LOSS_34_LOGIT_2", 0.0)
+    without = _goalie_nights(hist, (1, rating.last_start_shift(loss)))
+    assert with_cut[1]["2026-10-22"] == pytest.approx(without[1]["2026-10-22"])  # next game: the graded loss cut only
+    assert with_cut[1]["2026-10-24"] < without[1]["2026-10-24"]
+
+
+def test_three_goalie_team_no1_gets_more_of_the_games_after_the_next(monkeypatch):
+    """Handoff 626, pinned on the shipped constant (handoff 638): 3+ goalies started the last 10: the no. 1 gets more of
+    every game after the next; the next is unchanged, and each night's chances sum to 1."""
+    order = [1, 1, 2, 1, 1, 3, 1, 1, 2, 1]
+    hist = [(f"2026-10-{2 * i + 1:02d}", g) for i, g in enumerate(order)]
+    lifted = _goalie_nights(hist)
+    monkeypatch.setattr(rating, "THREE_GOALIE_NO1_LOGIT", 0.0)
+    flat = _goalie_nights(hist)
+    assert lifted[1]["2026-10-22"] == pytest.approx(flat[1]["2026-10-22"])
+    assert lifted[1]["2026-10-24"] > flat[1]["2026-10-24"] and lifted[1]["2026-10-26"] > flat[1]["2026-10-26"]
+    for d in ("2026-10-22", "2026-10-24", "2026-10-26"):
+        assert sum(n[d] for n in lifted.values()) == pytest.approx(1.0)
