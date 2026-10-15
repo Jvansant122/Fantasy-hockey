@@ -110,3 +110,17 @@ def test_fantasy_matchups_add_points_so_far_and_fill_the_lineup():
     assert abs(m["home"]["rest"] - (10 * 1.0 * 2 + 3.0)) < 0.05  # 10 skater slots a night at 1.0 each, plus the start
     assert abs(m["away"]["rest"] - 3.0) < 0.05
     assert 0.5 < m["p_home"] < 1.0
+
+
+def test_matchup_spread_is_widened(monkeypatch):
+    """League matchup margins run wider than the summed player spreads: the sd is MATCHUP_SD_SCALE x theirs, so a leader's
+    win chance sits a little closer to even (handoff 505)."""
+    a = [fa(i, "C", 2.0, [16, 17]) for i in range(12)]
+    b = [fa(100 + i, "C", 1.8, [16, 17], team_id=2) for i in range(12)]
+    sched = [{"matchupPeriodId": 3, "home": {"teamId": 1, "totalPointsLive": 10.0}, "away": {"teamId": 2, "totalPointsLive": 10.0}}]
+    run = lambda: winners.fantasy_matchups(sched, 3, a + b, {1: "Mess", 2: "Other"}, 16, list(range(14, 21)), "2026-10-14T20:00:00Z")[0]
+    wide = run()
+    monkeypatch.setattr(winners, "MATCHUP_SD_SCALE", 1.0)
+    narrow = run()
+    assert wide["sd"] == round(1.04 * narrow["sd"] / 1.0, 1) or abs(wide["sd"] - 1.04 * narrow["sd"]) < 0.11
+    assert 0.5 < wide["p_home"] < narrow["p_home"]
