@@ -238,3 +238,67 @@ def test_swap_sub_beats_the_player_he_replaces(browser, server, data):  # noqa: 
     assert not worse, f"swap subs who project less this week than the player they replace: {worse[:4]}"
     assert errors == []
     ctx.close()
+
+
+# ---------------------------------------------------------------- page: slots, rounding, sorting (handoffs 493-499)
+def test_stream_card_after_the_puck_counts_tomorrows_open_goalie_slots(browser, server, data):  # noqa: F811
+    """After tonight's first puck an added goalie plays from tomorrow, so the Stream card names tomorrow and its open G
+    slots, and stays hidden when tomorrow has none (handoff 493: '2 open G slots on Wed 14' with 0 open Thursday)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d, _ = _thursday(data, run_hour=6)
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 20))  # 8 PM ET, games under way
+    shown = 0
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        g = page.evaluate("state.openSlots[state.data.nights.find(n => n.date === 'Fri 16').sp].G")
+        card = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.innerText).find(x => x.startsWith('Stream a goalie')) || ''")
+        if g == 0:
+            assert card == "", (t["id"], card)
+        elif card:
+            assert "from tomorrow" in card and f"{g} open G slot" in card and "on Fri 16" in card, (t["id"], card)
+            shown += 1
+    assert shown, "no team showed the Stream card"
+    assert errors == []
+    ctx.close()
+
+
+def test_a_forward_can_take_the_empty_utl(browser, server, data):  # noqa: F811
+    """With 9 forwards and 3 D playing, the UTL is empty, so a free-agent forward who plays that night has an open game
+    (handoff 499: Frondell and Wennberg showed Open 0)."""
+    d = json.loads(json.dumps(data))
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(d["teams"][0]["id"]))
+    assert page.evaluate("JSON.stringify(slotsLeft(9, 3, 2))") == json.dumps({"F": 0, "D": 2, "U": 1, "G": 0}).replace(" ", "")
+    assert page.evaluate("room(slotsLeft(9, 3, 2), 'F') && !room(slotsLeft(10, 3, 2), 'F') && room(slotsLeft(10, 3, 2), 'D')")
+    assert page.evaluate("!room(slotsLeft(9, 6, 2), 'F') && !room(slotsLeft(9, 6, 2), 'D') && !room(slotsLeft(9, 3, 2), 'G')")
+    assert errors == []
+    ctx.close()
+
+
+def test_details_round_like_the_table_and_blanks_sort_last(browser, server, data):  # noqa: F811
+    """The details show the table's figure (handoff 494: Season 2.2 in the table, 2.1 in details), and a column with
+    blanks puts them last both ways (handoff 497)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    p = next(p for p in d["players"] if p.get("owner") == "freeagent" and p["pos"] != "G" and (p.get("cr_season") or 0) > 0.5)
+    p["cr_season"], p["cr"] = 2.15, 3.45  # x.x5: Math.round goes up, toFixed down
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#who", "every")
+    page.fill("#q", p["name"])
+    row = page.locator(f'#rows tr[data-id="{p["id"]}"]')
+    cells = row.inner_text()
+    assert "2.2" in cells and "3.5" in cells
+    row.click()
+    why = page.locator("#rows tr.why").inner_text()
+    assert "Season: 2.2" in why and "= 3.5" in why, why
+    page.fill("#q", "")
+    for k in ("cur_ppg", "last_ppg"):
+        for _ in range(2):
+            page.locator(f'#head th[data-k="{k}"]').click()
+            vals = page.evaluate(f"[...document.querySelectorAll('#rows tr[data-id]')].map(r => state.data.players.find(p => p.id === +r.dataset.id)).map(p => val(p, '{k}'))")
+            blank = [v is None for v in vals]
+            assert blank == sorted(blank), (k, page.evaluate("state.dir"))  # every blank after every number
+    assert errors == []
+    ctx.close()

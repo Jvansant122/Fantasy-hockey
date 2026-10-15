@@ -1146,6 +1146,16 @@ Waiver goalies. A goalie on waivers gets start chances only on the nights after 
 
 Rookie range. The Season 80% range for low-rated rookies is narrower: forwards -28% to +38% (was -38% to +51%), defencemen -31% to +47% (was -44% to +50%). In every held-out season the band now covers closer to 80%, and about 10% of these rookies finish above the top of it, as intended. Ratings don't move.
 
+## 157. Players the NHL moves first, fresh call-ups, road trips, and page fixes
+
+Players the NHL moves first. When the NHL moves a player before ESPN does, he now gets his new team's games as soon as he has played for it. A goalie ESPN lists on a different team from the NHL roster gets his starts from the team whose games he's given. Before, he could get one team's games and the other team's role, and for goalies that could stop the update from publishing.
+
+Fresh call-ups. A skater with no NHL game yet this season, called up in the last week with no ESPN status, now gets a 25% chance to play each game, not 10%. The 657 call-ups from 2021-26 played 31% of their team's next-week games, and 25% beat 10% in every season. The details say "called up".
+
+Road trips and long absences. On a team's first home game after two or more road games, skaters who missed games come back a little more and regulars sit a little more. A skater out three or more straight games comes back slightly faster later in the week. Both apply before the per-game lineup fit and cut the Week's dress-chance error in both held-out seasons.
+
+Page fixes. After the first puck, the Stream card counts tomorrow's open goalie slots and names tomorrow, and it hides when there are none. A free-agent forward can use an empty UTL, so his Open games and green dots count it. The details round numbers the same way the table does. Phones no longer show the "yours" tag on every row of your own team. Season figures line up when a rookie's upside badge shows. Blanks sort last both ways. Phone tap targets are at least 32 px.
+
 ## What the independent review changed
 
 | Review point | Outcome |

@@ -83,7 +83,7 @@
   .cr { font-weight: 700; }
   .pct { font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 10px; margin-left: 4px; background: var(--chip); color: var(--muted); }
   .pct.hi { background: var(--good); color: var(--card); }
-  .upside { font-size: 11px; color: var(--good); margin-left: 4px; white-space: nowrap; }
+  .upside { font-size: 11px; color: var(--good); margin-right: 4px; white-space: nowrap; }
   .pct.mid { color: var(--good); }
   .dots { display: inline-flex; gap: 3px; vertical-align: middle; }
   .dots i { width: 9px; height: 9px; border-radius: 2px; background: transparent; border: 1px solid var(--dot); }
@@ -139,11 +139,13 @@
     .night { font-size: 12px; padding: 4px 1px; }
     /* 12 px text at least, and 24 px tap targets (findings 237) */
     .meta, .tag, .pct { font-size: 12px; }
-    details.more > summary { display: inline-block; padding: 5px 2px; }
-    details.fold > summary { padding: 4px 0; }
+    /* 32 px tap targets for the folds and the trade x (handoff 498) */
+    details.more > summary { display: inline-block; padding: 7px 2px; min-height: 32px; box-sizing: border-box; }
+    details.fold > summary, details.footfold > summary { padding: 7px 0; min-height: 32px; box-sizing: border-box; }
+    .tside button { min-width: 32px; min-height: 32px; }
     main > .sub a { display: inline-block; padding: 5px 0; }
     .night b { font-size: 13px; }
-    .tag.own { display: none; }
+    td:first-child .tag.own, .tag.own { display: none; }  /* beats td:first-child .tag above (handoff 495) */
     .dots { gap: 2px; }
     .dots i { width: 7px; height: 7px; }
     /* All columns (findings 300): every column again, the table scrolls sideways under the pinned name column */
@@ -391,9 +393,10 @@ function openGames(p) {
   return state.data.nights.filter(n => activeNight(n) && !($("left").checked && goneTonight(p, n)) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
 }
 function hasRoom(sp, g) {
-  const o = state.openSlots[sp];
-  return o[g] > 0;
+  return room(state.openSlots[sp], g);
 }
+// a skater fits a night when his group has an empty slot or the UTL is empty (handoff 499: a forward can use it too)
+const room = (o, g) => !!o && (o[g] > 0 || (g !== "G" && o.U > 0));
 // The table's Games, Light and Open: this matchup, or the later week picked in Nights week (findings 300).
 // Week, Season, ESPN week and the cards stay on this matchup.
 function tGames(p) { const t = state.tw; return t ? t.nights.filter(n => t.plays(p, n.sp)).length : games(p); }
@@ -402,7 +405,7 @@ function tOpen(p) {
   const t = state.tw;
   if (!t) return openGames(p);
   if (!isFA(p) || !state.team) return null;
-  return t.nights.filter(n => t.plays(p, n.sp) && t.slots[n.sp]?.[group(p)] > 0).length;
+  return t.nights.filter(n => t.plays(p, n.sp) && room(t.slots[n.sp], group(p))).length;
 }
 // only the asked-for column's work: the sort calls this for every player once (a lookup object built all six each time)
 const VALS = { week, games: tGames, light: tLight, opengm: tOpen, nights: tGames, pos: p => posTxt(p) };
@@ -457,8 +460,9 @@ function computeOpenSlots(d) {
     state.openSlots[n.sp] = slotsLeft(count("F"), count("D"), g);
   }
 }
-// D slots plus the UTL, which only counts as an open D when it isn't already holding a tenth forward (findings 146)
-const slotsLeft = (f, dd, g) => ({ F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd) + (f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0), G: Math.max(0, SLOTS.G - g) });
+// D slots, and the UTL apart: empty unless a tenth forward or a sixth D already holds it (findings 146); a forward or a D
+// can take it (handoff 499)
+const slotsLeft = (f, dd, g) => ({ F: Math.max(0, SLOTS.F - f), D: Math.max(0, SLOTS.D - 1 - dd), U: f <= SLOTS.F && dd <= SLOTS.D - 1 ? 1 : 0, G: Math.max(0, SLOTS.G - g) });
 // A later week picked in Nights week (findings 300): its nights from season_weeks, each team's games from team_nights, and
 // my active, healthy players' open slots those nights. A goalie fills a slot by his recent share of his team's starts.
 function pickWeek(v) {
@@ -490,7 +494,7 @@ function pctBadge(p, key = "cr_pct") {
 function dots(p) {
   const t = state.tw;
   if (t) return `<span class="dots">${t.nights.map(n => {
-    const plays = t.plays(p, n.sp), open = plays && isFA(p) && state.team && t.slots[n.sp]?.[group(p)] > 0;
+    const plays = t.plays(p, n.sp), open = plays && isFA(p) && state.team && room(t.slots[n.sp], group(p));
     return `<i class="${plays ? "play" : ""} ${open ? "open" : ""}" title="${esc(n.date)}${plays ? ": plays" : ""}"></i>`;
   }).join("")}</span>`;
   return `<span class="dots">${state.data.nights.map(n => {
@@ -514,7 +518,7 @@ function upside(p) {
 }
 function why(p) {
   const w = p.cr_why || {}, parts = [];
-  const n = v => v == null ? "–" : (+v).toFixed(1);
+  const n = fmt;  // the table's rounding, so details and table show the same figure (handoff 494)
   if (p.pos === "G") {
     parts.push(`Week: expected starts ${w.exp_starts == null ? "–" : (+w.exp_starts).toFixed(2)} of ${w.team_games} team games left`);
     if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last ${w.n10 ?? 10}`);
@@ -571,6 +575,7 @@ function why(p) {
   if (p.cr_why?.pp_d_out) parts.push(`top power-play defenseman ${p.cr_why.pp_d_out} is out: more power-play time (+0.15 pts/game this week)`);
   if (p.cr_why?.newcomer) parts.push(`His team just added ${p.cr_why.newcomer} at his position, so he may sit (he had the least ice time at his position last game)`);
   if (p.cr_why?.d_departed) parts.push(`${p.cr_why.d_departed} has left his team's defense, so he is more likely back in the lineup`);
+  if (p.cr_why?.called_up) parts.push("called up in the last week with no NHL game yet: recent call-ups play about 1 game in 4 that week");
   if (p.cr_why?.fills_in) parts.push("a teammate at his position left the last game early, and scratches like him usually fill in");
   if (p.cr_why?.depth_point) parts.push("scored in his last game on depth minutes, and coaches tend to keep those players in");
   // team form and depth D (handoffs 340-342, 346): each reason that moved this week's dress chance
@@ -627,8 +632,9 @@ function cells(p) {
   return {
     name: `${esc(p.name)}${tags ? `<span class="tags">${tags}</span>` : ""}<span class="meta">${esc(p.team)} · ${esc(pos)}</span>`, team: esc(p.team), pos: esc(pos),
     cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "",
-    cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}${upside(p) != null
-      ? `<span class="upside" title="${EXP_TXT[p.cr_why.exp]}: 1 in 10 finish above ${fmt(upside(p))}">↑${fmt(upside(p))}</span>` : ""}` : "–", nights: dots(p), games: tGames(p),
+    // the upside badge goes before the number, so Season figures line up down the right-aligned column (handoff 496)
+    cr_season: d.rated && p.cr_season != null ? `${upside(p) != null
+      ? `<span class="upside" title="${EXP_TXT[p.cr_why.exp]}: 1 in 10 finish above ${fmt(upside(p))}">↑${fmt(upside(p))}</span>` : ""}<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}` : "–", nights: dots(p), games: tGames(p),
     opengm: og == null ? "–" : og, light: tLight(p), ppg: fmt(p.ppg), week: fmt(week(p)),
     cur_ppg: fmt(p.cur_ppg), proj_gp: p.proj_gp ?? "–", last_gp: p.last_gp ?? "–", last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
   };
@@ -664,7 +670,9 @@ function render(all = true) {
   list.sort((a, b) => {
     const [x, ka] = sv.get(a), [y, kb] = sv.get(b);
     if (typeof x === "string" || typeof y === "string") return dir * String(x ?? "").localeCompare(String(y ?? "")) || kb - ka;
-    return dir * ((x ?? -1e9) - (y ?? -1e9)) || kb - ka;  // ties (every Week 0.0 after Sunday's first puck) by keep value (findings 211)
+    // blanks last whichever way the column sorts (handoff 497)
+    if ((x == null) !== (y == null)) return x == null ? 1 : -1;
+    return dir * ((x ?? 0) - (y ?? 0)) || kb - ka;  // ties (every Week 0.0 after Sunday's first puck) by keep value (findings 211)
   });
   // the top 300, plus every player of your own or the picked roster further down: they're the drop candidates (findings 232)
   const shown = list.filter((p, i) => i < 300 || onMyTeam(p) || inRoster(p)), extras = Math.max(0, shown.length - 300);
@@ -815,7 +823,10 @@ function renderUpgrades() {
   const streamTitle = locked ? "Stream a goalie from tomorrow" : "Stream a goalie tonight";
   if (d.rated && tonight && !stale(d)) {
     const myG = tonightMine.filter(p => p.pos === "G");
-    const open = 2 - myG.filter(startsTonight).length;
+    // after the first puck an added goalie plays from tomorrow: that night's open G slots and date (handoff 493)
+    // (the matchup's last night keeps tonight's, for the "counts next matchup" and "nothing counts" notes)
+    const fromNext = locked && !lastNight, slotNight = fromNext ? d.nights[d.nights.indexOf(tonight) + 1] : tonight;
+    const open = fromNext ? (state.openSlots[slotNight?.sp]?.G ?? 0) : 2 - myG.filter(startsTonight).length;
     const limit = cnt.limit, used = cnt.used;  // null when ESPN gives no usable limit: show the card anyway
     if (open > 0 && !(limit && used >= limit)) {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
@@ -840,7 +851,7 @@ function renderUpgrades() {
       // a full roster needs a drop for the stream: name it (handoff 463)
       const sDrop = freeSpots <= 0 && streams.length && !locked ? dropOrder.find(p => !swapDrops.has(p.id)) : null;
       const sDropTxt = sDrop ? ` Your roster is full: drop ${sDrop.name} to add him.` : "";
-      streamCard = note => `<div class="upg"><b>${streamTitle}</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(before)}${esc(sDropTxt)}${esc(cap)}</span>
+      streamCard = note => `<div class="upg"><b>${streamTitle}</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(slotNight.date)}, ${esc(left)}.${esc(before)}${esc(sDropTxt)}${esc(cap)}</span>
         ${note ? `<div class="sub">${esc(note)}</div>` : locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
           : locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
           : streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
@@ -1068,7 +1079,7 @@ function renderNights() {
     // a night that's over or under way can't take an add any more: its open slots aren't green (handoff 474)
     const gone = n.past || n === done || (n === tonightNight && puckPassed());
     const num = (v, label) => v > 0 && !gone ? `<em>${label}${v}</em>` : `${label}${v}`;
-    const open = state.team ? `<span class="open">${gone ? "played" : `${num(o.F, "F")} ${num(o.D, "D")} ${num(o.G, "G")}`}</span>` : "";
+    const open = state.team ? `<span class="open">${gone ? "played" : `${num(o.F, "F")} ${num(o.D + o.U, "D")} ${num(o.G, "G")}`}</span>` : "";
     return `<div class="night ${n.light ? "light" : ""} ${n.past || n === done ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
   }).join("");
 }

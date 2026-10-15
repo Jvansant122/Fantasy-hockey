@@ -664,13 +664,18 @@ def main():
         })
 
     def reschedule(p, nhl_team):
-        """ESPN lists him as 'FA' but an NHL roster has him and he has played: his team's games (findings 230)."""
+        """His NHL team's games: ESPN lists him as 'FA' but an NHL roster has him and he has played (findings 230), or the
+        NHL moved him and he has played for the new team before ESPN caught up (handoff 501). His Daily Faceoff lineup
+        is the new team's."""
         tm = next((t for t in teams.values() if ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()) == nhl_team), None)
         if tm is None:
             return
+        was = p.get("team")
         own = tm.get("starts", {}).get(today_sp) if today_sp in tm["periods"] else None
         p.update(schedule_fields(tm, sched_info, 0, counts_until(own, p.get("owner"), first_start), run_utc))
-        print(f"{p['name']} is 'FA' on ESPN but on {nhl_team}'s roster: given its games")
+        if p["pos"] != "G":
+            leads.mark_lineups([p], lineups, ESPN_TO_NHL, last_start)
+        print(f"{p['name']} is {was!r} on ESPN but plays for {nhl_team}: given its games")
 
     # Claude Rating: projected points for the rest of the matchup. A failure here keeps the old numbers.
     now = today_et  # ESPN's day, not the clock's, until its overnight rollover (findings 180)
