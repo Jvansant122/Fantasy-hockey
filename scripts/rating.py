@@ -692,11 +692,27 @@ def goalie_fp(r):
             + 0.2 * (r.get("saves") or 0) + 3 * (r.get("shutouts") or 0))
 
 
+def relief_points(s, season):
+    """{goalie id: fantasy points in his relief appearances}. ESPN scores relief appearances 0 in this league (since Oct 11
+    2026, retroactively), so a per-start rate counts started games only (handoff 486). Empty if the report can't be read."""
+    try:
+        rows = nhl_get(s, f"{NHL_STATS}/goalie/summary", isAggregate="false", isGame="true", start=0, limit=-1,
+                       cayenneExp=f"seasonId={season} and gameTypeId=2 and gamesStarted=0").json()["data"]
+    except (requests.RequestException, KeyError, ValueError) as e:
+        print(f"Relief appearances {season} unavailable: {e!r}", file=sys.stderr)
+        return {}
+    out = {}
+    for r in rows:
+        out[r["playerId"]] = out.get(r["playerId"], 0.0) + goalie_fp(r)
+    return out
+
+
 def load_prev_goalie_season(s, season):
-    """Last season per goalie: (games started, fantasy points, saves, shots against, last team). The points include
-    relief appearances; the teams are listed in the order he played for them."""
-    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r), r.get("saves") or 0, r.get("shotsAgainst") or 0,
-                            (r.get("teamAbbrevs") or "").split(",")[-1].strip() or None)
+    """Last season per goalie: (games started, fantasy points in started games, saves, shots against, last team). The
+    teams are listed in the order he played for them; saves and shots include relief appearances."""
+    relief = relief_points(s, season)
+    return {r["playerId"]: (r.get("gamesStarted") or 0, goalie_fp(r) - relief.get(r["playerId"], 0.0), r.get("saves") or 0,
+                            r.get("shotsAgainst") or 0, (r.get("teamAbbrevs") or "").split(",")[-1].strip() or None)
             for r in stats_report(s, "goalie/summary", season, teams=True)}
 
 
@@ -1034,6 +1050,16 @@ def expected_fp(now, prev, is_d):
     if gp >= LUCK_MIN_GP and abs(gap) >= LUCK_GAP:
         out["luck"] = "hot" if gap > 0 else "cold"
     return out
+
+
+def nhl_xfp(x, games):
+    """expected_fp's note on the NHL's own points per game: MoneyPuck's 5-on-4 / 4-on-5 split misses PP and SH points
+    scored in other strengths (PPP -9%, SHP -14%), so the shown pts/game uses his NHL games, and the expected number moves
+    by the same amount, keeping the gap that decides hot or cold (handoff 487)."""
+    if not x or not games:
+        return x
+    nhl = sum(g.get("fp") or 0 for g in games) / len(games)
+    return {**x, "fpg": round(nhl, 2), "xfpg": round(x["xfpg"] + nhl - x["fpg"], 2)}
 
 
 def week_schedule(s, monday, games=None, weeks=1, starts=None, results=None, names=None):
@@ -2778,7 +2804,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
-                   "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D") if pid else None}
+                   "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
             why = {k: (round(v, 2) if isinstance(v, float) else v) for k, v in why.items()}
             if (prev.get(pid) or {}).get("season_label"):  # last season's line is from the season before (findings 234)
                 why["last_season"] = prev[pid]["season_label"]

@@ -70,6 +70,8 @@
   tr.mine td { background: var(--mine); }
   tbody tr[data-id] { cursor: pointer; }
   tr.why td { position: static; text-align: left; white-space: normal; color: var(--muted); font-size: 12px; background: var(--chip); box-shadow: none; }
+  /* one labelled line per reason instead of one run-on paragraph (handoff 478) */
+  tr.why .whytxt { white-space: pre-line; line-height: 1.45; }
   .meta { display: none; color: var(--muted); font-size: 11px; }
   .tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: var(--chip); color: var(--muted); margin-left: 4px; }
   /* a name with several tags (a waiver goalie who sits tonight) may wrap its tags rather than widen the table past 1366 px */
@@ -87,7 +89,8 @@
   .dots i { width: 9px; height: 9px; border-radius: 2px; background: transparent; border: 1px solid var(--dot); }
   .dots i.play { background: var(--muted); border-color: var(--muted); }
   .dots i.play.open { background: var(--good); border-color: var(--good); }
-  .dots i.play.past { background: var(--dot); border-color: var(--dot); }
+  /* already played: hollow (shape, not fading, which findings 237 ruled out), so it reads apart from a game to come (handoff 482) */
+  .dots i.play.past { background: transparent; border: 1px dashed var(--muted); }
   /* round as well as green, so an open night isn't told by colour alone (findings 237) */
   .dots i.play.open { border-radius: 50%; }
   .up { color: var(--good); font-weight: 600; }
@@ -111,6 +114,8 @@
   @media (max-width: 640px) {
     main { padding: 10px; }
     .card { padding: 10px; }
+    /* the units come from the key line under the count on phones, so the narrow table keeps its width (handoff 472) */
+    th .unit { display: none; }
     .wide { display: none; }
     .meta { display: block; }
     th, td { padding: 6px 4px; }
@@ -150,7 +155,7 @@
     body:not(.allcols) .wkl { display: none; }
     /* the details of a tapped row stay inside the screen while the table scrolls sideways */
     body.allcols tr.why td { overflow: visible; }
-    body.allcols tr.why .whytxt { position: sticky; left: 8px; max-width: calc(100vw - 56px); white-space: normal; }
+    body.allcols tr.why .whytxt { position: sticky; left: 8px; max-width: calc(100vw - 56px); white-space: pre-line; }
   }
   /* elsewhere the week's dates go on their own line under "Nights" rather than widening the column */
   th .wkl { display: block; font-weight: 400; font-size: 12px; }
@@ -211,13 +216,13 @@
   <div class="card faonly" id="nightscard">
     <h2>This matchup's nights</h2>
     <div class="nights" id="nights"></div>
-    <div class="sub legend"><span>Green outline = light night</span><span id="openkey"></span></div>
+    <div class="sub legend"><span>Big number = NHL games that night. Green outline = light night (5 or fewer games): the best nights to stream.</span><span id="openkey"></span></div>
   </div>
 
   <div class="card faonly" id="upgcard">
     <h2>Upgrades</h2>
     <div class="sub" id="upghead">Free agents projected above your team's weakest healthy player, and who to drop. <b>keep</b> = this week's points + about 2 weeks of points per game (Season × 7).
-      <details class="more"><summary>How to use your moves</summary>Your league allows 7 moves a matchup (6 in the 6-day first one, 14 in a two-week playoff round), usable any day. Make 2 skater moves on Monday and keep the other 5 for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</details></div>
+      <details class="more"><summary>How to use your moves</summary>Your league allows 7 moves a matchup (6 in the 6-day first one, 14 in a two-week playoff round), usable any day. On Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep 3 moves (6 in a two-week round) for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</details></div>
     <div class="upgrades" id="upgrades" style="margin-top:8px"></div>
   </div>
 
@@ -248,16 +253,21 @@
       <label class="phoneonly"><input type="checkbox" id="allcols"> All columns</label>
     </div>
     <div class="sub count" id="count"></div>
+    <div class="sub key faonly">Week = projected points left this matchup · Season = projected points per game, rest of season · green badge = rank vs his position (100 = best)</div>
     <div class="tablewrap">
       <table>
         <thead><tr id="head"></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
-    <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
+    <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night (still to come)</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span><span><span class="dots"><i class="play past"></i></span> already played</span></div>
   </div>
-  <p class="sub faonly"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, though Daily Faceoff news of surgery, a season-ending injury or a send-down lowers it; a player hurt before his first game is expected in only part of the rest). Goalies: 0.32 + 0.72 × his share of his team's starts × his points per start (rescaled so goalies and skaters compare on one board; a goalie who changed teams has his last-season rate adjusted for the gap between the teams). Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from his lineup history, a 16-season lineup model, his team's recent results, Daily Faceoff injury and roster news, and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early, and 3% for a game the same day; IR at 15%; out or IR at 50% when Daily Faceoff says he is practising; suspended 0; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, week-to-week, month-to-month, indefinitely, out for the season or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
-  <p class="sub faonly"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D and the UTL, counted as a D unless a tenth forward fills it, 2 G). Most of the value of empty slots is on light nights. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. <b>Last yr GP</b> = NHL games played last season. <b>Proj GP</b> = projected games this season (84 per team): games played so far plus the Season rating's share of his team's games still to play; for goalies, starts so far plus his projected share of the rest. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
+  <!-- a short plain key first, the formulas folded (handoff 479) -->
+  <p class="sub faonly"><b>Week</b> = projected points left this matchup (the Claude Rating): use it for this week's pickups. <b>Season</b> = projected points per game for the rest of the season: use it for trades and players you'd hold. <b>Open</b> = his games on nights you have an empty lineup slot. The green badge ranks him against his position (100 = best). <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
+  <details class="sub faonly footfold"><summary>How the numbers are made</summary>
+  <p class="sub faonly"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, though Daily Faceoff news of surgery, a season-ending injury or a send-down lowers it; a player hurt before his first game is expected in only part of the rest). Goalies: 0.32 + 0.72 × his share of his team's starts × his points per start (rescaled so goalies and skaters compare on one board; a goalie who changed teams has his last-season rate adjusted for the gap between the teams). Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from his lineup history, a 16-season lineup model, his team's recent results, Daily Faceoff injury and roster news, and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early, and 3% for a game the same day; IR at 15%; out or IR at 50% when Daily Faceoff says he is practising; suspended 0; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, week-to-week, month-to-month, indefinitely, out for the season or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why.</p>
+  <p class="sub faonly"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D and the UTL, counted as a D unless a tenth forward fills it, 2 G). Most of the value of empty slots is on light nights. <b>Light night</b> = 5 or fewer NHL games, when most teams have open lineup spots. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. <b>Last yr GP</b> = NHL games played last season. <b>Proj GP</b> = projected games this season (84 per team): games played so far plus the Season rating's share of his team's games still to play; for goalies, starts so far plus his projected share of the rest. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
+  </details>
 </main>
 <script>
 // UTL counts as a sixth D slot: on nights it matters, the 6th D usually outscores the 10th F (research section 19)
@@ -270,12 +280,20 @@ const CHECKS = ["left", "healthy", "addfa", "allcols"];
 const state = { view: "fa", tgive: [], tget: [], team: "", who: "fa", sort: "cr", dir: -1, data: null, open: null, openSlots: {}, teamNames: {}, wk: "", tw: null };
 // [key, label, align, shown on phones]
 const COLS = [
-  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", "Week", "r", true], ["cr_season", "Season", "r", true],
+  ["name", "Player", "l", true], ["team", "Team", "l", false], ["pos", "Pos", "l", false], ["cr", 'Week<span class="unit"> pts</span>', "r", true], ["cr_season", 'Season<span class="unit"> /gm</span>', "r", true],
   // Proj/G and This yr/G right after Games (findings 300)
-  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "Proj/G", "r", false], ["cur_ppg", "This yr/G", "r", false], ["proj_gp", "Proj GP", "r", false],
+  ["nights", "Nights", "l", true], ["games", "Games", "r", false], ["ppg", "ESPN/G", "r", false], ["cur_ppg", "Actual/G", "r", false], ["proj_gp", "Proj GP", "r", false],
   ["opengm", "Open", "r", true], ["light", "Light", "r", false], ["week", "ESPN week", "r", false],
   ["last_gp", "Last yr GP", "r", false], ["last_ppg", "Last yr/G", "r", false], ["owned", "% Own", "r", false],
 ];
+// what each column means, on hover and for screen readers (handoff 473)
+const TIPS = {
+  cr: "Week: projected fantasy points for the rest of this matchup (the Claude Rating)", cr_season: "Season: projected points per team game for the rest of the season",
+  nights: "Nights he plays this matchup", games: "His NHL games left this matchup", ppg: "ESPN's projected points per game, blended with this season's",
+  cur_ppg: "Fantasy points per game this season", proj_gp: "Projected games this season", opengm: "Games on nights you have an open slot for him",
+  light: "Games on nights with 5 or fewer NHL games", week: "ESPN-based points per game × games: the old number, kept for comparison",
+  last_gp: "NHL games played last season", last_ppg: "Fantasy points per game last season", owned: "Share of ESPN leagues that roster him",
+};
 const $ = id => document.getElementById(id);
 const fmt = v => v == null ? "–" : (Math.round(v * 10) / 10).toFixed(1);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -323,10 +341,27 @@ function weekOver(d) {
 }
 // the update workflow's runs, ET (CLAUDE.md): new numbers are up about 6:10 AM, 9:10 AM, 12:40 PM and 5:10 PM
 const RUNS = [[6, 10], [9, 10], [12, 40], [17, 10]];
-function nextRun(now = new Date()) {
-  const [h, m] = now.toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour12: false }).split(":").map(Number);
-  const [rh, rm] = RUNS.find(([rh, rm]) => rh * 60 + rm > (h % 24) * 60 + m) || RUNS[0];
-  return `${rh > 12 ? rh - 12 : rh}${rm ? `:${String(rm).padStart(2, "0")}` : ""} ${rh >= 12 ? "PM" : "AM"}`;
+const MOVE_MIN_GAIN = 3.5, MOVES_PER_DAY = 4;  // Best moves: every add worth 3.5+ keep points, up to 4 a day (handoff 488)
+const runLabel = ([rh, rm]) => `${rh > 12 ? rh - 12 : rh}${rm ? `:${String(rm).padStart(2, "0")}` : ""} ${rh >= 12 ? "PM" : "AM"}`;
+// [ET date, minutes after midnight ET] of a time
+function etParts(t) {
+  const [day, tm] = new Date(t).toLocaleString("en-CA", { timeZone: "America/New_York", hour12: false }).split(", ");
+  const [h, m] = tm.split(":").map(Number);
+  return [day, (h % 24) * 60 + m];
+}
+// the latest scheduled run at or before t: [ET date, minutes, run]
+function lastSlot(t = Date.now()) {
+  const [day, min] = etParts(t);
+  const r = [...RUNS].reverse().find(([h, m]) => h * 60 + m <= min);
+  return r ? [day, r[0] * 60 + r[1], r] : [etParts(t - 86400e3)[0], RUNS.at(-1)[0] * 60 + RUNS.at(-1)[1], RUNS.at(-1)];
+}
+// that run's numbers haven't landed: the data is older than the run's time (less 10 minutes for an early dispatch)
+const slotMissing = (d, slot) => !!d?.updated_utc && (([day, min]) => day < slot[0] || (day === slot[0] && min < slot[1] - 10))(etParts(d.updated_utc));
+// the next run, or the current one while its numbers are due (up to 45 minutes after it; handoff 469)
+function nextRun(now = new Date(), d = state.data) {
+  const slot = lastSlot(now.getTime()), [, min] = etParts(now.getTime());
+  if (slot[0] === etParts(now.getTime())[0] && min - slot[1] <= 45 && slotMissing(d, slot)) return runLabel(slot[2]);
+  return runLabel(RUNS.find(([rh, rm]) => rh * 60 + rm > min) || RUNS[0]);
 }
 // after the trade deadline ESPN takes no trades, so the site suggests none (findings 231)
 const tradesClosed = d => !!d.trade_deadline && Date.now() > new Date(d.trade_deadline).getTime();
@@ -481,7 +516,7 @@ function why(p) {
   const w = p.cr_why || {}, parts = [];
   const n = v => v == null ? "–" : (+v).toFixed(1);
   if (p.pos === "G") {
-    parts.push(`Expected starts ${w.exp_starts == null ? "–" : (+w.exp_starts).toFixed(2)} of ${w.team_games} team games left`);
+    parts.push(`Week: expected starts ${w.exp_starts == null ? "–" : (+w.exp_starts).toFixed(2)} of ${w.team_games} team games left`);
     if (w.share10 != null) parts.push(`started ${Math.round(w.share10 * 100)}% of his team's last ${w.n10 ?? 10}`);
     // once his team's game starts, tonight is out of the numbers, so the tonight notes go too (findings 232)
     if (started(p)) parts.push(stale(state.data) ? "last night's game is already out of the numbers" : "tonight's game has started");
@@ -496,7 +531,7 @@ function why(p) {
         // this week's starts keep 0.4 of his gap to the league rate before the line or schedule (findings 231, 242)
         + (own !== fpg ? `; this week priced at ${fpg}: pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)${by ? `, then ${by}` : ""}` : ""));
   } else {
-    parts.push(`${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% to dress`);
+    parts.push(`Week: ${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% chance he plays = ${n(p.cr)}`);
     // a player yet to play takes a fixed share of the rest, which isn't "no injury discount" when he was hurt (findings 232)
     // nor when Daily Faceoff news cut his share (handoff 420)
     const newsCut = (w.season_news || []).some(k => k !== "called up");
@@ -510,19 +545,21 @@ function why(p) {
       "indefinite": "injury news says out indefinitely or long-term"};
     if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(w.espn_proj ?? p.proj_ppg)}); the pull fades as he plays games`);
     if (w.lineup_slack != null && Math.abs(w.lineup_slack) >= 0.5) parts.push(w.lineup_slack > 0
-      ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so his Season share goes up${newsCut ? " a little, which only partly offsets the news below" : ""}`
-      : `His team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so his Season share goes down`);
+      ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so he should play more${newsCut ? " a little, which only partly offsets the news below" : ""}`
+      : `His team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so he may play less`);
     if (w.boost_dress != null || w.boost_fpg != null) parts.push(`A model trained on 16 seasons of game logs expects ` +
       [w.boost_dress != null ? `him in about ${Math.round(w.boost_dress * 100)}% of the rest of the season` : "",
        w.boost_fpg != null ? `${n(w.boost_fpg)} pts/game from here` : ""].filter(Boolean).join(" and ") + "; the Season rating moves part of the way toward it");
     // the league-wide forward / defense scoring shift in his Season pts/game (handoffs 405, 444)
     if (w.drift && Math.abs(w.drift) >= 0.01) parts.push(`Season pts/game ${w.drift > 0 ? "+" : "\u2212"}${Math.abs(w.drift).toFixed(2)} for a league-wide ${p.pos === "D" ? "defense" : "forward"} scoring shift this season`);
     if (w.season_news?.length) parts.push(`Season share uses Daily Faceoff news: ${w.season_news.map(k => NEWS_TXT[k] || k).join("; ")}`);
-    if (w.gp) parts.push(`TOI ${n(w.toi5)} last 5 (${n(w.toi)} season), PP TOI ${n(w.pp5)}, ${n(w.sog)} SOG/g` + (p.pos === "D" ? `, ${n(w.blk)} BLK/g` : "") + ` in ${w.gp} GP`);
+    if (w.gp) parts.push(`Stats: ice time ${n(w.toi5)} min a game, last 5 (${n(w.toi)} this season) · power play ${n(w.pp5)} min a game · ${n(w.sog)} shots a game` + (p.pos === "D" ? ` · ${n(w.blk)} blocks a game` : "") + ` · ${w.gp} games`);
     else parts.push("No NHL games yet this season");
     // a rate from a few games says so (handoff 422); last_gp is last season's, so not for an older season's line
     if (w.last_fpg != null) parts.push(`${w.last_season || "last season"} ${n(w.last_fpg)} pts/game` + (!w.last_season && p.last_gp > 0 && p.last_gp < 10 ? ` (${p.last_gp} GP)` : ""));
-    if (w.xfp) parts.push(`${n(w.xfp.fpg)} pts/game this season vs ${n(w.xfp.xfpg)} expected from his chances` +
+    // the table's Actual/G, with the expected number moved by the same amount, so one screen shows one "this season" (handoff 478)
+    const now = p.cur_ppg ?? w.xfp?.fpg, xNow = w.xfp ? w.xfp.xfpg + (now - w.xfp.fpg) : null;
+    if (w.xfp) parts.push(`${n(now)} pts/game this season vs ${n(xNow)} expected from his chances` +
       (w.xfp.luck === "hot" ? ". Running hot: about three quarters of a gap like that usually fades within a month, though a few elite finishers beat their chances every year" :
        w.xfp.luck === "cold" ? ". Running cold: about three quarters of a gap like that usually comes back within a month" : ""));
   }
@@ -568,7 +605,7 @@ function why(p) {
   if (p.cr_why?.displaced) parts.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push("not found in NHL stats, so treated as unlikely to play");
   if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);
-  return parts.join(" · ");
+  return parts.join("\n");
 }
 function details(p) {
   const og = tOpen(p);
@@ -576,7 +613,7 @@ function details(p) {
   // why a waiver player's games and starts look short (findings 232)
   if (p.owner === "waivers") extra.unshift(`on waivers: he can't play until he clears${p.clears ? ` ${p.clears}` : ""}, so only games from then count`);
   if (og != null) extra.push(`${og} of ${tGames(p)} games${state.tw ? ` in the week of ${state.tw.w.label}` : ""} on nights you have an open slot`);
-  return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join(" · ");
+  return [state.data.rated ? why(p) : "", extra.join(" · ")].filter(Boolean).join("\n");
 }
 
 function cells(p) {
@@ -592,7 +629,7 @@ function cells(p) {
     cr: d.rated ? `<span class="cr">${fmt(p.cr)}</span>${pctBadge(p)}` : "",
     cr_season: d.rated && p.cr_season != null ? `<span class="cr">${fmt(p.cr_season)}</span>${pctBadge(p, "cr_season_pct")}${upside(p) != null
       ? `<span class="upside" title="${EXP_TXT[p.cr_why.exp]}: 1 in 10 finish above ${fmt(upside(p))}">↑${fmt(upside(p))}</span>` : ""}` : "–", nights: dots(p), games: tGames(p),
-    opengm: og == null ? "–" : og, light: tLight(p), ppg: fmt(p.ppg), week: `<b>${fmt(week(p))}</b>`,
+    opengm: og == null ? "–" : og, light: tLight(p), ppg: fmt(p.ppg), week: fmt(week(p)),
     cur_ppg: fmt(p.cur_ppg), proj_gp: p.proj_gp ?? "–", last_gp: p.last_gp ?? "–", last_ppg: fmt(p.last_ppg), owned: fmt(p.owned),
   };
 }
@@ -631,12 +668,12 @@ function render(all = true) {
   });
   // the top 300, plus every player of your own or the picked roster further down: they're the drop candidates (findings 232)
   const shown = list.filter((p, i) => i < 300 || onMyTeam(p) || inRoster(p)), extras = Math.max(0, shown.length - 300);
-  $("count").textContent = `Showing ${shown.length} of ${list.length} players` + (extras ? ` (the top 300 plus ${extras} more from the roster)` : "") +
-    (list.length > shown.length ? " (narrow the filters to see the rest)" : "");
+  $("count").textContent = `Showing ${shown.length} of ${list.length}` + (extras ? `: the top 300 plus ${extras} of yours` : " players") +
+    (list.length > shown.length ? ". Narrow the filters to see the rest." : "");
   // a phone draws only its 5 columns unless "All columns" is on: the 9 hidden cells a row cost about a quarter of its layout
   state.cols = phoneWidth.matches && !$("allcols").checked ? COLS.filter(c => c[3]) : COLS;
   $("head").innerHTML = state.cols.map(([key, label, align, phone]) =>
-    `<th data-k="${key}" tabindex="0" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights<span class="wkl">(${esc(state.tw.w.label)})</span>` : label}</th>`).join("");
+    `<th data-k="${key}" tabindex="0" title="${esc(TIPS[key] || "")}" ${key === k ? `aria-sort="${dir < 0 ? "descending" : "ascending"}"` : ""} class="${align} ${phone ? "" : "wide"} ${key === k ? `sorted ${dir < 0 ? "desc" : "asc"}` : ""}">${key === "nights" && state.tw ? `Nights<span class="wkl">(${esc(state.tw.w.label)})</span>` : label}</th>`).join("");
   // the first rows now and the rest as the list scrolls near them: laying out all 300 took most of a phone's sort or filter
   drawRows(shown);
   if (all) { renderUpgrades(); renderTrade(); }
@@ -739,9 +776,10 @@ function renderUpgrades() {
   if (irHealthy.length) cards.push(`<div class="upg"><b>Activate from IR</b> <span class="drop">· healthy but in your IR slot, so his points don't count: move him to your lineup.${esc(fullNote)}</span>
     ${irHealthy.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}${p.injury === "DAY_TO_DAY" ? ", day-to-day: ESPN may block adds until he's out of IR" : ""}</span></div>`).join("")}</div>`);
   // a gain in addVal units, labelled: with no moves left addVal is 7 x Season, so show the Season difference
+  const gmTxt = n => `${n} game${n === 1 ? "" : "s"}`;
   const gainTxt = v => noMoves ? `+${fmt(v / KEEP_GAMES)} Season` : `+${fmt(v)} ${d.rated && !d.final_matchup ? "keep" : "pts"}`;
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
-  if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. Make about 2 skater moves each Monday and keep the rest for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
+  if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. On Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep ${d.move_limit ? Math.round(3 / 7 * d.move_limit) : 6} moves for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
   // unless Daily Faceoff's projected lines have him back in (findings 174);
   // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
@@ -755,21 +793,26 @@ function renderUpgrades() {
   if (outs.length) cards.push(`<div class="upg"><b>Mid-week swaps</b> <span class="drop">· out or sat his team's last game: worth one of your held moves.</span>
     ${outs.map(p => {
       // no more subs than moves left (findings 233), and none after the season's last move
-      const sub = seasonDone || (realLeft != null && swapSubs.size >= realLeft) ? null
+      let sub = seasonDone || (realLeft != null && swapSubs.size >= realLeft) ? null
         : fas.filter(f => group(f) === group(p) && !swapSubs.has(f.id) && (nextWeek || f.games_left > 0)).sort((a, b) => nextWeek ? addVal(b) - addVal(a) : score(b) - score(a))[0];
+      // a player who only sat (not out) is swapped only for a sub who scores more this week and keeps as much value (handoff 462)
+      if (sub && !OUT.includes(p.injury) && !nextWeek && !(score(sub) > score(p) && keep(sub) >= keep(p))) sub = null;
       if (sub) { swapSubs.add(sub.id); swapDrops.add(p.id); }
       const why = OUT.includes(p.injury) ? injLabel(p) : "sat last game";
       const ir = irMove.includes(p) ? " (IR-eligible: move him to IR)" : "";
       return `<div>${esc(p.name)}<span class="tag inj">${esc(why)}</span>${esc(ir)}${sub ? ` <span class="sub">→</span> ${esc(sub.name)}${wvTag(sub)} ${nextWeek
         ? `<span class="sub">${esc(sub.team)}</span> <span class="up">Season ${fmt(sub.cr_season)}</span>`
-        : `<span class="sub">${esc(sub.team)}, ${sub.games_left} gm left</span> <span class="up">${fmt(score(sub))}</span>`}` : ""}</div>`;
+        : `<span class="sub">${esc(sub.team)} · ${gmTxt(sub.games_left)} left</span> <span class="up">${fmt(score(sub))} pts this week</span>`}` : ""}</div>`;
     }).join("")}</div>`);
   // moves left after the swaps (2 when the count is unknown)
   const movesLeft = realLeft != null ? Math.max(0, realLeft - swapSubs.size) : 2;
   // a swap sub takes the spot of the player he replaces, so an IR move a swap already uses frees nothing more (findings 240)
   const freeSpots = rosterMax == null ? 0 : Math.max(0, rosterMax - nonIR.length + irMove.filter(p => !swapDrops.has(p.id)).length);
   // Stream a goalie tonight (research section 52): spare moves are worth more on confirmed wire starters than on skaters
-  let streamShown = false;
+  // the stream's move comes out of Best moves' budget (handoff 463); on the last call the two compete for the last move
+  let streamShown = false, streamNeed = 0, streamVal = 0, streamIdx = -1, streamCard = null;
+  // after tonight's first puck an added goalie plays from tomorrow, and the title says so (handoff 477)
+  const streamTitle = locked ? "Stream a goalie from tomorrow" : "Stream a goalie tonight";
   if (d.rated && tonight && !stale(d)) {
     const myG = tonightMine.filter(p => p.pos === "G");
     const open = 2 - myG.filter(startsTonight).length;
@@ -778,11 +821,12 @@ function renderUpgrades() {
       const left = limit ? (used == null ? `${limit} moves a matchup` : `${Math.max(0, limit - used)} of ${limit} moves left`)
         : (used == null ? "check your moves left" : `${used} move${used === 1 ? "" : "s"} used this matchup`);
       const pps = p => p.cr_why?.line?.pps ?? p.cr_fpg;
-      const streams = fas.filter(p => p.pos === "G" && p.owner !== "waivers" && !started(p) && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
+      const streams = (realLeft != null && movesLeft <= 0) ? [] : fas.filter(p => p.pos === "G" && p.owner !== "waivers" && !started(p) && p.cr_why?.tonight?.status === "Confirmed" && p.cr_why.tonight.starting)
         .sort((a, b) => pps(b) - pps(a)).slice(0, 3);
       const cap = d.goalie_cap ? ` Your league caps goalie starts at ${d.goalie_cap}, so check how many you've used.` : "";
       const before = puck && !locked ? ` Add before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET: later adds count from tomorrow.` : "";
       streamShown = true;
+      if (streams.length && !locked) { streamNeed = 1; streamVal = pps(streams[0]); }
       // only the updates that come before tonight's first puck can still catch a starter for tonight (findings 239)
       const recheck = () => {
         const etMin = t => { const [h, m] = t.toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour12: false }).split(":").map(Number); return (h % 24) * 60 + m; };
@@ -792,11 +836,16 @@ function renderUpgrades() {
         return puck ? `. The next update comes after tonight's first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET, so a goalie confirmed later can't be added for tonight.`
           : ". The site doesn't update again before tonight's games.";
       };
-      cards.push(`<div class="upg"><b>Stream a goalie tonight</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(before)}${esc(cap)}</span>
-        ${locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
+      streamIdx = cards.length;
+      // a full roster needs a drop for the stream: name it (handoff 463)
+      const sDrop = freeSpots <= 0 && streams.length && !locked ? dropOrder.find(p => !swapDrops.has(p.id)) : null;
+      const sDropTxt = sDrop ? ` Your roster is full: drop ${sDrop.name} to add him.` : "";
+      streamCard = note => `<div class="upg"><b>${streamTitle}</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(tonight.date)}, ${esc(left)}.${esc(before)}${esc(sDropTxt)}${esc(cap)}</span>
+        ${note ? `<div class="sub">${esc(note)}</div>` : locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
           : locked ? '<div class="sub">Tonight\'s first game has started, so a goalie added now plays from tomorrow. Tomorrow\'s confirmed starters show up after the morning update.</div>'
           : streams.length ? streams.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag news">starts tonight</span> <span class="sub">${esc(p.team)}${p.cr_why.line ? `, ${Math.round(p.cr_why.line.win_prob * 100)}% to win` : ""}</span> <span class="up">${fmt(pps(p))} pts</span></div>`).join("")
-          : `<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon${esc(recheck())}</div>`}</div>`);
+          : `<div class="sub">No free-agent goalie is confirmed to start tonight yet. Daily Faceoff usually confirms by mid-afternoon${esc(recheck())}</div>`}</div>`;
+      cards.push(streamCard());
     }
   }
   // Tonight on a crowded night (research findings 65): start by per-game rating, bench anyone Daily Faceoff leaves out
@@ -864,11 +913,13 @@ function renderUpgrades() {
     // with any move left, not only 3+: even one unused move is lost (findings 238)
     // not from yesterday's data: Monday 0-4 AM still shows Sunday as tonight (findings 240)
     lastCall = !noMoves && !reset && !locked && !stale(d) && !d.final_matchup && lastNight && realLeft > 0;
-    // hold one move for each night still to come (injury swaps, goalie streams), so a team following the card makes about
-    // 2 moves on Monday and keeps the rest, instead of 2 more at every update (findings 51, 59, 239)
+    // hold one move for each night still to come, up to 3 of 7 (6 of 14), for injury swaps and goalie streams, so a team
+    // following the card doesn't spend every move at the first update (findings 51, 59, 239; handoff 488: the move simulator
+    // with today's ratings gives +0.9 points a week over holding 5, every season tested)
     const nightsAfter = d.nights.filter(n => !n.past && n !== tonight && n.games > 0).length;  // nights without NHL games hold nothing (findings 291 (5))
-    // counting next matchup's moves, its whole week is still to come: hold all but 2 (handoff 416)
-    const hold = lastCall ? 0 : nextCount || reset ? Math.max(0, (cnt.limit || 7) - 2) : Math.min(nightsAfter, (d.move_limit || 7) - 2);
+    // counting next matchup's moves, its whole week is still to come: hold 3 of 7 (handoffs 416, 488)
+    const holdMax = Math.round(3 / 7 * (d.move_limit || 7));
+    const hold = lastCall ? 0 : nextCount || reset ? Math.round(3 / 7 * (cnt.limit || 7)) : Math.min(nightsAfter, holdMax);
     spare = realLeft != null ? Math.max(0, realLeft - swapSubs.size - hold) : 2;
     // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
     const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);
@@ -881,16 +932,26 @@ function renderUpgrades() {
         const worst = left.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
         if (!top || addVal(fa) - addVal(worst) > top.gain) top = { fa, worst, gain: addVal(fa) - addVal(worst) };
       }
-      return top && top.gain > 0.5 ? top : null;
+      // every add worth 3.5+ keep points (handoff 488); the final, where keep is just this round's points, keeps 0.5
+      return top && (d.final_matchup || noMoves ? top.gain > 0.5 : top.gain >= MOVE_MIN_GAIN) ? top : null;
     };
-    for (let i = 0; i < (lastCall ? movesLeft : Math.min(2, spare, movesLeft)); i++) {
+    for (let i = 0; i < (lastCall ? movesLeft - streamNeed : Math.min(MOVES_PER_DAY, spare, movesLeft - streamNeed)); i++) {
       const top = pick();
       if (!top) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);
     }
+    // the last call's held-back move: the Best move takes it when it gains more than tonight's best stream scores
+    if (lastCall && streamNeed && best.length === Math.max(0, movesLeft - streamNeed)) {
+      const top = pick();
+      if (top && top.gain > streamVal) {
+        added.add(top.fa.id); dropped.add(top.worst.id); best.push(top); streamNeed = 0;
+        cards[streamIdx] = streamCard("Your last move gains more on the Best move below than on a goalie tonight, so it goes there.");
+      }
+    }
     // every move left is held for the nights to come, though a free agent would gain: say so instead of going quiet
     if (!best.length && !lastCall && realLeft != null && movesLeft > 0 && spare === 0 && pick())
-      cards.push(`<div class="upg"><b>Best moves</b> <span class="drop">· You have ${movesLeft} move${movesLeft === 1 ? "" : "s"} left; one is held for each night still to come (injury swaps, goalie streams). More free up later in the week.</span></div>`);
+      // one moves-left count, the same as the Stream card's, and never folded away on phones (handoff 471)
+      cards.push(`<div class="upg nofold"><b>Best moves</b> <span class="drop">· none today. You have ${realLeft} move${realLeft === 1 ? "" : "s"} left${swapSubs.size ? `: ${swapSubs.size} go${swapSubs.size === 1 ? "es" : ""} to the Mid-week swaps above and the other ${movesLeft} ${movesLeft === 1 ? "is" : "are"} held` : `, all held`}, one for each night still to come (injury swaps, goalie streams). More free up later in the week.</span></div>`);
     // its own line, so a phone doesn't fold it behind 'why' (findings 238); no game today means ESPN's rollover is the deadline
     const expire = lastCall ? `You have ${realLeft} move${realLeft === 1 ? "" : "s"} left, and the ones you don't use expire tonight: add next week's targets ${puck ? `before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : "before ESPN's overnight rollover (about 3 AM ET)"}. Next Monday starts with a fresh set.` : "";
     // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same
@@ -905,27 +966,34 @@ function renderUpgrades() {
   for (const g of seasonDone ? [] : ["F", "D", "G"]) {
     const mineG = mine.filter(p => group(p) === g);
     if (!mineG.length) continue;
-    const worst = mineG.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
+    // not tonight's starting goalie before his game, while another goalie could go instead (handoff 485)
+    const pool = g === "G" && !locked && mineG.some(p => !startsTonight(p)) ? mineG.filter(p => !startsTonight(p)) : mineG;
+    const worst = pool.reduce((a, b) => addVal(a) <= addVal(b) ? a : b);
     const better = fas.filter(p => group(p) === g && addVal(p) > addVal(worst) + 0.5).sort((a, b) => addVal(b) - addVal(a)).slice(0, 3);
     if (!better.length) continue;
     cards.push(`<div class="upg"><b>${names[g]}</b> <span class="drop">· your weakest: ${esc(worst.name)} ${fmt(score(worst))} this week${kv(worst)}${noMoves ? `, Season ${fmt(worst.cr_season)}` : ""}.</span>
-      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}, ${games(p)} gm, ${openGames(p)} open</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))}${kv(p)}`} (${gainTxt(addVal(p) - addVal(worst))})</span></div>`).join("")}</div>`);
+      ${better.map(p => `<div>${esc(p.name)}${wvTag(p)} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(games(p))} (${openGames(p)} on open nights)</span> <span class="up">${noMoves ? `Season ${fmt(p.cr_season)}` : `${fmt(score(p))} pts this week${kv(p)}`}, ${gainTxt(addVal(p) - addVal(worst))} over ${esc(worst.name)}</span></div>`).join("")}</div>`);
   }
   if (cards.length === nSwap && !seasonDone) cards.push('<div class="empty">No free agent beats your team\'s weakest healthy player in any group right now.</div>');
-  const dropGain = p => {  // the best free agent at his position, by the cards' own measure (findings 68, 233)
-    const fa = d.rated && fas.filter(f => group(f) === group(p)).sort((a, b) => addVal(b) - addVal(a))[0];
-    return fa && addVal(fa) > addVal(p) ? ` · ${esc(fa.name)}${wvTag(fa)} ${gainTxt(addVal(fa) - addVal(p))}` : "";
+  // the best free agent at his position, by the cards' own measure (findings 68, 233), one the other cards don't already add,
+  // and each named once: a free agent can be added only once (handoff 476)
+  const named = new Set([...swapSubs, ...best.map(m => m.fa.id)]);
+  const dropGain = p => {
+    const fa = d.rated && fas.filter(f => group(f) === group(p) && !named.has(f.id)).sort((a, b) => addVal(b) - addVal(a))[0];
+    if (!fa || addVal(fa) <= addVal(p)) return "";
+    named.add(fa.id);
+    return ` · replace with ${esc(fa.name)}${wvTag(fa)} (${gainTxt(addVal(fa) - addVal(p))})`;
   };
   // Drop list: lowest keep value (research sections 17 and 57), IR slot excluded; IR-eligible players move to IR instead (findings 231)
   if (!seasonDone && (drops.length || irMove.length)) cards.push(`<div class="upg"><b>Drop list</b> <span class="drop">· ${d.final_matchup ? "your lowest points left: this is the final, so nothing after it counts"
       : noMoves ? "your lowest Season ratings, since adds now wait for the next matchup" : "your lowest keep value: this week plus about two more weeks of points per game"}</span>
     ${irMove.map(p => `<div>${esc(p.name)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <span class="up">Move to IR</span><span class="sub"> (free, keeps him, opens a roster spot)</span></div>`).join("")}
-    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${noMoves && d.rated ? ` · Season ${fmt(p.cr_season)}` : kv(p)}${upside(p) != null ? ` · ${EXP_TXT[p.cr_why.exp]}, upside ${fmt(upside(p))} a game` : ""}${dropGain(p)}</span>${d.rated && !d.final_matchup && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
+    ${drops.map(p => `<div>${esc(p.name)}${p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : ""} <span class="sub">${esc(p.team)} ${esc(posTxt(p))} · ${gmTxt(games(p))}</span> <b>${fmt(score(p))}</b><span class="sub"> pts${noMoves && d.rated ? ` · Season ${fmt(p.cr_season)}` : kv(p)}${upside(p) != null ? ` · ${EXP_TXT[p.cr_why.exp]}, upside ${fmt(upside(p))} a game` : ""}${dropGain(p)}</span>${d.rated && !d.final_matchup && p.cr_season >= 1.5 ? '<span class="tag wv">goes on waivers: others will claim him</span>' : ""}</div>`).join("")}</div>`);
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only. Not in the final: no later weeks
   // with a full roster it takes a drop and a second move (findings 231)
   // IR slots the Drop list's IR moves leave, and a drop no other card already uses (findings 240)
   const irLeft = irOpen - irMove.length, stashDrop = dropOrder.find(p => !dropped.has(p.id));
-  const stashBudget = noMoves ? Infinity : realLeft != null ? (lastCall ? movesLeft : spare) - best.length : movesLeft;
+  const stashBudget = noMoves ? Infinity : realLeft != null ? (lastCall ? movesLeft : spare) - best.length - streamNeed : movesLeft;
   const stash = !d.rated || irLeft <= 0 || d.final_matchup || stashBudget < (full ? 2 : 1) ? []
     : d.players.filter(p => isFA(p) && p.pos !== "G" && irEligible(p) && p.cr_fpg >= 1.5 && !p.cr_why?.back?.season)
     .sort((a, b) => b.cr_season - a.cr_season).slice(0, 3);
@@ -939,7 +1007,7 @@ function renderUpgrades() {
   const myGoalies = roster.filter(p => !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
   const gLine = p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)}, ${games(p)} gm</span> <b>${fmt(score(p))}</b><span class="sub">${d.rated ? `${kv(p) || " ·"}${kv(p) ? "," : ""} Season ${fmt(p.cr_season)}` : ""} · lowest ${d.final_matchup ? "points left" : "keep value"}</span></div>`;
   if (myGoalies.length > 3 && !seasonDone) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· you carry ${myGoalies.length} healthy. Two plus a stream slot is the plan, so use the fourth spot on a skater.</span>
-    ${myGoalies.slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
+    ${[...myGoalies.filter(p => locked || !startsTonight(p)), ...myGoalies.filter(p => !locked && startsTonight(p))].slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
   // nothing to stream for once the final's moves or nights are gone (findings 232)
   else if (myGoalies.length === 3 && !(d.final_matchup && (noMoves || (locked && lastNight)))) {
     // not tonight's starter: dropping him empties a slot tonight (findings 233)
@@ -948,7 +1016,7 @@ function renderUpgrades() {
       : locked && lastNight ? `tonight's first game has started and it's the matchup's last night, so an add now counts in the next matchup: from Monday, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
       : locked ? `tonight's first game has started, so an add now counts from tomorrow: when a G slot is open tomorrow, drop ${esc(gDrop.name)} for a confirmed starter.`
       : stale(d) || !tonight ? `when a G slot is open on a night, drop ${esc(gDrop.name)} for a confirmed starter.`
-      : `when a G slot is open tonight, drop ${esc(gDrop.name)} for a confirmed starter${streamShown ? " (see Stream a goalie tonight)" : ""}.`}</span>
+      : `when a G slot is open tonight, drop ${esc(gDrop.name)} for a confirmed starter${streamShown ? ` (see ${streamTitle})` : ""}.`}</span>
     ${gLine(gDrop)}</div>`);
   }
   // a waiver player listed: a claim is free to try (findings 212: losing claims used no move; Kempe drew three claims)
@@ -979,7 +1047,7 @@ function foldCards() {
       const det = document.createElement("details"), sum = document.createElement("summary");
       det.className = "fold"; sum.append(title);
       det.append(sum, ...c.childNodes); c.append(det);
-    } else if (drop && /^(Mid-week swaps|Best|Drop list|Activate from IR|Two-week)/.test(title.textContent)) {
+    } else if (drop && !c.classList.contains("nofold") && /^(Mid-week swaps|Best|Drop list|Activate from IR|Two-week)/.test(title.textContent)) {
       // the stream deadline, "bench these" and "your weakest" stay visible (findings 233)
       const det = document.createElement("details"), sum = document.createElement("summary");
       det.className = "more"; sum.textContent = "why";
@@ -993,11 +1061,14 @@ function renderNights() {
   const d = state.data;
   $("openkey").textContent = state.team ? "Under each night: your team's empty F / D / G slots (UTL counted as a D unless a tenth forward fills it)" : "Pick your team to see its open slots each night";
   // stale data's first night still to play was last night: it's over (findings 232)
-  const done = stale(d) ? d.nights.find(n => !n.past) : null;
+  const done = stale(d) ? d.nights.find(n => !n.past) : null, tonightNight = stale(d) ? null : d.nights.find(n => !n.past);
+  const puckPassed = () => !!d.first_start && new Date(d.first_start) <= new Date();
   $("nights").innerHTML = d.nights.map(n => {
     const o = state.openSlots[n.sp];
-    const num = (v, label) => v > 0 ? `<em>${label}${v}</em>` : `${label}0`;
-    const open = state.team ? `<span class="open">${num(o.F, "F")} ${num(o.D, "D")} ${num(o.G, "G")}</span>` : "";
+    // a night that's over or under way can't take an add any more: its open slots aren't green (handoff 474)
+    const gone = n.past || n === done || (n === tonightNight && puckPassed());
+    const num = (v, label) => v > 0 && !gone ? `<em>${label}${v}</em>` : `${label}${v}`;
+    const open = state.team ? `<span class="open">${gone ? "played" : `${num(o.F, "F")} ${num(o.D, "D")} ${num(o.G, "G")}`}</span>` : "";
     return `<div class="night ${n.light ? "light" : ""} ${n.past || n === done ? "past" : ""}">${esc(n.date)}<b>${n.games}</b>${open}</div>`;
   }).join("");
 }
@@ -1254,10 +1325,12 @@ function weekOptions(d) {
 // An open tab reloads (findings 230): when it comes back after 10+ minutes, and when a game starts, so started games,
 // streams and best moves follow the clock. Your team and filters come back from this browser's storage.
 let loadedAt = Date.now();
-const reloadDue = now => !!state.data && state.data.players.some(p => {
+// a tab left open reloads once a game starts, 15 minutes after a scheduled run, and after midnight ET (handoff 469)
+const slotKey = t => lastSlot(t).slice(0, 2).join(" ");
+const reloadDue = now => !!state.data && (state.data.players.some(p => {
   const t = p.today_start ? new Date(p.today_start).getTime() : NaN;
   return t > loadedAt && t <= now;
-});
+}) || (now - 15 * 60e3 > loadedAt && slotKey(now - 15 * 60e3) !== slotKey(loadedAt)) || etParts(now)[0] !== etParts(loadedAt)[0]);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && Date.now() - loadedAt >= 10 * 60e3) location.reload();
 });
@@ -1386,23 +1459,31 @@ function renderWinners() {
   const games = w.games || [], rec = w.record || {};
   $("nhlhead").innerHTML = "Claude's win chance for each game: each skater's NHL points (goals + assists) per game × his chance to dress from the player projections, the likely starting goalie's save%, goal differential, home ice and back-to-backs. Tested on 6,560 games from 2021-26, it picked the winner 60% of the time (always picking the home team: 54%). On the 1,651 games with archived betting lines it was right 63.2% of the time, level with the betting favourite (63.1%)."
     + (rec.games ? ` <b>This week: ${rec.right} of ${rec.games} right</b> (the home team won ${rec.home_right}).` : "");
+  // days with games still to play first; finished days after them, folded to one line each (handoff 480)
   const days = [...new Set(games.map(g => g.date))];
-  $("nhlgames").innerHTML = days.length ? days.map(day => {
-    const gs = games.filter(g => g.date === day);
-    return `<div class="night-h">${esc(dayLabel(day))} <span class="sub">${gs.length} game${gs.length === 1 ? "" : "s"}</span></div><div class="games">${gs.map(gameCard).join("")}</div>`;
+  const final = g => g.home_score != null;
+  const over = day => games.filter(g => g.date === day).every(final);
+  $("nhlgames").innerHTML = days.length ? [...days.filter(x => !over(x)), ...days.filter(over)].map(day => {
+    const gs = games.filter(g => g.date === day), cards = `<div class="games">${gs.map(gameCard).join("")}</div>`;
+    const n = `${gs.length} game${gs.length === 1 ? "" : "s"}`;
+    if (!over(day)) return `<div class="night-h">${esc(dayLabel(day))} <span class="sub">${n}</span></div>${cards}`;
+    const picked = gs.filter(g => g.p_home != null), right = picked.filter(g => (g.p_home >= 0.5) === g.home_won).length;
+    return `<details class="fold dayfold"><summary><b>${esc(dayLabel(day))} · ${n}, all final</b> <span class="sub">${picked.length
+      ? `picks ${right} of ${picked.length} right` : "no picks: before this page had them"}</span></summary>${cards}</details>`;
   }).join("") : '<div class="prompt">No NHL games left this week.</div>';
   const ms = w.matchups || [];
   $("fmhead").textContent = ms.length
-    ? "Points so far from ESPN, plus the rest of the week projected from each roster's Week ratings with the best lineup each night (9 F, 5 D, UTL, 2 G; IR left out). Each side shows its projected total and win chance. The win chance allows for each player's night-to-night spread in 2021-26 games."
+    ? "Points so far from ESPN, plus the rest of the week projected from each roster's Week ratings with the best lineup each night (9 F, 5 D, UTL, 2 G; IR left out). Each side: projected final points · win chance. The win chance allows for each player's night-to-night spread in 2021-26 games."
     : "League matchups weren't available in this update.";
   const mine = m => state.team !== "" && [m.home.id, m.away.id].map(String).includes(state.team);
   $("fantasy").innerHTML = [...ms].sort((a, b) => mine(b) - mine(a)).map(m => {
     const homePick = m.p_home >= 0.5;
-    const side = (t, q, pick) => `<div class="side${pick ? " pick" : ""}"><span class="tm">${esc(t.name)}${pick ? ' <span class="chip">pick</span>' : ""}</span>`
-      + `<span class="pts" title="projected total">${fmt(t.total)}</span><span class="wpct">${pct(q)}</span></div>`;
+    // the pick chip sits outside the name, so a long name's ellipsis can't hide it (handoff 481)
+    const side = (t, q, pick) => `<div class="side${pick ? " pick" : ""}"><span class="tm">${esc(t.name)}</span>${pick ? '<span class="chip">pick</span>' : ""}`
+      + `<span class="pts" title="projected final points">${fmt(t.total)} pts</span><span class="wpct">${pct(q)}</span></div>`;
     return `<div class="game matchup${mine(m) ? " mine" : ""}">${side(m.home, m.p_home, homePick)}`
       + `<div class="bar"><i style="width:${Math.round(100 * m.p_home)}%"></i></div>${side(m.away, other(m.p_home), !homePick)}`
-      + `<div class="meta"><span>so far ${fmt(m.home.now)} to ${fmt(m.away.now)}</span><span>still to come ${fmt(m.home.rest)} to ${fmt(m.away.rest)}</span></div></div>`;
+      + `<div class="meta"><span>So far ${fmt(m.home.now)}-${fmt(m.away.now)}</span><span>projected rest ${fmt(m.home.rest)}-${fmt(m.away.rest)} (top team first)</span></div></div>`;
   }).join("");
 }
 
@@ -1427,6 +1508,12 @@ fetch("data/players.json", { cache: "no-store" })
     const etDay = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     if (stale(d) && d.updated_utc && etDay(d.updated_utc) === etDay(Date.now()))
       $("stale").textContent = "These numbers are from an overnight update, before ESPN moved to today. Last night's games are in, but tonight's lineup cards wait for the 6 AM ET refresh.";
+    // a run today that hasn't landed 45 minutes after its time: say the numbers are older (handoff 465)
+    const slot = lastSlot();
+    if ($("stale").hidden && !stale(d) && slot[0] === etParts(Date.now())[0] && etParts(Date.now())[1] - slot[1] > 45 && slotMissing(d, slot)) {
+      $("stale").hidden = false;
+      $("stale").textContent = `Today's ${runLabel(slot[2])} update hasn't landed yet; these numbers are from ${d.updated}.`;
+    }
     // Monday after ESPN's rollover, before the first run (findings 233)
     if (weekOver(d)) $("stale").textContent = "These are last matchup's numbers. ESPN has started the new matchup with fresh moves, less any you added after Sunday's first puck; the site refreshes at 6 AM ET.";
     // after the fantasy final there's nothing to pick up or trade (findings 232)
