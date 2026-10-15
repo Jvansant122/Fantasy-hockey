@@ -1211,7 +1211,7 @@ def week_schedule(s, monday, games=None, weeks=1, starts=None, results=None, nam
     days = [d for k in range(weeks) for d in nhl_get(s, f"{NHL_WEB}/schedule/{(monday + timedelta(days=7 * k)).isoformat()}").json().get("gameWeek", [])]
     for day in days:
         for g in day.get("games", []):
-            if g.get("gameType") == 2:
+            if g.get("gameType") == 2 and g.get("gameScheduleState", "OK") not in ("PPD", "CNCL"):  # postponed or cancelled: not played on this date (handoff 660)
                 for side, other in (("awayTeam", "homeTeam"), ("homeTeam", "awayTeam")):
                     out.setdefault(g[side]["abbrev"], []).append(day["date"])
                     if games is not None:
@@ -2495,7 +2495,7 @@ def line_win_probs(odds, today, now=None):
             if start <= now or start.astimezone(ET).date() != today:
                 continue
             ph = win_prob(g["home"]["MONEY_LINE_2_WAY"], g["away"]["MONEY_LINE_2_WAY"])
-        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        except (AttributeError, KeyError, TypeError, ValueError, ZeroDivisionError):  # a line with no start time (handoff 661)
             continue
         out[g["home"]["team"]], out[g["away"]["team"]] = ph, 1 - ph
     return out

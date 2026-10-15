@@ -4,7 +4,8 @@ fetch.py swallows rating errors so the site still publishes; this test is what c
 import json
 import math
 import re
-from datetime import date, timedelta
+import copy
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 import requests
@@ -2711,3 +2712,41 @@ def test_older_goalies_lose_season_share_with_games_left():
     assert old[2] == pytest.approx(young[2])  # not handed to the partner
     assert share({1: 38.0, 2: 25.0}, 0)[1] == pytest.approx(young[1])  # no games left, no cut
     assert [k for _, k in rating.SEASON_PPS_K] == [8, 15, 30]  # handoff 641's shrink tiers
+
+
+class PostponedSunday(FakeSession):
+    """Handoff 660. The NHL week schedule keeps Sunday's BOS-TOR game on its date, marked postponed (gameScheduleState "PPD"), as it
+    kept the cancelled NSH-TBL game of Oct 7 2024 ("CNCL", gameState "FUT"); ESPN's schedule no longer has it."""
+    def get(self, url, params=None, headers=None, timeout=None):
+        r = super().get(url, params, headers, timeout)
+        if "/schedule/" in url:
+            wk = copy.deepcopy(r.payload)
+            for day in wk["gameWeek"]:
+                for g in day["games"]:
+                    g["gameScheduleState"] = "PPD" if day["date"] == "2026-10-11" else "OK"
+            return Resp(wk)
+        return r
+
+
+def test_postponed_game_isnt_counted(monkeypatch, tmp_path):
+    monkeypatch.setattr(rating.requests, "Session", lambda: PostponedSunday())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    gs = [dict(espn(111, "Joseph Woll", "TOR", "G", games_left=1)), dict(espn(112, "Anthony Stolarz", "TOR", "G", games_left=1)),
+          dict(espn(113, "Jeremy Swayman", "BOS", "G", games_left=1))]  # ESPN: only tonight left
+    w = {}
+    rating.add_ratings(gs, 2027, TODAY, MONDAY, [], winners=w)
+    for p in gs:
+        assert p["cr_why"]["exp_starts"] <= p["games_left"] + 0.01, (p["name"], p["cr_why"]["exp_starts"])
+        assert "2026-10-11" not in p["cr_g_nights"]
+    assert sum(p["cr_why"]["exp_starts"] for p in gs if p["team"] == "TOR") <= 1.01
+    assert "2026-10-11" not in {g["date"] for g in w["games"]}  # no pick for a game that won't be played that night
+
+
+def test_line_without_a_start_time_is_skipped():
+    """Handoff 661. A betting-line game with no start time is left out, not a crash that takes the whole rating down."""
+    odds = {"games": [{"start_utc": None, "home": {"team": "TOR", "MONEY_LINE_2_WAY": -150}, "away": {"team": "BOS", "MONEY_LINE_2_WAY": 130}},
+                      {"start_utc": "2026-10-09T23:00:00Z", "home": {"team": "MTL", "MONEY_LINE_2_WAY": -150}, "away": {"team": "OTT", "MONEY_LINE_2_WAY": 130}}]}
+    lines = rating.line_win_probs(odds, TODAY, datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    assert set(lines) == {"MTL", "OTT"}
