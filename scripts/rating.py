@@ -1327,6 +1327,9 @@ class Model:
         self.season_lr = json.loads(sd.read_text()) if sd.exists() else None
         sr = ROOT / "model" / "season_range.json"
         self.season_range_table = json.loads(sr.read_text()) if sr.exists() else None
+        # the Season FP/G's boosted next-week TOI/G and PP TOI/G forecasts (handoff 668); None without both files
+        tb = {k: season_boost.load(k) for k in ("toi", "pptoi")}
+        self.toi_boost = tb if all(tb.values()) else None
 
     def season_range(self, season, is_d, gp_last, gp_before, age=None, gp_now=0):
         """80% range of the Season rating and his experience group (findings 345): rookies and second-year players finish
@@ -1370,8 +1373,8 @@ class Model:
 
     def fpg(self, feats, season=False):
         """Points a game: the Week rating's ridge, or with season=True the Season rating's (no hinge curves, findings 320 (2);
-        decomposed scoring forecasts, findings 320 (3))."""
-        feats = {**feats, **forecast_features(feats, self.sk)}
+        decomposed scoring forecasts, findings 320 (3); boosted ice-time forecasts, handoff 668)."""
+        feats = {**feats, **forecast_features(feats, self.sk, self.toi_boost if season else None, season)}
         m = self.sk.get("season", self.sk) if season else self.sk
         if season and m.get("rates"):
             feats |= season_features(feats, m)
@@ -1580,11 +1583,16 @@ def injury_note(note, today):
     for m in [*LONG_ABSENCE.finditer(short), *LONG_OWN.finditer(mine)]:
         w = m.group(0).lower()
         kinds.add("wtw" if w == "week-to-week" else "ltir" if "injured reserve" in w or w == "ltir"
-                  else "timeline" if w.endswith("weeks") else "words")
+                  else "timeline" if w.endswith("weeks") else "unclear" if w.startswith("unclear") else "words")
     if left is not None and left >= 14:
         kinds.add("timeline")
-    why = None if not long_abs else "words" if season or "words" in kinds or ("ltir" in kinds and len(kinds) > 1) \
-        else "ltir" if "ltir" in kinds else "wtw" if "wtw" in kinds else "timeline"
+    # "unclear when he'll return" is the only long reason: the Week reads the note as not long (hunt14/audit5, t_site_long3.py)
+    k2 = kinds - {"unclear"}
+    # LTIR wins over the other long words but surgery and the season, as the replay grouped it (hunt14/audit5, t_ltir_mix.py)
+    surgery = bool(re.search(r"surgery|surgical|\boperation\b", short, re.I))
+    why = None if not long_abs else "unclear" if not k2 and not season \
+        else "words" if season or surgery else "ltir" if "ltir" in k2 \
+        else "words" if "words" in k2 else "wtw" if "wtw" in k2 else "timeline"
     return {"long": long_abs, "season": season, "days_left": left, "long_why": why}
 
 
@@ -2123,18 +2131,30 @@ def week_extras(f):
     return out
 
 
-def forecast_features(f, sk):
+def forecast_features(f, sk, toi_boost=None, season=False):
     """Ridge inputs built on the others (same arithmetic as model/train.py): next week's TOI and PP TOI forecast, the
     usage x efficiency inputs with the forecasts in place of last-5 ice time (findings 310 (1)), and the products of the
-    12 strongest inputs, each missing factor filled with its training mean (findings 310 (2))."""
+    12 strongest inputs, each missing factor filled with its training mean (findings 310 (2)). The Week's forecast ridges
+    have wider inputs (handoff 669); season=True uses the Season ridge's narrower ones. toi_boost (the Season rating only,
+    handoff 668): {"toi": model, "pptoi": model}, boosted trees (model/train_toi_boost.py) that read f plus the inputs
+    above built on the narrower linear forecasts (no hinges or products) and his team's games this week
+    (f["team_games"]); their forecasts then replace the linear ones in the fc_ inputs."""
     out = week_extras(f)
-    fc = sk.get("toi_forecast")
+    fc = ((sk.get("season") or {}).get("toi_forecast") if season else None) or sk.get("toi_forecast")
     if fc:
         x = dict(f, gpw=min((f.get("std_gp") or 0) / 20, 1)) | context_gaps(f)
+        if any(k.endswith("_sq") for m in fc.values() for k in m["inputs"]):  # the wider ridges (handoff 669)
+            x |= {f"{c}_sq": None if f.get(c) is None else f[c] ** 2 for c in FC_WIDE_SQ}
+            x |= {f"D_{c}": (f.get("is_D") or 0.0) * (f.get(c) or 0.0) for c in FC_WIDE_D}
+            x["age_m"] = 27.0 if f.get("age_m") is None else f["age_m"]
+            x["prev_gp"] = None if f.get("no_prev") else f.get("prev_gp")  # no last season: the training mean, as trained
         val = {tgt: m["intercept"] + sum(c * (m["fill"][k] if x.get(k) is None else x[k]) for k, c in zip(m["inputs"], m["coef"]))
                for tgt, m in fc.items()}
-        u = ux_features(dict(f, l5_toi=val["y_toi"], l5_pptoi=max(val["y_pptoi"], 0.0)), "D" if f.get("is_D") else "F", sk.get("ux_means"))
-        out |= {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
+        out |= fc_inputs(f, val, sk)
+        if toi_boost:
+            xb = {**f, **out}
+            out |= fc_inputs(f, {"y_toi": season_boost.predict(toi_boost["toi"], xb),
+                                 "y_pptoi": season_boost.predict(toi_boost["pptoi"], xb)}, sk)
     for c, knots in (sk.get("hinges") or {}).items():  # Week rating's bend points (findings 320 (2)); missing x: filled
         v = out.get(c, f.get(c))
         for i, q in enumerate(knots):
@@ -2147,6 +2167,16 @@ def forecast_features(f, sk):
             for b in pairs["inputs"][i + 1:]:
                 out[f"{a}*{b}"] = v[a] * v[b]
     return out
+
+
+FC_WIDE_SQ = ["std_toi", "l5_toi", "l10_toi", "last_toi", "std_pptoi", "l5_pptoi", "pp_l1"]  # model/train.py (handoff 669)
+FC_WIDE_D = ["std_toi", "l5_toi", "l10_toi", "last_toi"]
+
+
+def fc_inputs(f, val, sk):
+    """The ice-time forecasts val and the usage x efficiency inputs with them in place of last-5 ice time and PP time."""
+    u = ux_features(dict(f, l5_toi=val["y_toi"], l5_pptoi=max(val["y_pptoi"], 0.0)), "D" if f.get("is_D") else "F", sk.get("ux_means"))
+    return {f"fc_{k}": v for k, v in u.items()} | {"fc_toi": val["y_toi"], "fc_pptoi": val["y_pptoi"]}
 
 
 IPP_K, IPP_EV_MIN, IPP_PP_MIN = 20.0, 300.0, 60.0  # shrinkage of IPP and on-ice xGF per minute (findings 320 (3))
@@ -2588,6 +2618,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         s.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=32))
     season, prev_season = season_ids(espn_season)
     model = Model()
+    week_end = (monday + timedelta(days=7)).isoformat()  # sched covers 2 weeks in a playoff round
     week_games, week_starts, week_results, team_names = {}, {}, {}, {}
     bios = {}  # {id: (birth, draft, first season)}, filled by load_birthdates for the boosted models
     # the feeds don't depend on each other: load them side by side (each still loads as it did one by one)
@@ -2975,6 +3006,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2,
                                   context=context.get(pid), age=age)
             f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
+            # his team's games this Monday-Sunday week, an input of the Season's boosted ice-time forecasts (handoff 668)
+            f["team_games"] = sum(d < week_end for d in sched.get(team, []))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
             fpg_s = model.fpg(f, season=True) if pid else fpg  # the Season rating's ridge (findings 320 (2))
             if pid and not gl and p2 and prev.get(pid):  # no game yet: the Week leans on both past seasons (handoff 429)
@@ -2987,7 +3020,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if kept is not None:
                 f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg,
                                      is_d=p["pos"] == "D", p2=p2, context=context.get(pid), age=age)
-                f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
+                f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")), team_games=f["team_games"])
                 fpg = (fpg + model.fpg(f2)) / 2
                 fpg_s = (fpg_s + model.fpg(f2, season=True)) / 2
             # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)
@@ -3134,6 +3167,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if n.get("fpg_mult") is not None:
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
+            if note and note["long_why"] == "unclear":  # only "unclear when he'll return": dressed 25-30% of games (audit5)
+                note = {**note, "long": False, "long_why": None}
             long_caps = LONG_NOTE_CAPS.get(note.get("long_why")) if note and note["long"] else None
             inj = (max(long_caps) if long_caps else 0.0) if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
             # OUT for one named game that his team has since played: day-to-day, as ESPN has him by the next morning (findings 236)

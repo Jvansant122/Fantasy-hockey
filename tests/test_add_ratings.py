@@ -2863,3 +2863,77 @@ def test_games_before_stated_return_count_less(monkeypatch, tmp_path):
                 "date": "2026-10-08T14:00Z"}]
         return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="DAY_TO_DAY")], injuries=inj)["David Pastrnak"]
     assert pasta(-0.6)["cr_games"] < pasta(0.0)["cr_games"]
+
+
+# handoffs 672-674: tests pinning 657, 658, 659, 667 and the long-note fixes (hunt14/audit5)
+
+def _mcavoy5(monkeypatch, tmp_path, injury, short, long="", when="2026-10-08T12:00Z", **kw):
+    """McAvoy sat BOS's last game (Oct 7); BOS plays today (Oct 9) and Sunday (Oct 11)."""
+    note = {"athlete_id": 104, "name": "Charlie McAvoy", "short": short, "long": long, "date": when}
+    return rate(monkeypatch, tmp_path, [espn(104, "Charlie McAvoy", "BOS", "D", injury=injury, games_left=2)],
+                injuries=[note], **kw)["Charlie McAvoy"]
+
+
+def test_week_to_week_note_caps_each_game(monkeypatch, tmp_path):
+    """Handoff 657: a note whose only long word is week-to-week caps today's game at 0.05 and Sunday's at 0.20 (it was 0)."""
+    p = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) is considered week-to-week.")
+    assert p["cr_dress_next"] <= 0.05 + 1e-9 and 0.05 < p["cr_games"] <= 0.25 + 1e-9
+    surgery = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) will undergo surgery and is week-to-week.")
+    assert surgery["cr"] == 0
+
+
+def test_timeline_only_note_caps_each_game(monkeypatch, tmp_path):
+    """Handoff 657: a note that is long only for its stated 4-6 weeks caps at 0.10 today, 0.30 after."""
+    p = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", "McAvoy (knee) is expected to miss four to six weeks.")
+    assert p["cr_dress_next"] <= 0.10 + 1e-9 and p["cr_games"] > p["cr_dress_next"]
+    assert p["cr_games"] <= 0.40 + 1e-9
+
+
+def test_espn_timeline_lowers_season_share(monkeypatch, tmp_path):
+    """Handoff 658: a skater out now whose ESPN note states a timeline loses Season share in proportion to it."""
+    short = "McAvoy (knee) is expected to miss four to six weeks."
+    on = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short)
+    monkeypatch.setattr(rating, "SEASON_TIMELINE_C", 0.0)
+    off = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short)
+    assert on["cr_season"] < off["cr_season"]
+
+
+def test_espn_season_out_note_lowers_season_share(monkeypatch, tmp_path):
+    """Handoff 659: ESPN's out-for-the-season note cuts the Season share when Daily Faceoff hasn't said so."""
+    short = "McAvoy (knee) will miss the remainder of the season."
+    on = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short)
+    monkeypatch.setattr(rating, "ESPN_SEASON_OUT", 0.0)
+    off = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short)
+    assert on["cr_season"] < off["cr_season"] and on["cr"] == 0
+
+
+def test_offseason_mover_week_and_season_multipliers_differ(monkeypatch, tmp_path):
+    """Handoff 667: the Week cut is OFFSEASON_MOVER_MULT_WEEK (0.98), the Season keeps OFFSEASON_MOVER_MULT (0.965)."""
+    def matthews(week, season):
+        monkeypatch.setattr(rating, "OFFSEASON_MOVER_MULT", season)
+        monkeypatch.setattr(rating, "OFFSEASON_MOVER_MULT_WEEK", week)
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], FakeSession(last_team={1: "BOS"}))["Auston Matthews"]
+    assert rating.OFFSEASON_MOVER_MULT_WEEK == 0.98 and rating.OFFSEASON_MOVER_MULT == 0.965
+    plain, shipped = matthews(1.0, 1.0), matthews(0.98, 0.965)
+    assert shipped["cr_fpg"] == pytest.approx(0.98 * plain["cr_fpg"], abs=0.01)
+    assert matthews(0.98, 1.0)["cr_season"] == plain["cr_season"]  # the Week multiplier leaves the Season alone
+
+
+
+def _why5(short, long_=""):
+    return rating.injury_note({"short": short, "long": long_, "name": "Joe Test", "date": "2026-10-15"}, date(2026, 10, 15))["long_why"]
+
+
+def test_unclear_return_alone_isnt_a_long_absence(monkeypatch, tmp_path):
+    """'Unclear when he'll return' with no other long word: the status caps, not 0 (dressed 25-30%, audit5 t_site_long3)."""
+    assert _why5("Test (lower body) was placed on injured reserve.", "It's unclear when he will be ready to return.") == "unclear"
+    assert _why5("Test is week-to-week.", "It's unclear when Test will return.") == "wtw"
+    p = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (lower body) will miss Friday's game.",
+                long="It's unclear when he will be ready to return to the lineup.")
+    assert p["cr_games"] > 0.1
+
+
+def test_ltir_with_another_long_word_keeps_the_ltir_cap():
+    """LTIR plus week-to-week or a stated timeline: the LTIR 5% cap, as the 657 replay grouped LTIR (audit5 t_ltir_mix)."""
+    assert _why5("Test was placed on LTIR and is week-to-week.") == "ltir"
+    assert _why5("Test was placed on LTIR after surgery.") == "words"

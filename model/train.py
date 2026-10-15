@@ -72,6 +72,13 @@ ROLE_PP = ["r1_pp_share", "r3_pp_share", "r1_pp_rank", "r3_pp_rank", "r1_pp1", "
 TOI_FC_IN = TOI_FC_IN + LINEUP_TOI + ROLE_TOI
 PP_FC_IN = PP_FC_IN + LINEUP_PP + ROLE_PP
 FC_EXTRA = ["no_prev", "is_D", "gpw"]
+# the Week ridge's forecasts only (handoff 669, findings 464; hunt14/fpg/t9_fclin.py): wider forecast ridges, every window
+# of rank, role, shots, FP and ice time, SH TOI, dressed share, games, two seasons ago, return flags and age (missing 27),
+# squared ice time and D x ice time. The Season ridge and its boosted forecasts' inputs keep the narrower ones.
+FC_WIDE = [f"{w}_{c}" for w in ("l5", "l10", "l20", "std", "prev") for c in ("toi_rank", "top_line", "pp_rank", "pp1", "shots", "fp", "toi", "pptoi")] \
+    + ["sh_l1", "sh_l5", "sh_l10", "sh_std", "sh_prev", "dressed3", "dressed10", "std_gp", "prev_gp", "p2_toi", "p2_pptoi", "out_run", "back_last", "age_m"]
+FC_WIDE_SQ = ["std_toi", "l5_toi", "l10_toi", "last_toi", "std_pptoi", "l5_pptoi", "pp_l1"]
+FC_WIDE_D = ["std_toi", "l5_toi", "l10_toi", "last_toi"]
 FC_FEATS = [f"fc_{n}" for n in UX_FEATS] + ["fc_toi", "fc_pptoi"]
 # pairwise products of the 12 strongest inputs, a linear stand-in for the declined tree layer (findings 310 (2))
 PAIR_IN = ["sx_ux", "sx_fp", "sx_pp", "l5_toi", "l5_pptoi", "std_fp", "prev_fp", "std_gp", "std_shots", "prev_shots", "std_ixg", "l5_fp"]
@@ -213,11 +220,16 @@ def context_gaps(df):
     return out
 
 
-def fc_design(df, ins):
+def fc_design(df, ins, wide=False):
     X = pd.concat([df, context_gaps(df)], axis=1)[ins].copy() if "missed_last" in df else df[ins].copy()
     X["no_prev"] = df.prev_gp.isna().astype(float)
     X["is_D"] = (df.pos == "D").astype(float)
     X["gpw"] = np.clip(df.std_gp / 20, 0, 1)
+    if wide:  # handoff 669 (same arithmetic as scripts/rating.py forecast_features)
+        X = pd.concat([X, df[[c for c in FC_WIDE if c not in X]].astype(float)], axis=1)
+        X["age_m"] = X.age_m.fillna(27)
+        X = pd.concat([X, pd.DataFrame({f"{c}_sq": df[c] ** 2 for c in FC_WIDE_SQ} | {f"D_{c}": X.is_D * df[c].fillna(0) for c in FC_WIDE_D},
+                                       index=df.index)], axis=1)
     return X
 
 
@@ -278,20 +290,21 @@ def add_y_ixg(df, sk):
     return df.drop(columns="y_ixg", errors="ignore").merge(y, on=["playerId", "monday"], how="left")
 
 
-def fit_forecast(train):
-    """Two small ridges (alpha 1, weighted by games next week): next week's TOI/G and PP TOI/G (findings 310 (1))."""
+def fit_forecast(train, wide=False):
+    """Two small ridges (alpha 1, weighted by games next week): next week's TOI/G and PP TOI/G (findings 310 (1)); wide:
+    the Week's wider inputs (handoff 669)."""
     tr = train[train.y_gp > 0]
     st = {}
     for tgt, ins in zip(("y_toi", "y_pptoi"), (TOI_FC_IN, PP_FC_IN)):
-        X = fc_design(tr, ins)
+        X = fc_design(tr, ins, wide)
         fill = X.mean()
         m = Ridge(alpha=1.0).fit(X.fillna(fill), tr[tgt], sample_weight=tr.y_gp)
-        st[tgt] = {"inputs": ins, "coef": m.coef_, "intercept": float(m.intercept_), "fill": fill}
+        st[tgt] = {"inputs": ins, "wide": wide, "columns": list(X.columns), "coef": m.coef_, "intercept": float(m.intercept_), "fill": fill}
     return st
 
 
 def forecast(df, st):
-    return {tgt: pd.Series(fc_design(df, m["inputs"]).fillna(m["fill"]).values @ m["coef"] + m["intercept"], index=df.index)
+    return {tgt: pd.Series(fc_design(df, m["inputs"], m.get("wide", False)).fillna(m["fill"]).values @ m["coef"] + m["intercept"], index=df.index)
             for tgt, m in st.items()}
 
 
@@ -456,13 +469,14 @@ def prep(df, feats=FEATS, mu=None, st=None):
     return X[feats]
 
 
-def fit_state(train, feats, mu):
-    """What the forecast and product inputs need from the training rows: the two forecast ridges, and each product
-    factor's training mean (a missing factor is filled with it before multiplying)."""
+def fit_state(train, feats, mu, wide_fc=None):
+    """What the forecast and product inputs need from the training rows: the two forecast ridges (the Week ridge's, with
+    its luck inputs, wider unless wide_fc says otherwise: handoff 669), and each product factor's training mean (a missing
+    factor is filled with it before multiplying)."""
     tr = train[train.y_gp > 0]
     st = {}
     if any(c in FC_FEATS for c in feats):
-        st["fc"] = fit_forecast(tr)
+        st["fc"] = fit_forecast(tr, any(c in LUCK_FEATS for c in feats) if wide_fc is None else wide_fc)
     if any(c in PAIR_FEATS for c in feats):
         st["pair_fill"] = prep(tr, UX_ERA_FEATS, mu)[PAIR_IN].mean()
     if any(c in DEC_FEATS for c in feats):
@@ -584,12 +598,11 @@ def main():
         "skater": {"features": WEEK_FEATS, "coef": [round(float(x), 8) for x in coef], "intercept": round(float(icpt), 8),
                    "fill": {k: round(float(v), 8) for k, v in means.items()},
                    "season": {"features": SEASON_FEATS, "coef": [round(float(x), 8) for x in s_coef], "intercept": round(float(s_icpt), 8),
-                              "fill": {k: round(float(v), 8) for k, v in s_means.items()}, **decomposed_json(s_st["dec"])},
+                              "fill": {k: round(float(v), 8) for k, v in s_means.items()}, **decomposed_json(s_st["dec"]),
+                              "toi_forecast": forecast_json(s_st["fc"])},  # the narrower forecast ridges (handoff 669)
                    "hinges": {c: [round(float(q), 6) for q in k] for c, k in sk_st["knots"].items()},
                    "ux_means": {p: {k: round(v, 6) for k, v in m.items()} for p, m in mu.items()},
-                   "toi_forecast": {tgt: {"inputs": m["inputs"] + FC_EXTRA, "coef": [round(float(x), 6) for x in m["coef"]],
-                                          "intercept": round(m["intercept"], 6), "fill": {k: round(float(v), 4) for k, v in m["fill"].items()}}
-                                    for tgt, m in sk_st["fc"].items()},
+                   "toi_forecast": forecast_json(sk_st["fc"]),
                    "pairs": {"inputs": PAIR_IN, "fill": {k: round(float(v), 4) for k, v in sk_st["pair_fill"].items()}},
                    "replacement_fpg": {k: round(float(v), 3) for k, v in repl.items()}},
         "dress": dress_table(tables),
@@ -604,6 +617,13 @@ def main():
     print("wrote", OUT, "pts/start", model["goalie"]["points_per_start"], "dress", model["dress"])
     check_daily_arithmetic(df, coef, icpt, means, sk_st, mu, WEEK_FEATS)
     check_daily_arithmetic(df, s_coef, s_icpt, s_means, s_st, mu, SEASON_FEATS, season=True)
+
+
+def forecast_json(fc):
+    """The forecast ridges for scripts/rating.py; the wider ones (handoff 669) need more digits for their squared inputs."""
+    return {tgt: {"inputs": m["columns"], "coef": [round(float(x), 8 if m["wide"] else 6) for x in m["coef"]],
+                  "intercept": round(m["intercept"], 6), "fill": {k: round(float(v), 4) for k, v in m["fill"].items()}}
+            for tgt, m in fc.items()}
 
 
 def decomposed_json(st):
@@ -625,6 +645,7 @@ def check_daily_arithmetic(df, coef, icpt, means, st, mu, feats, season=False, n
     want = np.maximum(predict(rows, coef, icpt, means, st, feats, mu), 0)
     base = prep(rows, UX_ERA_FEATS + P2_FEATS, mu)
     m = rating.Model()
+    m.toi_boost = None  # this script's Season ridge reads the linear forecasts; train_toi_boost.py checks the boosted ones
     got = []
     for (_, r), (_, b) in zip(rows.iterrows(), base.iterrows()):
         f = {k: (None if pd.isna(v) else float(v)) for k, v in r.items() if isinstance(v, (int, float, np.number))}
