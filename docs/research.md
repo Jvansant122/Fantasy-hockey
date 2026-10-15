@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 186). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 192). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1281,6 +1281,30 @@ Rookies who were picked in the top 24 of the draft dress for more of the rest of
 ## 186. The lowest-minutes player who scored
 
 Section 170 lowers the chance of the depth player with the fewest minutes at his position. When that player had a point in the game, he keeps his spot more often than that suggests, so he gets most of the drop back. Small, but better in both seasons, both halves and both positions.
+
+## 187. Older goalies' share of the rest of the season
+
+Goalies over 30 hand more of their team's remaining starts to their partner as the season goes on than their share so far suggests. The Season rating now trims an older goalie's share a little for each year over 30, scaled by how many team games are left, keeping the small floor a working backup always has. Better in every season tested.
+
+## 188. Goalie points per start, by experience
+
+A goalie's points per start this season is pulled toward last season's. For the Season rating, a goalie with few NHL starts in the last three seasons is now pulled less (his early games say more about him), and a veteran with over 100 starts is pulled more. The Week rating is unchanged.
+
+## 189. Smaller trade check numbers
+
+The trade check's "About +X points a week" was about 1.4 times too big. Played over thousands of simulated trades, each point of Season gap was worth about 2.1 points a week, not 3. The win-rate table is unchanged.
+
+## 190. Forced drops keep a full lineup
+
+When a card has to drop someone (activating from IR, streaming, the IR stash), it now keeps at least 11 healthy forwards and 6 healthy defensemen, so the drop never leaves a lineup hole. Better in every simulated league and season.
+
+## 191. Swaps for an out player
+
+A player who is out but not moved to IR is now swapped mid-week only for a sub worth as much to keep. A small gain in every simulation.
+
+## 192. Details and cards that add up
+
+After the first game of the evening, a skater's Week line showed the whole week's chance to play next to only the games left, so the numbers didn't multiply out. It now shows the chance over the games left, and a goalie's Week line shows its own multiplication too. This week's reasons for a player's chance to play now sit right under his Week line. A day-to-day goalie counts toward your goalie spots, since he still holds a roster spot. The Drop list no longer suggests a different add for a player another card already drops, and Best moves shows this week's part of each gain.
 
 ## What the independent review changed
 
