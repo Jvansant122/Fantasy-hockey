@@ -45,7 +45,18 @@ def test_freeze_keeps_the_pre_game_pick():
     assert now[0]["p_home"] == 0.61 and now[0]["frozen"]
     assert now[1]["p_home"] is None and not now[1]["frozen"]  # started before the tab had a pick for it
     again = winners.freeze([game(started=True, p=0.8)], now)
-    assert again[0]["p_home"] == 0.61
+    assert next(g for g in again if g["home"] == "TOR")["p_home"] == 0.61
+
+
+def test_freeze_carries_this_weeks_started_games_through_a_failed_run():
+    """Handoff 436: a run with no NHL games keeps the week's locked picks; last week's games drop off."""
+    prev = [game(started=True, p=0.61, frozen=True), game(home="MTL", day="2026-10-11", started=True, p=0.5, frozen=True),
+            game(home="OTT", day="2026-10-16", p=0.4)]
+    kept = winners.freeze([], prev, "2026-10-12")
+    assert [(g["home"], g["p_home"]) for g in kept] == [("TOR", 0.61)]  # not last week's, not one still to start
+    later = winners.freeze([game(home="OTT", day="2026-10-16", started=True, p=0.45)], kept, "2026-10-12")
+    assert [(g["home"], g["p_home"]) for g in later] == [("TOR", 0.61), ("OTT", None)]
+    assert winners.record([dict(g, home_won=True) for g in later])["games"] == 1
 
 
 def test_record_counts_right_picks():

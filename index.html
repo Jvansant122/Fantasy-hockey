@@ -256,7 +256,7 @@
     </div>
     <div class="sub legend"><span><span class="dots"><i class="play"></i></span> plays that night</span><span><span class="dots"><i class="play open"></i></span> plays on a night you have an open slot for him</span></div>
   </div>
-  <p class="sub faonly"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, so an injured star still rates high; a player hurt before his first game is expected in only part of the rest). Goalies: his share of his team's starts × his points per start. Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from his recent lineup history and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early; IR at 15%; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
+  <p class="sub faonly"><b>Season</b> = projected points per team game for the rest of the season: how good a player is, apart from this week's schedule. Skaters: projected points per game × how often he's in the lineup (ESPN's injury status aside, though Daily Faceoff news of surgery, a season-ending injury or a send-down lowers it; a player hurt before his first game is expected in only part of the rest). Goalies: 0.32 + 0.72 × his share of his team's starts × his points per start (rescaled so goalies and skaters compare on one board; a goalie who changed teams has his last-season rate adjusted for the gap between the teams). Use it for trades and for players you'd hold beyond this week; use Week for this week's pickups. <b>Week</b> (the Claude Rating) = projected points for the rest of this matchup. Skaters: projected points per game (recent ice time and power-play time, shots, blocks, xG, this season and last) × games left × chance he dresses, from his lineup history, a 16-season lineup model, his team's recent results, Daily Faceoff injury and roster news, and ESPN's injury status (out players are capped at 35%, or 15% if he left his last game early, and 3% for a game the same day; IR at 15%; out or IR at 50% when Daily Faceoff says he is practising; suspended 0; day-to-day at 50% if he missed the last game, or 15/50/75% by how much he played in it; and 0 when ESPN's note says surgery, long-term IR, week-to-week, month-to-month, indefinitely, out for the season or a return 2+ weeks away). Goalies: expected starts (recent start share, back-to-backs, and Daily Faceoff confirmed starters, checked at about 6 AM, 9 AM, 12:40 PM and 5 PM ET) × his points per start this season, blended over 15 starts with his last-season rate (itself pulled toward the 2.9 league average; 2.9 if he has no starts last season). This week's starts keep 0.4 of his gap to the league's rate, since his own rate already reflects his team, plus 3.0 × (his team's win chance from team strength − 50%); tonight's game uses the betting line's win chance instead, at 4.1 per start. The badge is the percentile among all forwards, defensemen or goalies in the league and on the wire. Tap a row to see why. <a href="https://github.com/Jvansant122/Fantasy-hockey/blob/main/docs/research.md">How the rating works and the research behind it</a>.</p>
   <p class="sub faonly"><b>Open</b> = a free agent's games on nights when your team's active, healthy players leave a slot he could fill (9 F, 5 D and the UTL, counted as a D unless a tenth forward fills it, 2 G). Most of the value of empty slots is on light nights. ESPN week = ESPN-based points per game × games, the old number, kept for comparison. <b>Last yr GP</b> = NHL games played last season. <b>Proj GP</b> = projected games this season (84 per team): games played so far plus the Season rating's share of his team's games still to play; for goalies, starts so far plus his projected share of the rest. All points use the league's scoring. Your team and filters are remembered in this browser only.</p>
 </main>
 <script>
@@ -554,7 +554,9 @@ function why(p) {
       "timeline": "Daily Faceoff's stated timeline runs past some of this week's games",
       "timeline up": "Daily Faceoff's stated timeline has run out for some of this week's games" };
     const txt = wkn.why.map(k => WKN_TXT[k]).filter(Boolean).join("; ");
-    if (txt) parts.push(`${txt} (${wkn.shift > 0 ? "more" : "less"} likely to play this week)`);
+    // only when it moved his chance by 2+ points after the caps (handoff 435); older data has no move
+    const mv = wkn.move ?? wkn.shift;
+    if (txt && Math.abs(mv) >= 0.02) parts.push(`${txt} (${mv > 0 ? "more" : "less"} likely to play this week)`);
   }
   // the 16-season weekly lineup model's pull on this week's chance to play, when it moves it 5+ points (handoff 425)
   const bwm = p.cr_why?.boost_week_move;
@@ -1308,6 +1310,8 @@ function showView(v) {
   for (const k of ["fa", "win"]) $(`tab-${k}`).setAttribute("aria-selected", String(k === v));
 }
 const pct = q => `${Math.round(100 * q)}%`;
+// the other side's chance from the rounded one, so the two always add to 100% (handoff 437)
+const other = q => 1 - Math.round(100 * q) / 100;
 const dayLabel = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" });
 // a game whose puck dropped since the data was published: its pick is the one shown before the start (findings 450)
 const gameStarted = g => g.started || (!!g.start && new Date(g.start) <= new Date());
@@ -1330,8 +1334,8 @@ function gameCard(g) {
   const b2b = g.inputs?.b2b || [];
   if (b2b[0] || b2b[1]) meta.push(`back-to-back: ${[b2b[1] ? g.away : "", b2b[0] ? g.home : ""].filter(Boolean).join(", ")}`);
   return `<div class="game">`
-    + sideRow(g.away_name, g.away, q == null ? null : 1 - q, q != null && !homePick, done ? !g.home_won : null, done ? g.away_score : null)
-    + `<div class="bar" title="away win chance"><i style="width:${q == null ? 0 : Math.round(100 * (1 - q))}%"></i></div>`
+    + sideRow(g.away_name, g.away, q == null ? null : other(q), q != null && !homePick, done ? !g.home_won : null, done ? g.away_score : null)
+    + `<div class="bar" title="away win chance"><i style="width:${q == null ? 0 : Math.round(100 * other(q))}%"></i></div>`
     + sideRow(g.home_name, g.home, q, homePick, done ? g.home_won : null, done ? g.home_score : null)
     + `<div class="meta">${meta.map(x => `<span>${x}</span>`).join("")}</div></div>`;
 }
@@ -1344,7 +1348,7 @@ function renderWinners() {
     return;
   }
   const games = w.games || [], rec = w.record || {};
-  $("nhlhead").innerHTML = "Claude's win chance for each game, from the same inputs as the player projections: each skater's points per game × his chance to dress, the likely starting goalie's save%, goal differential, home ice and back-to-backs. Tested on 6,560 games from 2021-26, it picked the winner 60% of the time (always picking the home team: 54%). On the 1,651 games with archived betting lines it was right 63.2% of the time, level with the betting favourite (63.1%)."
+  $("nhlhead").innerHTML = "Claude's win chance for each game: each skater's NHL points (goals + assists) per game × his chance to dress from the player projections, the likely starting goalie's save%, goal differential, home ice and back-to-backs. Tested on 6,560 games from 2021-26, it picked the winner 60% of the time (always picking the home team: 54%). On the 1,651 games with archived betting lines it was right 63.2% of the time, level with the betting favourite (63.1%)."
     + (rec.games ? ` <b>This week: ${rec.right} of ${rec.games} right</b> (the home team won ${rec.home_right}).` : "");
   const days = [...new Set(games.map(g => g.date))];
   $("nhlgames").innerHTML = days.length ? days.map(day => {
@@ -1353,7 +1357,7 @@ function renderWinners() {
   }).join("") : '<div class="prompt">No NHL games left this week.</div>';
   const ms = w.matchups || [];
   $("fmhead").textContent = ms.length
-    ? "Points so far from ESPN, plus the rest of the week projected from each roster's Week ratings with the best lineup each night (9 F, 5 D, UTL, 2 G; IR left out). Each side shows its projected total and win chance. The win chance allows for each player's night-to-night spread in 2021-26 games. New this season: it gets graded as the weeks play out."
+    ? "Points so far from ESPN, plus the rest of the week projected from each roster's Week ratings with the best lineup each night (9 F, 5 D, UTL, 2 G; IR left out). Each side shows its projected total and win chance. The win chance allows for each player's night-to-night spread in 2021-26 games."
     : "League matchups weren't available in this update.";
   const mine = m => state.team !== "" && [m.home.id, m.away.id].map(String).includes(state.team);
   $("fantasy").innerHTML = [...ms].sort((a, b) => mine(b) - mine(a)).map(m => {
@@ -1361,7 +1365,7 @@ function renderWinners() {
     const side = (t, q, pick) => `<div class="side${pick ? " pick" : ""}"><span class="tm">${esc(t.name)}${pick ? ' <span class="chip">pick</span>' : ""}</span>`
       + `<span class="pts" title="projected total">${fmt(t.total)}</span><span class="wpct">${pct(q)}</span></div>`;
     return `<div class="game matchup${mine(m) ? " mine" : ""}">${side(m.home, m.p_home, homePick)}`
-      + `<div class="bar"><i style="width:${Math.round(100 * m.p_home)}%"></i></div>${side(m.away, 1 - m.p_home, !homePick)}`
+      + `<div class="bar"><i style="width:${Math.round(100 * m.p_home)}%"></i></div>${side(m.away, other(m.p_home), !homePick)}`
       + `<div class="meta"><span>so far ${fmt(m.home.now)} to ${fmt(m.away.now)}</span><span>still to come ${fmt(m.home.rest)} to ${fmt(m.away.rest)}</span></div></div>`;
   }).join("");
 }

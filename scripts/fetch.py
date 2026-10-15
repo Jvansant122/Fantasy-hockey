@@ -281,10 +281,10 @@ def previous_winners(path=DATA_PATH):
         return []
 
 
-def predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc):
+def predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc, week_start=None):
     """The Predicted winners tab: this week's NHL games (the rating's, each pick frozen at puck drop) and the league's
     fantasy matchups. Either part can fail alone and publishes empty."""
-    games = winners_model.freeze(winners.get("games") or [], previous_winners())
+    games = winners_model.freeze(winners.get("games") or [], previous_winners(), week_start)
     matchups = []
     try:  # points so far this matchup, from ESPN's scoreboard view
         sched = get(s, league_url, ["mMatchupScore", "mScoreboard"], scoringPeriodId=today_sp).get("schedule") or []
@@ -720,7 +720,8 @@ def main():
           f"season over: {season_over}, moves used known for "
           f"{sum(v is not None for v in moves_used.values())} teams")
 
-    predicted = predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc)
+    predicted = predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc,
+                                  (today_et - timedelta(days=today_et.weekday())).isoformat())
 
     out = {
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
