@@ -362,10 +362,19 @@ def save_news(news):
 
 def fetch_odds(s, today=None, team_map=None):
     """Today's betting lines. The NHL partner feed only rolls to the new day around noon ET, so morning runs fall back to
-    ESPN's scoreboard, which posts lines a day ahead (findings 232)."""
-    r = s.get("https://api-web.nhle.com/v1/partner-game/US/now", timeout=30)
-    r.raise_for_status()
-    d = r.json()
+    ESPN's scoreboard, which posts lines a day ahead (findings 232). If the NHL feed fails, ESPN's lines stand in (handoff 452)."""
+    try:
+        r = s.get("https://api-web.nhle.com/v1/partner-game/US/now", timeout=30)
+        r.raise_for_status()
+        d = r.json()
+    except Exception as e:  # noqa: BLE001 - a timeout must not leave tonight's goalies without lines
+        if today is None:
+            raise
+        print(f"NHL odds failed, trying ESPN: {e!r}", file=sys.stderr)
+        espn = espn_odds(s, today, team_map or {})  # raises if ESPN fails too
+        if not espn["games"]:
+            raise
+        return espn
     if today is not None and (d.get("currentOddsDate") or "") < today.isoformat():
         try:
             espn = espn_odds(s, today, team_map or {})
@@ -458,7 +467,7 @@ def write_log(now, players, starters, errors, s, odds=None, injuries=None, leagu
     if lineups is not None:
         rec["lineups"] = lineups
     for key, fn in (("lineups", fetch_lineups), ("injuries", fetch_injuries), ("odds", fetch_odds)):
-        if key in rec:
+        if key in rec or key in rec["errors"]:  # a feed that failed for the rating stays missing: log what it used (handoff 452)
             continue
         try:
             rec[key] = fn(s)

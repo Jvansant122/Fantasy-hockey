@@ -933,7 +933,7 @@ function renderUpgrades() {
     : "Stash in your open IR slot: costs one move, no lineup spot.";
   if (stash.length) cards.push(`<div class="upg fold"><b>IR stash</b> <span class="drop">· ${irLeft} open IR slot${irLeft > 1 ? "s" : ""}. ${esc(stashHow)} Worth it only for 1.5+ pts/game players.</span>
     ${stash.map(p => `<div>${esc(p.name)}${wvTag(p)}<span class="tag inj">${esc(injLabel(p))}</span> <span class="sub">${esc(p.team)} ${esc(posTxt(p))}</span> <b>${fmt(p.cr_fpg)}</b><span class="sub"> pts/game · Season ${fmt(p.cr_season)}</span></div>`).join("")}</div>`);
-  if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN's projection and this season's points so far are about the same for each pair, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.</span>
+  if (trades.length) cards.push(`<div class="upg fold"><b>Trade ideas</b> <span class="drop">· ESPN's projection and this season's points so far are about the same for each pair, so the offer looks fair, but Claude's Season rating clearly prefers the player you'd get. In past seasons a trade like this gained about 1 point a week for the rest of the season and picked the better player 70% of the time. Trades use none of your moves; the other manager has to accept. Rookies and new arrivals are left out because ESPN may know more about them.${new Set(trades.map(({ m }) => m.id)).size < trades.length ? " Ideas that offer the same player are alternatives: only one of them can happen." : ""}</span>
     ${trades.map(({ m, o }) => `<div>Offer ${esc(m.name)}${group(o) !== group(m) ? ` (${group(m)})` : ""} for ${esc(o.name)}${group(o) !== group(m) ? ` (${group(o)})` : ""} <span class="sub">(${esc(teamName(o.team_id))}) · ESPN ${m.proj_ppg.toFixed(2)} vs ${o.proj_ppg.toFixed(2)} a game; Season ${m.cr_season.toFixed(2)} vs ${o.cr_season.toFixed(2)}</span></div>`).join("")}</div>`);
   // Carry 2 goalies plus a stream slot (research sections 37 and 144): a third goalie spot is the stream slot, a fourth is spare
   const myGoalies = roster.filter(p => !p.ir && !p.injury && p.pos === "G").sort((a, b) => keep(a) - keep(b));
@@ -1014,7 +1014,7 @@ function renderTrade() {
     return;
   }
   $("tpick").hidden = false;
-  const opt = p => `<option value="${p.id}">${esc(p.name)} (${esc(p.pos)}, ${esc(p.team)}) ${fmt(p.cr_season)}</option>`;
+  const opt = p => `<option value="${p.id}">${esc(p.name)} (${esc(p.pos)}, ${esc(p.team)}) Season ${fmt(p.cr_season)}</option>`;
   const byName = (a, b) => a.name.localeCompare(b.name);
   const mineAll = d.players.filter(p => String(p.team_id) === state.team && !p.pending_drop);  // not a player already dropped (handoff 220)
   $("tgive").innerHTML = `<option value="">Add a player to give…</option>` + mineAll.filter(p => !state.tgive.includes(p.id)).sort(byName).map(opt).join("");
@@ -1043,12 +1043,13 @@ function renderTrade() {
     const delta = give.filter(p => !p.ir).length - (get.length - irUsed);  // roster spots the trade frees; negative when it needs some
     // keep two healthy goalies (findings 235): the shortfall is filled with the best free-agent goalies first
     const okG = p => p.pos === "G" && !p.ir && !p.injury;
-    const gAfter = mineAll.filter(okG).length - give.filter(okG).length + get.filter(okG).length;
-    const gFill = best(p => p.pos === "G", 2 - gAfter);
+    const gBefore = mineAll.filter(okG).length, gAfter = gBefore - give.filter(okG).length + get.filter(okG).length;
+    // only the shortfall the trade itself creates counts against it (handoff 459); one you already have is the same either way
+    const gFill = best(p => p.pos === "G", Math.min(2, gBefore) - gAfter);
     if (gFill.length) {
       gap += sum(gFill, "cr_season"); plus.push(...gFill);
       notes.push(`You'd have only ${gAfter} healthy goalie${gAfter === 1 ? "" : "s"}: add ${names(gFill)}.`);
-    }
+    } else if (gAfter < 2) notes.push(`You have only ${gBefore} healthy goalie${gBefore === 1 ? "" : "s"} with or without this trade, so it isn't counted here.`);
     const spots = delta - gFill.length;
     if (spots > 0) {  // spots freed: fill them with the best healthy free agents at the positions given
       const groups = new Set(give.map(group));
@@ -1070,9 +1071,22 @@ function renderTrade() {
       let open = open0;
       // not a goalie unless goalies are in the trade (findings 211), and never when you're short of goalies
       const withG = [...give, ...get].some(p => p.pos === "G") && !gFill.length;
-      const cands = mineAll.filter(p => !p.ir && !state.tgive.includes(p.id) && (withG || p.pos !== "G")).sort((a, b) => keep(a) - keep(b));
+      // never a player the check moves to IR (handoff 456)
+      const cands = mineAll.filter(p => !p.ir && !state.tgive.includes(p.id) && !irMoves.includes(p) && (withG || p.pos !== "G"))
+        .sort((a, b) => keep(a) - keep(b));
       const drop = [], worth = [];
-      const take = () => open > 0 ? (open--, null) : cands[drop.length] ?? null;
+      // ... and never a goalie that would leave fewer than two healthy ones (handoff 457)
+      let ci = 0, gLeft = gAfter;
+      const take = () => {
+        if (open > 0) { open--; return null; }
+        while (ci < cands.length) {
+          const c = cands[ci++];
+          if (okG(c) && gLeft <= 2) continue;
+          if (okG(c)) gLeft--;
+          return c;
+        }
+        return null;
+      };
       for (let i = 0; i < pSpots; i++) {
         const f = fill[i] ?? null, dr = take();
         if (dr) drop.push(dr);
@@ -1089,15 +1103,33 @@ function renderTrade() {
       // IR moves needed for the open spots used: plain open spots go first, and a roster over the limit needs one more each
       const used = open0 - open, irNeed = used ? irMoves.slice(0, Math.max(0, used - Math.max(0, rawOpen) - Math.min(0, rawOpen))) : [];
       const irTxt = irNeed.map(p => esc(p.name)).join(" and ");
-      if (drop.length) notes.push(`${irNeed.length ? `Move ${irTxt} to IR, and then you'd` : "You'd"} need to drop ${names(drop)}, your lowest keep value.`);
-      else if (irNeed.length) notes.push(`Moving ${irTxt} to IR opens the spot${irNeed.length > 1 ? "s" : ""}, so you drop nobody.`);
+      const dropNames = drop.map(p => `${esc(p.name)} (keep ${fmt(keep(p))})`).join(", ");
+      if (drop.length) notes.push(`${irNeed.length ? `Move ${irTxt} to IR, and then you'd` : "You'd"} need to drop ${dropNames}, your lowest keep value.`);
+      else if (irNeed.length) notes.push(`Moving ${irTxt} to IR opens the spot${irNeed.length > 1 ? "s" : ""}, so you drop nobody until ${irNeed.length > 1 ? "they're" : "he's"} back.`);
       else if (d.roster_max) notes.push("Your open roster spot takes him, so you drop nobody.");
     }
-    // the partner's roster too (findings 235): at the limit, taking more players than he gives means a drop
+    // a player you get and park on IR holds no roster spot only while he's out (handoff 458): for the share of the rest of
+    // the season he plays, he takes a spot the best free agent at his position could hold
+    for (const r of get.filter(irElig).slice(0, irUsed)) {
+      const sf = r.cr_why?.season_fpg || r.cr_fpg;
+      const plays = sf ? Math.min(1, Math.max(0, (r.cr_season ?? 0) / sf)) : 1;
+      const [f] = best(p => group(p) === group(r) && !plus.includes(p), 1);
+      if (!f || plays <= 0) continue;
+      gap -= f.cr_season * plays;
+      const back = r.cr_why?.back, when = back?.days ? `in about ${back.days} days` : back?.games ? `in about ${back.games} games` : "later";
+      notes.push(`${esc(r.name)} can go on IR, but when he's back (${when}) he needs a roster spot: counts ${fmt(f.cr_season * plays)} (${esc(f.name)}, the best free agent, for the games he'd play).`);
+    }
+    // the partner's roster too (findings 235): at the limit, taking more players than he gives means a drop, unless he can
+    // move players who qualify to open IR slots (handoff 460)
     if (d.roster_max) {
+      const count = n => ["", "him", "two", "three", "four"][n] || `${n}`;
       for (const t of new Set(get.map(p => String(p.team_id)))) {
-        const after = d.players.filter(p => String(p.team_id) === t && !p.ir && !p.pending_drop).length - get.filter(p => String(p.team_id) === t && !p.ir).length + give.length;
-        if (after > d.roster_max) notes.push(`${esc(state.teamNames[t] || "The other team")} would have to drop ${after - d.roster_max === 1 ? "a player" : `${after - d.roster_max} players`} to take ${give.length === 2 ? "two" : "them"}.`);
+        const theirs = d.players.filter(p => String(p.team_id) === t && !p.pending_drop), sent = get.filter(p => String(p.team_id) === t);
+        let after = theirs.filter(p => !p.ir).length - sent.filter(p => !p.ir).length + give.length;
+        const irOpen = Math.max(0, (d.ir_slots || 0) - theirs.filter(p => p.ir).length + sent.filter(p => p.ir).length);
+        const irAble = theirs.filter(p => !p.ir && irElig(p) && !sent.includes(p)).length + give.filter(p => irElig(p)).length;
+        after -= Math.min(irOpen, irAble);
+        if (after > d.roster_max) notes.push(`${esc(state.teamNames[t] || "The other team")} would have to drop ${after - d.roster_max === 1 ? "a player" : `${after - d.roster_max} players`} to take ${count(give.length)}.`);
       }
     }
     const fpw = 0.87 * gap * 3.5;

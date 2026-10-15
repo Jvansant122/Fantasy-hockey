@@ -2382,7 +2382,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for page in starters:
         for g in page.get("games", []):
             cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")] \
-                or [pid for pid, (t, pos) in nickname_cands(index, g.get("goalie"), g.get("team")).items() if pos == "G"]  # "Matthew" Murray (findings 175)
+                or [pid for pid, (t, pos) in nickname_cands(index, g.get("goalie"), g.get("team")).items() if pos == "G"] \
+                or [pid for pid in index.get(norm(g.get("goalie") or ""), {})
+                    if pid in {q for q, _, qpos in rosters.get(g.get("team"), ()) if qpos == "G"}]
+            # ... "Matthew" Murray (findings 175); the last: traded or claimed, no game for his new team yet (handoff 454)
             if not page.get("date") or page["date"] < today.isoformat():
                 continue
             if not cands and g.get("status") == "Confirmed" and g.get("goalie"):
@@ -2887,6 +2890,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_fpg"] = round(p["cr_fpg"] + NEXT_UP_PP_D_FPG, 2)
             p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
             p["cr_why"]["pp_d_out"] = top
+
+    # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
+    # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
+    for p in players:
+        if not p["cr_matched"] and not p.get("gp") and not p.get("last_gp") and not p.get("proj_ppg"):
+            p["cr"], p["cr_season"], p["cr_games"], p["cr_dress"], p["cr_dress_next"] = 0.0, 0.0, 0.0, 0.0, 0.0
+            p["cr_why"]["no_record"] = True
 
     # percentile within F / D / G among the players on the site
     groups = {}

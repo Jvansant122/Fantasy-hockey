@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 153). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 154). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1115,6 +1115,12 @@ The Predicted winners picks now use each team's expected-goal differential from 
 Two goalie start fixes, replayed on 15 seasons with every season better. Early in the season (the team's first 10 games), a goalie who hasn't started for his team yet was getting too many starts, most of them on the second night of a back-to-back (third goalies like Black, Poirier and Spencer Martin read 25-33% for Oct 13 and started none). His start chance is now cut until he gets one. And when a team's two goalies have split the last 20 starts evenly, the no. 1's back-to-back adjustments are half size, since there is no clear no. 1 to rest.
 
 Two lineup shifts for healthy scratches. When a teammate at the same position left the team's last game early (40-55% of his usual ice time is now a second, smaller band next to the under-40% one), a scratched forward or defenseman at that position is more likely to draw back in. And a scratched skater is a little more likely to play after his team lost its last game, and a little less after a win.
+
+## 154. Feed and Trade check fixes from two audits
+
+Feeds. When the NHL's betting-odds feed times out, ESPN's lines now stand in, so tonight's goalies are still priced with lines (one run on Oct 12 had none). The run log now records the lines the rating actually used. Retired and minor-league names that ESPN still lists with an NHL team (Josh Gorges, Ryan Suter, Marc-Andre Fleury) no longer get a small rating from that team's games: a player with no NHL match, no ESPN games this season or last and no ESPN projection is rated 0. A goalie traded or claimed before his first game for his new team now keeps a confirmed Daily Faceoff start, which used to match nobody and set every goalie on that team to 0 for the game. The free-agent list also takes in the 200 free agents with the most fantasy points this season, so a 0%-owned player dressing on a top power play is no longer cut off by the 400-by-ownership limit.
+
+Trade check. It no longer moves a player to IR and then names the same player as the drop. A forced drop never leaves you fewer than two healthy goalies. A goalie shortfall you already have is no longer charged to the trade. A player you get and park on IR now counts the roster spot he needs once he's back, valued at the best free agent at his position for the games he'd play, instead of a free agent filling his spot all season. The note about the other team having to drop a player now counts their open IR slots and players who qualify for IR. The drop note shows keep value next to "your lowest keep value", and Trade ideas that offer the same player say only one can happen.
 
 ## What the independent review changed
 
