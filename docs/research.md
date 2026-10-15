@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 199). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 200). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1333,6 +1333,10 @@ Knowing next week's minutes exactly would lift the weekly ranking a lot, so ice 
 ## 199. Sick players and "will play" notes
 
 ESPN lists a player who's sick the same way it lists one who's hurt, so the Week rating used to cap him at the injured player's chance (35% a game for OUT). Sick players come back fast: in 2024-26, skaters listed with an illness note at most three days old dressed 74-77% of their next games. The Week rating now caps them at 75% instead. Likewise, when ESPN's note says he "will play", is "expected to return", "practiced" or "was activated" (about him, not hedged with "hopes" or "unclear"), the cap rises to 50% and each game gets a small lift. Together they cut the chance-to-play error for listed players by about 0.2-0.4 points of relative Brier score in both seasons tested, every half-season, with the sizes kept below what the held-out fits chose. A game today for a player on IR still counts at most 5%.
+
+## 200. Goalies with fresh injury news
+
+Daily Faceoff often reports a goalie's injury before ESPN lists him. A goalie with Daily Faceoff injury news since his last appearance (at most two weeks old, and not saying he's back or practising fully) now gets at most a 20% chance of starting his team's next game and 35% for later games; his partner picks up the rest. In a replay of 15 seasons on the site's goalie model, those nights' start predictions got 2.5-13% more accurate, depending on how often ESPN had already listed him, and were better in 14 or 15 of the 15 seasons. ESPN's own status, a Daily Faceoff confirmed or likely start, and the Season rating work as before.
 
 ## What the independent review changed
 

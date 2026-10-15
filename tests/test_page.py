@@ -544,6 +544,11 @@ def test_last_night_before_first_puck_uses_every_move(browser, server, data):
         d["move_limit"] = 7
         for t in d["teams"]:
             t["moves_used"] = used
+        # enough free agents worth a move whatever the day's data (late on a Thursday only 2 were)
+        fas = sorted((p for p in d["players"] if p.get("owner") == "freeagent" and p["pos"] != "G" and p.get("cr") is not None),
+                     key=lambda p: -(p.get("cr_season") or 0))[:8]
+        for p in fas:
+            p["cr_season"] = (p.get("cr_season") or 0) + 2
         ctx, page, errors = open_page(browser, server, data=d, phone=phone)
         most, seen = 0, 0
         for t in d["teams"]:
@@ -1920,7 +1925,7 @@ def test_next_weeks_moves_hold_three(browser, server, data):
     d = _sunday(data)
     d["move_limit_next"] = 7
     team = d["teams"][0]
-    sk = next(p for p in _mine(d, team) if p["pos"] != "G" and not p.get("ir"))
+    sk = min((p for p in _mine(d, team) if p["pos"] != "G" and not p.get("ir")), key=lambda p: p.get("cr_season") or 0)  # a sub can beat him
     sk.update(sat_last=True, dfo_out=None, games_left=1, injury=None)
     ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))

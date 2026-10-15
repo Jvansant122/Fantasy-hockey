@@ -2966,3 +2966,25 @@ def test_return_words_lift_the_cap_and_the_chance(monkeypatch, tmp_path):
     assert _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) practiced fully Thursday and will play Sunday.")["cr_games"] \
         <= back["cr_games"] + 1e-9
     assert rating.note_words({"name": "Charlie McAvoy", "short": "McAvoy (flu) will play Sunday.", "long": ""}) == (True, False)
+
+
+def test_goalie_dfo_injury_news_caps_his_starts(monkeypatch, tmp_path):
+    """Handoff 679: Daily Faceoff injury news since his last appearance, with no return or full-practice words, caps a goalie's
+    start chance at 0.2 next game and 0.35 later; his partner takes the rest. Return words, or news before his last game, don't."""
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+
+    def toronto(items):
+        news = {"fetched": "2099-01-01T00:00Z", "recent": {"11": items}}
+        players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news=news)
+        return {p["name"]: p for p in players}
+    base = toronto([])
+    hurt = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}])
+    back = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}, {"ts": f"{TODAY}T02:00:00", "cat": "inj", "f": ["ret"]}])
+    old = toronto([{"ts": "2026-09-01T01:00:00", "cat": "inj", "f": []}])
+    assert hurt["Joseph Woll"]["cr_games"] < base["Joseph Woll"]["cr_games"]
+    assert hurt["Anthony Stolarz"]["cr_games"] > base["Anthony Stolarz"]["cr_games"]
+    assert back["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
+    assert old["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]

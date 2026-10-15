@@ -58,6 +58,9 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
+# a goalie with Daily Faceoff injury news since his last appearance (at most 14 days old, no return or full-practice
+# words): his start chance is capped at 0.2 for the team's next game and 0.35 later (handoff 679, findings 503)
+GOALIE_DFO_INJ_CAPS, GOALIE_DFO_INJ_DAYS = (0.2, 0.35), 14
 # ESPN-listed with an illness note at most 3 days old: OUT dressed 0.77 / 0.74 vs the 0.35 cap (hunt14/phrases, findings 502)
 ILLNESS_WORDS = re.compile(r"illness|\bill\b|\bsick|\bflu\b|virus", re.I)
 ILLNESS_CAP, ILLNESS_DAYS = 0.75, 3
@@ -2285,7 +2288,7 @@ def repeating_pattern(seq, cands):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -2295,6 +2298,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     blended with last season's split over SEASON_SHARE_K games), for the Season rating.
     injury: {goalie id: ESPN injury factor}; scales his chance before each game is split among the team's goalies,
     so an injured starter's games go to his partner (findings section 48).
+    dfo_inj: {goalie id: (next game, later games)} caps on that factor from Daily Faceoff injury news (handoff 679).
     last_start: (goalie id, (shift next game, shift game after next, ...)) for whoever started the team's last game:
     his start logit drops after a bad start or a loss and rises after a win (findings 131-133); after he left without
     a decision it stays down for every game in the window, until a Daily Faceoff confirmation names him (findings 164).
@@ -2489,7 +2493,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 z += EARLY_NO_START_LOGIT
             if z and 0 < raw[gid] < 1:
                 raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + z)))
-            raw[gid] *= injury.get(gid, 1.0)
+            # Daily Faceoff injury news: the factor is min(ESPN's, 0.2 next game, 0.35 later) (handoff 679)
+            cut = (dfo_inj or {}).get(gid)
+            raw[gid] *= min(injury.get(gid, 1.0), cut[min(ahead, 1)]) if cut else injury.get(gid, 1.0)
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         early = B2B_NIGHT2_NO1_EARLY if night2_no1 and len(seq) <= EARLY_GAMES else 0.0
@@ -2904,6 +2910,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 goalie_inj[pid] = INJURY_DRESS[p["injury"]]
                 if p["id"] in notes and injury_note(notes[p["id"]], today)["season"]:
                     goalie_gone.add(pid)
+    # Daily Faceoff injury news since his last appearance (handoff 679): posted after 20:00 UTC on that date, at most 14 days old
+    goalie_dfo = {}
+    last_app = {gid: max(d for d, _ in v) for gid, v in goalie_dates.items()}
+    oldest = f"{today - timedelta(days=GOALIE_DFO_INJ_DAYS)}T13:00:00"
+    for team_r in rosters.values():
+        for gid, _, pos in team_r:
+            items = ((dfo_news or {}).get("recent") or {}).get(str(gid)) or ()
+            since = max(f"{last_app[gid]}T20:00:00" if gid in last_app else "", oldest)
+            inj = [r for r in items if r.get("cat") == "inj" and r["ts"] > since]
+            if pos == "G" and inj and not {"ret", "full"} & set(inj[-1].get("f") or ()):
+                goalie_dfo[gid] = GOALIE_DFO_INJ_CAPS
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
     g_ages = {gid: (today - b).days / 365.25 for gid, b in births.items() if b}  # the goalies' age cut (handoff 640)
@@ -2916,7 +2933,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
                             {d for d, _, home in week_games.get(team, []) if not home},
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
-                            likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0))
+                            likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo)
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
