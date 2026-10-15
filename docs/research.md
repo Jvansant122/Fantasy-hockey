@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 181). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 186). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1261,6 +1261,26 @@ When three or more goalies started a team's last 10 games, the site already cuts
 ## 181. How many moves to hold in the playoffs
 
 Best moves keeps a few moves back for injury swaps and goalie streams: 3 of a normal week's 7. In the two-week playoff rounds it held 6 of 14. Replaying past seasons with the move simulator, holding 3 in the first playoff round gained about 0.4 points a week over holding 6, and holding 2 in the 6-day opening week beat holding 3. The final keeps 6, where holding 3 was mixed. The card and the help text now use these numbers.
+
+## 182. Injured reserve by how soon the game is
+
+A player on injured reserve was capped at 15% for every game this week. Players come off IR during the week, so the chance depends on how far off the game is: about 5% for a game the same day, 7% the next day and 19% two or more days out. The site now caps IR players at 5%, 15% and 25% for those games. Better in both held-out seasons, every half-season, forwards and defensemen.
+
+## 183. Day-to-day after a full game
+
+A day-to-day player who played his full minutes in his last game was capped at 75%, but such players dressed about 85% of the time. The cap is now 85%. A small gain.
+
+## 184. Suspensions count only for their length
+
+A suspended player was given no chance for every game of the week, even when the suspension was shorter. The site now reads the length from ESPN's note, counts the team's games since the listing as served, and gives him his normal chance once it is over. With no stated length, each game after the listing gets a little more of a chance, from how long 25 suspensions in 2021-26 lasted. (On Oct 12-14 Nazar showed 0 of 3 games on a 2-game ban.)
+
+## 185. First-round rookies
+
+Rookies who were picked in the top 24 of the draft dress for more of the rest of the season than the Season rating expected, mostly forwards. Their Season chance to play now gets a small lift. Better in every season tested, in both halves of the season, and more than any of 20 random rookie groups of the same size.
+
+## 186. The lowest-minutes player who scored
+
+Section 170 lowers the chance of the depth player with the fewest minutes at his position. When that player had a point in the game, he keeps his spot more often than that suggests, so he gets most of the drop back. Small, but better in both seasons, both halves and both positions.
 
 ## What the independent review changed
 

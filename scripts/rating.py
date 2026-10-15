@@ -55,6 +55,15 @@ SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
 INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}  # goalies (inside goalie_starts)
 # skaters (findings section 58): injured players still dress for some of the week, unless the note says it's a long absence
 SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}
+# IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
+# (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
+IR_DAY_CAPS = (0.05, 0.15, 0.25)
+# a suspension counts only for its length (handoff 631, findings 476 (3)): N from ESPN's note, the team's games since the
+# listing served; no stated length: game j since the listing capped at 0.85 x the share of 25 spells (2021-26) shorter than j
+SUSP_LEN = re.compile(r"\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)[- ]game suspension|suspended (?:for )?"
+                      r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten) (?:regular[- ]season |more )?games?", re.I)
+SUSP_UNKNOWN_CAPS = (0.0, 0.17, 0.44, 0.61, 0.68, 0.82)
+NUM_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
 LONG_ABSENCE = re.compile(r"remainder of the (?:\d{4}-\d{2} )?(?:regular )?(?:season|campaign)|rest of the (?:regular )?(?:season|campaign)"
                           r"|season-ending|out for the (?:season|year)|long[- ]term injured reserve|\bltir\b|surgery|surgical|\boperation\b"
                           r"|month-to-month|week-to-week|indefinitely|no timetable|no timeline|extended period|long-term"
@@ -267,6 +276,9 @@ LINEUP_SLACK = (1.34, 2.84)
 # games), W = their last-season TOI/G / 15 min (F) or 20 min (D), summed per last season's team; team MISSING_REG_MIN_TG+
 # games (handoffs 509, 513, findings 402: Season Spearman +0.0003 all / +0.0007 free agents, every test season)
 MISSING_REG_C, MISSING_REG_K, MISSING_REG_GP, MISSING_REG_MIN_TG = -0.08, 20, 40, 3
+# rookies picked in the top 24 dress for more of the rest of the season than the Season share says (hunt14/rookies,
+# findings 477, handoff 632): first NHL season within the last two, at most 60 NHL games over the last two seasons
+ROOKIE_PICK_SEASON_LOGIT, ROOKIE_PICK_MAX, ROOKIE_PICK_GP = 0.3, 24, 60
 # Week: those regulars with a Daily Faceoff injury or roster-move item in the last WEEK_MISSING_NEWS_DAYS count in the Week
 # slack sums as WEEK_MISSING_A x K/(K + team games) x last-season TOI/G / (15 F, 20 D) players on every date, from the team's
 # 3rd game (handoff 510, findings 402: Brier -0.023/-0.036 points, both held-out seasons)
@@ -368,6 +380,9 @@ PP_SCRATCH_LOGIT, PP_SCRATCH_MIN, PP_SCRATCH_DAYS = -0.1, 0.5, 10
 # other depth skaters less (findings 335-336, handoff 360); measured on the current stack at -0.1 / +0.1 with the lifts
 # above, not the row's -0.15 / +0.15 (hunt13/toi_rank_post)
 DEPTH_RANK_LOGIT = {"lowest": -0.1, "other": 0.1}
+# ... but the lowest-minutes one who had a point in that game keeps his spot more: +0.2 back (findings 343, handoff 362;
+# measured on the current stack, every season, half and position)
+LOW_SCORER_LOGIT = 0.2
 # missed his team's last game, not on its healthy-scratch list, no ESPN injury status, no Daily Faceoff injury or
 # roster-move item since that game (hunt14/week, findings 475, handoff 623): 0.10 predicted vs 0.06 dressed
 NO_STATUS_OUT_LOGIT = -0.5
@@ -512,7 +527,7 @@ CLEARED_DAYS = 7
 CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no games yet this season (findings 172)
 CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the last one (findings 173)
 # DAY_TO_DAY and dressed for the team's last game: cap by that game's TOI over his season average (findings 176)
-DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.75))
+DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.85))  # full minutes 0.85, not 0.75 (handoff 630)
 OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
@@ -1565,6 +1580,22 @@ def game_after(when, day, game_day, start):
     return st > when if st else when.astimezone(ET).hour < ONE_GAME_SAME_DAY_HOUR
 
 
+def suspension_caps(note, team_game_dates, n, starts=None):
+    """Per-game dress caps for a suspended skater's next n team games (handoff 631), or None without a dated note. The
+    team's played games after the listing count as served; a stated length N caps the games until N are served at 0 and
+    the rest not at all, else game j since the listing takes SUSP_UNKNOWN_CAPS."""
+    when = parse_utc((note or {}).get("date"))
+    if when is None:
+        return None
+    m = SUSP_LEN.search(f"{note.get('short') or ''} {note.get('long') or ''}")
+    k = (m.group(1) or m.group(2)).lower() if m else None
+    length = (int(k) if k.isdigit() else NUM_WORDS[k]) if k else None
+    day = when.astimezone(ET).date().isoformat()
+    served = sum(game_after(when, day, d[:10], (starts or {}).get(d[:10])) for d in team_game_dates)
+    return [(0.0 if served + i < length else 1.0) if length else SUSP_UNKNOWN_CAPS[min(served + i, len(SUSP_UNKNOWN_CAPS) - 1)]
+            for i in range(n)]
+
+
 def one_game_out_over(note, team_game_dates, starts=None):
     """A one-game OUT note ('won't play Thursday') once his team has played a game after the note's time (findings 236).
     team_game_dates: his team's played game dates (ET, ISO). starts: {date: that game's start, UTC ISO} where known
@@ -1751,7 +1782,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         reg = (HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0) \
             + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch")) \
             + DEPTH_RANK_LOGIT.get(r.get("toi_rank"), 0.0) \
-            + NO_STATUS_OUT_LOGIT * bool(r.get("no_status_out"))  # handoffs 358-360, 623
+            + NO_STATUS_OUT_LOGIT * bool(r.get("no_status_out")) + LOW_SCORER_LOGIT * bool(r.get("low_scorer"))  # 358-360, 623, 362
         # handoff 624: his team's next game only
         regs = [reg + (DTD_NEXT_LOGIT if j == 0 and r.get("dtd_next") else 0.0) for j in range(len(r["per_game"]))]
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
@@ -1803,10 +1834,10 @@ def lineup_slack(lineup, boost_x, boost_dress, model, missing=None):
         # a skater Daily Faceoff reports sent down since his last game doesn't fill his team's open spots (handoff 420)
         if slack is not None and slack > 0 and "sent down" in (e["p"]["cr_why"].get("season_news") or ()):
             slack = None
-        if slack is None and not back:
+        if slack is None and not back and not e.get("rookie_pick"):
             continue
         q = min(max(e["share"], 0.001), 0.999)
-        z = math.log(q / (1 - q)) + back
+        z = math.log(q / (1 - q)) + back + ROOKIE_PICK_SEASON_LOGIT * bool(e.get("rookie_pick"))  # handoff 632
         if slack is not None:
             z += (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
         share = 1 / (1 + math.exp(-z))
@@ -3025,6 +3056,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                       {d: st for (tm, d), st in week_starts.items() if tm == team})
             if one_game_over:
                 inj = SKATER_INJURY_CAP["DAY_TO_DAY"]
+            # per-game caps by days to the game (IR, handoff 629) or by games left to serve (suspension, handoff 631)
+            game_caps = None
+            if p.get("injury") == "INJURY_RESERVE" and not (note and note["long"]):
+                inj = IR_DAY_CAPS[2]
+                game_caps = "ir"
+            elif p.get("injury") == "SUSPENSION" and p["id"] in notes and p["games_left"]:
+                game_caps = suspension_caps(notes[p["id"]], team_dates.get(team, ()), p["games_left"],
+                                            {d: st for (tm, d), st in week_starts.items() if tm == team})
+                if game_caps is not None:
+                    inj = 1.0
             if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
                 share = gl[-1]["toi"] / f["std_toi"]
                 if p["injury"] == "DAY_TO_DAY":
@@ -3126,6 +3167,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if p.get("injury") == "OUT" and not one_game_over and per_game and p.get("today_start") and not game_started(p):
                 per_game[0] = min(per_game[0], OUT_TODAY_CAP)
                 dress_next = per_game[0]
+            if game_caps == "ir":
+                game_caps = None if practising else [IR_DAY_CAPS[min((date.fromisoformat(d) - today).days, 2)] for d in wk_dates]
+            if game_caps and per_game:
+                per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
+                dress_next = per_game[0]
             exp_games = sum(per_game)
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
@@ -3136,6 +3182,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 caps = [min(cap, inj)] * len(per_game)
                 if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p):
                     caps[0] = min(caps[0], OUT_TODAY_CAP)
+                if game_caps:
+                    caps = [min(a, c) for a, c in zip(caps, game_caps)]
                 week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                   "dates": wk_dates, "per_game": list(per_game), "before": list(per_game), "caps": caps,
                                   "missed": missed, "after_trip": after_trip(venue.get(espn_team, {}), wk_dates),
@@ -3148,7 +3196,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   "toi_rank": toi_rank,
                                   # missed the last game with no listing, status or news (623); DFO day-to-day news (624)
                                   "no_status_out": sat_last and not p.get("injury") and not scratch and not (any(wk_news) or wk_down),
-                                  "dtd_next": "day-to-day" in wk_why})
+                                  "dtd_next": "day-to-day" in wk_why,
+                                  "low_scorer": toi_rank == "lowest" and scored})  # handoff 362
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
@@ -3206,7 +3255,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 lineup.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                "share": rest_share, "pts": season_pts, "gp": len(gl), "left": games_left_season,
                                "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),
-                                         (today - births[pid]).days / 365.25 if pid in births else None, len(gl))})
+                                         (today - births[pid]).days / 365.25 if pid in births else None, len(gl)),
+                               # a first-round rookie (handoff 632)
+                               "rookie_pick": pid in bios and (bios[pid][1] or 999) <= ROOKIE_PICK_MAX and bool(bios[pid][2])
+                               and bios[pid][2] // 10000 >= espn_season - 3
+                               and gp_last + (prev2.get(pid) or {}).get("gp", 0) <= ROOKIE_PICK_GP})
             if pid and season_pts is not None:  # the league-wide F/D scoring drift, once every Season FP/G is known (handoff 405)
                 drift_rows.append({"p": p, "D": p["pos"] == "D", "pts": season_pts, "share": rest_share, "fp": [g["fp"] for g in gl],
                                    "range": (p["pos"] == "D", gp_last, (prev2.get(pid) or {}).get("gp", 0),

@@ -735,8 +735,9 @@ def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     # ESPN's DAY_TO_DAY flag takes over from the left-early cut, capped by last game's share of his ice time (findings 176)
     assert matthews(toi=300, injury="DAY_TO_DAY")["cr_dress_next"] == pytest.approx(0.15, abs=0.01)
     assert matthews(toi=800, injury="DAY_TO_DAY")["cr_dress_next"] == pytest.approx(0.5, abs=0.01)
-    assert 0.5 < matthews(injury="DAY_TO_DAY")["cr_dress_next"] <= 0.75
-    assert matthews(injury="DAY_TO_DAY")["cr_dress"] <= 0.75
+    full = rating.DTD_PLAYED_CAPS[-1][1]  # 0.85 since handoff 630
+    assert 0.5 < matthews(injury="DAY_TO_DAY")["cr_dress_next"] <= full
+    assert matthews(injury="DAY_TO_DAY")["cr_dress"] <= full
     # OUT after leaving early: 0.15, OUT with full minutes keeps 0.35 (handoff 75)
     assert matthews(toi=300, injury="OUT")["cr_dress_next"] == pytest.approx(rating.OUT_LEFT_EARLY_CAP, abs=0.01)
     assert matthews(injury="OUT")["cr_dress_next"] == pytest.approx(rating.SKATER_INJURY_CAP["OUT"], abs=0.01)
@@ -1313,7 +1314,8 @@ def test_bare_status_word_keeps_the_last_real_note(monkeypatch, tmp_path):
     def pasta(note, status="INJURY_RESERVE"):
         return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury=status)], injuries=[note])["David Pastrnak"]
     assert not notes_file.exists()
-    assert pasta(bare)["cr_dress"] == pytest.approx(rating.SKATER_INJURY_CAP["INJURY_RESERVE"], abs=0.01)  # nothing kept yet
+    # nothing kept yet: IR's caps by days to each game (handoff 629)
+    assert rating.IR_DAY_CAPS[0] < pasta(bare)["cr_dress"] <= rating.IR_DAY_CAPS[2]
     assert pasta(real)["cr"] == 0
     kept = json.loads(notes_file.read_text())
     assert kept["103"]["short"] == real["short"] and kept["103"]["status"] == "INJURY_RESERVE" and kept["103"]["date"] == real["date"]
@@ -2680,3 +2682,15 @@ def test_three_goalie_team_no1_gets_more_of_the_games_after_the_next(monkeypatch
     assert lifted[1]["2026-10-24"] > flat[1]["2026-10-24"] and lifted[1]["2026-10-26"] > flat[1]["2026-10-26"]
     for d in ("2026-10-22", "2026-10-24", "2026-10-26"):
         assert sum(n[d] for n in lifted.values()) == pytest.approx(1.0)
+
+
+def test_injured_reserve_caps_by_days_and_suspensions_by_length():
+    """Handoff 629: IR caps 0.05 today, 0.15 tomorrow, 0.25 later. Handoff 631: a stated N-game suspension caps the games
+    until N are served at 0 and none after; no stated length, game j since the listing takes the spell table."""
+    note = {"date": "2026-10-10T16:00Z", "short": "Smith was suspended two games for an illegal hit.", "long": ""}
+    played = ["2026-10-09", "2026-10-11"]  # one game served after the listing
+    assert rating.suspension_caps(note, played, 3) == [0.0, 1.0, 1.0]
+    assert rating.suspension_caps(dict(note, short="Smith received a three-game suspension."), played, 3) == [0.0, 0.0, 1.0]
+    assert rating.suspension_caps(dict(note, short="Smith was suspended by the league."), played, 3) == list(rating.SUSP_UNKNOWN_CAPS[1:4])
+    assert rating.suspension_caps(dict(note, date=None), played, 3) is None
+    assert rating.IR_DAY_CAPS[0] < rating.IR_DAY_CAPS[1] < rating.IR_DAY_CAPS[2]
