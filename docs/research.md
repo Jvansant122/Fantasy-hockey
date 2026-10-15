@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 167). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 168). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1205,6 +1205,10 @@ A healthy scratch's chance to play moves with his team's last result: down after
 ## 167. A depth forward's special-teams role
 
 A forward on depth minutes who killed penalties for a minute or more in his last game dresses more often than his lineup history suggests. One with no power-play and no penalty-kill time at all dresses a little less often. Defensemen showed nothing either way. Measured on the site as it stands now, after the weekly lineup model, the penalty-kill lift held its size, while the "no special teams" drop had mostly been absorbed already. So the site adds a small lift for the penalty killer and a smaller drop for the forward with no special-teams role. Both are applied with the healthy-regular and fight adjustments, after each team's lineup spots are filled. Both seasons improved, by less than the other recent changes.
+
+## 168. A wider top for top-tier rookie defensemen
+
+The Season range for a rookie defenseman in the top tier used to copy the veteran cell, since there are so few such rookies. Held out, 55% of them finished above that range's top. The range for that cell is now taken from rookie defensemen at every tier, scaled to the top tier's spread. It sits higher and is a little narrower, and the coverage error dropped in every held-out season. It still runs high (about 37% finish above), because the cell has only a handful of players. This changes the displayed range only, not the rating.
 
 ## What the independent review changed
 
