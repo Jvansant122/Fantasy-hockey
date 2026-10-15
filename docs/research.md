@@ -1198,6 +1198,10 @@ Several adjustments to a healthy scratch's chance to play this week were applied
 
 With the scratch adjustments now applied after the weekly lineup model (section 164), every adjustment applied after that model was refit together. Two changed. When a team has more likely players than lineup spots, everyone's chance to play is now pulled down a little harder. And a healthy scratch's lift from his team's last result is half again as large. Both held-out seasons agreed on those two and on nothing else. The pair was picked after looking at both seasons, so the measured gain is a little optimistic, but every nearby setting also improved.
 
+## 166. The last-result scratch lift fades over the week
+
+A healthy scratch's chance to play moves with his team's last result: down after a win, up after a loss. That lift used to apply evenly to every game left in the week. Replaying 2024-25 and 2025-26 game by game showed it is mostly a next-game effect, gone by about the third game. It is now applied by game. After a win the shift is largest on his team's next game, smaller on the second, and small after that. After a non-win it is up on the next two games and nothing after. Chance-to-play accuracy improved in both seasons. The other last-game lifts (a depth player who scored, a teammate who left early, a depth player who fought) held steady across the week and stay as they were.
+
 ## What the independent review changed
 
 | Review point | Outcome |

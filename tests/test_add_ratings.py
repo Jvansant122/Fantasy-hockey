@@ -692,7 +692,7 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     the list doesn't; if the list can't be read, missing the game with no ESPN injury counts (findings 153)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
-    monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_LOGIT", 0.0)  # ... and without the last-result lift (handoff 354)
+    monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_BY_GAME", {"win": (0.0,), "other": (0.0,)})  # ... and without the last-result lift (handoff 354)
     monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(**kw):
         fake = FakeSession(**kw)
@@ -2475,3 +2475,23 @@ def test_scratch_lifts_keep_their_size_after_the_weekly_model(monkeypatch, tmp_p
     assert on["cr_why"].get("fills_in")
     lift = rating.logit(on["cr_dress_next"]) - rating.logit(off["cr_dress_next"])
     assert lift > 0.5 * rating.TEAMMATE_LEFT_BANDS[0][1]["D"], lift
+
+
+def test_last_result_scratch_shift_is_by_game(monkeypatch, tmp_path):
+    """The healthy scratch's last-result shift is per game from his team's next one (handoff 357): a shift on game 1 only
+    moves his next game, not the rest of the week."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+
+    def mcavoy(by_game):
+        monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_BY_GAME", {"win": by_game, "other": by_game})
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(101, "Auston Matthews", "TOR", "C")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    flat, first = mcavoy((0.0,)), mcavoy((1.0, 0.0))
+    assert flat["sat_last"] and flat["games_left"] >= 2
+    assert first["cr_dress_next"] > flat["cr_dress_next"] + 0.05
+    assert first["cr_games"] - flat["cr_games"] == pytest.approx(first["cr_dress_next"] - flat["cr_dress_next"], abs=0.02)
