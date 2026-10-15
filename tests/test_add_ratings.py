@@ -2398,3 +2398,30 @@ def test_last_seasons_regulars_yet_to_play_cut_their_teams_season_share(monkeypa
     assert on["David Pastrnak"]["cr_season"] <= off["David Pastrnak"]["cr_season"]
     assert "missing_regs" not in on["Auston Matthews"]["cr_why"]
     assert on["Auston Matthews"]["cr_season"] == off["Auston Matthews"]["cr_season"]
+
+
+def test_week_counts_regulars_due_back(monkeypatch, tmp_path):
+    """Last season's regulars with no game yet and a recent Daily Faceoff item count in their current team's Week lineup
+    sums, fading with team games; without recent news, on no roster, or before the team's 3rd game they don't (handoff 510)."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 10, 15, 12, tzinfo=timezone.utc)
+    prev = {9: {"gp": 80, "toi": 15.0, "pos": "C"}, 4: {"gp": 80, "toi": 20.0, "pos": "D"}, 8: {"gp": 80, "toi": 15.0, "pos": "L"},
+            7: {"gp": 5, "toi": 15.0, "pos": "R"}}
+    news = {"injuries": {"9": {"ts": "2026-10-10T12:00"}, "4": {"ts": "2026-10-10T12:00"}, "7": {"ts": "2026-10-10T12:00"}},
+            "roster-moves": {"8": {"ts": "2026-08-01T12:00"}}}
+    tg = {"BOS": list(range(5)), "TOR": [1, 2]}
+    out = rating.week_missing_regulars(prev, {4: [{"game": 1}]}, tg, news, now, {9: "BOS", 4: "BOS", 8: "BOS", 7: "BOS"})
+    assert out == {("BOS", False): pytest.approx(1.0 * rating.WEEK_MISSING_A * 20 / 25)}  # McAvoy has played, Marchand's news is old
+    assert rating.week_missing_regulars(prev, {}, tg, news, now, {9: "TOR"}) == {}  # TOR has 2 games
+    assert rating.week_missing_regulars(prev, {}, tg, news, now, {}) == {}  # on no roster
+
+
+def test_ice_time_change_skips_a_game_he_left_hurt(monkeypatch, tmp_path):
+    """A short last game he left early isn't lost ice time: no early ice-time term (handoff 512)."""
+    fake = FakeSession(short_last={1: 240})
+    monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    assert "toi_chg" not in players[0]["cr_why"]

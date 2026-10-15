@@ -535,7 +535,7 @@ function why(p) {
         // this week's starts keep 0.4 of his gap to the league rate before the line or schedule (findings 231, 242)
         + (own !== fpg ? `; this week priced at ${fpg}: pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)${by ? `, then ${by}` : ""}` : ""));
   } else {
-    parts.push(`Week: ${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.round((p.cr_dress ?? 0) * 100)}% chance he plays = ${n(p.cr)}`);
+    parts.push(`Week: ${n(p.cr_fpg)} pts/game × ${p.games_left} games left × ${Math.min(Math.round((p.cr_dress ?? 0) * 100), 99)}% chance he plays = ${n(p.cr)}`);
     // a player yet to play takes a fixed share of the rest, which isn't "no injury discount" when he was hurt (findings 232)
     // nor when Daily Faceoff news cut his share (handoff 420)
     const newsCut = (w.season_news || []).some(k => k !== "called up");
