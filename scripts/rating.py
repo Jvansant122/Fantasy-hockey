@@ -3242,9 +3242,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     inj = min(inj, OUT_LEFT_EARLY_CAP)
             # a fresh illness note (handoff 676) or return words (677) lift the cap; IR's game today keeps its cap
             word_floor, return_words = None, False
-            if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and p["id"] in notes and not (note and note["long"]):
-                ill, return_words = note_words(notes[p["id"]])
-                nd = note_date(notes[p["id"]].get("date"))
+            # behind a bare status word ('out'), his last real note while he hasn't played since, as the research read it
+            wn = notes.get(p["id"])
+            if wn and PLACEHOLDER_NOTE.match(wn.get("short") or ""):
+                wn = stored_notes.get(str(p["id"]))
+                wn = wn if wn and not played_since(p["id"], str(wn.get("date") or "")) else None
+            if p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and wn and not (note and note["long"]):
+                ill, return_words = note_words(wn)
+                nd = note_date(wn.get("date"))
                 word_floor = ILLNESS_CAP if ill and nd and (today - nd).days <= ILLNESS_DAYS else RETURN_CAP if return_words else None
                 if word_floor is not None:
                     inj = max(inj, word_floor)
