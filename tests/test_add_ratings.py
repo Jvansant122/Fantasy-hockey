@@ -2937,3 +2937,32 @@ def test_ltir_with_another_long_word_keeps_the_ltir_cap():
     """LTIR plus week-to-week or a stated timeline: the LTIR 5% cap, as the 657 replay grouped LTIR (audit5 t_ltir_mix)."""
     assert _why5("Test was placed on LTIR and is week-to-week.") == "ltir"
     assert _why5("Test was placed on LTIR after surgery.") == "words"
+
+
+def test_fresh_illness_note_lifts_the_injury_cap(monkeypatch, tmp_path):
+    """Handoff 676: an illness note at most 3 days old caps the chance to play at 0.75, not OUT's 0.35; IR's game today keeps 0.05."""
+    plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) is out.")
+    ill = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (illness) is out.")
+    stale = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (illness) is out.", when="2026-10-02T12:00Z")
+    stale_plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) is out.", when="2026-10-02T12:00Z")
+    assert ill["cr_games"] > plain["cr_games"] and ill["cr_games"] <= 2 * 0.75 + 1e-9
+    assert stale["cr_games"] == pytest.approx(stale_plain["cr_games"])
+    # ESPN swaps the note for a bare "out" (Evangelista, Oct 15): his last real note, still fresh, keeps the lift
+    _mcavoy5(monkeypatch, tmp_path, "DAY_TO_DAY", "McAvoy (illness) is a game-time decision.")
+    assert _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")["cr_games"] == pytest.approx(ill["cr_games"])
+    ir = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", "McAvoy is sick and was placed on injured reserve.")
+    assert ir["cr_dress_next"] <= 0.05 + 1e-9 and 0.25 < ir["cr_games"] <= 0.05 + 0.75 + 1e-9
+    assert rating.note_words({"name": "Charlie McAvoy", "short": "McAvoy is not sick.", "long": ""}) == (False, False)
+
+
+def test_return_words_lift_the_cap_and_the_chance(monkeypatch, tmp_path):
+    """Handoff 677: ESPN return words about him lift OUT's cap to 0.5 and add RETURN_LOGIT to each game; hedged words don't."""
+    plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) won't play Friday.")
+    back = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) practiced fully Thursday and will play Sunday.")
+    hedged = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) hopes he will play Sunday.")
+    assert back["cr_games"] > plain["cr_games"] and back["cr_games"] <= 2 * 0.5 + 1e-9
+    assert hedged["cr_games"] == pytest.approx(plain["cr_games"])
+    monkeypatch.setattr(rating, "RETURN_LOGIT", 0.0)
+    assert _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) practiced fully Thursday and will play Sunday.")["cr_games"] \
+        <= back["cr_games"] + 1e-9
+    assert rating.note_words({"name": "Charlie McAvoy", "short": "McAvoy (flu) will play Sunday.", "long": ""}) == (True, False)

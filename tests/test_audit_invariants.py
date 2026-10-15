@@ -285,6 +285,7 @@ def test_details_round_like_the_table_and_blanks_sort_last(browser, server, data
     d = json.loads(json.dumps(data))
     p = next(p for p in d["players"] if p.get("owner") == "freeagent" and p["pos"] != "G" and (p.get("cr_season") or 0) > 0.5)
     p["cr_season"], p["cr"] = 2.15, 3.45  # x.x5: Math.round goes up, toFixed down
+    p["today_start"] = None  # after his first puck the table shows the games left, not cr (handoff 645)
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#who", "every")
     page.fill("#q", p["name"])
