@@ -195,6 +195,9 @@ THREE_GOALIE_NO1_LOGIT = 0.5
 # the no. 1 on any night that isn't night 2 of a back-to-back: rested no. 1s started 0.615 of next games vs 0.586 given; on the
 # reported chance, not the chain (handoff 363, ledger 1455: 15 of 15 seasons better at +0.05, worse in 2023-24 in the chain)
 RESTED_NO1_LOGIT = 0.05
+# another goalie started the team's last game, win or lose: the no. 1 started 0.571 of the games after vs 0.528 given; on
+# the reported chance, every game left (handoff 364, ledger 2137: 15 of 15 seasons better at +0.1, the chain version weaker)
+NO1_AFTER_OTHER_LOGIT = 0.1
 # the rest of the week after those next-game rules: the last starter read high in two later games (findings 249, every
 # season): a strict rotation's third game (0.48 against 0.37 actual) and, when no rotation, pattern, last-6 or
 # three-goalie rule fires, the game after next (0.56 against 0.51)
@@ -2517,6 +2520,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         if no1 in q and 0 < q[no1] < 1 and not night2:  # handoff 363
             was = q[no1]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + RESTED_NO1_LOGIT)))
+            q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
+        if seq and seq[-1] != no1 and no1 in q and 0 < q[no1] < 1:  # handoff 364
+            was = q[no1]
+            now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
         lk = (likely_dfo or {}).get(d)
         if lk in q and q[lk] < LIKELY_START_FLOOR:

@@ -3081,3 +3081,21 @@ def test_free_agents_on_a_later_game_still_fill_tonight(monkeypatch):
     rating.week_slack(with_fa + fas(), {}, None)
     assert with_fa[0]["p"]["cr_dress_next"] < without[0]["p"]["cr_dress_next"]  # tonight is full again
     assert abs(with_fa[0]["p"]["cr_why"].get("week_slack", 0)) < abs(without[0]["p"]["cr_why"].get("week_slack", 0))
+
+
+def test_no1_gets_a_small_lift_after_another_goalie_started(monkeypatch):
+    """Handoff 364: the backup started the team's last game, so the no. 1's reported chance gets +0.1 logit on every game
+    left; the chain is unchanged, and after the no. 1's own start nothing moves."""
+    def nights(lift, order):
+        monkeypatch.setattr(rating, "NO1_AFTER_OTHER_LOGIT", lift)
+        hist = [(f"2026-10-{2 * i + 1:02d}", g) for i, g in enumerate(order)]
+        out = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 20}, ["2026-10-22", "2026-10-25"],
+                             date(2026, 10, 22), by_date=out)
+        return out
+    backup_last = [1, 1, 2, 1, 1, 2, 1, 1, 1, 2]
+    a, b = nights(0.0, backup_last), nights(0.1, backup_last)
+    for d in ("2026-10-22", "2026-10-25"):
+        assert b[1][d] > a[1][d] and b[1][d] + b[2][d] == pytest.approx(a[1][d] + a[2][d])
+    no1_last = backup_last[:-1] + [1]
+    assert nights(0.1, no1_last)[1] == pytest.approx(nights(0.0, no1_last)[1])
