@@ -123,6 +123,9 @@ def test_displaced_skater_is_least_used_at_the_returning_regulars_position():
     assert rating.displaced_skaters(by_player, tg, healthy={1, 2, 3, 4}) == {3: (0.08, "P1")}
     assert rating.displaced_skaters(by_player, tg, healthy={1, 2, 4}) == {2: (0.08, "P1")}  # P3 hurt: the next one sits
     assert rating.displaced_skaters(by_player, tg, healthy={2, 3, 4}) == {}  # still listed as out
+    # a skater ESPN's pool doesn't carry can be the one who sits (handoff 620); the regular himself must be listed healthy
+    assert rating.displaced_skaters(by_player, tg, healthy={1, 2, 4}, pickable={1, 2, 3, 4}) == {3: (0.08, "P1")}
+    assert rating.displaced_skaters(by_player, tg, healthy={2, 3, 4}, pickable={1, 2, 3, 4}) == {}
 
 
 def test_roster_moves_newcomer_sits_the_least_used_and_a_departed_d_brings_one_in():

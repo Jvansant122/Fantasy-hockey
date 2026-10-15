@@ -86,6 +86,9 @@ def test_write_log_records_feeds_and_survives_failures(monkeypatch, tmp_path):
     assert LOG_KEYS - {"injuries"} <= set(rec)
     assert "ESPN down" in rec["errors"]["injuries"] and "starters 2026-10-10" in rec["errors"]
     assert set(rec["players"][0]) >= LOG_PLAYER_KEYS and "cr_why" not in rec["players"][0]
+    # the per-game numbers for live grading (handoff 618); a goalie also logs tonight's start chance
+    assert {"cr_dress_next", "cr_g_nights", "cr_season", "proj_gp", "sat_last", "today_start"} <= set(rec["players"][0])
+    assert "p_today" not in rec["players"][0]
 
 
 def test_latest_committed_log_has_the_scored_fields():
