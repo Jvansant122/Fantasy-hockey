@@ -266,7 +266,8 @@ MISSING_REG_C, MISSING_REG_K, MISSING_REG_GP, MISSING_REG_MIN_TG = -0.08, 20, 40
 WEEK_MISSING_A, WEEK_MISSING_K, WEEK_MISSING_GP, WEEK_MISSING_NEWS_DAYS, WEEK_MISSING_MIN_TG = 0.5, 20, 40, 30, 3
 # Week: per team game, the same open spots from the per-game Week chances themselves; logit += over x min(s, 0) + room x
 # max(s, 0), s = open spots / 3 (handoff 489, findings 402: Brier -0.50 / -0.57 points, fits 2.23/1.14 and 1.98/0.96)
-WEEK_SLACK = (2.0, 1.0)
+# handoff 517: over-full side 2.0 -> 2.8 in a joint refit after 515-516 moved the scratch lifts (findings 402)
+WEEK_SLACK = (2.8, 1.0)
 # healthy regulars (dressed his team's last game at DEPTH_TOI+ minutes, no injury listing) dress more than the Week model
 # gives them: + this on the logit after the slack fit, outside its sums (handoff 355, findings 317: site 0.951 vs actual 0.981
 # live Oct 9-13; still ~0.96 after the boosted Week model and the slack fit)
@@ -346,7 +347,7 @@ SCRATCH_LONG_LOGIT, SCRATCH_LONG_GAMES = 0.375, 5
 TEAMMATE_LEFT_BANDS, TEAMMATE_LEFT_GP = ((0.40, {"F": 0.5, "D": 1.8}), (0.55, {"F": 0.25, "D": 1.2})), 5
 # a healthy scratch after his team's last game: -0.15 after a win (any kind), +0.15 after a non-win, on top of the win-run
 # shift (findings 312, handoff 354)
-SCRATCH_LAST_RESULT_LOGIT = 0.15
+SCRATCH_LAST_RESULT_LOGIT = 0.225  # 0.15 before it moved after the boosted Week model; refit in handoff 517
 # the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
 # model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
