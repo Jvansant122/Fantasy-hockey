@@ -92,6 +92,10 @@ ONE_GAME_NOT = re.compile(r"week|month|indefin|games", re.I)
 ONE_GAME_SAME_DAY_HOUR = 17  # game dates have no start time: a note posted before 5 PM ET came before that night's game
 # ESPN OUT on the day of his team's game: 0 of 20 dressed (findings 235); later games keep the OUT cap
 OUT_TODAY_CAP = 0.03
+# a long ESPN note that is only week-to-week, only a timeline, or only LTIR: per-game caps (game today or tomorrow, game 2+
+# days after the run) instead of 0. Week-to-week / timeline-only long notes dressed 0.04-0.21, LTIR 0.01-0.13
+# (hunt14/returns, findings 489; handoff 657)
+LONG_NOTE_CAPS = {"wtw": (0.05, 0.20), "timeline": (0.10, 0.30), "ltir": (0.05, 0.05)}
 SEASON_OUT = re.compile(r"remainder of the (?:\d{4}-\d{2} )?(?:regular )?(?:season|campaign)|rest of the (?:regular )?(?:season|campaign)"
                         r"|season-ending|out for the (?:season|year)", re.I)
 WORDNUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "ten": 10, "twelve": 12,
@@ -266,6 +270,9 @@ NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 # NEWS_RECALL_DAYS: a + b x min(GP, 40)/40; latest injury item since his last game says season-ending / surgery
 NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
 NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
+# Season dress logit for a skater out now from ESPN's own note: its stated timeline as a share of his team's games left
+# (findings 488, handoff 658), and out for the season when Daily Faceoff hasn't said so (handoff 659)
+SEASON_TIMELINE_C, ESPN_SEASON_OUT = -0.6, -3.0
 NEWS_INDEFINITE = -0.3  # "out indefinitely", "long-term", "several months" without season-level wording (findings 371, idea 963)
 NEWS_STALE_DAYS = 2
 # lineup spots per team (12 F, 6 D) and the slack weights on the Season dress logit (findings 370, handoff 350)
@@ -539,6 +546,7 @@ SEASON_PPS_K = ((50, 8), (100, 15), (float("inf"), 30))
 GOALIE_AGE_SEASON = 0.009
 NEWS_CAP = 25
 OFFSEASON_MOVER_MULT = 0.965  # skater on a new team since last season: leave-one-season-out 0.963-0.970 (findings 230)
+OFFSEASON_MOVER_MULT_WEEK = 0.98  # the Week's: movers score 0.973-0.990 of the current Week ridge (findings 464, handoff 667)
 # ESPN team abbreviations that differ from the NHL's
 ESPN_TO_NHL = {"TB": "TBL", "NJ": "NJD", "SJ": "SJS", "LA": "LAK", "UTAH": "UTA", "WAS": "WSH", "MON": "MTL", "CLB": "CBJ"}
 
@@ -1334,6 +1342,8 @@ class Model:
             lo, hi = lo * ph["late_scale"], hi * ph["late_scale"]
         elif ph and 1 <= gp_now <= ph["early_gp"] and tier == "low":
             lo *= ph["early_low_tier_lo_scale"]
+        elif ph and exp == "rookie" and ph.get("rookie_mid_gp", [0, -1])[0] <= gp_now <= ph.get("rookie_mid_gp", [0, -1])[1]:
+            lo, hi = lo * ph["rookie_mid_scale"], hi * ph["rookie_mid_scale"]  # handoff 663
         return [round(max(season + lo, 0.0), 2), round(season + hi, 2)], exp
 
     def season_dress(self, x, shift=0.0):
@@ -1558,7 +1568,18 @@ def injury_note(note, today):
         left = u - gone if left is None else max(left, u - gone)
     season = bool(SEASON_OUT.search(short) or SEASON_OUT.search(own))
     long_abs = season or bool(LONG_ABSENCE.search(short)) or bool(LONG_OWN.search(mine)) or (left is not None and left >= 14)
-    return {"long": long_abs, "season": season, "days_left": left}
+    # why the note is long (handoff 657): "words" (season-level, surgery, indefinitely, ...), "ltir" when LTIR is the only
+    # such word, "wtw" when week-to-week is the only one, "timeline" when only a stated 14+ days or "a few weeks"
+    kinds = set()
+    for m in [*LONG_ABSENCE.finditer(short), *LONG_OWN.finditer(mine)]:
+        w = m.group(0).lower()
+        kinds.add("wtw" if w == "week-to-week" else "ltir" if "injured reserve" in w or w == "ltir"
+                  else "timeline" if w.endswith("weeks") else "words")
+    if left is not None and left >= 14:
+        kinds.add("timeline")
+    why = None if not long_abs else "words" if season or "words" in kinds or ("ltir" in kinds and len(kinds) > 1) \
+        else "ltir" if "ltir" in kinds else "wtw" if "wtw" in kinds else "timeline"
+    return {"long": long_abs, "season": season, "days_left": left, "long_why": why}
 
 
 def note_date(text):
@@ -2959,7 +2980,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)
             last_team = (prev.get(pid) or {}).get("team") if pid else None
             if last_team and team in rosters and last_team != team and not traded and len({g["team"] for g in gl}) <= 1:
-                fpg *= OFFSEASON_MOVER_MULT
+                fpg *= OFFSEASON_MOVER_MULT_WEEK
                 fpg_s *= OFFSEASON_MOVER_MULT
             # 0-3 games: part of the way to ESPN's preseason projection (handoff 429)
             early_w = next((w for top, w in EARLY_WEEK_ESPN if len(gl) <= top), 0.0) if pid else 0.0
@@ -3027,6 +3048,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 sx = season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
                                            played=len(team_games.get(team, [])))
                 news_z, news_why = news_season_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sx["os_k"], sx["gp_now"], now_utc)
+                # missed his team's last game with an ESPN status: ESPN's stated timeline or out-for-the-season note (658-659)
+                tl = injury_note(notes[p["id"]], today) if sat_last and p.get("injury") and p["id"] in notes else None
+                if tl and tl["season"]:
+                    news_z += ESPN_SEASON_OUT if "season-ending" not in news_why else 0.0
+                elif tl and tl["days_left"] is not None:
+                    news_z += SEASON_TIMELINE_C * min(max(tl["days_left"], 0) / 2.2 / max(SEASON_GAMES - len(team_games.get(team, [])), 1), 1)
                 z = model.season_dress_logit(sx, NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                              + CLEARED_SEASON_LOGIT * cleared_out)
                 # part of the way to the 16-season boosted share (findings 360 (3)); not for a skater ESPN lists on a team he
@@ -3094,7 +3121,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if n.get("fpg_mult") is not None:
                     fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
-            inj = 0.0 if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
+            long_caps = LONG_NOTE_CAPS.get(note.get("long_why")) if note and note["long"] else None
+            inj = (max(long_caps) if long_caps else 0.0) if note and note["long"] else SKATER_INJURY_CAP.get(p.get("injury") or "", 1.0)
             # OUT for one named game that his team has since played: day-to-day, as ESPN has him by the next morning (findings 236)
             one_game_over = p.get("injury") == "OUT" and p["id"] in notes and not (note and note["long"]) \
                 and one_game_out_over(notes[p["id"]], team_dates.get(team, ()),
@@ -3106,9 +3134,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if p.get("injury") == "INJURY_RESERVE" and not (note and note["long"]):
                 inj = IR_DAY_CAPS[2]
                 game_caps = "ir"
+            elif long_caps:
+                game_caps = "long"
             elif p.get("injury") == "SUSPENSION" and p["id"] in notes and p["games_left"]:
                 game_caps = suspension_caps(notes[p["id"]], team_dates.get(team, ()), p["games_left"],
                                             {d: st for (tm, d), st in week_starts.items() if tm == team})
+                # a long note with no stated length ("suspended indefinitely") keeps 0 (handoff 664)
+                if game_caps is not None and note and note["long"] \
+                        and not SUSP_LEN.search(f"{notes[p['id']].get('short') or ''} {notes[p['id']].get('long') or ''}"):
+                    game_caps = None
                 if game_caps is not None:
                     inj = 1.0
             if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
@@ -3214,6 +3248,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 dress_next = per_game[0]
             if game_caps == "ir":
                 game_caps = None if practising else [IR_DAY_CAPS[min((date.fromisoformat(d) - today).days, 2)] for d in wk_dates]
+            elif game_caps == "long":
+                game_caps = [long_caps[0] if (date.fromisoformat(d) - today).days <= 1 else long_caps[1] for d in wk_dates]
             if game_caps and per_game:
                 per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
                 dress_next = per_game[0]

@@ -177,12 +177,15 @@ Fallbacks: before his team has played, 90% if he played last season (50% if not)
 | ESPN status | Cap |
 | --- | --- |
 | Day-to-day, missed the last game | 50% |
-| Day-to-day, played the last game (PR #74) | 15% if under 55% of his usual ice time, 50% at 55-80%, 75% at 80%+ |
+| Day-to-day, played the last game (PR #74) | 15% if under 55% of his usual ice time, 50% at 55-80%, 85% at 80%+ (PR #199) |
 | OUT | 35% (15% if he played the last game but under 55% of his usual ice time, PR #77); 3% for his team's game the same day (PR #99); 50% once his team has played the one game the note named |
-| Injured reserve | 15% |
+| Injured reserve | 5% for a game the same day, 15% the next day, 25% after that (PR #199) |
 | OUT or IR, and Daily Faceoff says he is practising (PR #164) | 50%, like day-to-day |
-| Suspended | 0 |
-| Note says surgery, LTIR, season-ending, week-to-week, month-to-month, indefinitely, no timetable, "several" or "a few weeks", or a return 14+ days away | 0 |
+| Suspended | 0 for the games still to serve (length from ESPN's note, counting his team's games since it); no stated length: 0 / 17% / 44% / 61% / 68% / 82% for games 1-6+ since the listing (PR #199); a note saying indefinitely or rest of the season with no length stays 0 |
+| Note says surgery, season-ending, month-to-month, indefinitely or no timetable | 0 |
+| Note's only long word is week-to-week | 5% for a game today or tomorrow, 20% after that (handoff 657) |
+| Note's only long reason is "several" or "a few weeks", or a return 14+ days away | 10% today or tomorrow, 30% after that (handoff 657) |
+| Note's only long word is LTIR | 5% |
 
 The softer OUT and IR caps shipped in PR #24; before that OUT and IR were 0.
 
@@ -340,7 +343,7 @@ These cards use the rating; none of them change it. All are for the team picked 
 | --- | --- | --- |
 | **Move plan** (Upgrades header) | 7 moves a matchup (6 in the 6-day first one, 14 in a playoff round): on Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep 3 moves (2 in the 6-day first matchup, 6 in the two-week final) for injury swaps and goalie streams; carry 2 goalies plus a stream slot (PR #174) | 2 Monday moves plus swaps and streams: +5.6 pts a week over all 7 on Monday, and the re-tuned plan a further +0.9 a week in every season tested; 2 goalies plus a stream slot beats a third regular goalie by about 2 more |
 | **Activate from IR** | A healthy player sitting in your IR slot, whose points don't count | Celebrini's 2.9 points were lost this way on Oct 10 |
-| **Two-week playoff round** | One pool of moves for both weeks; on Monday add every skater worth 3.5+ keep points, and keep 6 moves for injury swaps and goalie streams | A week with no moves ran about 20 pts behind |
+| **Two-week playoff round** | One pool of moves for both weeks; on Monday add every skater worth 3.5+ keep points, and keep 3 moves (6 in the two-week final; PR #197) for injury swaps and goalie streams | A week with no moves ran about 20 pts behind |
 | **Waiver claims** (PR #94) | A player on waivers gets "put in a claim": a losing claim uses no move. Shows your place in ESPN's waiver order; a drop with Season 1.5+ is tagged as one others will claim | Every losing claim in the league's logs was cancelled without using a move |
 | **Mid-week swaps** | Your skaters who are out, suspended, or sat the last game (unless back in Daily Faceoff's lines), next to the best free agent at their position; IR-eligible noted when an IR slot is open | +1.1 to +1.4 pts/roster/week from holding moves for this |
 | **Stream a goalie tonight** | When fewer than two of your goalies start tonight: free-agent goalies confirmed to start, ranked by tonight's line, with moves left. Before first puck it says the time to add by; after it, that a goalie added now plays from tomorrow. Waiver goalies and started games are left out | Each of the first 2-3 streams adds 2-4 pts; which confirmed goalie matters little (~0.4) |

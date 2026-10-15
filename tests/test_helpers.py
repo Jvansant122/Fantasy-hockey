@@ -549,3 +549,32 @@ def test_lineup_cutoff_is_the_last_finished_game_not_the_one_on_now():
     out = fetch.last_finished_starts(teams, "2026-10-15T02:20:00Z")
     assert out == {"COL": "2026-10-13T01:00:00Z"}  # COL's game started 80 minutes ago; TOR's only game is still on
     assert fetch.last_finished_starts(teams, "2026-10-15T05:30:00Z") == {"COL": "2026-10-15T01:00:00Z", "TOR": "2026-10-14T23:00:00Z"}
+
+
+def test_injury_note_says_why_a_note_is_long():
+    """Handoff 657: week-to-week only, a stated timeline only, or LTIR only get per-game caps; other long words stay at 0."""
+    import rating
+    from datetime import date
+    today = date(2026, 10, 15)
+    why = lambda short, long_="": rating.injury_note({"short": short, "long": long_, "name": "Joe Test", "date": "2026-10-15"}, today)["long_why"]
+    assert why("Test is week-to-week with a lower-body injury.") == "wtw"
+    assert why("Test will miss a few weeks.") == "timeline"
+    assert why("Test was placed on LTIR.") == "ltir"
+    assert why("Test is out indefinitely.") == "words"
+    assert why("Test needs surgery and is week-to-week.") == "words"
+    assert why("Test is out for the season.") == "words"
+    assert why("Test is day-to-day.") is None
+    assert set(rating.LONG_NOTE_CAPS) == {"wtw", "timeline", "ltir"}
+    assert rating.SEASON_TIMELINE_C < 0 and rating.ESPN_SEASON_OUT < 0
+
+
+def test_mid_season_rookies_get_a_wider_season_range():
+    """Handoff 663: rookies with 7-40 NHL games this season, both offsets x 1.10; 6 and 41 games keep their own rules."""
+    import rating
+    m = rating.Model()
+    r = lambda gp: m.season_range(1.5, False, 0, 0, age=21, gp_now=gp)[0]
+    base, mid = r(0), r(20)
+    assert mid[1] - 1.5 == pytest.approx((base[1] - 1.5) * 1.1, abs=0.011)
+    assert r(41) == mid  # the late rule's own 1.10
+    vet = lambda gp: m.season_range(1.5, False, 80, 80, age=29, gp_now=gp)[0]
+    assert vet(20) == vet(0)
