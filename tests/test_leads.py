@@ -207,6 +207,28 @@ def test_morning_odds_come_from_espn_until_the_nhl_feed_rolls_over():
     assert leads.fetch_odds(s, date(2026, 10, 12))["odds_date"] == "2026-10-11"
 
 
+
+def test_odds_fall_back_to_espn_when_the_nhl_feed_fails():
+    """Handoff 452: an NHL odds timeout (run 2026-10-12-0835) no longer leaves tonight's goalies without lines."""
+    from datetime import date
+    s = JsonSession({"site.api.espn.com": ESPN_TODAY})  # no partner-game entry: the NHL request raises
+    odds = leads.fetch_odds(s, date(2026, 10, 12), {"NJ": "NJD"})
+    assert odds["source"] == "espn" and odds["games"][0]["home"]["team"] == "NJD"
+    with pytest.raises(Exception):
+        leads.fetch_odds(JsonSession({}), date(2026, 10, 12))  # both down: the error reaches fetch.py
+
+
+def test_write_log_does_not_refetch_a_failed_feed(monkeypatch, tmp_path):
+    """Handoff 452: the log keeps the run's own failure instead of odds fetched later that the rating never used."""
+    from datetime import datetime
+    monkeypatch.setattr(leads, "LOG_DIR", tmp_path)
+    called = []
+    monkeypatch.setattr(leads, "fetch_odds", lambda s: called.append(1) or {"games": []})
+    leads.write_log(datetime(2026, 10, 12, 8, 35), [], [], {"odds": "ReadTimeout"}, None, injuries=[], lineups={})
+    rec = read_log(next(tmp_path.glob("*.json.gz")))
+    assert not called and "odds" not in rec and rec["errors"]["odds"] == "ReadTimeout"
+
+
 def test_fetch_news_keeps_each_players_latest_item(monkeypatch, tmp_path):
     """Daily Faceoff injury and roster-move news (findings 360 (1)): pages read until the stored items, flags parsed
     as the research did, older items pruned."""

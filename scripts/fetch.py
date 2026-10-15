@@ -29,6 +29,9 @@ ESPN_ROLLOVER = timedelta(hours=3, minutes=25)  # ESPN rolls its day at about 3:
 LIGHT_NIGHT_MAX_GAMES = 5  # nights with this many NHL games or fewer count as light
 FREE_AGENT_LIMIT = 400
 FREE_AGENT_GOALIE_LIMIT = 100
+# free agents with the most fantasy points this season, however few own them: a 0%-owned skater dressing on a top power
+# play sat past the ownership cut (Judd Caulfield, handoff 455)
+FREE_AGENT_SCORING_LIMIT = 200
 TX_TYPES = ["FREEAGENT", "WAIVER", "WAIVER_ERROR", "ROSTER", "TRADE_ACCEPT", "TRADE_DECLINE", "TRADE_PROPOSAL",
             "TRADE_UPHOLD", "TRADE_VETO", "FUTURE_ROSTER", "RETRO_ROSTER"]
 
@@ -557,6 +560,17 @@ def main():
                  if (e.get("player") or {}).get("id") not in have]
     except (requests.RequestException, KeyError, ValueError) as e:
         print(f"Free-agent goalie lookup failed: {e!r}", file=sys.stderr)
+    scoring_filter = {"players": {**fa_filter["players"], "limit": FREE_AGENT_SCORING_LIMIT,
+                                  "sortAppliedStatTotal": {"sortAsc": False, "sortPriority": 1, "value": f"00{season}"},
+                                  "sortPercOwned": {"sortPriority": 2, "sortAsc": False}}}
+    try:
+        have = {(e.get("player") or {}).get("id") for e in pool}
+        extra = [e for e in get(s, league_url, ["kona_player_info"], scoring_filter, scoringPeriodId=today_sp)["players"]
+                 if (e.get("player") or {}).get("id") not in have]
+        pool += extra
+        print(f"{len(extra)} more free agents by points this season")
+    except (requests.RequestException, KeyError, ValueError) as e:
+        print(f"Free-agent scoring lookup failed: {e!r}", file=sys.stderr)
     # Every team's roster, so the page can show any team. Player cards come in chunks to keep requests small.
     roster_players = {e["playerId"]: e["playerPoolEntry"]["player"] for t in league["teams"]
                       for e in (t.get("roster") or {}).get("entries", []) if (e.get("playerPoolEntry") or {}).get("player")}

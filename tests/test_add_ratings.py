@@ -214,7 +214,8 @@ def test_matching_and_injuries(run):
     assert players["David Pastrnak"]["cr_why"]["back"] == {"games": "16"}
     assert players["Morgan Rielly"]["cr_dress"] <= 0.5
     ghost = players["Not A Real Player"]
-    assert ghost["cr_matched"] is False and ghost["cr_dress"] == rating.NOT_PLAYING_DRESS
+    # no NHL match, no ESPN games this season or last, no projection: a retired or minor-league name, not rated (handoff 453)
+    assert ghost["cr_matched"] is False and ghost["cr"] == ghost["cr_games"] == ghost["cr_dress"] == 0 and ghost["cr_why"]["no_record"]
     logged = [json.loads(line) for line in log.read_text().splitlines()]
     assert {r["status"] for r in logged} == {"OUT", "DAY_TO_DAY", "SUSPENSION"}
 
@@ -2173,3 +2174,23 @@ def test_even_tandem_halves_b2b_shift(monkeypatch):
     even = [(f"2026-10-{d:02d}", 1 if i % 2 else 2) for i, d in enumerate(range(1, 21))]
     lopsided = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21))]
     assert 0 < gap(even) < gap(lopsided)
+
+
+def test_traded_goalie_keeps_his_confirmed_start(monkeypatch, tmp_path):
+    """Handoff 454: a goalie on his new team's roster with no game for it yet still matches its confirmed starter."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    real = rating.roster
+    def moved(s, team, goalie_games=()):  # Swayman claimed by TOR, all his games so far for BOS
+        r = [x for x in real(s, team, goalie_games) if x[0] != 13]
+        return r + [(13, "Jeremy Swayman", "G")] if team == "TOR" else r
+    monkeypatch.setattr(rating, "roster", moved)
+    starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Jeremy Swayman", "status": "Confirmed"}]}]
+    players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G"), espn(113, "Jeremy Swayman", "TOR", "G")]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, starters)
+    woll, stolarz, sway = players
+    assert sway["cr_why"]["tonight"]["starting"] is True and sway["cr_why"]["p_today"] == 1.0
+    assert woll["cr_why"]["p_today"] == 0 and stolarz["cr_why"]["p_today"] == 0

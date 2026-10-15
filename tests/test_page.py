@@ -1499,11 +1499,12 @@ def test_trade_check_counts_an_ir_move_spot(browser, server, data):
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(team["id"]))
     text = _trade(page, [sk[0]["id"]], [theirs[0]["id"], theirs[1]["id"]])
-    assert f"Moving {hurt['name']} to IR opens the spot, so you drop nobody." in text, text
+    assert f"Moving {hurt['name']} to IR opens the spot, so you drop nobody until he's back." in text, text
     assert "You'd need to drop" not in text
     # 1-for-3: the IR move opens one spot, the other still needs a drop
     text = _trade(page, [sk[0]["id"]], [theirs[0]["id"], theirs[1]["id"], theirs[2]["id"]])
     assert f"Move {hurt['name']} to IR, and then you'd need to drop" in text, text
+    assert f"drop {hurt['name']}" not in text, text  # never drops the player it moves to IR (handoff 456)
     # giving the injured player away: no IR move to count
     text = _trade(page, [hurt["id"]], [theirs[0]["id"], theirs[1]["id"]])
     assert "to IR" not in text and "You'd need to drop" in text, text
@@ -2022,5 +2023,40 @@ def test_predicted_winners_before_the_first_run(browser, server, data):
     ctx, page, errors = open_page(browser, server, d)
     page.click("#tab-win")
     assert "next data update" in page.locator("#nhlhead").inner_text()
+    assert errors == []
+    ctx.close()
+
+
+def test_trade_check_goalie_rules(browser, server, data):
+    """A forced drop never leaves fewer than two healthy goalies (handoff 457), and a goalie shortfall you already have
+    isn't charged to the trade (handoff 459)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = json.loads(json.dumps(data))
+    team, other = d["teams"][0], d["teams"][1]
+    mine = _mine(d, team)
+    for p in mine:
+        p.update(ir=False, injury=None)
+    gs = [p for p in mine if p["pos"] == "G"]
+    sk = [p for p in mine if p["pos"] != "G"]
+    if len(gs) < 2 or len(sk) < 2:
+        pytest.skip("needs two goalies")
+    for g in gs:  # goalies have the lowest keep value, so they'd be dropped first without the rule
+        g.update(cr_season=0.0, cr_fpg=0.0, cr=0.0)
+    d["players"] = [p for p in d["players"] if not (str(p.get("team_id")) == str(team["id"]) and p["pos"] == "G" and p not in gs[:3])]
+    gs = gs[:3]
+    mine = _mine(d, team)
+    d["ir_slots"], d["roster_max"] = 0, len(mine)
+    theirs = [p for p in _mine(d, other) if p["pos"] != "G" and not p["ir"]]
+    ctx, page, errors = open_page(browser, server, data=d)
+    page.select_option("#team", str(team["id"]))
+    # give one goalie for two skaters: one drop, and it can't be a goalie when only two would be left
+    text = _trade(page, [gs[0]["id"]], [theirs[0]["id"], theirs[1]["id"]])
+    assert "You'd need to drop" in text, text
+    assert not any(f"drop {g['name']}" in text for g in gs[1:]), text
+    # one goalie hurt before the trade, a skater swap: no goalie added to the trade's numbers
+    page.evaluate(f"state.data.players.filter(p => {json.dumps([g['id'] for g in gs[1:]])}.includes(p.id)).forEach(p => p.injury = 'DAY_TO_DAY')")
+    text = _trade(page, [sk[0]["id"]], [theirs[0]["id"]])
+    assert "with or without this trade" in text and "add " not in text, text
     assert errors == []
     ctx.close()
