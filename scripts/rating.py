@@ -271,6 +271,9 @@ WEEK_SLACK = (2.0, 1.0)
 # gives them: + this on the logit after the slack fit, outside its sums (handoff 355, findings 317: site 0.951 vs actual 0.981
 # live Oct 9-13; still ~0.96 after the boosted Week model and the slack fit)
 HEALTHY_REG_LOGIT = 0.5
+# a healthy depth skater (under DEPTH_TOI, not left early) with FIGHT_PIM+ penalty minutes in his last game keeps his spot:
+# + this on the same step (handoff 356, findings 323: +0.065/+0.092 dressed over the site's chance, offset +0.75/+0.57)
+FIGHT_LOGIT, FIGHT_PIM = 0.5, 5
 # before that: the first home game after WEEK_TRIP_MIN+ straight road games brings skaters who missed games back (+0.1) and
 # sits regulars a little (-0.6 x (1 - p)); out WEEK_OUT_LONG_GAMES+ straight games, +0.05 a game further into the week
 # (handoff 500, findings 402: Brier -0.085 / -0.111 points on top of the slack)
@@ -610,7 +613,8 @@ def load_skater_games(s, season, today):
             rows[(r["playerId"], r["gameId"])] = {
                 "id": r["playerId"], "game": r["gameId"], "date": r["gameDate"], "team": r["teamAbbrev"],
                 "name": r["skaterFullName"], "pos": r["positionCode"], "toi": (r.get("timeOnIcePerGame") or 0) / 60,
-                **{k: r.get(k) or 0 for k in ("goals", "assists", "ppPoints", "shPoints", "shots")}}
+                **{k: r.get(k) or 0 for k in ("goals", "assists", "ppPoints", "shPoints", "shots")},
+                "pim": r.get("penaltyMinutes") or 0}
         for r in reports[(a, "realtime")]:
             row = rows.get((r["playerId"], r["gameId"]))
             if row:
@@ -1683,7 +1687,8 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         sums[key] += (missing or {}).get(key[:2], 0.0)
     for r in rows:
         p = r["p"]
-        reg = HEALTHY_REG_LOGIT if r.get("regular") else 0.0  # handoff 355, not in the sums above
+        # handoffs 355 and 356, not in the sums above
+        reg = HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0
         # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
             if reg:
@@ -3021,6 +3026,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             exp_games = sum(per_game)
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
+            # a depth skater who fought in his last game (handoff 356)
+            fought = bool(gl) and not sat_last and not traded and not early and not p.get("injury") and base_dress is not None \
+                and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("pim", 0) >= FIGHT_PIM
             if gl and pid and per_game:
                 caps = [min(cap, inj)] * len(per_game)
                 if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p):
@@ -3032,7 +3040,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   # Daily Faceoff news since (handoff 355)
                                   "regular": not sat_last and not traded and not early and not p.get("injury") and not wk_why
                                   and base_dress is not None
-                                  and gl[-1]["toi"] >= DEPTH_TOI["D" if p["pos"] == "D" else "F"]})
+                                  and gl[-1]["toi"] >= DEPTH_TOI["D" if p["pos"] == "D" else "F"],
+                                  "fought": fought})
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}
@@ -3050,6 +3059,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fills_in"] = True  # a same-position teammate left the last game early (handoff 352)
             if scored and base_dress is not None:
                 why["depth_point"] = True  # a depth player who scored last game (handoff 351)
+            if fought:
+                why["fought"] = True  # a depth player who fought last game (handoff 356)
             if wk_why and news_move is not None:  # handoffs 406-408; its effect on his chance, shown from 2 points (435)
                 why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "move": round(news_move, 3), "why": wk_why}
             if boost_wk is not None:
