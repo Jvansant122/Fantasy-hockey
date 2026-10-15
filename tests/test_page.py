@@ -7,6 +7,7 @@ import http.server
 import json
 import os
 import threading
+import re
 
 import pytest
 
@@ -548,7 +549,7 @@ def test_last_night_before_first_puck_uses_every_move(browser, server, data):
         for t in d["teams"]:
             page.select_option("#team", str(t["id"]))
             text = page.locator("#upgrades").inner_text()  # visible text only: a folded line doesn't count
-            card = page.locator("#upgrades .upg", has_text="Best")
+            card = page.locator("#upgrades .upg", has_text=re.compile(r"^Best"))  # not the Drop list naming a Best move (handoff 647)
             if not card.count():
                 continue
             seen += 1
@@ -845,7 +846,7 @@ def test_table_fixes(browser, server, data):
     assert "starts tonight" not in row.inner_text()
     row.click()
     why = page.locator("#rows tr.why").inner_text()
-    assert "tonight's game has started" in why and "Daily Faceoff:" not in why
+    assert "Tonight's game has started" in why and "Daily Faceoff:" not in why
     assert page.evaluate(f"pctBadge(state.data.players.find(p => p.id === {zero['id']}))") == ""
     # search: punctuation and NHL codes
     named = next((p for p in d["players"] if any(c in p["name"] for c in ".'") and p["owner"] == "freeagent" and p["team"] != "FA"), None)
@@ -1094,7 +1095,7 @@ def test_goalie_slots_follow_start_chances_and_new_details(browser, server, data
         for i in range(min(8, rows(page))):
             page.locator("#rows tr[data-id]").nth(i).click()
             text = page.locator("#rows tr.why").inner_text()
-            assert "his own 3.10 pts per start" in text or "expects him in about 45% of the rest" in text, text
+            assert "His own 3.10 pts per start" in text or "expects him in about 45% of the rest" in text, text
             assert "his team's last 10" not in text
         assert errors == []
         ctx.close()
@@ -1749,7 +1750,7 @@ def test_goalie_details_name_the_pull_to_the_league_rate(browser, server, data):
     g["cr_why"].pop("line", None)
     ctx, page, errors = open_page(browser, server, d)
     text = page.evaluate(f"why(state.data.players.find(p => p.id === {g['id']}))")
-    assert "his own 3.96 pts per start" in text
+    assert "His own 3.96 pts per start" in text
     assert "this week priced at 3.47: pulled most of the way to the league's rate" in text and "then the schedule" in text
     g2 = page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {g['id']}); p.cr_why.sched = null; return why(p); }})()")
     assert "pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)" in g2 and "then" not in g2.split("priced at")[1]
@@ -2009,7 +2010,7 @@ def test_details_wording_for_news_cuts_and_small_samples(browser, server, data):
     why = page.evaluate(f"why(state.data.players.find(p => p.id === {p['id']}))")
     assert "no injury discount" not in why and "share cut by the Daily Faceoff news below" in why
     assert "only partly offsets the news below" in why
-    assert "last season 3.3 pts/game (1 GP)" in why
+    assert "Last season 3.3 pts/game (1 GP)" in why
     assert "(−7 percentage points on his chance to play" in why
     assert errors == []
     ctx.close()
@@ -2026,7 +2027,7 @@ def test_details_explain_week_fit_goalie_season_and_game_dates(browser, server, 
     a["cr_why"].update(week_slack=-1.0, lineup_slack=1.0, missing_regs=-0.1, missing_regs_pp=-0.004)
     b["cr_why"].update(week_slack=0.2, missing_regs=-0.3, missing_regs_pp=-0.023)
     g = next(p for p in d["players"] if p["pos"] == "G" and p.get("cr_matched") and p.get("cr_season") and p["games_left"])
-    g["cr_why"].update(g_season_share=0.42, own_pps=2.5, mover_pps=2.7)
+    g["cr_why"].update(g_season_share=0.42, own_pps=2.5, mover_pps=2.7, season_pps=2.7)
     nt = next(n for n in d["nights"] if not n["past"] and n["sp"] in g["nights"])
     g["cr_g_nights"] = {str(nt["sp"]): 0.18}
     u = next(p for p in d["players"] if p["pos"] == "G" and p is not g)
@@ -2037,9 +2038,9 @@ def test_details_explain_week_fit_goalie_season_and_game_dates(browser, server, 
     wa, wb, wg, wu = whyof(a), whyof(b), whyof(g), whyof(u)
     assert "This week his team has about 1.0 more likely" in wa and "For the rest of the season, his team has about 1.0" in wa
     assert "Regulars from last season" not in wa  # under a point
-    assert "This week his team" not in wb and "Season chance to play is about 2 points lower" in wb
+    assert "This week his team" not in wb and "Season chance to play is about 2 percentage points lower" in wb
     assert "his expected share of his team's remaining starts (42%) × 2.70 pts per start (his last-season rate adjusted" in wg
-    assert "not on an NHL roster and no NHL game this season" in wu and "pts per start (" not in wu
+    assert "Not on an NHL roster and no NHL game this season" in wu and "pts per start (" not in wu
     det = page.evaluate(f"details(state.data.players.find(p => p.id === {g['id']}))")
     assert f"Games left this matchup: " in det and f"{nt['date']} (18% to start)" in det
     assert errors == []
@@ -2210,3 +2211,74 @@ def test_moves_held_by_matchup_kind(browser, server, data):
         == [3, 3, 2, 6, 3]
     assert errors == []
     ctx.close()
+
+
+def test_details_week_lines_multiply_out_after_first_puck(browser, server, data):
+    """After the first puck every skater's 'pts/game x N games left x C% = W' and every matched goalie's 'expected
+    starts E ... x P pts per start = W' multiply out (handoffs 645, 649, 656): the chance is over the games left."""
+    from datetime import datetime, timedelta
+    if not data.get("rated") or not data.get("first_start"):
+        pytest.skip("needs rated data with a game today")
+    now = datetime.fromisoformat(data["first_start"].replace("Z", "+00:00")) + timedelta(minutes=30)
+    ctx, page, errors = open_page(browser, server, data=json.loads(json.dumps(data)), clock=now)
+    lines = page.evaluate("state.data.players.filter(p => p.cr_why).map(p => why(p).split('\\n')[0])")
+    sk = gl = 0
+    for t in lines:
+        m = re.match(r"Week: ([\d.]+) pts/game × (\d+) games? left × (\d+)% chance he plays = ([\d.]+)$", t)
+        if m:
+            a, g, c, w = float(m[1]), int(m[2]), int(m[3]) / 100, float(m[4])
+            assert (g == 1) == (" 1 game left" in t), t
+            assert abs(a * g * c - w) <= 0.06 + 0.05 * g + 0.011 * a * g, t
+            sk += 1
+        m = re.match(r"Week: expected starts ([\d.]+) of \d+ team games? left × ([\d.]+) pts per start = ([\d.]+)$", t)
+        if m:
+            assert abs(float(m[1]) * float(m[2]) - float(m[3])) <= 0.08, t
+            gl += 1
+    assert sk > 50 and gl > 10, (sk, gl)
+    assert not errors, errors
+    ctx.close()
+
+
+def test_drop_list_points_to_the_card_that_drops_him(browser, server, data):
+    """No Drop list row names a 'replace with' for a player Best moves, Mid-week swaps or the Stream card drops (handoff 647)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    ctx, page, errors = open_page(browser, server, data=_fresh(data))
+    checked = 0
+    for t in data["teams"]:
+        page.select_option("#team", str(t["id"]))
+        cards = page.evaluate("[...document.querySelectorAll('#upgrades .upg')].map(c => c.innerText)")
+        dropped = set()
+        for c in cards:
+            if c.startswith("Best"):
+                dropped |= set(re.findall(r" for (.+?) [+−]", c))
+            if c.startswith("Mid-week swaps"):
+                dropped |= {ln.split("out")[0].strip() for ln in c.split("\n")[1:] if "→" in ln}
+        drop = next((c for c in cards if c.startswith("Drop list")), "")
+        for ln in drop.split("\n")[1:]:
+            if "replace with" in ln:
+                assert not any(ln.startswith(n) for n in dropped if n), (t["id"], ln, dropped)
+                checked += 1
+    assert not errors, errors
+    ctx.close()
+
+
+def test_day_to_day_goalie_counts_toward_the_goalie_spots(browser, server, data):
+    """A day-to-day goalie still holds a roster spot, so 2 healthy + 1 day-to-day is a third goalie spot, and 3 + 1
+    day-to-day a fourth (handoff 646)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    for extra, want in ((2, "your third goalie spot"), (3, "you carry 4 goalies outside IR")):
+        d = _fresh(data)
+        d["move_limit"] = None
+        team = d["teams"][0]
+        for p in _mine(d, team, "G"):
+            p["team_id"], p["owner"] = None, "freeagent"
+        gs = [p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")][:extra + 1]
+        for i, p in enumerate(gs):
+            p.update(team_id=team["id"], owner=str(team["id"]), ir=False, injury="DAY_TO_DAY" if i == 0 else None)
+        ctx, page, errors = open_page(browser, server, data=d)
+        page.select_option("#team", str(team["id"]))
+        assert want in page.locator("#upgrades").inner_text(), (extra, want)
+        assert not errors, errors
+        ctx.close()

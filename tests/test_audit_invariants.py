@@ -379,7 +379,7 @@ def test_stream_card_drops_the_third_goalie(browser, server, data):
         st = next((c for c in txt if c.startswith("Stream")), None)
         m = st and re.search(r"Your roster is full: drop (.+?) to add him", st)
         if g3 and m:  # 3 goalies: the stream slot's goalie; 4+: the first the card lists (handoff 633)
-            gm = re.search(r"drop (.+?) for a confirmed starter", g3) or re.search(r"skater\. (.+?) [A-Z]{2,3}, ", g3)
+            gm = re.search(r"drop (.+?) for a confirmed starter", g3) or re.search(r"(?:skater|start)\. ([^.]+?) [A-Z]{2,3}, ", g3)  # after handoff 653's note when it shows
             gname = gm.group(1)
             if m.group(1) != gname:
                 bad.append((t["id"], m.group(1), gname))

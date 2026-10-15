@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 191). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 192). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1301,6 +1301,10 @@ When a card has to drop someone (activating from IR, streaming, the IR stash), i
 ## 191. Swaps for an out player
 
 A player who is out but not moved to IR is now swapped mid-week only for a sub worth as much to keep. A small gain in every simulation.
+
+## 192. Details and cards that add up
+
+After the first game of the evening, a skater's Week line showed the whole week's chance to play next to only the games left, so the numbers didn't multiply out. It now shows the chance over the games left, and a goalie's Week line shows its own multiplication too. This week's reasons for a player's chance to play now sit right under his Week line. A day-to-day goalie counts toward your goalie spots, since he still holds a roster spot. The Drop list no longer suggests a different add for a player another card already drops, and Best moves shows this week's part of each gain.
 
 ## What the independent review changed
 
