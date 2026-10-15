@@ -2249,3 +2249,40 @@ def test_week_slack_fits_each_game_to_the_lineup_spots():
     few = [row(k, (0.5, 0.5)) for k in range(5)]  # fewer listed than spots: left alone
     rating.week_slack(few, {}, None)
     assert "cr_games" not in few[0]["p"]
+
+
+def test_a_fresh_call_up_with_no_game_yet_plays_one_game_in_four(monkeypatch, tmp_path):
+    """Yet to play this season, no ESPN status, and Daily Faceoff's latest move a call-up this week: 0.25 a game, not the
+    0.10 for a player who isn't playing (handoff 502). A call-up two weeks old, or with an ESPN status, keeps the old cap."""
+    def rate(ts, injury=None):
+        fake = FakeSession(missed={1: {0, 1, 2, 3}})
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        monkeypatch.setattr(rating, "load_news", lambda: {})
+        p = espn(101, "Auston Matthews", "TOR", "C", games_left=2, injury=injury)
+        news = {"injuries": {}, "roster-moves": {"1": {"ts": ts, "up": True}}, "fetched": rating.utcnow().strftime("%Y-%m-%dT%H:%MZ")}
+        rating.add_ratings([p], 2027, TODAY, MONDAY, [], dfo_news=news)
+        return p
+    fresh = (rating.utcnow() - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M")
+    up = rate(fresh)
+    assert up["cr_dress"] == pytest.approx(rating.RECALL_NEW_DRESS, abs=0.03) and up["cr_why"]["called_up"]
+    old = rate((rating.utcnow() - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M"))
+    assert old["cr_dress"] <= 0.11 and "called_up" not in old["cr_why"]
+    hurt = rate(fresh, injury="OUT")
+    assert "called_up" not in hurt["cr_why"] and hurt["cr_dress"] <= 0.11
+
+
+def test_home_after_a_road_trip_and_long_absences_move_week_chances():
+    """The first home game after 2+ road games brings back skaters who missed games and sits regulars a little; a
+    skater out 3+ games comes back a bit faster later in the week (handoff 500)."""
+    venue = {"2026-10-03": False, "2026-10-05": False, "2026-10-07": True, "2026-10-09": False, "2026-10-11": True}
+    assert rating.after_trip(venue, ["2026-10-07", "2026-10-09", "2026-10-11"]) == [True, False, False]
+    def row(pid, chances, missed, trip):
+        return {"p": {"cr_fpg": 2.0, "cr_why": {}}, "pid": pid, "team": "TOR", "isD": False, "dates": ["2026-10-07", "2026-10-09"],
+                "per_game": list(chances), "before": list(chances), "caps": [1.0, 1.0], "missed": missed, "after_trip": trip}
+    rows = [row(1, (0.9, 0.9), 0, [True, False]), row(2, (0.3, 0.3), 1, [True, False]), row(3, (0.3, 0.3), 4, [False, False])]
+    rating.week_slack(rows, {}, None)  # 3 forwards: too few for the slack, so only these shifts move them
+    regular, back, long_out = (r["p"] for r in rows)
+    assert regular["cr_dress_next"] < 0.9 and back["cr_dress_next"] > 0.3
+    assert long_out["cr_dress_next"] == 0.3 and long_out["cr_games"] > 0.6
+    assert regular["cr"] == round(2.0 * regular["cr_games"], 2)

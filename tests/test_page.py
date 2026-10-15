@@ -1214,6 +1214,12 @@ def test_phone_text_taps_names_and_tags(browser, server, data, width):
         short = page.evaluate("""[...document.querySelectorAll('details.more > summary, details.fold > summary, main > .sub a')]
           .filter(e => e.offsetParent).map(e => e.getBoundingClientRect()).filter(r => r.height < 24).length""")
         assert short == 0
+        # the folds and the trade x at 32 px (handoff 498)
+        low = page.evaluate("""[...document.querySelectorAll('details.more > summary, details.fold > summary, details.footfold > summary, .tside button')]
+          .filter(e => e.offsetParent).map(e => e.getBoundingClientRect().height).filter(h => h < 31.5)""")
+        assert low == [], low
+        # the 'yours' tag stays off phones' own rows (handoff 495)
+        assert page.evaluate("[...document.querySelectorAll('#rows .tag.own')].filter(e => e.offsetParent).length") == 0
         # no name cut short: the cell's text fits its box
         cut = page.evaluate("[...document.querySelectorAll('#rows td:first-child')].filter(td => td.scrollWidth > td.clientWidth + 1).length")
         assert cut == 0
@@ -1331,7 +1337,8 @@ def test_nights_for_a_later_week(browser, server, data):
     for sp in w["sps"]:
         f = sum(1 for p in mine if p["pos"] != "D" and sp in d["team_nights"].get(p["team"], []))
         dd = sum(1 for p in mine if p["pos"] == "D" and sp in d["team_nights"].get(p["team"], []))
-        assert slots[str(sp)]["F"] == max(0, 9 - f) and slots[str(sp)]["D"] == max(0, 5 - dd) + (1 if f <= 9 and dd <= 5 else 0)
+        assert slots[str(sp)]["F"] == max(0, 9 - f) and slots[str(sp)]["D"] == max(0, 5 - dd)
+        assert slots[str(sp)]["U"] == (1 if f <= 9 and dd <= 5 else 0)  # the UTL apart: a forward or a D can use it (handoff 499)
     # Min games counts the week's games; sorting and details follow it
     page.fill("#ming", "4")
     assert all(int(t) >= 4 for t in page.evaluate("[...document.querySelectorAll('#rows tr[data-id]')].map(r => r.children[6].innerText)"))
