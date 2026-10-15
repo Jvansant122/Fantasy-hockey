@@ -224,7 +224,7 @@
   <div class="card faonly" id="upgcard">
     <h2>Upgrades</h2>
     <div class="sub" id="upghead">Free agents projected above your team's weakest healthy player, and who to drop. <b>keep</b> = this week's points + about 2 weeks of points per game (Season × 7).
-      <details class="more"><summary>How to use your moves</summary>Your league allows 7 moves a matchup (6 in the 6-day first one, 14 in a two-week playoff round), usable any day. On Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep 3 moves (6 in a two-week round) for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</details></div>
+      <details class="more"><summary>How to use your moves</summary>Your league allows 7 moves a matchup (6 in the 6-day first one, 14 in a two-week playoff round), usable any day. On Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep 3 moves (2 in the 6-day first matchup, 6 in the two-week final) for injury swaps and for streaming a goalie with a confirmed start on nights your goalies leave a slot open. Carry 2 goalies and use the third roster spot for goalie streams.</details></div>
     <div class="upgrades" id="upgrades" style="margin-top:8px"></div>
   </div>
 
@@ -398,6 +398,9 @@ function openLeft(p) {
   if (!isFA(p) || !state.team) return null;
   return state.data.nights.filter(n => !n.past && !goneTonight(p, n) && p.nights.includes(n.sp) && hasRoom(n.sp, group(p))).length;
 }
+// moves to hold for swaps and streams: 3 of a normal week's 7 and of the first playoff round's 14, 2 of the 6-day opener's
+// 6, and 6 of the final's 14 (move simulator: handoffs 488, 627, 628)
+const holdCap = (limit, final) => final ? Math.round(3 / 7 * limit) : Math.max(0, Math.min(3, limit - 4));
 function hasRoom(sp, g) {
   return room(state.openSlots[sp], g);
 }
@@ -819,7 +822,7 @@ function renderUpgrades() {
   const gmTxt = n => `${n} game${n === 1 ? "" : "s"}`;
   const gainTxt = v => noMoves ? `+${fmt(v / KEEP_GAMES)} Season` : `+${fmt(v)} ${d.rated && !d.final_matchup ? "keep" : "pts"}`;
   // Two-week playoff rounds (findings 109): one pool of moves for both weeks, so plan per week
-  if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. On Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep ${d.move_limit ? Math.round(3 / 7 * d.move_limit) : 6} moves for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
+  if (d.matchup_weeks > 1) cards.push(`<div class="upg"><b>Two-week playoff round</b> <span class="drop">· ${d.move_limit ? `${d.move_limit} moves` : "one pool of moves"} for the whole round, and unused moves carry into the second week. On Monday add every skater worth 3.5+ keep points over your weakest at his position (usually 1-3), and keep ${holdCap(d.move_limit || 14, d.final_matchup)} moves for injury swaps and goalie streams. Projections here cover both weeks.${d.final_matchup ? " This is the final, so keep value counts this round only: grab whoever scores most now." : ""}</span></div>`);
   // Mid-week swaps (research section 51): a skater who is out, or sat his team's last game while it still plays this week,
   // unless Daily Faceoff's projected lines have him back in (findings 174);
   // next to the best free agent at his position for the rest of the week. Held moves (2 on Monday, keep the other 5) cover these and goalie streams.
@@ -974,13 +977,14 @@ function renderUpgrades() {
     // with any move left, not only 3+: even one unused move is lost (findings 238)
     // not from yesterday's data: Monday 0-4 AM still shows Sunday as tonight (findings 240)
     lastCall = !noMoves && !reset && !locked && !stale(d) && !d.final_matchup && lastNight && realLeft > 0;
-    // hold one move for each night still to come, up to 3 of 7 (6 of 14), for injury swaps and goalie streams, so a team
+    // hold one move for each night still to come, up to holdCap's number, for injury swaps and goalie streams, so a team
     // following the card doesn't spend every move at the first update (findings 51, 59, 239; handoff 488: the move simulator
     // with today's ratings gives +0.9 points a week over holding 5, every season tested)
     const nightsAfter = d.nights.filter(n => !n.past && n !== tonight && n.games > 0).length;  // nights without NHL games hold nothing (findings 291 (5))
-    // counting next matchup's moves, its whole week is still to come: hold 3 of 7 (handoffs 416, 488)
-    const holdMax = Math.round(3 / 7 * (d.move_limit || 7));
-    const hold = lastCall ? 0 : nextCount || reset ? Math.round(3 / 7 * (cnt.limit || 7)) : Math.min(nightsAfter, holdMax);
+    // counting next matchup's moves, its whole week is still to come: hold 3 of 7 (handoffs 416, 488); after a two-week
+    // round's last night the next matchup is the final
+    const holdMax = holdCap(d.move_limit || 7, d.final_matchup);
+    const hold = lastCall ? 0 : nextCount || reset ? holdCap(cnt.limit || 7, d.matchup_weeks > 1) : Math.min(nightsAfter, holdMax);
     spare = realLeft != null ? Math.max(0, realLeft - swapSubs.size - hold) : 2;
     // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
     const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);

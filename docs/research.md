@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 180). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 181). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1257,6 +1257,10 @@ A goalie who lost his last start while letting in 3 or 4 goals (short of a bad s
 ## 180. Three-goalie teams and their no. 1
 
 When three or more goalies started a team's last 10 games, the site already cuts the ones who haven't started lately for the next game. For the games after that, the no. 1 took back more starts than the site gave him: about 1.45 a week against 1.32. He now gets a lift in every game after the next. Every one of 15 held-out seasons was better.
+
+## 181. How many moves to hold in the playoffs
+
+Best moves keeps a few moves back for injury swaps and goalie streams: 3 of a normal week's 7. In the two-week playoff rounds it held 6 of 14. Replaying past seasons with the move simulator, holding 3 in the first playoff round gained about 0.4 points a week over holding 6, and holding 2 in the 6-day opening week beat holding 3. The final keeps 6, where holding 3 was mixed. The card and the help text now use these numbers.
 
 ## What the independent review changed
 
