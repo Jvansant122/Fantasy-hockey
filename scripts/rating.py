@@ -345,9 +345,10 @@ SCRATCH_LONG_LOGIT, SCRATCH_LONG_GAMES = 0.375, 5
 # scratch fills in, D most (0.6 dressed against the site's 0.3, findings 307, handoff 352)
 # Handoff 353 (findings 308): a second band, 40-55% of his minutes, and D +1.8 under 40%: (share below, {F, D} logit)
 TEAMMATE_LEFT_BANDS, TEAMMATE_LEFT_GP = ((0.40, {"F": 0.5, "D": 1.8}), (0.55, {"F": 0.25, "D": 1.2})), 5
-# a healthy scratch after his team's last game: -0.15 after a win (any kind), +0.15 after a non-win, on top of the win-run
-# shift (findings 312, handoff 354)
-SCRATCH_LAST_RESULT_LOGIT = 0.225  # 0.15 before it moved after the boosted Week model; refit in handoff 517
+# a healthy scratch after his team's last game, on top of the win-run shift (findings 312, handoff 354): by game from his
+# team's next one (game 1, game 2, later games), strongest next game and gone by the third after a non-win (findings
+# 326-327, handoff 357; replaces 354's flat 0.15, 0.225 after handoff 517)
+SCRATCH_LAST_RESULT_BY_GAME = {"win": (-0.35, -0.15, -0.10), "other": (0.20, 0.15, 0.0)}
 # the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
 # model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
@@ -2979,8 +2980,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             filled = scratch and bool(bands)
             if filled:  # the teammate who played least of his minutes sets the lift (handoff 353)
                 post_z += TEAMMATE_LEFT_BANDS[min(bands)][1]["D" if p["pos"] == "D" else "F"]
-            if scratch and forms.get(team):  # his team's last result (handoff 354)
-                post_z += -SCRATCH_LAST_RESULT_LOGIT if forms[team][1] > 0 else SCRATCH_LAST_RESULT_LOGIT
+            # his team's last result, by game (handoffs 354, 357)
+            by_res = SCRATCH_LAST_RESULT_BY_GAME["win" if forms[team][1] > 0 else "other"] if scratch and forms.get(team) else None
             # a depth skater who scored in the last game keeps his spot more (handoff 351)
             scored = bool(gl) and not sat_last and not traded and not early and not p.get("injury") \
                 and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("points", 0) > 0
@@ -3011,15 +3012,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     b = min(max(season_boost.predict(boost_week, boost_x[pid]), BOOST_WEEK_CLIP[0]), BOOST_WEEK_CLIP[1])
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
             has_news = bool(wk_news) and (any(wk_news) or bool(wk_down))
-            if per_game and base_dress is not None and (boost_wk is not None or has_news or post_z):
-                shift = lambda news, down, extra=post_z: [
-                    q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + (boost_wk or 0.0) + extra + z + down))), cap, inj)
-                    for q, z in zip(per_game, news)]
+            post_g = [post_z + (by_res[min(k, len(by_res) - 1)] if by_res else 0.0) for k in range(len(per_game))]
+            if per_game and base_dress is not None and (boost_wk is not None or has_news or any(post_g)):
+                shift = lambda news, down, extra=post_g: [
+                    q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + (boost_wk or 0.0) + e + z + down))), cap, inj)
+                    for q, z, e in zip(per_game, news, extra)]
                 mean = lambda xs: sum(xs) / len(xs)
                 boosted = shift([0.0] * len(per_game), 0.0)  # the boost and the scratch lifts (handoffs 515-516)
                 final = shift(wk_news, wk_down) if has_news else boosted
                 if boost_wk is not None:
-                    boost_move = mean(shift([0.0] * len(per_game), 0.0, 0.0)) - mean(per_game)  # the boost alone (425)
+                    boost_move = mean(shift([0.0] * len(per_game), 0.0, [0.0] * len(per_game))) - mean(per_game)  # the boost alone (425)
                 if has_news:
                     news_move = mean(final) - mean(boosted)  # the news's real effect after the caps (handoff 435)
                 per_game = final
