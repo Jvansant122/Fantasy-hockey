@@ -255,6 +255,11 @@ NEWS_STALE_DAYS = 2
 # lineup spots per team (12 F, 6 D) and the slack weights on the Season dress logit (findings 370, handoff 350)
 LINEUP_SPOTS = {False: 12, True: 6}
 LINEUP_SLACK = (1.34, 2.84)
+# last season's regulars (MISSING_REG_GP+ games) with no NHL game yet this season: they come back and take games from the
+# skaters filling in, which the slack (skaters with games this season) can't see. Season dress logit += c x W x K/(K + team
+# games), W = their last-season TOI/G / 15 min (F) or 20 min (D), summed per current team; team MISSING_REG_MIN_TG+ games
+# (handoff 509, findings 402: Season Spearman +0.0003 all / +0.0007 free agents, every test season)
+MISSING_REG_C, MISSING_REG_K, MISSING_REG_GP, MISSING_REG_MIN_TG = -0.08, 20, 40, 3
 # Week: per team game, the same open spots from the per-game Week chances themselves; logit += over x min(s, 0) + room x
 # max(s, 0), s = open spots / 3 (handoff 489, findings 402: Brier -0.50 / -0.57 points, fits 2.23/1.14 and 1.98/0.96)
 WEEK_SLACK = (2.0, 1.0)
@@ -1673,7 +1678,7 @@ def week_slack(rows, boost_x, boost_week):
         p["cr_dress_next"] = round(per_game[0], 2)
 
 
-def lineup_slack(lineup, boost_x, boost_dress, model):
+def lineup_slack(lineup, boost_x, boost_dress, model, missing=None):
     """Open lineup spots (findings 370, handoff 350): per NHL team and position group, LINEUP_SPOTS minus the summed Season
     dress shares of its skaters with games this season (team = his latest). Skaters not on the site count with the boosted
     model's share (within 0.015 of the final one on average). Each listed skater's logit then moves by
@@ -1693,21 +1698,29 @@ def lineup_slack(lineup, boost_x, boost_dress, model):
             if pid not in seen:
                 add((x["team"], x["isD"] == 1.0), min(max(season_boost.predict(boost_dress, x), 0.0), 1.0))
     for e in lineup:
-        # fewer players than spots means missing game logs, not open spots: leave that group alone
-        if not e["pts"] or counts[(e["team"], e["isD"])] < LINEUP_SPOTS[e["isD"]]:
+        if not e["pts"]:
             continue
-        slack = LINEUP_SPOTS[e["isD"]] - sums[(e["team"], e["isD"])]
+        back = (missing or {}).get(e["team"], 0.0)  # regulars yet to play this season (handoff 509)
+        # fewer players than spots means missing game logs, not open spots: leave that group's slack alone
+        slack = None if counts[(e["team"], e["isD"])] < LINEUP_SPOTS[e["isD"]] else LINEUP_SPOTS[e["isD"]] - sums[(e["team"], e["isD"])]
         # a skater Daily Faceoff reports sent down since his last game doesn't fill his team's open spots (handoff 420)
-        if slack > 0 and "sent down" in (e["p"]["cr_why"].get("season_news") or ()):
+        if slack is not None and slack > 0 and "sent down" in (e["p"]["cr_why"].get("season_news") or ()):
+            slack = None
+        if slack is None and not back:
             continue
         q = min(max(e["share"], 0.001), 0.999)
-        z = math.log(q / (1 - q)) + (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
+        z = math.log(q / (1 - q)) + back
+        if slack is not None:
+            z += (LINEUP_SLACK[0] * max(slack, 0) + LINEUP_SLACK[1] * min(slack, 0)) / 3 * (1 - q)
         share = 1 / (1 + math.exp(-z))
         p, why = e["p"], e["p"]["cr_why"]
         season = share * e["pts"]
         p["cr_season"] = round(season, 2)
         p["proj_gp"] = round(e["gp"] + share * e["left"])
-        why["lineup_slack"] = round(slack, 1)
+        if slack is not None:
+            why["lineup_slack"] = round(slack, 1)
+        if back:
+            why["missing_regs"] = round(back, 2)
         rng, _ = model.season_range(season, *e["range"])
         if rng:
             why["season_range"] = rng
@@ -3067,7 +3080,20 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
 
     season_drift(drift_rows, model)
-    lineup_slack(lineup, boost_x, boost_dress, model)
+    # each team's last-season regulars with no NHL game yet this season, on his current team (NHL roster, else ESPN's), and
+    # only while on an NHL roster or an ESPN NHL team, so summer moves and departures don't count (handoff 509)
+    now_team = {p["nhl_id"]: ESPN_TO_NHL.get(p["team"], p["team"]) for p in players
+                if p.get("nhl_id") and p.get("team") and p["team"] != "FA"}
+    now_team.update({pid: team for team, r in rosters.items() for pid, _, _ in r})
+    missing_w = {}
+    for mid, pv in prev.items():
+        tm = now_team.get(mid)
+        if tm and (pv.get("gp") or 0) >= MISSING_REG_GP and mid not in by_player and not pv.get("season_label") \
+                and pv.get("pos") != "G":
+            missing_w[tm] = missing_w.get(tm, 0.0) + (pv.get("toi") or 0) / (20 if pv.get("pos") == "D" else 15)
+    missing = {tm: MISSING_REG_C * w * MISSING_REG_K / (MISSING_REG_K + len(team_games.get(tm, [])))
+               for tm, w in missing_w.items() if len(team_games.get(tm, [])) >= MISSING_REG_MIN_TG}
+    lineup_slack(lineup, boost_x, boost_dress, model, missing)
     week_slack(week_rows, boost_x, boost_week)
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)

@@ -636,6 +636,10 @@ def test_roster_size_rules(browser, server, data):
     fa = next(p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G")  # worth stashing
     fa.update(injury="OUT", cr_fpg=2.0, cr_season=1.0)
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
+    # two healthy free agents clearly better than his roster, so Best moves has an add with a drop whatever the day's data
+    top = max(p.get("cr_season") or 0 for p in sk)
+    for p in [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G" and not p.get("injury") and p is not fa][:2]:
+        p["cr_season"] = round(top + 1.0, 2)
     ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     activate = _card(page, "Activate from IR")

@@ -551,6 +551,8 @@ function why(p) {
     if (w.lineup_slack != null && Math.abs(w.lineup_slack) >= 0.5) parts.push(w.lineup_slack > 0
       ? `His team has about ${n(w.lineup_slack)} more ${p.pos === "D" ? "defense" : "forward"} spots than expected regulars, so he should play more${newsCut ? " a little, which only partly offsets the news below" : ""}`
       : `His team has about ${n(-w.lineup_slack)} more expected regulars than ${p.pos === "D" ? "defense" : "forward"} spots, so he may play less`);
+    // last season's regulars on his team who haven't played yet this season (handoff 509), when they move his logit 0.02+
+    if (w.missing_regs && Math.abs(w.missing_regs) >= 0.02) parts.push("Regulars from last season on his team haven't played yet, and when they return they take games from the players filling in, so his Season chance to play is a little lower");
     if (w.boost_dress != null || w.boost_fpg != null) parts.push(`A model trained on 16 seasons of game logs expects ` +
       [w.boost_dress != null ? `him in about ${Math.round(w.boost_dress * 100)}% of the rest of the season` : "",
        w.boost_fpg != null ? `${n(w.boost_fpg)} pts/game from here` : ""].filter(Boolean).join(" and ") + "; the Season rating moves part of the way toward it");
