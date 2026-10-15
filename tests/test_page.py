@@ -799,9 +799,10 @@ def test_open_tab_reloads(browser, server, data):
     page.wait_for_function("document.getElementById('updated').textContent.startsWith('Matchup')")
     # a tab open across a scheduled run (15 minutes after it) or across midnight ET reloads too (handoff 469)
     assert page.evaluate("""(() => {
-      const at = new Date('2026-10-15T13:00:00Z').getTime();  // 9 AM ET, before the 9:10 run
+      // a year before the data, so no player's today_start (or this test's own, set to now) falls in the window
+      const at = new Date('2025-10-15T13:00:00Z').getTime();  // 9 AM ET, before the 9:10 run
       const was = loadedAt; loadedAt = at;
-      const out = [reloadDue(at + 20 * 60e3), reloadDue(at + 26 * 60e3), reloadDue(new Date('2026-10-16T04:30:00Z').getTime())];
+      const out = [reloadDue(at + 20 * 60e3), reloadDue(at + 26 * 60e3), reloadDue(new Date('2025-10-16T04:30:00Z').getTime())];
       loadedAt = was; return out;
     })()""") == [False, True, True]
     assert errors == []
