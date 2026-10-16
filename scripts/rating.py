@@ -3351,7 +3351,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
             season_share, news_why, boost_q = None, [], None
             if df_ and model.season_lr:
-                sx = season_dress_features(gl, team, tg, f, df_, prev.get(pid), fpg_s, model.season_lr["markov"],
+                sx = season_dress_features(gl, team, tg, f, df_w, prev.get(pid), fpg_s, model.season_lr["markov"],
                                            played=len(team_games.get(team, [])))
                 news_z, news_why = news_season_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sx["os_k"], sx["gp_now"], now_utc)
                 # missed his team's last game with an ESPN status: ESPN's stated timeline or out-for-the-season note (658-659)
