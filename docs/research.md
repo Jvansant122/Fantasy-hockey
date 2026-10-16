@@ -1336,7 +1336,7 @@ ESPN lists a player who's sick the same way it lists one who's hurt, so the Week
 
 ## 200. Goalies with fresh injury news
 
-Daily Faceoff often reports a goalie's injury before ESPN lists him. A goalie with Daily Faceoff injury news since his last appearance (at most two weeks old, and not saying he's back or practising fully) now gets at most a 20% chance of starting his team's next game and 35% for later games; his partner picks up the rest. In a replay of 15 seasons on the site's goalie model, those nights' start predictions got 2.5-13% more accurate, depending on how often ESPN had already listed him, and were better in 14 or 15 of the 15 seasons. ESPN's own status, a Daily Faceoff confirmed or likely start, and the Season rating work as before.
+Daily Faceoff often reports a goalie's injury before ESPN lists him. A goalie with Daily Faceoff injury news since his last appearance (at most two weeks old, and not saying he's back or practising fully) now has his chance of starting cut to a fifth of what it would be for his team's next game and about a third for later games, before it is split with his partner, who picks up the rest. In a replay of 15 seasons on the site's goalie model, those nights' start predictions got 2.5-13% more accurate, depending on how often ESPN had already listed him, and were better in 14 or 15 of the 15 seasons. ESPN's own status, a Daily Faceoff confirmed or likely start, and the Season rating work as before.
 
 ## 201. Nothing jumps at the first puck
 
