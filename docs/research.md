@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 203). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 204). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1350,6 +1350,10 @@ Once a night's first game starts, a free agent's game later that night no longer
 ## 203. Who else is in the lineup, and power-play share
 
 A skater's minutes depend on who else dresses next to him. The ice-time forecasts now compare the minutes his same-position teammates usually play in his games (over his last 10) with the minutes the teammates expected to dress next week would play (each one's chance to dress from the Week's dress model). When a regular who eats minutes is likely to sit, he is forecast a bit more ice time, and the reverse when one is due back. The power-play forecast now also reads his share of his team's power-play time (last 5, last 10 and season games) times how much power-play time his team usually draws. Ice-time forecast error fell about 0.5% in each of the three seasons tested; the Week rating's weekly ranking rose a little in every season, most for free agents, and so did the Season rating's rest-of-season ranking after its boosted ice-time forecasts were refit on top.
+
+## 204. Left out of tonight's lines
+
+When Daily Faceoff's fresh lines for tonight leave out a player who dressed for his team's last game and has no ESPN status, he almost always sits: 4 of 45 such players dressed in the first week of logs. The site still had them at about 80%. Tonight's game for such a player now counts at most 15%, and his later games are unchanged. Replayed on every log so far, this made tonight's chance-to-play predictions about 23% more accurate overall (Brier score 0.0186 to 0.0144). We'll re-grade it at the Oct 30 review.
 
 ## What the independent review changed
 
