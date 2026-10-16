@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 16, 2026 (sections through 205). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 16, 2026 (sections through 206). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1358,6 +1358,10 @@ When Daily Faceoff's fresh lines for tonight leave out a player who dressed for 
 ## 205. Opening night and the lines
 
 The tonight cap for a regular left out of Daily Faceoff's lines (section 204) was measured on players who dressed their team's last game. Before a team's first game there is no last game, so a training-camp lineup could cap a regular's opener at 15%. The cap now waits until his team has played. It moved no players on Oct 15's data.
+
+## 206. A no. 1 goalie back from a spell
+
+When a team's no. 1 (half or more of its 20 starts before the gap) goes five or more team games without a start and then starts again, the site used to read him too low for the next couple of games: he started 0.363 of next games against 0.247 given, and 0.433 of later ones against 0.357. Now his start chance gets a small lift (+0.5 on the log-odds) for the team's first two games after his return. On 15 seasons of replayed site starts it improved the start forecasts on the nights it touches in all 15 seasons, by about 0.8 to 1.0% (Brier score), and beat a placebo built from matched no. 1s. No team qualifies yet this season.
 
 ## What the independent review changed
 

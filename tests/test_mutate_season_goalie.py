@@ -106,3 +106,26 @@ def test_even_tandem_scale_is_applied():
     zero = dict(B2B_AHEAD_NIGHT1=0.0, B2B_AHEAD_NIGHT2_NEXT=0.0)
     gap = lambda **kw: abs(_night(even, pair, today, **kw)[1]["2026-10-23"] - _night(even, pair, today, **zero, **kw)[1]["2026-10-23"])
     assert 0 < gap() < gap(EVEN_TANDEM_B2B_SCALE=1.0)
+
+
+def test_back_from_spell_finds_the_latest_gap():
+    """Handoff 711: games since his first start back and his share of the 20 starts before his latest 5+ game gap."""
+    assert rating.back_from_spell([1] * 12 + [2] * 6 + [1], 1) == (0, 1.0)
+    assert rating.back_from_spell([1] * 12 + [2] * 6 + [1, 2], 1) == (1, 1.0)
+    assert rating.back_from_spell([1, 2] * 6 + [2] * 5 + [1], 1) == (0, 6 / 11)  # the window ends at his last start before the gap
+    assert rating.back_from_spell([1] * 12 + [2] * 4 + [1], 1) is None  # a 4-game gap is no spell
+    assert rating.back_from_spell([1] * 12, 1) is None and rating.back_from_spell([2] * 12, 1) is None
+
+
+def test_no1_back_from_a_spell_gets_the_lift_for_two_games():
+    """Handoff 711: a no. 1 back from 5+ team games without a start gets BACK_NO1_LOGIT on every game left while his first
+    start back is one of the team's last 2; not once he is 2 games past it, nor for a goalie who was the backup."""
+    hist = lambda tail: [(f"2026-09-{d:02d}", g) for d, g in zip(range(1, 31), [1] * 12 + [2] * 6 + tail)]
+    dates, today = ["2026-10-20", "2026-10-22"], date(2026, 10, 20)
+    for tail in ([1], [1, 2]):
+        on, off = _night(hist(tail), dates, today), _night(hist(tail), dates, today, BACK_NO1_LOGIT=0.0)
+        assert all(on[1][d] > off[1][d] for d in dates), tail
+    late = hist([1, 2, 1])
+    assert _night(late, dates, today)[1] == pytest.approx(_night(late, dates, today, BACK_NO1_LOGIT=0.0)[1])
+    backup = [(f"2026-09-{d:02d}", g) for d, g in zip(range(1, 31), [2, 2, 2, 1] * 3 + [2] * 6 + [1])]
+    assert _night(backup, dates, today)[1] == pytest.approx(_night(backup, dates, today, BACK_NO1_LOGIT=0.0)[1])

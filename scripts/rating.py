@@ -201,6 +201,9 @@ RESTED_NO1_LOGIT = 0.05
 # another goalie started the team's last game, win or lose: the no. 1 started 0.571 of the games after vs 0.528 given; on
 # the reported chance, every game left (handoff 364, ledger 2137: 15 of 15 seasons better at +0.1, the chain version weaker)
 NO1_AFTER_OTHER_LOGIT = 0.1
+# no. 1 back from 5+ team games without a start, his first start back in the team's last 2 games: next game 0.363 vs 0.247,
+# later 0.433 vs 0.357 (hunt14 gback, findings 514; handoff 711: 15 of 15 seasons better at +0.5, +0.7 and up worse in 2023-24)
+BACK_SPELL_GAMES, BACK_SPELL_SHARE, BACK_NO1_LOGIT = 5, 0.5, 0.5
 # the rest of the week after those next-game rules: the last starter read high in two later games (findings 249, every
 # season): a strict rotation's third game (0.48 against 0.37 actual) and, when no rotation, pattern, last-6 or
 # three-goalie rule fires, the game after next (0.56 against 0.51)
@@ -2381,6 +2384,17 @@ def repeating_pattern(seq, cands):
     return best[:2] if best else None
 
 
+def back_from_spell(seq, gid):
+    """His latest gap of BACK_SPELL_GAMES+ team games without a start: (team games since his first start back, his share
+    of the 20 starts before the gap), or None (handoff 711)."""
+    idx = [i for i, x in enumerate(seq) if x == gid]
+    for i in range(len(idx) - 1, 0, -1):
+        if idx[i] - idx[i - 1] - 1 >= BACK_SPELL_GAMES:
+            win = seq[max(0, idx[i - 1] - 19):idx[i - 1] + 1]
+            return len(seq) - 1 - idx[i], win.count(gid) / len(win)
+    return None
+
+
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
                   opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None):
@@ -2586,6 +2600,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 z += RELIEF_LOGITS[min(ahead, 1)] + relieved[gid]
             if len(seq) < EARLY_SHARE_GAMES and gid not in seq:  # no start for this team yet, early season (handoff 450)
                 z += EARLY_NO_START_LOGIT
+            b = back_from_spell(seq, gid)  # a no. 1 back from a spell, first 2 team games after his first start back (711)
+            if b and b[0] <= 1 and b[1] >= BACK_SPELL_SHARE:
+                z += BACK_NO1_LOGIT
             if z and 0 < raw[gid] < 1:
                 raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + z)))
             # Daily Faceoff injury news: the factor is min(ESPN's, 0.2 next game, 0.35 later) (handoff 679)
