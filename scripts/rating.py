@@ -1553,6 +1553,19 @@ class Model:
         return 1 / (1 + math.exp(-z))
 
 
+def dressed_any_team(gl, tg, team_games, n):
+    """His share of his current team's last n games as the Week dress logistic was fit: games he played for any team that
+    fall inside that team's own last n, over n (a skater traded within them keeps his old team's games; handoff 717)."""
+    last = tg[-n:]
+    if not last:
+        return None
+    team, windows = gl[-1]["team"] if gl else None, {}
+    for g in gl:
+        if g["team"] not in windows:
+            windows[g["team"]] = set(last if g["team"] == team else team_games.get(g["team"], [])[-n:])
+    return sum(g["game"] in windows[g["team"]] for g in gl) / len(last)
+
+
 def skater_features(games, prev, xg_now, xg_prev, team_games, is_d=False, p2=None, context=None, age=None, two_season=False):
     """Inputs for one skater. games: his games this season, oldest first. team_games: his team's game ids, oldest first.
     p2: his per-game rates two seasons ago (findings 310 (4)), None if he didn't play then. context: his lineup_context
@@ -3294,7 +3307,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 p_dress = 0.9 if prev.get(pid) else 0.5
             else:
                 df_ = dress_features(gl, team, tg, f, today) if model.dress_lr else None
-                p_dress = base_dress = model.dress_logit(df_) if df_ else model.dress(f["dressed3"], f["dressed10"])
+                # the Week logistic reads dressed3/10 on its fit convention, old-team games kept (handoff 717); the
+                # Season logistic keeps df_
+                df_w = dress_features(gl, team, tg, {**f, **{f"dressed{n}": dressed_any_team(gl, tg, team_games, n) for n in (3, 10)}},
+                                      today) if df_ and not traded else df_
+                p_dress = base_dress = model.dress_logit(df_w) if df_ else model.dress(f["dressed3"], f["dressed10"])
                 last = gl[-1]["date"] if gl else None
                 idle = None if last is None else (today - date.fromisoformat(last)).days
                 if len(tg) >= 3 and (idle is None or idle > 14):

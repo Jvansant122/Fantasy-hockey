@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 16, 2026 (sections through 207). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 16, 2026 (sections through 208). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1366,6 +1366,10 @@ When a team's no. 1 (half or more of its 20 starts before the gap) goes five or 
 ## 207. Back from an absence
 
 Three small changes for skaters returning after missing five or more team games in a row. A forward in his first 1-3 games back is rated 4% lower per game for the Week (returning forwards scored 0.92-0.97 of what the Week model expected; better ranking in every held-out season, defensemen excluded because the same cut made them worse). The player who filled in for him gets a slightly lower chance to dress while the regular is in his first 1-3 games back (fill-ins dressed 0.66 against 0.69 predicted, better in 14 of 15 seasons). And a skater ESPN still lists on IR who has already played full minutes since coming back is capped at 85% instead of the IR caps (they dressed 0.80 against 0.19 predicted, a small sample of 9 players). No skater qualifies on Oct 16's data. Only games he played for his current team count toward the absence, so a player traded to a team he had played against doesn't read as returning (handoff 715). The older comeback lift on chance to play (section 168's +0.4) now counts games the same way (handoff 716): about 7% of its long-gap lifts in 2010-26 went to traded players who had missed nothing, and dropping them improved the forecasts in both held-out seasons.
+
+## 208. A traded skater's recent games
+
+The Week chance-to-play model was fit counting every game a skater played for any team within that team's own recent games. The site counted only his current team's games, so a skater traded in the last ten games looked as if he had missed his old team's games. The Week model now reads them the way it was fit. On 2010-26 player-weeks where the two counts differ, the base model's error fell 10.9%, better in all 16 seasons. On the full current stack the gain is small (0.2-0.4% on those rows), because the boosted weekly model already corrects most of it. The Season rating and the points model are unchanged. On Oct 16's data three skaters moved by 0.01.
 
 ## What the independent review changed
 
