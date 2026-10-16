@@ -3452,11 +3452,14 @@ def test_return_from_absence_rules(monkeypatch, tmp_path):
 def test_back_gap_sees_only_games_for_the_team_it_walks(monkeypatch, tmp_path):
     """Handoff 715: a traded player's games for his old team (one may share an id with the new team's schedule, head to
     head) are no games for the new team, so he doesn't read as back from an absence."""
-    seen, real = [], rating.back_gap
+    seen, real, cb_seen, cb_real = [], rating.back_gap, [], rating.comeback_logit
     monkeypatch.setattr(rating, "back_gap", lambda tg, played: seen.append((list(tg), set(played))) or real(tg, played))
+    monkeypatch.setattr(rating, "comeback_logit",  # the comeback lift's walk too (handoff 716)
+                        lambda tg, played, sl, pid: cb_seen.append((list(tg), set(played))) or cb_real(tg, played, sl, pid))
     rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")],
          fake=FakeSession(moved={1: 2}))
     assert seen and all(played <= set(tg) for tg, played in seen)
+    assert cb_seen and all(played <= set(tg) for tg, played in cb_seen)
     # head to head: his old team's game against the new one is on the new team's schedule
     gl = [{"id": 1, "team": "OTT", "pos": "C", "game": x} for x in range(10)] + [{"id": 1, "team": "PIT", "pos": "C", "game": 25}]
     tg = list(range(10)) + list(range(11, 26))  # PIT's games, the first 10 against OTT while he was there

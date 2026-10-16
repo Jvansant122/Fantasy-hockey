@@ -2917,7 +2917,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     want = set()
     for gl in by_player.values():
         if team_games.get(gl[-1]["team"]):
-            comeback_logit(team_games[gl[-1]["team"]], {g["game"] for g in gl}, want.add, gl[-1]["id"])
+            comeback_logit(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]}, want.add, gl[-1]["id"])
     want -= tried
     tried |= want
     scratches.update(load_scratches(s, want))
@@ -3322,7 +3322,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 p_dress = dress_by_game(base_dress, 1, False, 1.0, CLEARED_LOGIT)[0]
             # sat it as a healthy scratch: on that game's scratch list; if the list can't be read, no ESPN injury status
             scratch = sat_last and not p.get("injury") and (pid in scratches[tg[-1]] if tg[-1] in scratches else True)
-            comeback = 0.0 if sat_last or traded or not gl else comeback_logit(tg, {g["game"] for g in gl}, scratch_list, pid)
+            comeback = 0.0 if sat_last or traded or not gl else comeback_logit(tg, {g["game"] for g in gl if g["team"] == team}, scratch_list, pid)  # his games for this team (716)
             # just traded or claimed: 1-3 games for his current team after games for another team this season
             run = next((k for k, g in enumerate(reversed(gl)) if g["team"] != gl[-1]["team"]), None) if gl else None
             new_team = traded or (not sat_last and run is not None and 1 <= run <= NEW_TEAM_GAMES)
