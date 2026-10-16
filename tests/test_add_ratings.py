@@ -3143,3 +3143,71 @@ def test_listed_after_playing_lowers_the_season_share(monkeypatch, tmp_path):
     assert on["cr_season"] < off["cr_season"]
     personal = pasta("Pastrnak is away from the team for personal reasons.")
     assert personal["cr_season"] == pasta("Pastrnak is away from the team for personal reasons.", lift=0.0)["cr_season"]
+# handoff 678: the forecast ridges' teammate and PP-share inputs (rating.teammate_inputs, model/train.py add_teammates)
+TEAMMATE_KEYS = ("sh_hat", "sh_hat_D", "ps_l5", "ps_l10", "ps_std", "ppx_l5", "ppx_l10", "ppx_std")
+
+
+def test_teammate_inputs_reach_the_forecasts(monkeypatch, tmp_path):
+    """Every skater with games gets the eight inputs, finite, in both the Week and the Season forecasts; the model files
+    list them among the forecast ridges' inputs."""
+    seen = []
+    ff = rating.forecast_features
+
+    def spy(f, sk, toi_boost=None, season=False):
+        seen.append((season, dict(f)))
+        return ff(f, sk, toi_boost, season)
+    monkeypatch.setattr(rating, "forecast_features", spy)
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")])
+    played = [f for _, f in seen if f.get("std_gp")]
+    assert {s for s, f in seen if f.get("std_gp")} == {True, False}
+    for f in played:
+        for k in TEAMMATE_KEYS:
+            assert f.get(k) is not None and math.isfinite(f[k]), k
+        assert f["sh_hat_D"] == (f["sh_hat"] if f["is_D"] else 0.0)
+    sk = rating.Model().sk
+    for fc in (sk["toi_forecast"], sk["season"]["toi_forecast"]):
+        assert {"sh_hat", "sh_hat_D"} <= set(fc["y_toi"]["inputs"])
+        assert {"ps_l5", "ps_l10", "ps_std", "ppx_l5", "ppx_l10", "ppx_std"} <= set(fc["y_pptoi"]["inputs"])
+
+
+def tm_games(team, roster, n, pp=None):
+    """by_player for one team: roster [(pid, pos, toi)], all dressed in n games; pp: {pid: PP TOI each game}."""
+    out = {}
+    for pid, pos, toi in roster:
+        out[pid] = [{"id": pid, "game": f"{team}{i}", "date": f"2026-10-{i + 1:02d}", "team": team, "pos": pos, "toi": toi,
+                     "pptoi": (pp or {}).get(pid, 0.0)} for i in range(n)]
+    return out
+
+
+def test_sh_hat_is_zero_when_expected_teammates_match_his_recent_ones():
+    """Every teammate sure to dress next week (chance 1) and dressed in all his games: C_hat = C10, sh_hat = 0."""
+    roster = [(1, "C", 18.0), (2, "C", 15.0), (3, "L", 12.0), (4, "D", 22.0), (5, "D", 19.0)]
+    bp = tm_games("TOR", roster, 12)
+    tg = {"TOR": [f"TOR{i}" for i in range(12)]}
+    one = {"features": [], "baseline": 1.0, "trees": []}
+    out = rating.teammate_inputs(bp, tg, {pid: {} for pid in bp}, one)
+    for pid in bp:
+        assert out[pid]["sh_hat"] == pytest.approx(0.0, abs=1e-9)
+    # a forward sure to miss next week: the other forwards expect more minutes (sh_hat > 0), the D don't move
+    half = rating.teammate_inputs(bp, tg, {pid: {"out": pid == 2} for pid in bp},
+                                  {"features": ["out"], "baseline": 1.0, "trees": [[[0, -1, -1], [0.5, 0.0, -1.0], [1, 0, 0], [2, 0, 0], [1, 0, 0]]]})
+    assert half[1]["sh_hat"] > 0.1 and half[3]["sh_hat"] > 0.1 and half[4]["sh_hat"] == pytest.approx(0.0, abs=1e-9)
+    # without the Week dress model: missing (the ridges' training mean)
+    assert rating.teammate_inputs(bp, tg, {}, None)[1]["sh_hat"] is None
+
+
+def test_pp_share_capped_at_one_and_quiet_games_skipped():
+    """His PP share is his PP TOI over the most PP TOI on his team that game, never above 1; a game with 0.25 PP min or less
+    is skipped; ppx = share x the team's PP minutes per game (shrunk to the league's)."""
+    bp = tm_games("TOR", [(1, "C", 18.0), (2, "C", 15.0)], 6, pp={1: 3.0, 2: 1.5})
+    bp[2][-1]["pptoi"] = 3.2  # more than the PP1 forward that game: share 1, and his 3.0 becomes 3 / 3.2
+    for p in (1, 2):
+        bp[p][0]["pptoi"] = 0.2  # a quiet first game: team PP time 0.2 min, skipped
+    tg = {"TOR": [f"TOR{i}" for i in range(6)]}
+    out = rating.teammate_inputs(bp, tg)
+    assert all(0 <= out[p][f"ps_{w}"] <= 1 for p in (1, 2) for w in ("l5", "l10", "std"))
+    assert out[1]["ps_std"] == pytest.approx((4 * 1.0 + 3.0 / 3.2) / 5)
+    assert out[2]["ps_l5"] == pytest.approx((4 * 0.5 + 1.0) / 5)
+    rate_ = (0.2 + 4 * 3.0 + 3.2 + 5 * (0.2 + 4 * 3.0 + 3.2) / 6) / (6 + 5)
+    assert out[1]["ppx_std"] == pytest.approx(out[1]["ps_std"] * rate_)
+    assert out[1]["sh_hat"] is None  # no Week dress model given
