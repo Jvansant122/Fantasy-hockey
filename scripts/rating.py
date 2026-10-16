@@ -109,6 +109,9 @@ ONE_GAME_NOT = re.compile(r"week|month|indefin|games", re.I)
 ONE_GAME_SAME_DAY_HOUR = 17  # game dates have no start time: a note posted before 5 PM ET came before that night's game
 # ESPN OUT on the day of his team's game: 0 of 20 dressed (findings 235); later games keep the OUT cap
 OUT_TODAY_CAP = 0.03
+# a regular (dressed his team's last game, no ESPN status) whom Daily Faceoff's fresh lines leave out of tonight's game: dressed
+# 4 of 45 live, Oct 8-15 (findings 509 (5), handoff 696); tonight's game only
+DFO_ABSENT_TODAY_CAP = 0.15
 # a long ESPN note that is only week-to-week, only a timeline, or only LTIR: per-game caps (game today or tomorrow, game 2+
 # days after the run) instead of 0. Week-to-week / timeline-only long notes dressed 0.04-0.21, LTIR 0.01-0.13
 # (hunt14/returns, findings 489; handoff 657)
@@ -3493,6 +3496,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
                 per_game[0] = min(per_game[0], OUT_TODAY_CAP)
                 dress_next = per_game[0]
+            dfo_absent = p.get("dfo_out") is True and not sat_last and not p.get("injury")  # handoff 696
+            if dfo_absent and per_game and \
+                    ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
+                per_game[0] = min(per_game[0], DFO_ABSENT_TODAY_CAP)
+                dress_next = per_game[0]
             if game_caps == "ir":
                 game_caps = None if practising else [
                     (lambda k: max(IR_DAY_CAPS[k], word_floor) if k and word_floor is not None else IR_DAY_CAPS[k])(
@@ -3520,11 +3528,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 caps = [min(cap, inj)] * len(per_game)
                 if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p) and not skip:
                     caps[0] = min(caps[0], OUT_TODAY_CAP)
+                if dfo_absent and p.get("today_start") and not game_started(p) and not skip:
+                    caps[0] = min(caps[0], DFO_ABSENT_TODAY_CAP)
                 if game_caps:
                     caps = [min(a, c) for a, c in zip(caps, game_caps)]
                 lead_caps = [min(cap, inj, c) for c in (lead_game_caps or [1.0] * len(out_idx))]
                 if out_idx and p.get("injury") == "OUT" and not one_game_over and all_dates[out_idx[0]] == today.isoformat() and tonight_ahead:
                     lead_caps[0] = min(lead_caps[0], OUT_TODAY_CAP)
+                if out_idx and dfo_absent and all_dates[out_idx[0]] == today.isoformat() and tonight_ahead:
+                    lead_caps[0] = min(lead_caps[0], DFO_ABSENT_TODAY_CAP)
                 trips = after_trip(venue.get(espn_team, {}), all_dates)
                 week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                   "dates": wk_dates, "per_game": list(per_game), "before": list(per_game), "caps": caps,

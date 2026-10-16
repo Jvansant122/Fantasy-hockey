@@ -3364,3 +3364,18 @@ def test_teammate_inputs_reach_the_kept_games_forecast(monkeypatch, tmp_path):
     rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], FakeSession(short_last={1: 200}, missed={1: {0}}))  # 3 games, the last cut short
     played = [f for f in seen if f.get("std_gp")]
     assert len(played) > 2 and all(f.get("ps_std") is not None for f in played)
+
+
+def test_regular_left_out_of_tonights_dfo_lines_is_capped_tonight(monkeypatch, tmp_path):
+    """Handoff 696: a regular with no ESPN status whom Daily Faceoff's fresh lines leave out: tonight's game at most 0.15,
+    later games unchanged; nothing once his game has started or when the lines have him."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+
+    def matthews(start, dfo_out):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start=start, dfo_out=dfo_out)
+        return rate(monkeypatch, tmp_path, [p])["Auston Matthews"]
+    out, inl = matthews("2026-10-09T23:00:00Z", True), matthews("2026-10-09T23:00:00Z", None)
+    assert out["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9 < inl["cr_dress_next"]
+    assert out["cr_games"] == pytest.approx(inl["cr_games"] - inl["cr_dress_next"] + out["cr_dress_next"], abs=0.02)
+    assert matthews("2026-10-09T15:00:00Z", True)["cr_games"] == matthews("2026-10-09T15:00:00Z", None)["cr_games"]
