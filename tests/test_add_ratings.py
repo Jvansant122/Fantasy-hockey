@@ -783,6 +783,7 @@ def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "load_news", lambda: {})
+    monkeypatch.setattr(rating, "dressed_any_team", lambda gl, tg, team_games, n: 0.5)  # off the 0.99 ceiling (handoff 717)
     def matthews(moved, logit):
         monkeypatch.setattr(rating, "NEW_TEAM_LOGIT", logit)
         fake = FakeSession(moved={1: moved})
@@ -3465,3 +3466,21 @@ def test_back_gap_sees_only_games_for_the_team_it_walks(monkeypatch, tmp_path):
     tg = list(range(10)) + list(range(11, 26))  # PIT's games, the first 10 against OTT while he was there
     by_player = {1: gl, 2: [{"id": 2, "team": "PIT", "pos": "L", "game": x} for x in range(11, 26)]}
     assert rating.fillins_back(by_player, {"PIT": tg}) == set()
+
+
+def test_dressed_any_team_keeps_old_team_games():
+    """Handoff 717: games he played for any team inside that team's own last n count toward his current team's last n."""
+    g = lambda team, x: {"team": team, "game": x}
+    gl = [g("BOS", 200), g("BOS", 201), g("TOR", 102), g("TOR", 103)]
+    tgs = {"BOS": [200, 201, 202, 203], "TOR": [100, 101, 102, 103]}
+    assert rating.dressed_any_team(gl, tgs["TOR"], tgs, 3) == 1.0 and rating.dressed_any_team(gl, tgs["TOR"], tgs, 10) == 1.0
+    assert rating.dressed_any_team(gl[2:], tgs["TOR"], tgs, 3) == pytest.approx(2 / 3)
+    assert rating.dressed_any_team(gl, [], tgs, 3) is None
+
+
+def test_week_dress_logistic_reads_the_fit_convention(monkeypatch, tmp_path):
+    """Handoff 717: a skater with games for two teams has his old team's games counted in the Week logistic's dressed3/10."""
+    seen, real = [], rating.Model.dress_logit
+    monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: seen.append(dict(f)) or real(self, f))
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], fake=FakeSession(moved={1: 2}))
+    assert seen and all(f["dressed3"] == 1.0 and f["dressed10"] == 1.0 for f in seen)
