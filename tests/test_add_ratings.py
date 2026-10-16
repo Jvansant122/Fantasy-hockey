@@ -3386,3 +3386,26 @@ def test_regular_left_out_of_tonights_dfo_lines_is_capped_tonight(monkeypatch, t
     assert out["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9 < inl["cr_dress_next"]
     assert out["cr_games"] == pytest.approx(inl["cr_games"] - inl["cr_dress_next"] + out["cr_dress_next"], abs=0.02)
     assert matthews("2026-10-09T15:00:00Z", True)["cr_games"] == matthews("2026-10-09T15:00:00Z", None)["cr_games"]
+
+
+class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
+    def get(self, url, params=None, headers=None, timeout=None):
+        exp = (params or {}).get("cayenneExp", "")
+        if "seasonId=20262027" in exp and "gameDate" in exp:
+            self.calls.append(url)
+            return Resp({"data": []})
+        return super().get(url, params, headers, timeout)
+
+
+def test_dfo_absent_cap_needs_a_last_game(monkeypatch, tmp_path):
+    """Handoff 710: before his team's first game, a camp lineup without him isn't the row-696 signal (measured on regulars
+    who dressed their team's last game), so opening night keeps his chance to play."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+
+    def matthews(dfo_out):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z", dfo_out=dfo_out)
+        return rate(monkeypatch, tmp_path, [p], fake=Opener())["Auston Matthews"]
+    out, inl = matthews(True), matthews(None)
+    assert inl["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP
+    assert out["cr_dress_next"] == inl["cr_dress_next"] and out["cr_games"] == inl["cr_games"]

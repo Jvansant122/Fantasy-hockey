@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 204). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 16, 2026 (sections through 205). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1354,6 +1354,10 @@ A skater's minutes depend on who else dresses next to him. The ice-time forecast
 ## 204. Left out of tonight's lines
 
 When Daily Faceoff's fresh lines for tonight leave out a player who dressed for his team's last game and has no ESPN status, he almost always sits: 4 of 45 such players dressed in the first week of logs. The site still had them at about 80%. Tonight's game for such a player now counts at most 15%, and his later games are unchanged. Replayed on every log so far, this made tonight's chance-to-play predictions about 23% more accurate overall (Brier score 0.0186 to 0.0144). We'll re-grade it at the Oct 30 review.
+
+## 205. Opening night and the lines
+
+The tonight cap for a regular left out of Daily Faceoff's lines (section 204) was measured on players who dressed their team's last game. Before a team's first game there is no last game, so a training-camp lineup could cap a regular's opener at 15%. The cap now waits until his team has played. It moved no players on Oct 15's data.
 
 ## What the independent review changed
 
