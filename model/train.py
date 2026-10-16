@@ -69,8 +69,12 @@ LINEUP_TOI = ["missed_last", "out_above_toi", "ml_gap", "oa_gap"]
 LINEUP_PP = ["missed_last", "out_above_pp", "ml_ppgap", "oap_gap"]
 ROLE_TOI = ["r1_toi_rank", "r3_toi_rank", "r1_top_line", "r3_top_line"]
 ROLE_PP = ["r1_pp_share", "r3_pp_share", "r1_pp_rank", "r3_pp_rank", "r1_pp1", "r3_pp1"]
-TOI_FC_IN = TOI_FC_IN + LINEUP_TOI + ROLE_TOI
-PP_FC_IN = PP_FC_IN + LINEUP_PP + ROLE_PP
+# expected teammate minutes next week vs his last 10 games, and his share of the team's PP time x the team's PP rate
+# (handoff 678, findings 498; add_teammates, scripts/rating.py teammate_inputs)
+TEAMMATE_TOI = ["sh_hat", "sh_hat_D"]
+TEAMMATE_PP = ["ps_l5", "ps_l10", "ps_std", "ppx_l5", "ppx_l10", "ppx_std"]
+TOI_FC_IN = TOI_FC_IN + LINEUP_TOI + ROLE_TOI + TEAMMATE_TOI
+PP_FC_IN = PP_FC_IN + LINEUP_PP + ROLE_PP + TEAMMATE_PP
 FC_EXTRA = ["no_prev", "is_D", "gpw"]
 # the Week ridge's forecasts only (handoff 669, findings 464; hunt14/fpg/t9_fclin.py): wider forecast ridges, every window
 # of rank, role, shots, FP and ice time, SH TOI, dressed share, games, two seasons ago, return flags and age (missing 27),
@@ -262,6 +266,33 @@ def add_age(df):
     return df.assign(age_m=(df.monday - df.playerId.map(pd.to_datetime(bd))).dt.days / 365.25)
 
 
+TEAMMATE_DATA = os.path.join(RESEARCH, "hunt14", "toi")
+
+
+def add_teammates(df):
+    """Handoff 678 inputs per (playerId, monday), from the research's hunt14/toi tables (build_feats.py, build_roster.py,
+    build_qsite.py, build_ehat_site.py, build_share.py, build_sched.py), same arithmetic as scripts/rating.py
+    teammate_inputs. m = his TOI with his team this season shrunk 2 games to 12 min (F) / 17 (D); C10 = mean over his last
+    10 games with the team of the same-position teammates' m who dressed; C_hat = sum of same-position teammates' m x
+    their next-week dress share (the Week dress model, fit on earlier seasons); sh_hat = (C10 - C_hat) x m / (C_hat + m).
+    ps_w = his PP TOI / the team's PP time per game (team PP time = most PP TOI of a skater, games over 0.25 min), last
+    5 / 10 / season games; ppx_w = ps_w (missing 0) x the team's PP minutes per game shrunk 5 games to the league mean."""
+    key = df[["playerId", "monday", "team"]].assign(monday=pd.to_datetime(df.monday))
+    rd = lambda n, cols: pd.read_parquet(os.path.join(TEAMMATE_DATA, f"{n}.parquet"), columns=cols).assign(
+        monday=lambda d: pd.to_datetime(d.monday)).drop_duplicates([c for c in ("playerId", "team", "monday") if c in cols])
+    k = key.merge(rd("feats", ["playerId", "monday", "c_mine10", "my_norm"]), on=["playerId", "monday"], how="left") \
+        .merge(rd("ehat_site", ["playerId", "monday", "c_hat"]), on=["playerId", "monday"], how="left") \
+        .merge(rd("share", ["playerId", "monday", "ps_l5", "ps_l10", "ps_std"]), on=["playerId", "monday"], how="left") \
+        .merge(rd("sched", ["team", "monday", "own_pp"]), on=["team", "monday"], how="left")
+    out = df.drop(columns=TEAMMATE_TOI + TEAMMATE_PP, errors="ignore").copy()
+    sh = ((k.c_mine10 - k.c_hat) * k.my_norm / (k.c_hat + k.my_norm)).astype(float).values
+    out["sh_hat"], out["sh_hat_D"] = sh, sh * (df.pos == "D").astype(float).values
+    for w in ("l5", "l10", "std"):
+        out[f"ps_{w}"] = k[f"ps_{w}"].astype(float).values
+        out[f"ppx_{w}"] = (k[f"ps_{w}"].fillna(0) * k.own_pp).astype(float).values
+    return out
+
+
 def add_returns(df, sk):
     """His run of missed team games before each Monday (counting back from the team's last game, up to 10) and whether he
     played the team's last game after missing the one before (same as scripts/rating.py lineup_context)."""
@@ -421,14 +452,14 @@ def snapshots():
         if "out_run" not in df:  # ... and before the return-from-absence terms
             df = add_returns(df, common.load_skaters())
             df.to_parquet(CACHE)
-        return add_age(df)
+        return add_teammates(add_age(df))
     sk = add_ranks(common.load_skaters())
     sk["iCF"] = sk["totalShotAttempts"]  # live data uses NHL shot attempts, so train on the same
     common.RATES = common.RATES + [r for r in RANK_RATES if r not in common.RATES]  # skater_snapshots windows these
     df = add_y_ixg(add_season_inputs(add_context(add_p2(add_recent(common.skater_snapshots(sk), sk), sk), sk), sk), sk)
     df = add_returns(df, sk)
     df.to_parquet(CACHE)
-    return add_age(df)
+    return add_teammates(add_age(df))
 
 
 def prep(df, feats=FEATS, mu=None, st=None):
@@ -620,9 +651,11 @@ def main():
 
 
 def forecast_json(fc):
-    """The forecast ridges for scripts/rating.py; the wider ones (handoff 669) need more digits for their squared inputs."""
-    return {tgt: {"inputs": m["columns"], "coef": [round(float(x), 8 if m["wide"] else 6) for x in m["coef"]],
-                  "intercept": round(m["intercept"], 6), "fill": {k: round(float(v), 4) for k, v in m["fill"].items()}}
+    """The forecast ridges for scripts/rating.py, to 8 digits: the wider ones (handoff 669) for their squared inputs, the
+    narrower ones because the Season's boosted trees split on their forecasts (handoff 678: 6-digit coefficients and 4-digit
+    fills moved fc_toi ~1e-5, enough to cross a split and fail train_toi_boost.py's arithmetic check)."""
+    return {tgt: {"inputs": m["columns"], "coef": [round(float(x), 8) for x in m["coef"]],
+                  "intercept": round(m["intercept"], 8), "fill": {k: round(float(v), 8) for k, v in m["fill"].items()}}
             for tgt, m in fc.items()}
 
 

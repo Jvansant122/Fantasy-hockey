@@ -1086,6 +1086,76 @@ def lineup_context(by_player, team_games):
     return out
 
 
+TEAMMATE_REP, TEAMMATE_K = {"F": 12.0, "D": 17.0}, 2.0  # usual minutes shrunk 2 games to these (handoff 678)
+PP_TEAM_MIN, PP_RATE_K = 0.25, 5.0  # a game counts for his PP share when the team had over 0.25 PP min; rate shrunk 5 games
+
+
+def teammate_inputs(by_player, team_games, boost_x=None, boost_week=None):
+    """The forecast ridges' teammate and PP-share inputs per skater (handoff 678, findings 498; model/train.py add_teammates).
+    Usual minutes m = (TOI with that team this season + 2 x 12 min F / 17 D) / (games with it + 2). His team = his last
+    game's. C10 = mean over his last 10 games with the team of the summed m of same-position (F or D) teammates who dressed;
+    C_hat = sum over same-position teammates whose latest game was for the team of m x their next-week dress share (the
+    boosted Week dress model's raw output, model/season_boost_week.json, before the per-game lifts; a teammate it doesn't
+    cover: his share of the team's last 10 games); sh_hat = (C10 - C_hat) x m / (C_hat + m), None without the Week model.
+    ps_l5 / l10 / std: his PP TOI / the team's PP time (the most PP TOI of any of its skaters that game, games over 0.25
+    min, capped at 1) over his last 5 / 10 / season games; ppx_w = ps_w (missing 0) x the team's PP minutes per game
+    shrunk 5 games to the league's."""
+    present, team_pp, tot, is_d = {}, {}, {}, {}
+    for pid, gl in by_player.items():
+        if not gl:
+            continue
+        is_d[pid] = gl[-1].get("pos") == "D"
+        for g in gl:
+            k = (g["team"], g["game"])
+            present.setdefault(k, []).append(pid)
+            team_pp[k] = max(team_pp.get(k, 0.0), g.get("pptoi") or 0.0)
+            t = tot.setdefault((pid, g["team"]), [0.0, 0])
+            t[0] += g["toi"]
+            t[1] += 1
+
+    def usual(pid, team):
+        s, n = tot.get((pid, team), (0.0, 0))
+        return (s + TEAMMATE_K * TEAMMATE_REP["D" if is_d[pid] else "F"]) / (n + TEAMMATE_K)
+    pp_sum, pp_n = {}, {}
+    for team, tg in team_games.items():
+        pp_sum[team], pp_n[team] = sum(team_pp.get((team, g), 0.0) for g in tg), len(tg)
+    league = sum(pp_sum.values()) / sum(pp_n.values()) if sum(pp_n.values()) else 0.0
+    rate = {t: (pp_sum[t] + PP_RATE_K * league) / (pp_n[t] + PP_RATE_K) for t in pp_sum}
+    roster, q = {}, {}
+    for pid, gl in by_player.items():
+        if not gl:
+            continue
+        team = gl[-1]["team"]
+        roster.setdefault((team, is_d[pid]), []).append(pid)
+        if boost_week:
+            if pid in (boost_x or {}):
+                q[pid] = min(max(season_boost.predict(boost_week, boost_x[pid]), 0.0), 1.0)
+            else:
+                last10, mine = team_games.get(team, [])[-10:], {g["game"] for g in gl}
+                q[pid] = sum(g in mine for g in last10) / len(last10) if last10 else 0.0
+    out = {}
+    for pid, gl in by_player.items():
+        if not gl:
+            continue
+        team, d = gl[-1]["team"], is_d[pid]
+        m = usual(pid, team)
+        f = {"sh_hat": None}
+        mine = [g["game"] for g in gl if g["team"] == team][-10:]
+        if boost_week and mine:
+            c10 = mean([sum(usual(i, team) for i in present.get((team, g), ()) if i != pid and is_d[i] == d) for g in mine])
+            c_hat = sum(q[i] * usual(i, team) for i in roster.get((team, d), ()) if i != pid)
+            f["sh_hat"] = (c10 - c_hat) * m / (c_hat + m)
+        f["sh_hat_D"] = None if f["sh_hat"] is None else f["sh_hat"] * d
+        tpp = [team_pp.get((g["team"], g["game"]), 0.0) for g in gl]
+        shares = [min((g.get("pptoi") or 0.0) / t, 1.0) if t > PP_TEAM_MIN else None for g, t in zip(gl, tpp)]
+        for w, n in (("l5", 5), ("l10", 10), ("std", None)):
+            tail = [v for v in (shares[-n:] if n else shares) if v is not None]
+            f[f"ps_{w}"] = mean(tail) if tail else None
+            f[f"ppx_{w}"] = (f[f"ps_{w}"] or 0.0) * rate[team] if team in rate else None
+        out[pid] = f
+    return out
+
+
 def next_up_pp_d(by_player, team_games, out):
     """Per team, defensemen with 5+ games this season ranked by PP TOI/G: when the top one (1+ PP min/G) missed the team's
     last game or ESPN has him OUT, IR or suspended (out: NHL ids), the next healthy one who played that game gets more
@@ -2815,6 +2885,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             gl_ = by_player.get(pid) or []
             x.update(season_boost.news_inputs(((dfo_news or {}).get("injuries") or {}).get(str(pid)),
                                               max(g["date"] for g in gl_) if gl_ else None, now_utc))
+    teammates = teammate_inputs(by_player, team_games, boost_x, boost_week)  # the forecast ridges' (handoff 678)
     missed = {pid for pid in on_roster | set(by_player) if (prev.get(pid) or {}).get("gp", 0) < PREV_MIN_GP}
     prev3 = {}
     if missed:
@@ -3089,7 +3160,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             age = (monday - births[pid]).days / 365.25 if pid in births else None
             f = skater_features(gl, prev.get(pid), xg_now.get(pid), xg_prev.get(pid), tg, is_d=p["pos"] == "D", p2=p2,
                                   context=context.get(pid), age=age)
-            f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")))
+            f.update(ux_features(f, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")), **teammates.get(pid, {}))
             # his team's games this Monday-Sunday week, an input of the Season's boosted ice-time forecasts (handoff 668)
             f["team_games"] = sum(d < week_end for d in sched.get(team, []))
             fpg = model.fpg(f) if pid else model.sk["replacement_fpg"]["D" if p["pos"] == "D" else "F"]
@@ -3104,7 +3175,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if kept is not None:
                 f2 = skater_features(kept, prev.get(pid), xg_now.get(pid) if kept else None, xg_prev.get(pid), tg,
                                      is_d=p["pos"] == "D", p2=p2, context=context.get(pid), age=age)
-                f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")), team_games=f["team_games"])
+                f2.update(ux_features(f2, "D" if p["pos"] == "D" else "F", model.sk.get("ux_means")), team_games=f["team_games"],
+                          **teammates.get(pid, {}))
                 fpg = (fpg + model.fpg(f2)) / 2
                 fpg_s = (fpg_s + model.fpg(f2, season=True)) / 2
             # with a new team since last season, and with one team this season: rated ~3.5% high (findings 230)
