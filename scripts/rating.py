@@ -59,7 +59,7 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
 # a goalie with Daily Faceoff injury news since his last appearance (at most 14 days old, no return or full-practice
-# words): his start chance is capped at 0.2 for the team's next game and 0.35 later (handoff 679, findings 503)
+# words): his start odds are multiplied by 0.2 for the team's next game and 0.35 later, min with ESPN's factor (handoff 679, findings 503)
 GOALIE_DFO_INJ_CAPS, GOALIE_DFO_INJ_DAYS = (0.2, 0.35), 14
 # ESPN-listed with an illness note at most 3 days old: OUT dressed 0.77 / 0.74 vs the 0.35 cap (hunt14/phrases, findings 502)
 ILLNESS_WORDS = re.compile(r"illness|\bill\b|\bsick|\bflu\b|virus", re.I)
@@ -3008,7 +3008,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if p["id"] in notes and injury_note(notes[p["id"]], today)["season"]:
                     goalie_gone.add(pid)
     # Daily Faceoff injury news since his last appearance (handoff 679): posted after 20:00 UTC on that date, at most 14 days old
-    goalie_dfo = {}
+    goalie_dfo, goalie_dfo_day = {}, {}
     last_app = {gid: max(d for d, _ in v) for gid, v in goalie_dates.items()}
     oldest = f"{today - timedelta(days=GOALIE_DFO_INJ_DAYS)}T13:00:00"
     for team_r in rosters.values():
@@ -3018,6 +3018,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             inj = [r for r in items if r.get("cat") == "inj" and r["ts"] > since]
             if pos == "G" and inj and not {"ret", "full"} & set(inj[-1].get("f") or ()):
                 goalie_dfo[gid] = GOALIE_DFO_INJ_CAPS
+                goalie_dfo_day[gid] = inj[-1]["ts"][:10]  # for his details (handoff 695)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
     g_ages = {gid: (today - b).days / 365.25 for gid, b in births.items() if b}  # the goalies' age cut (handoff 640)
@@ -3106,6 +3107,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
             if pid:
                 why["g_season_share"] = round(goalie_season.get(pid, 0.0), 2)  # for the page's Season line (handoff 605)
+                if pid in goalie_dfo_day and goalie_inj.get(pid, 1.0) > 0:  # the news cut his starts; not when ESPN has him at 0 (695)
+                    why["dfo_inj"] = goalie_dfo_day[pid]
                 why["season_pps"] = round(fpg_s, 2)  # the Season's pts/start (handoff 641)
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
             # Proj GP: NHL starts so far + his share of his team's starts still to play (the Season rating's share)

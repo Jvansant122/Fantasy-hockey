@@ -2985,6 +2985,7 @@ def test_goalie_dfo_injury_news_caps_his_starts(monkeypatch, tmp_path):
     back = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}, {"ts": f"{TODAY}T02:00:00", "cat": "inj", "f": ["ret"]}])
     old = toronto([{"ts": "2026-09-01T01:00:00", "cat": "inj", "f": []}])
     assert hurt["Joseph Woll"]["cr_games"] < base["Joseph Woll"]["cr_games"]
+    assert hurt["Joseph Woll"]["cr_why"]["dfo_inj"] == str(TODAY) and "dfo_inj" not in base["Joseph Woll"]["cr_why"]  # handoff 695
     assert hurt["Anthony Stolarz"]["cr_games"] > base["Anthony Stolarz"]["cr_games"]
     assert back["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
     assert old["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
@@ -3211,3 +3212,155 @@ def test_pp_share_capped_at_one_and_quiet_games_skipped():
     rate_ = (0.2 + 4 * 3.0 + 3.2 + 5 * (0.2 + 4 * 3.0 + 3.2) / 6) / (6 + 5)
     assert out[1]["ppx_std"] == pytest.approx(out[1]["ps_std"] * rate_)
     assert out[1]["sh_hat"] is None  # no Week dress model given
+
+
+# handoff 692: pinned lines from #207-#209 (hunt14/audit7)
+def test_goalie_dfo_constants_as_measured():
+    """Handoff 679: 0.2 next game, 0.35 later, 14 days (hunt14/gnotes 2066; 7 and 28 days and 0.1/0.5 caps were variants)."""
+    assert rating.GOALIE_DFO_INJ_CAPS == (0.2, 0.35) and rating.GOALIE_DFO_INJ_DAYS == 14
+
+
+def _nights(dates, **kw):
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    nights = {}
+    rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), by_date=nights, **kw)
+    return nights[1]
+
+
+def test_goalie_dfo_factor_is_min_with_espn_and_per_game():
+    """Handoff 679: the factor is min(ESPN's, 0.2) on the next game and min(ESPN's, 0.35) later, so an ESPN-OUT goalie stays 0
+    and the later games are cut less than the next one."""
+    one, two = ["2026-10-22"], ["2026-10-22", "2026-10-24"]
+    cut = {1: (0.2, 0.35)}
+    # next game: the same as an ESPN factor of 0.2; DTD 0.5 -> 0.2; OUT 0 stays 0
+    assert _nights(one, dfo_inj=cut)["2026-10-22"] == pytest.approx(_nights(one, injury={1: 0.2})["2026-10-22"])
+    assert _nights(one, dfo_inj=cut, injury={1: 0.5})["2026-10-22"] == pytest.approx(_nights(one, injury={1: 0.2})["2026-10-22"])
+    assert _nights(two, dfo_inj=cut, injury={1: 0.0}) == {"2026-10-22": 0.0, "2026-10-24": 0.0}
+    # later game: cut by 0.35, so higher than with 0.2 on every game
+    assert _nights(two, dfo_inj=cut)["2026-10-24"] > _nights(two, injury={1: 0.2})["2026-10-24"] + 0.01
+
+
+def _woll(monkeypatch, tmp_path, items):
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news={"fetched": "2099-01-01T00:00Z", "recent": {"11": items}})
+    return players[0]["cr_games"]
+
+
+def test_goalie_dfo_posting_rule_and_full_practice(monkeypatch, tmp_path):
+    """Handoff 679: only news posted after 20:00 UTC on his last appearance's date counts (his last game in the fake league
+    is Oct 7), and 'full' practice words exempt him like return words."""
+    base = _woll(monkeypatch, tmp_path, [])
+    assert _woll(monkeypatch, tmp_path, [{"ts": "2026-10-07T19:00:00", "cat": "inj", "f": []}]) == base
+    assert _woll(monkeypatch, tmp_path, [{"ts": "2026-10-07T21:00:00", "cat": "inj", "f": []}]) < base
+    assert _woll(monkeypatch, tmp_path, [{"ts": "2026-10-08T21:00:00", "cat": "inj", "f": ["full"]}]) == base
+    assert _woll(monkeypatch, tmp_path, [{"ts": "2026-10-08T21:00:00", "cat": "move", "f": ["down"]}]) == base
+
+
+def test_stored_unclear_note_behind_bare_out_keeps_the_return_lift(monkeypatch, tmp_path):
+    """#207 (handoff 681) keeps a stored note whose only long word is 'unclear when' (handoff 675's reset): its return
+    words still lift a bare 'out', and the details say why (handoff 685's note_lift)."""
+    from test_add_ratings import _mcavoy5
+    short = "McAvoy (upper body) will play Saturday."
+    long_ = short + " It's unclear when he'll return to full strength."
+    wl = rating.injury_note({"short": short, "long": long_, "name": "Charlie McAvoy", "date": "2026-10-08T12:00Z"}, date(2026, 10, 9))
+    assert wl["long"] and wl["long_why"] == "unclear"
+    _mcavoy5(monkeypatch, tmp_path, "DAY_TO_DAY", short, long_)
+    after = _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")
+    plain_dir = tmp_path / "plain"; plain_dir.mkdir()
+    monkeypatch.setattr(rating, "INJURY_NOTES", plain_dir / "injury_notes.json")
+    plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "out", when="2026-10-09T10:00Z")
+    assert after["cr_games"] > plain["cr_games"] and after["cr_why"].get("note_lift") == "return"
+    assert plain["cr_why"].get("note_lift") is None
+
+
+def test_illness_note_lift_says_illness(monkeypatch, tmp_path):
+    from test_add_ratings import _mcavoy5
+    sick = _mcavoy5(monkeypatch, tmp_path, "DAY_TO_DAY", "McAvoy is day-to-day with an illness.", when="2026-10-08T12:00Z")
+    assert sick["cr_why"].get("note_lift") == "illness"
+
+
+# PR #208 (handoffs 364, 687, 688): lines no test pins (hunt14/audit7 mutants D1, D3, E1, E3, E5, F1)
+def test_208_constants_as_measured():
+    assert rating.NO1_AFTER_OTHER_LOGIT == 0.1 and rating.LISTED_PLAYED_SEASON == -0.3 and rating.NEWS_CONDITIONING_SEASON == 0.5
+
+
+def test_no1_after_other_lift_is_on_the_reported_chance_only(monkeypatch):
+    """Handoff 364 (ledger 2137 'q' mode): +0.1 on each game's reported chance; the chain keeps p, so with two goalies every
+    game's log-odds move by exactly 0.1 (a chain version compounds on later games)."""
+    import math
+    def nights(lift):
+        monkeypatch.setattr(rating, "NO1_AFTER_OTHER_LOGIT", lift)
+        hist = [(f"2026-10-{2 * i + 1:02d}", g) for i, g in enumerate([1, 1, 2, 1, 1, 2, 1, 1, 1, 2])]
+        out = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 20},
+                             ["2026-10-22", "2026-10-24", "2026-10-26"], date(2026, 10, 22), by_date=out)
+        return out[1]
+    lo = lambda v: math.log(v / (1 - v))
+    a, b = nights(0.0), nights(0.1)
+    for d in a:
+        assert lo(b[d]) - lo(a[d]) == pytest.approx(0.1, abs=1e-6)
+
+
+def test_listed_after_playing_needs_a_note_near_his_last_game_and_a_game_played(monkeypatch, tmp_path):
+    """Handoff 687: a note from before the day before his last game (Oct 7) doesn't count, nor does a player who sat it."""
+    from test_add_ratings import rate
+    def season(pid, name, team, pos, short, when, lift):
+        monkeypatch.setattr(rating, "LISTED_PLAYED_SEASON", lift)
+        inj = [{"athlete_id": pid, "name": name, "short": short, "long": "", "date": when}]
+        return rate(monkeypatch, tmp_path, [espn(pid, name, team, pos, injury="DAY_TO_DAY")], injuries=inj)[name]["cr_season"]
+    old = "Pastrnak (lower body) is day-to-day."
+    assert season(103, "David Pastrnak", "BOS", "RW", old, "2026-10-05T20:00Z", -0.3) == season(103, "David Pastrnak", "BOS", "RW", old, "2026-10-05T20:00Z", 0.0)
+    assert season(103, "David Pastrnak", "BOS", "RW", old, "2026-10-06T20:00Z", -0.3) < season(103, "David Pastrnak", "BOS", "RW", old, "2026-10-06T20:00Z", 0.0)
+    sat = "McAvoy (upper body) is day-to-day."  # McAvoy sat BOS's last game (Oct 7)
+    assert season(104, "Charlie McAvoy", "BOS", "D", sat, "2026-10-07T20:00Z", -0.3) == season(104, "Charlie McAvoy", "BOS", "D", sat, "2026-10-07T20:00Z", 0.0)
+
+
+# PR #209 (handoff 678): teammate_inputs lines no test pins (hunt14/audit7 mutants G1, G2, G4, G11, G12, G13)
+def test_teammate_constants_as_measured():
+    assert rating.TEAMMATE_REP == {"F": 12.0, "D": 17.0} and rating.TEAMMATE_K == 2.0
+    assert rating.PP_TEAM_MIN == 0.25 and rating.PP_RATE_K == 5.0
+
+
+def _tm(team, roster, n, first=0):
+    return {pid: [{"id": pid, "game": f"{team}{i}", "date": f"2026-10-{i + 1:02d}", "team": team, "pos": pos, "toi": toi,
+                   "pptoi": pp} for i in range(first, n)] for pid, pos, toi, pp in roster}
+
+
+def test_sh_hat_formula_last_ten_games_and_shrink():
+    """Handoff 678: m = (TOI + 2 x 12 F) / (GP + 2); C10 over his last 10 games with the team; sh = (C10 - C_hat) m / (C_hat + m).
+    Forward 3 dressed only the first 6 of 12 games and is out next week (chance 0)."""
+    bp = _tm("TOR", [(1, "C", 18.0, 0.0), (2, "C", 15.0, 0.0)], 12)
+    bp.update(_tm("TOR", [(3, "C", 10.0, 0.0)], 6))
+    tg = {"TOR": [f"TOR{i}" for i in range(12)]}
+    week = {"features": ["out"], "baseline": 1.0, "trees": [[[0, -1, -1], [0.5, 0.0, -1.0], [1, 0, 0], [2, 0, 0], [1, 0, 0]]]}
+    out = rating.teammate_inputs(bp, tg, {pid: {"out": pid == 3} for pid in bp}, week)
+    m1, u2, u3 = (12 * 18 + 24) / 14, (12 * 15 + 24) / 14, (6 * 10 + 24) / 8
+    c10, c_hat = u2 + 0.4 * u3, u2  # his last 10 games are 2-11: forward 3 dressed 4 of them
+    assert out[1]["sh_hat"] == pytest.approx((c10 - c_hat) * m1 / (c_hat + m1))
+
+
+def test_pp_rate_shrinks_to_the_league_and_no_pp_share_reads_zero():
+    """ppx = share x (team PP min + 5 x league per game) / (team games + 5); a skater with no counted PP game: ps None, ppx 0."""
+    bp = _tm("TOR", [(1, "C", 18.0, 4.0)], 4)
+    bp.update(_tm("BOS", [(2, "C", 18.0, 2.0)], 4))
+    bp.update(_tm("MTL", [(3, "C", 18.0, 0.0)], 4))
+    tg = {t: [f"{t}{i}" for i in range(4)] for t in ("TOR", "BOS", "MTL")}
+    out = rating.teammate_inputs(bp, tg)
+    league = (16 + 8 + 0) / 12
+    assert out[1]["ppx_std"] == pytest.approx(1.0 * (16 + 5 * league) / (4 + 5))
+    assert out[3]["ps_std"] is None and out[3]["ppx_std"] == 0.0
+
+
+def test_teammate_inputs_reach_the_kept_games_forecast(monkeypatch, tmp_path):
+    """The kept-games path (he left his last game early) rates him a second time: those forecasts read the inputs too."""
+    from test_add_ratings import rate
+    seen = []
+    ff = rating.forecast_features
+    monkeypatch.setattr(rating, "forecast_features", lambda f, sk, toi_boost=None, season=False: (seen.append(dict(f)), ff(f, sk, toi_boost, season))[1])
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], FakeSession(short_last={1: 200}, missed={1: {0}}))  # 3 games, the last cut short
+    played = [f for f in seen if f.get("std_gp")]
+    assert len(played) > 2 and all(f.get("ps_std") is not None for f in played)

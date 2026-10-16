@@ -192,7 +192,7 @@ Fallbacks: before his team has played, 90% if he played last season (50% if not)
 
 The softer OUT and IR caps shipped in PR #24; before that OUT and IR were 0.
 
-**Goalies:** OUT, IR and suspended scale his chance of starting each game to 0, day-to-day to half, and the starts he loses go to his healthy partner (part 6).
+**Goalies:** OUT, IR and suspended scale his chance of starting each game to 0, day-to-day to half, and the starts he loses go to his healthy partner (part 6). Daily Faceoff injury news since his last appearance (at most 14 days old, no return or full-practice words) scales his chance to at most 0.2 of itself for the next game and 0.35 later (handoff 679).
 
 Tapping an injured player shows "usually back in about N games" (or the note's timeline). Every override is logged daily to `data/injury_log.jsonl`.
 
