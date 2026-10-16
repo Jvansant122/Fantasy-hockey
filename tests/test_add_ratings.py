@@ -3075,9 +3075,9 @@ def test_free_agents_on_a_later_game_still_fill_tonight(monkeypatch):
                 "per_game": list(chances), "caps": [1.0] * len(chances), **kw}
     both = ["2026-10-09", "2026-10-11"]
     roster = lambda: [row(k, both, (0.85, 0.85)) for k in range(12)]
-    fas = lambda: [row(20 + k, both[1:], (0.85,), slack_today=0.85, today="2026-10-09") for k in range(3)]
+    fas = lambda: [row(20 + k, both[1:], (0.85,), j0=1, others=[("2026-10-09", 0.85, 1.0, False, 0)]) for k in range(3)]
     without, with_fa = roster(), roster()
-    rating.week_slack(without + [{**r, "slack_today": None} for r in fas()], {}, None)
+    rating.week_slack(without + [{**r, "others": []} for r in fas()], {}, None)
     rating.week_slack(with_fa + fas(), {}, None)
     assert with_fa[0]["p"]["cr_dress_next"] < without[0]["p"]["cr_dress_next"]  # tonight is full again
     assert abs(with_fa[0]["p"]["cr_why"].get("week_slack", 0)) < abs(without[0]["p"]["cr_why"].get("week_slack", 0))
@@ -3099,3 +3099,47 @@ def test_no1_gets_a_small_lift_after_another_goalie_started(monkeypatch):
         assert b[1][d] > a[1][d] and b[1][d] + b[2][d] == pytest.approx(a[1][d] + a[2][d])
     no1_last = backup_last[:-1] + [1]
     assert nights(0.1, no1_last)[1] == pytest.approx(nights(0.0, no1_last)[1])
+
+
+# handoffs 690-691: the night's first puck (hunt14/puck)
+def test_first_puck_keeps_a_free_agents_later_games(monkeypatch, tmp_path):
+    starts = {"2026-10-09": "2026-10-09T23:30:00Z"}  # TOR-BOS tonight at 7:30 PM ET; another game started at 7
+
+    def run(clock, fa_left, fa_start):
+        monkeypatch.setattr(rating, "utcnow", lambda: clock)
+        ps = [dict(espn(104, "Charlie McAvoy", "BOS", "D", games_left=fa_left), owner="freeagent", today_start=fa_start),
+              dict(espn(101, "Auston Matthews", "TOR", "C", games_left=2), owner="mine", today_start=starts["2026-10-09"]),
+              dict(espn(108, "Zack Bolduc", "BOS", "LW", games_left=2), owner="other", today_start=starts["2026-10-09"])]
+        return rate(monkeypatch, tmp_path, ps, fake=FakeSession(starts=starts))
+    first = "2026-10-09T23:00:00Z"
+    before = run(datetime(2026, 10, 9, 22, 55, tzinfo=timezone.utc), 2, first)
+    after = run(datetime(2026, 10, 9, 23, 10, tzinfo=timezone.utc), 1, first)
+    mc0, mc1 = before["Charlie McAvoy"], after["Charlie McAvoy"]
+    # Sunday's chance is the same game either way: games before the puck less tonight's
+    assert mc1["cr_games"] == pytest.approx(mc0["cr_games"] - mc0["cr_dress_next"], abs=0.011)
+    for n in ("Auston Matthews", "Zack Bolduc"):  # tonight's game is still ahead for them: nothing moves
+        assert (after[n]["cr"], after[n]["cr_games"], after[n]["cr_dress_next"]) == (before[n]["cr"], before[n]["cr_games"], before[n]["cr_dress_next"])
+
+
+def test_conditioning_loan_counts_less_than_a_send_down():
+    """Handoff 688: a Daily Faceoff send-down that says conditioning gets NEWS_CONDITIONING_SEASON back on the Season logit."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+    news = lambda cond: {"roster-moves": {"7": {"ts": "2026-10-15T12:00", "down": True, "up": False, "cond": cond}}}
+    down, why = rating.news_season_logit(news(False), 7, "2026-10-14", 3, 10, now)
+    cond, why2 = rating.news_season_logit(news(True), 7, "2026-10-14", 3, 10, now)
+    assert cond == pytest.approx(down + rating.NEWS_CONDITIONING_SEASON) and "conditioning loan" in why2 and "sent down" in why
+    import leads
+    assert leads.news_flags({"details": "He was assigned to the AHL on a conditioning loan.", "newsCategoryName": "Send Down"})["cond"]
+
+
+def test_listed_after_playing_lowers_the_season_share(monkeypatch, tmp_path):
+    """Handoff 687: ESPN still lists a skater who played his team's last game, from a note around that game: Season share down."""
+    def pasta(short, when="2026-10-07T20:00Z", lift=-0.3):
+        monkeypatch.setattr(rating, "LISTED_PLAYED_SEASON", lift)
+        inj = [{"athlete_id": 103, "name": "David Pastrnak", "short": short, "long": "", "date": when}]
+        return rate(monkeypatch, tmp_path, [espn(103, "David Pastrnak", "BOS", "RW", injury="DAY_TO_DAY")], injuries=inj)["David Pastrnak"]
+    on, off = pasta("Pastrnak (lower body) is day-to-day."), pasta("Pastrnak (lower body) is day-to-day.", lift=0.0)
+    assert on["cr_season"] < off["cr_season"]
+    personal = pasta("Pastrnak is away from the team for personal reasons.")
+    assert personal["cr_season"] == pasta("Pastrnak is away from the team for personal reasons.", lift=0.0)["cr_season"]

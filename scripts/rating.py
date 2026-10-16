@@ -293,9 +293,15 @@ NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 # NEWS_RECALL_DAYS: a + b x min(GP, 40)/40; latest injury item since his last game says season-ending / surgery
 NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
 NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
+# a conditioning loan: dressed 0.20-0.44 of the rest vs 0.11-0.18 predicted (hunt14/snotes, findings 505 (5), handoff 688)
+NEWS_CONDITIONING_SEASON = 0.5
 # Season dress logit for a skater out now from ESPN's own note: its stated timeline as a share of his team's games left
 # (findings 488, handoff 658), and out for the season when Daily Faceoff hasn't said so (handoff 659)
 SEASON_TIMELINE_C, ESPN_SEASON_OUT = -0.6, -3.0
+# ESPN-listed after playing his team's last game: dressed 0.61-0.70 of the rest vs 0.66-0.78 predicted (hunt14/snotes,
+# findings 505 (4), handoff 687); a note posted from the day before that game, not a personal, scratch or demotion note
+LISTED_PLAYED_SEASON = -0.3
+NOT_INJURY_NOTE = re.compile(r"personal|healthy scratch|scratched|assigned|sent down|reassigned|demot|loan", re.I)
 NEWS_INDEFINITE = -0.3  # "out indefinitely", "long-term", "several months" without season-level wording (findings 371, idea 963)
 NEWS_STALE_DAYS = 2
 # lineup spots per team (12 F, 6 D) and the slack weights on the Season dress logit (findings 370, handoff 350)
@@ -1870,14 +1876,21 @@ def week_slack(rows, boost_x, boost_week, missing=None):
             if r.get("after_trip", ())[j:j + 1] == [True]:
                 dz += WEEK_HOME_AFTER_TRIP[0] if r.get("missed", 0) >= 1 else WEEK_HOME_AFTER_TRIP[1] * (1 - q)
             if r.get("missed", 0) >= WEEK_OUT_LONG_GAMES:
-                dz += WEEK_OUT_LONG * j
+                dz += WEEK_OUT_LONG * (j + r.get("j0", 0))
             if dz:
                 r["per_game"][j] = min(1 / (1 + math.exp(-(logit(q) + dz))), r["caps"][j])
         for d, q in zip(r["dates"], r["per_game"]):
             sums[(r["team"], r["isD"], d)] = sums.get((r["team"], r["isD"], d), 0.0) + q
-        if r.get("slack_today") is not None:  # his team's game tonight is still ahead though it no longer counts for an add
-            key = (r["team"], r["isD"], r["today"])
-            sums[key] = sums.get(key, 0.0) + r["slack_today"]
+        # his team's games still ahead that don't count for him (a free agent's game tonight after the first puck, a
+        # waiver player's before he clears, a dropped player's after today) still take a lineup spot (hunt14/puck)
+        for d, q, c, trip, j in r.get("others", ()):
+            dz = 0.0
+            if q > 0.001 and trip:
+                dz += WEEK_HOME_AFTER_TRIP[0] if r.get("missed", 0) >= 1 else WEEK_HOME_AFTER_TRIP[1] * (1 - q)
+            if q > 0.001 and r.get("missed", 0) >= WEEK_OUT_LONG_GAMES:
+                dz += WEEK_OUT_LONG * j
+            q = min(1 / (1 + math.exp(-(logit(q) + dz))), c) if dz else q
+            sums[(r["team"], r["isD"], d)] = sums.get((r["team"], r["isD"], d), 0.0) + q
     if boost_week:
         dates = {}
         for team, isD, d in sums:
@@ -1900,7 +1913,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
             + DEPTH_RANK_LOGIT.get(r.get("toi_rank"), 0.0) \
             + NO_STATUS_OUT_LOGIT * bool(r.get("no_status_out")) + LOW_SCORER_LOGIT * bool(r.get("low_scorer"))  # 358-360, 623, 362
         # handoff 624: his team's next game only
-        regs = [reg + (DTD_NEXT_LOGIT if j == 0 and r.get("dtd_next") else 0.0)
+        regs = [reg + (DTD_NEXT_LOGIT if j + r.get("j0", 0) == 0 and r.get("dtd_next") else 0.0)
                 + (BEFORE_RETURN_LOGIT if j < len(r.get("before_return") or ()) and r["before_return"][j] else 0.0)  # handoff 670
                 + RETURN_LOGIT * bool(r.get("return_words"))  # handoff 677
                 for j in range(len(r["per_game"]))]
@@ -1987,6 +2000,9 @@ def news_season_logit(news, nhl_id, last_game, out_games, gp_now, now_utc):
     if down:
         z += NEWS_SENT_DOWN[0] + NEWS_SENT_DOWN[1] * math.log1p(out_games)
         why.append("sent down")
+        if mv.get("cond"):
+            z += NEWS_CONDITIONING_SEASON
+            why.append("conditioning loan")
     elif mv and mv.get("up") and out_games == 0 \
             and mv["ts"] >= (now_utc - timedelta(days=NEWS_RECALL_DAYS)).strftime("%Y-%m-%dT%H:%M"):
         z += NEWS_CALLED_UP[0] + NEWS_CALLED_UP[1] * min(gp_now, 40) / 40
@@ -3168,6 +3184,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     news_z += ESPN_SEASON_OUT if "season-ending" not in news_why else 0.0
                 elif tl and tl["days_left"] is not None:
                     news_z += SEASON_TIMELINE_C * min(max(tl["days_left"], 0) / 2.2 / max(SEASON_GAMES - len(team_games.get(team, [])), 1), 1)
+                # still listed after playing his team's last game, from a note around that game (handoff 687)
+                if gl and not sat_last and p.get("injury") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") and p["id"] in notes:
+                    n_ = notes[p["id"]]
+                    nd_ = note_date(n_.get("date"))
+                    if nd_ and nd_ >= date.fromisoformat(gl[-1]["date"][:10]) - timedelta(days=1) \
+                            and not NOT_INJURY_NOTE.search(f"{n_.get('short') or ''} {n_.get('long') or ''}"):
+                        news_z += LISTED_PLAYED_SEASON
                 z = model.season_dress_logit(sx, NEW_TEAM_SEASON_LOGIT * new_team_season + LEFT_EARLY_SEASON_LOGIT * bool(early)
                                              + CLEARED_SEASON_LOGIT * cleared_out)
                 # part of the way to the 16-season boosted share (findings 360 (3)); not for a skater ESPN lists on a team he
@@ -3291,6 +3314,22 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             gn = p["games_left"]
             wk_dates = [d for d in sched.get(espn_team, []) if d >= today.isoformat()][-gn:] if gn else []
             wk_dates = (wk_dates + wk_dates[-1:] * gn)[:gn] if wk_dates else [today.isoformat()] * gn
+            # his team's games still to start that don't count for him (a free agent's game tonight after the first puck, a
+            # waiver player's games before he clears) keep their place in his per-game list, so his own games keep their
+            # game numbers (hunt14/puck); they are cut out again below
+            tonight_ahead = today.isoformat() in sched.get(espn_team, []) and \
+                (parse_utc(week_starts.get((espn_team, today.isoformat()))) or now_utc) > now_utc
+            lead = [d for d in sched.get(espn_team, []) if (d > today.isoformat() or d == today.isoformat() and tonight_ahead)
+                    and (not wk_dates or d < wk_dates[0])]
+            skip, tail = len(lead), []
+            # dropped after the first puck: his own games are his team's next ones, not the week's last (hunt14/puck)
+            if p.get("pending_drop") and gn:
+                ahead = [d for d in sched.get(espn_team, []) if d > today.isoformat() or d == today.isoformat() and tonight_ahead]
+                if len(ahead) >= gn:
+                    wk_dates, tail, lead, skip = ahead[:gn], ahead[gn:], [], 0
+            own_n = gn
+            wk_dates = lead + wk_dates + tail
+            gn = gn + skip + len(tail)
             # no game yet this season: news since the season's first game counts (handoff 427)
             wk_news, wk_down, practising, wk_why = week_news_logit(dfo_news, pid, gl[-1]["date"] if gl else season_open, sat_last,
                                                           p.get("injury"), wk_dates,
@@ -3375,7 +3414,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 dress_next = max(dress_next, DFO_LINEUP_NEXT)
                 per_game = [dress_next] + per_game[1:]
             # ESPN has him OUT on the day of his team's game, still to start: that game counts ~0 (findings 235)
-            if p.get("injury") == "OUT" and not one_game_over and per_game and p.get("today_start") and not game_started(p):
+            if p.get("injury") == "OUT" and not one_game_over and per_game and \
+                    ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
                 per_game[0] = min(per_game[0], OUT_TODAY_CAP)
                 dress_next = per_game[0]
             if game_caps == "ir":
@@ -3387,6 +3427,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if game_caps and per_game:
                 per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
                 dress_next = per_game[0]
+            out_idx = list(range(skip)) + list(range(skip + own_n, gn))  # his team's games that aren't his
+            all_dates = wk_dates
+            lead_q = [per_game[i] for i in out_idx] if per_game else []
+            lead_game_caps = [game_caps[i] for i in out_idx] if game_caps else None
+            if out_idx:
+                per_game, wk_dates, gn = per_game[skip:skip + own_n], wk_dates[skip:skip + own_n], own_n
+                game_caps = game_caps[skip:skip + own_n] if game_caps else game_caps
+                dress_next = per_game[0] if per_game else dress_next
             exp_games = sum(per_game)
             if gn:
                 p_dress = exp_games / gn  # the week's average, shown as "to dress"
@@ -3395,13 +3443,21 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("pim", 0) >= FIGHT_PIM
             if gl and pid and per_game:
                 caps = [min(cap, inj)] * len(per_game)
-                if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p):
+                if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p) and not skip:
                     caps[0] = min(caps[0], OUT_TODAY_CAP)
                 if game_caps:
                     caps = [min(a, c) for a, c in zip(caps, game_caps)]
+                lead_caps = [min(cap, inj, c) for c in (lead_game_caps or [1.0] * len(out_idx))]
+                if out_idx and p.get("injury") == "OUT" and not one_game_over and all_dates[out_idx[0]] == today.isoformat() and tonight_ahead:
+                    lead_caps[0] = min(lead_caps[0], OUT_TODAY_CAP)
+                trips = after_trip(venue.get(espn_team, {}), all_dates)
                 week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                   "dates": wk_dates, "per_game": list(per_game), "before": list(per_game), "caps": caps,
-                                  "missed": missed, "after_trip": after_trip(venue.get(espn_team, {}), wk_dates),
+                                  "missed": missed, "after_trip": trips[skip:skip + own_n], "j0": skip,
+                                  # his team's games still ahead that aren't his: (date, chance, cap, home after a trip,
+                                  # game number) for the lineup sums only (hunt14/puck)
+                                  "others": [(all_dates[i], q, c, trips[i], i) for i, q, c in zip(out_idx, lead_q, lead_caps)
+                                             ],
                                   # a healthy regular: dressed his team's last game at regular minutes, no injury listing or
                                   # Daily Faceoff news since (handoff 355)
                                   "regular": not sat_last and not traded and not early and not p.get("injury") and not wk_why
@@ -3418,12 +3474,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   and note["days_left"] is not None and 0 <= note["days_left"] <= 7 else None,
                                   "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
                                   "low_scorer": toi_rank == "lowest" and scored,  # handoff 362
-                                  # a free agent's game tonight stops counting for an add at the first puck (fetch.counts_until),
-                                  # but he still fills a lineup spot if his team's game is later: count him in tonight's sums (audit6)
-                                  "slack_today": per_game[0] if per_game and p.get("owner") in ("freeagent", "waivers")
-                                  and today.isoformat() not in wk_dates and today.isoformat() in sched.get(espn_team if traded else gl[-1]["team"], [])
-                                  and (parse_utc(week_starts.get((espn_team if traded else gl[-1]["team"], today.isoformat()))) or now_utc) > now_utc
-                                  else None, "today": today.isoformat()})
+                                  })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
                    "last_fpg": prev[pid]["fp"] if pid in prev else None, "xfp": nhl_xfp(expected_fp(xg_now.get(pid), xg_prev.get(pid), p["pos"] == "D"), gl) if pid else None}

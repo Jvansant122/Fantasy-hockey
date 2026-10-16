@@ -2,7 +2,7 @@
 
 The Free Agent Finder ranks players by the **Claude Rating**: how many fantasy points a player is projected to score over the rest of the current matchup, using this league's scoring. This page explains what went into it and what the research found, in plain language.
 
-Last updated Oct 15, 2026 (sections through 200). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
+Last updated Oct 15, 2026 (sections through 202). The research is ongoing; new findings are added here as they land. Every idea tested so far, with its result and whether it changed the site, is listed in the [ideas ledger](ideas-ledger.md).
 
 **It is possible to find ways to boost performance rating predictions.** A test below that found no gain is a record of what that test measured, not a limit on the rating.
 
@@ -1337,6 +1337,16 @@ ESPN lists a player who's sick the same way it lists one who's hurt, so the Week
 ## 200. Goalies with fresh injury news
 
 Daily Faceoff often reports a goalie's injury before ESPN lists him. A goalie with Daily Faceoff injury news since his last appearance (at most two weeks old, and not saying he's back or practising fully) now gets at most a 20% chance of starting his team's next game and 35% for later games; his partner picks up the rest. In a replay of 15 seasons on the site's goalie model, those nights' start predictions got 2.5-13% more accurate, depending on how often ESPN had already listed him, and were better in 14 or 15 of the 15 seasons. ESPN's own status, a Daily Faceoff confirmed or likely start, and the Season rating work as before.
+
+## 201. Nothing jumps at the first puck
+
+Once a night's first game starts, a free agent's game later that night no longer counts for an add, since a player added now can't play tonight. The rating used to treat his next game as tonight's, so it picked up tonight-only effects such as Daily Faceoff's lineup floor (Frank Nazar's Saturday went from 52% to 88%). The rating also miscounted the open lineup spots on his team tonight, which moved rostered teammates' numbers. Now a free agent's later games keep their own numbers, and his game tonight still fills a lineup spot. A replay of tonight's runs at 6:55, 7:42, 9:55 and 10:05 PM shows no number moving at the first or last puck unless that player's own game started. The same fix covers a player dropped after the first puck, whose game tonight had been counted on Sunday.
+
+## 202. Goalie and Season tweaks
+
+- **No. 1 after a backup start.** When another goalie started the team's last game, win or lose, the no. 1 started 57% of the games after, against 53% predicted. His start chance now gets a small lift on every game left; it was better in all 15 seasons replayed.
+- **Still listed after playing.** A skater ESPN still lists after playing his team's last game dressed 61-70% of the rest of the season, against 66-78% predicted. His Season share now dips a little (better every season tested, free agents most).
+- **Conditioning loans.** A Daily Faceoff "conditioning loan" to the AHL was counted as a send-down. Those players came back for 20-44% of the rest of the season against 11-18% predicted, so a conditioning loan now cuts the Season share less.
 
 ## What the independent review changed
 
