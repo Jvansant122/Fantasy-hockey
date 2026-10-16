@@ -3409,3 +3409,41 @@ def test_dfo_absent_cap_needs_a_last_game(monkeypatch, tmp_path):
     out, inl = matthews(True), matthews(None)
     assert inl["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP
     assert out["cr_dress_next"] == inl["cr_dress_next"] and out["cr_games"] == inl["cr_games"]
+
+
+def test_back_gap_and_fillins_back():
+    """Handoffs 712-714: the back/gap walk, and the fill-ins whose same-position regular is 1-3 games back from 5+ missed."""
+    tg = list(range(20))
+    assert rating.back_gap(tg, set(range(12)) | {18, 19}) == (2, 6, 12)
+    assert rating.back_gap(tg, set(range(19))) == (0, 1, 19)
+    g = lambda pid, pos, games: [{"id": pid, "team": "TOR", "pos": pos, "game": x} for x in games]
+    by_player = {1: g(1, "C", list(range(12)) + [18, 19]),  # the regular: 12 straight, 6 missed, 2 back
+                 2: g(2, "L", [0, 5] + list(range(12, 20))),  # filled in: all 6 of the run, 1 of the 10 before
+                 3: g(3, "D", [0, 5] + list(range(12, 20))),  # same games, but a defenseman
+                 4: g(4, "R", list(range(20))),  # an everyday forward
+                 5: g(5, "C", [2, 4, 6, 8, 10, 13, 15, 17, 19])}  # half the run: not 60%
+    assert rating.fillins_back(by_player, {"TOR": tg}) == {2}
+    by_player[1] = g(1, "C", list(range(12)) + [16, 17, 18, 19])  # four games back: no longer
+    assert rating.fillins_back(by_player, {"TOR": tg}) == set()
+
+
+def test_return_from_absence_rules(monkeypatch, tmp_path):
+    """Handoff 712: a forward 1-3 games back from 5+ missed has the Week's pts/game x RETURN_F_FPG_MULT, Season unchanged.
+    714: IR-listed but back on full minutes takes IR_RETURN_CAP, not the IR caps. 713: a fill-in gets FILLIN_BACK_LOGIT."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    run = lambda injury=None: rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury=injury)])["Auston Matthews"]
+    plain, plain_ir = run(), run("INJURY_RESERVE")
+    monkeypatch.setattr(rating, "back_gap", lambda tg, played: (2, 6, 1))
+    back, back_ir = run(), run("INJURY_RESERVE")
+    assert 0.9 < rating.RETURN_F_FPG_MULT < 1 and back["cr_fpg"] < plain["cr_fpg"]
+    assert back["cr_fpg"] == pytest.approx(plain["cr_fpg"] * rating.RETURN_F_FPG_MULT, abs=0.011)
+    assert back["cr_season"] == pytest.approx(plain["cr_season"], abs=0.01) or back["cr_season"] == plain["cr_season"]
+    assert plain_ir["cr_dress_next"] < rating.IR_RETURN_CAP - 0.2 and back_ir["cr_dress_next"] == pytest.approx(rating.IR_RETURN_CAP, abs=0.01)
+    monkeypatch.setattr(rating, "back_gap", lambda tg, played: (0, 0, len(tg)))
+    monkeypatch.setattr(rating, "fillins_back", lambda by_player, team_games: {1})
+    assert -1 < rating.FILLIN_BACK_LOGIT < 0
+    monkeypatch.setattr(rating, "FILLIN_BACK_LOGIT", -3.0)  # an everyday regular at 0.99: a large logit to see the wiring
+    assert run()["cr_dress_next"] < plain["cr_dress_next"] - 0.1
+    monkeypatch.setattr(rating, "FILLIN_BACK_LOGIT", 0.0)
+    assert run()["cr_dress_next"] == pytest.approx(plain["cr_dress_next"])

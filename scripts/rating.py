@@ -152,6 +152,9 @@ SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blende
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
 DISPLACED_CUT = {"F": 0.08, "D": 0.12}  # least-used healthy skater sits more when a regular returns (findings section 63)
+# fill-ins in the regular's first 1-3 games back dressed 0.66 vs 0.69 predicted; low in 15/15 seasons (hunt14/sback,
+# findings 515; handoff 713: post-model, every game of the week)
+FILLIN_BACK_LOGIT = -0.2
 # trades and claims (findings 269-272): a newcomer at his position cuts the least-used skater like a returning regular until
 # the newcomer has played ARRIVAL_GAMES for the team; a departed D lifts the team's healthy D out 1-4 games by DEPARTED_D_LIFT
 ARRIVAL_GAMES, DEPARTED_D_LIFT, DEPARTED_D_GAMES, DEPARTED_D_OUT = 3, 0.10, 3, (1, 4)
@@ -479,6 +482,46 @@ def left_early_shifts(last_toi, avg_toi):
 BACK_INJURY_LOGIT, BACK_SCRATCH_LOGIT = 0.4, -0.4
 
 
+def back_gap(tg, played):
+    """(games he has played in a row at the end of tg, team games he missed just before those, index where that run
+    starts): the walk comeback_logit uses (handoffs 712-714)."""
+    back = 0
+    for x in reversed(tg):
+        if x not in played:
+            break
+        back += 1
+    k, gap = len(tg) - back, 0
+    while k > 0 and tg[k - 1] not in played:
+        gap, k = gap + 1, k - 1
+    return back, gap, k
+
+
+def fillins_back(by_player, team_games):
+    """NHL ids of skaters who filled in for a same-position regular now 1-3 games back from 5+ straight missed team games:
+    the regular dressed 8+ of the 10 team games before the run; the fill-in dressed 60%+ of the run and 5 or fewer of
+    those 10 (handoff 713)."""
+    out = set()
+    for gl in by_player.values():
+        tg = team_games.get(gl[-1]["team"])
+        if not tg:
+            continue
+        played = {g["game"] for g in gl}
+        back, gap, k = back_gap(tg, played)
+        if not (1 <= back <= 3 and gap >= 5 and k > 0):
+            continue
+        before, run = tg[max(0, k - 10):k], tg[k:k + gap]
+        if sum(x in played for x in before) < 8:
+            continue
+        grp = pos_group(gl[-1]["pos"])
+        for fid, fl in by_player.items():
+            if fl is gl or fl[-1]["team"] != gl[-1]["team"] or pos_group(fl[-1]["pos"]) != grp:
+                continue
+            fp = {g["game"] for g in fl}
+            if sum(x in fp for x in run) >= 0.6 * len(run) and sum(x in fp for x in before) <= 5:
+                out.add(fid)
+    return out
+
+
 def comeback_logit(tg, played, scratch_list, pid):
     """Dress-logit shift for a skater just back in the lineup. tg: his team's game ids, oldest first; played: the ids he
     dressed for; scratch_list(game id): that game's healthy-scratch ids, or None if it can't be read."""
@@ -585,6 +628,11 @@ GOALIE_AGE_SEASON = 0.009
 NEWS_CAP = 25
 OFFSEASON_MOVER_MULT = 0.965  # skater on a new team since last season: leave-one-season-out 0.963-0.970 (findings 230)
 OFFSEASON_MOVER_MULT_WEEK = 0.98  # the Week's: movers score 0.973-0.990 of the current Week ridge (findings 464, handoff 667)
+# forwards back 1-3 games from 5+ missed team games: next week 0.92-0.97 of the Week ridge (hunt14/sback, findings 515;
+# handoff 712: Week pts/game only, D worse with the same cut)
+RETURN_F_FPG_MULT, RETURN_GAP_GAMES, RETURN_FPG_GAMES = 0.96, 5, 3
+# IR-listed returners who played full minutes dressed 0.80 vs 0.19 (hunt14/sback, findings 515; handoff 714)
+IR_RETURN_CAP, IR_RETURN_SHARE = 0.85, 0.8
 # ESPN team abbreviations that differ from the NHL's
 ESPN_TO_NHL = {"TB": "TBL", "NJ": "NJD", "SJ": "SJS", "LA": "LAK", "UTAH": "UTA", "WAS": "WSH", "MON": "MTL", "CLB": "CBJ"}
 
@@ -2863,6 +2911,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     context = lineup_context(by_player, team_games)  # who missed each team's last game (findings 320 (1))
     left_teammates = left_early_teammates(by_player, team_games)  # for the scratches who fill in (handoff 352)
     fewest = lowest_toi(by_player, team_games)  # for the depth skaters' minutes rank (handoff 360)
+    fill_back = fillins_back(by_player, team_games)  # fill-ins whose regular is just back (handoff 713)
     # the older scratch lists that players just back ask scratch_list for, read side by side now rather than one by one in
     # the loop below (about 30 calls, 8 s; speed audit, Oct 12 2026): each skater's window on his latest team, a superset
     want = set()
@@ -3217,6 +3266,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if last_team and team in rosters and last_team != team and not traded and len({g["team"] for g in gl}) <= 1:
                 fpg *= OFFSEASON_MOVER_MULT_WEEK
                 fpg_s *= OFFSEASON_MOVER_MULT
+            # a forward in his first 1-3 games back from 5+ missed team games: the Week's pts/game 4% lower (handoff 712)
+            if pid and gl and p["pos"] != "D" and not traded:
+                r_back, r_gap, r_k = back_gap(tg, {g["game"] for g in gl})
+                if 1 <= r_back <= RETURN_FPG_GAMES and r_gap >= RETURN_GAP_GAMES and r_k > 0:
+                    fpg *= RETURN_F_FPG_MULT
             # 0-3 games: part of the way to ESPN's preseason projection (handoff 429)
             early_w = next((w for top, w in EARLY_WEEK_ESPN if len(gl) <= top), 0.0) if pid else 0.0
             proj_pre = p.get("proj_ppg_pre", p.get("proj_ppg"))
@@ -3378,6 +3432,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if p.get("injury") == "INJURY_RESERVE" and not (note and note["long"]):
                 inj = IR_DAY_CAPS[2]
                 game_caps = "ir"
+                # already back 1-3 games from 5+ missed, on full minutes: ESPN hasn't caught up (handoff 714)
+                if gl and not sat_last and f.get("std_toi") and gl[-1]["toi"] / f["std_toi"] >= IR_RETURN_SHARE:
+                    r_back, r_gap, r_k = back_gap(tg, {g["game"] for g in gl})
+                    if 1 <= r_back <= RETURN_FPG_GAMES and r_gap >= RETURN_GAP_GAMES and r_k > 0:
+                        inj, game_caps = IR_RETURN_CAP, None
             elif long_caps:
                 game_caps = "long"
             elif p.get("injury") == "SUSPENSION" and p["id"] in notes and p["games_left"]:
@@ -3454,6 +3513,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             filled = scratch and bool(bands)
             if filled:  # the teammate who played least of his minutes sets the lift (handoff 353)
                 post_z += TEAMMATE_LEFT_BANDS[min(bands)][1]["D" if p["pos"] == "D" else "F"]
+            if pid in fill_back:  # his regular is back: he sits a bit more (handoff 713)
+                post_z += FILLIN_BACK_LOGIT
             # a depth forward's special-teams role in his last game (handoff 358)
             st_role = None
             if gl and pid and p["pos"] != "D" and not sat_last and not traded and not early and not p.get("injury") \
