@@ -1407,6 +1407,12 @@ def test_wide_desktop_and_all_columns_on_phones(browser, server, data):
     ctx.close()
 
 
+def _run_clock(d):
+    """A fixed clock a minute after the data's run, so a test reading tonight's numbers doesn't see them as yesterday's."""
+    from datetime import datetime, timedelta
+    return datetime.fromisoformat(d["updated_utc"].replace("Z", "+00:00")) + timedelta(minutes=1)
+
+
 def _et(month, day, hour, minute=0):
     """A fixed clock at that time in New York in October 2026 (EDT, UTC-4)."""
     from datetime import datetime, timedelta, timezone
@@ -1757,7 +1763,7 @@ def test_goalie_details_name_the_pull_to_the_league_rate(browser, server, data):
     g = next(p for p in d["players"] if p["pos"] == "G" and p.get("cr_why"))
     g["cr_fpg"], g["cr_why"]["own_pps"], g["cr_why"]["sched"], g["cr_why"]["gs"] = 3.47, 3.96, 0.2, 8
     g["cr_why"].pop("line", None)
-    ctx, page, errors = open_page(browser, server, d)
+    ctx, page, errors = open_page(browser, server, d, clock=_run_clock(d))  # the run's own time, not a later day's
     text = page.evaluate(f"why(state.data.players.find(p => p.id === {g['id']}))")
     assert "His own 3.96 pts per start" in text
     assert "this week priced at 3.47: pulled most of the way to the league's rate" in text and "then the schedule" in text
@@ -2042,7 +2048,7 @@ def test_details_explain_week_fit_goalie_season_and_game_dates(browser, server, 
     u = next(p for p in d["players"] if p["pos"] == "G" and p is not g)
     u.update(cr_matched=False)
     u["cr_why"] = {k: v for k, v in u["cr_why"].items() if k != "no_record"}
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=_run_clock(d))  # the run's own time, not a later day's
     whyof = lambda p: page.evaluate(f"why(state.data.players.find(p => p.id === {p['id']}))")
     wa, wb, wg, wu = whyof(a), whyof(b), whyof(g), whyof(u)
     assert "This week his team has about 1.0 more likely" in wa and "For the rest of the season, his team has about 1.0" in wa

@@ -158,7 +158,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 9  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 10  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -280,6 +280,7 @@ def news_flags(item):
     return {"season": bool(NEWS_SEASON_907.search(text)) or news_wording(text, NEWS_SEASON, neg=False),
             "surgery": news_surgery(text), "indefinite": news_wording(text, NEWS_INDEFINITE),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text)),
+            "cond": bool(re.search(r"conditioning", text, re.I)),  # a conditioning loan isn't a real send-down (handoff 688)
             # the return-ladder flags were fit on the news line only, not the background paragraph (handoff 424)
             **{k: bool(r.search(details if k in NEWS_DETAILS_ONLY else text)) for k, r in NEWS_WEEK.items()},
             "ret": news_return(text), "tl": news_timeline(text),
@@ -315,7 +316,7 @@ def fetch_news(s, now_utc, stored=None):
         stored = {}
     out = {"fetched": now_utc.strftime("%Y-%m-%dT%H:%MZ"), "version": NEWS_VERSION}
     recent = {pid: list(v) for pid, v in (stored.get("recent") or {}).items()}
-    for slug, keys in (("injuries", ("season", "surgery", "indefinite")), ("roster-moves", ("down", "up"))):
+    for slug, keys in (("injuries", ("season", "surgery", "indefinite")), ("roster-moves", ("down", "up", "cond"))):
         have = dict(stored.get(slug) or {})
         floor = (now_utc - timedelta(days=NEWS_DAYS)).strftime("%Y-%m-%dT%H:%M")
         newest = max((v["ts"] for v in have.values()), default="")
