@@ -3506,7 +3506,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
                 per_game[0] = min(per_game[0], OUT_TODAY_CAP)
                 dress_next = per_game[0]
-            dfo_absent = p.get("dfo_out") is True and not sat_last and not p.get("injury")  # handoff 696
+            dfo_absent = p.get("dfo_out") is True and bool(gl) and bool(tg) and not sat_last and not p.get("injury")  # handoff 696; a team yet to play has no last game (710)
             if dfo_absent and per_game and \
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
                 per_game[0] = min(per_game[0], DFO_ABSENT_TODAY_CAP)
