@@ -3107,7 +3107,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
             if pid:
                 why["g_season_share"] = round(goalie_season.get(pid, 0.0), 2)  # for the page's Season line (handoff 605)
-                if pid in goalie_dfo_day:  # Daily Faceoff injury news cut his starts (handoffs 679, 695)
+                if pid in goalie_dfo_day and goalie_inj.get(pid, 1.0) > 0:  # the news cut his starts; not when ESPN has him at 0 (695)
                     why["dfo_inj"] = goalie_dfo_day[pid]
                 why["season_pps"] = round(fpg_s, 2)  # the Season's pts/start (handoff 641)
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
