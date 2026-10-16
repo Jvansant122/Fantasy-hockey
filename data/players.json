@@ -1,8 +1,8 @@
 {
- "updated": "Fri Oct 16, 1:37 AM ET",
+ "updated": "Fri Oct 16, 1:58 AM ET",
  "updated_date": "2026-10-15",
  "first_start": "2026-10-15T23:00:00Z",
- "updated_utc": "2026-10-16T05:36:54Z",
+ "updated_utc": "2026-10-16T05:58:45Z",
  "team": "New York Mess",
  "matchup_period": 3,
  "matchup_weeks": 1,
@@ -11442,8 +11442,8 @@
    "clears": null,
    "dfo_out": false,
    "proj_ppg_pre": 2.44,
-   "cr": 2.3,
-   "cr_fpg": 2.32,
+   "cr": 2.29,
+   "cr_fpg": 2.31,
    "cr_season": 1.97,
    "proj_gp": 79,
    "cr_games": 0.99,
@@ -23649,14 +23649,14 @@
     "toi_chg": 0.001,
     "week_news": {
      "shift": 0.87,
-     "move": 0.024,
+     "move": 0.001,
      "why": [
       "could return",
       "set to return"
      ]
     },
-    "boost_week": 1.31,
-    "boost_week_move": 0.31,
+    "boost_week": 1.43,
+    "boost_week_move": 0.33,
     "season_pts": 2.15,
     "boost_dress": 0.82,
     "boost_fpg": 2.07,
@@ -31493,86 +31493,6 @@
    "cr_season_pct": 57
   },
   {
-   "id": 5149189,
-   "name": "Matthew Wood",
-   "team": "NSH",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    15,
-    17,
-    19
-   ],
-   "games_next2": 6,
-   "today_start": "2026-10-15T23:00:00Z",
-   "pos": "RW",
-   "slots": [
-    "F",
-    "RW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 1.0,
-   "gp": 7,
-   "ppg": 1.11,
-   "cur_ppg": 1.09,
-   "last_ppg": 1.12,
-   "last_gp": 71,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr": 1.23,
-   "cr_fpg": 1.24,
-   "cr_season": 1.06,
-   "proj_gp": 74,
-   "cr_games": 0.99,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8484241,
-   "cr_why": {
-    "toi5": 15.12,
-    "toi": 15.49,
-    "pp5": 2.18,
-    "sog": 1.5,
-    "blk": 0.33,
-    "gp": 6,
-    "last_fpg": 1.12,
-    "xfp": {
-     "gp": 7,
-     "fpg": 1.12,
-     "xfpg": 1.4
-    },
-    "season_fpg": 1.21,
-    "opp_last": {
-     "ga": 0.006,
-     "move": 0.001
-    },
-    "toi_chg": -0.022,
-    "boost_week": 0.0,
-    "season_pts": 1.22,
-    "boost_dress": 0.86,
-    "boost_fpg": 1.25,
-    "season_range": [
-     0.59,
-     1.62
-    ],
-    "exp": "year 2",
-    "missing_regs_pp": -0.01,
-    "lineup_slack": 1.6,
-    "missing_regs": -0.09,
-    "week_slack": 1.0
-   },
-   "cr_pct": 53,
-   "cr_season_pct": 54
-  },
-  {
    "id": 5104716,
    "name": "Maxwell Crozier",
    "team": "TB",
@@ -32067,6 +31987,86 @@
    },
    "cr_pct": 52,
    "cr_season_pct": 50
+  },
+  {
+   "id": 5149189,
+   "name": "Matthew Wood",
+   "team": "NSH",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    15,
+    17,
+    19
+   ],
+   "games_next2": 6,
+   "today_start": "2026-10-15T23:00:00Z",
+   "pos": "RW",
+   "slots": [
+    "F",
+    "RW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 1.0,
+   "gp": 7,
+   "ppg": 1.11,
+   "cur_ppg": 1.09,
+   "last_ppg": 1.12,
+   "last_gp": 71,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr": 1.22,
+   "cr_fpg": 1.23,
+   "cr_season": 1.06,
+   "proj_gp": 74,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8484241,
+   "cr_why": {
+    "toi5": 15.12,
+    "toi": 15.49,
+    "pp5": 2.18,
+    "sog": 1.5,
+    "blk": 0.33,
+    "gp": 6,
+    "last_fpg": 1.12,
+    "xfp": {
+     "gp": 7,
+     "fpg": 1.12,
+     "xfpg": 1.4
+    },
+    "season_fpg": 1.21,
+    "opp_last": {
+     "ga": 0.006,
+     "move": 0.001
+    },
+    "toi_chg": -0.022,
+    "boost_week": 0.0,
+    "season_pts": 1.22,
+    "boost_dress": 0.86,
+    "boost_fpg": 1.25,
+    "season_range": [
+     0.59,
+     1.62
+    ],
+    "exp": "year 2",
+    "missing_regs_pp": -0.01,
+    "lineup_slack": 1.6,
+    "missing_regs": -0.09,
+    "week_slack": 1.0
+   },
+   "cr_pct": 52,
+   "cr_season_pct": 54
   },
   {
    "id": 4915855,
@@ -34201,7 +34201,7 @@
    "dfo_out": false,
    "cr": 1.16,
    "cr_fpg": 1.18,
-   "cr_season": 0.98,
+   "cr_season": 0.97,
    "proj_gp": 74,
    "cr_games": 0.98,
    "cr_dress": 0.98,
@@ -34222,19 +34222,19 @@
      "fpg": 0.51,
      "xfpg": 0.93
     },
-    "season_fpg": 1.16,
+    "season_fpg": 1.15,
     "opp_last": {
      "ga": 0.065,
      "move": 0.012
     },
     "toi_chg": -0.011,
     "boost_week": -0.89,
-    "season_pts": 1.12,
+    "season_pts": 1.11,
     "boost_dress": 0.88,
     "boost_fpg": 1.1,
     "season_range": [
-     0.51,
-     1.54
+     0.5,
+     1.53
     ],
     "exp": "year 2",
     "missing_regs_pp": -0.02,
@@ -34243,7 +34243,7 @@
     "week_slack": -0.1
    },
    "cr_pct": 48,
-   "cr_season_pct": 45
+   "cr_season_pct": 44
   },
   {
    "id": 3904190,
@@ -40998,14 +40998,14 @@
      "fpg": 1.0,
      "xfpg": 1.23
     },
-    "season_fpg": 1.05,
+    "season_fpg": 1.03,
     "opp_last": {
      "ga": 0.065,
      "move": 0.012
     },
     "toi_chg": -0.012,
     "boost_week": -0.75,
-    "season_pts": 1.01,
+    "season_pts": 1.0,
     "boost_dress": 0.81,
     "boost_fpg": 1.0,
     "season_news": [
@@ -51864,7 +51864,7 @@
      "move": -0.011
     },
     "toi_chg": 0.05,
-    "boost_week": 1.33,
+    "boost_week": 1.36,
     "boost_week_move": 0.22,
     "form": {
      "shift": -0.07,
@@ -52235,7 +52235,7 @@
       "day-to-day"
      ]
     },
-    "boost_week": 0.97,
+    "boost_week": 0.98,
     "boost_week_move": 0.17,
     "season_pts": 1.12,
     "boost_dress": 0.67,
