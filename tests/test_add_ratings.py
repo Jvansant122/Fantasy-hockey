@@ -3447,3 +3447,18 @@ def test_return_from_absence_rules(monkeypatch, tmp_path):
     assert run()["cr_dress_next"] < plain["cr_dress_next"] - 0.1
     monkeypatch.setattr(rating, "FILLIN_BACK_LOGIT", 0.0)
     assert run()["cr_dress_next"] == pytest.approx(plain["cr_dress_next"])
+
+
+def test_back_gap_sees_only_games_for_the_team_it_walks(monkeypatch, tmp_path):
+    """Handoff 715: a traded player's games for his old team (one may share an id with the new team's schedule, head to
+    head) are no games for the new team, so he doesn't read as back from an absence."""
+    seen, real = [], rating.back_gap
+    monkeypatch.setattr(rating, "back_gap", lambda tg, played: seen.append((list(tg), set(played))) or real(tg, played))
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")],
+         fake=FakeSession(moved={1: 2}))
+    assert seen and all(played <= set(tg) for tg, played in seen)
+    # head to head: his old team's game against the new one is on the new team's schedule
+    gl = [{"id": 1, "team": "OTT", "pos": "C", "game": x} for x in range(10)] + [{"id": 1, "team": "PIT", "pos": "C", "game": 25}]
+    tg = list(range(10)) + list(range(11, 26))  # PIT's games, the first 10 against OTT while he was there
+    by_player = {1: gl, 2: [{"id": 2, "team": "PIT", "pos": "L", "game": x} for x in range(11, 26)]}
+    assert rating.fillins_back(by_player, {"PIT": tg}) == set()

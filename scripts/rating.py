@@ -505,7 +505,7 @@ def fillins_back(by_player, team_games):
         tg = team_games.get(gl[-1]["team"])
         if not tg:
             continue
-        played = {g["game"] for g in gl}
+        played = {g["game"] for g in gl if g["team"] == gl[-1]["team"]}  # a game against his new team isn't one for it (715)
         back, gap, k = back_gap(tg, played)
         if not (1 <= back <= 3 and gap >= 5 and k > 0):
             continue
@@ -516,7 +516,7 @@ def fillins_back(by_player, team_games):
         for fid, fl in by_player.items():
             if fl is gl or fl[-1]["team"] != gl[-1]["team"] or pos_group(fl[-1]["pos"]) != grp:
                 continue
-            fp = {g["game"] for g in fl}
+            fp = {g["game"] for g in fl if g["team"] == gl[-1]["team"]}
             if sum(x in fp for x in run) >= 0.6 * len(run) and sum(x in fp for x in before) <= 5:
                 out.add(fid)
     return out
@@ -3268,7 +3268,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 fpg_s *= OFFSEASON_MOVER_MULT
             # a forward in his first 1-3 games back from 5+ missed team games: the Week's pts/game 4% lower (handoff 712)
             if pid and gl and p["pos"] != "D" and not traded:
-                r_back, r_gap, r_k = back_gap(tg, {g["game"] for g in gl})
+                r_back, r_gap, r_k = back_gap(tg, {g["game"] for g in gl if g["team"] == team})
                 if 1 <= r_back <= RETURN_FPG_GAMES and r_gap >= RETURN_GAP_GAMES and r_k > 0:
                     fpg *= RETURN_F_FPG_MULT
             # 0-3 games: part of the way to ESPN's preseason projection (handoff 429)
@@ -3434,7 +3434,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 game_caps = "ir"
                 # already back 1-3 games from 5+ missed, on full minutes: ESPN hasn't caught up (handoff 714)
                 if gl and not sat_last and f.get("std_toi") and gl[-1]["toi"] / f["std_toi"] >= IR_RETURN_SHARE:
-                    r_back, r_gap, r_k = back_gap(tg, {g["game"] for g in gl})
+                    r_back, r_gap, r_k = back_gap(tg, {g["game"] for g in gl if g["team"] == team})
                     if 1 <= r_back <= RETURN_FPG_GAMES and r_gap >= RETURN_GAP_GAMES and r_k > 0:
                         inj, game_caps = IR_RETURN_CAP, None
             elif long_caps:
