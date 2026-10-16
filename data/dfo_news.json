@@ -1,5 +1,5 @@
 {
-"fetched": "2026-10-16T02:46Z",
+"fetched": "2026-10-16T03:36Z",
 "injuries": {
 "8470621": {
 "indefinite": false,
@@ -1478,11 +1478,12 @@
 "8483468": {
 "indefinite": false,
 "nf": [
-"ret"
+"dtd",
+"illness"
 ],
 "season": false,
 "surgery": false,
-"ts": "2026-09-25T16:25:33"
+"ts": "2026-10-15T22:40:37"
 },
 "8483472": {
 "indefinite": false,
@@ -4832,6 +4833,13 @@
 "ret"
 ],
 "ts": "2026-09-25T16:25:33"
+},
+{
+"cat": "inj",
+"f": [
+"dtd"
+],
+"ts": "2026-10-15T22:40:37"
 }
 ],
 "8483472": [
