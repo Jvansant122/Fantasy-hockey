@@ -3014,14 +3014,21 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     goalie_dfo, goalie_dfo_day = {}, {}
     last_app = {gid: max(d for d, _ in v) for gid, v in goalie_dates.items()}
     oldest = f"{today - timedelta(days=GOALIE_DFO_INJ_DAYS)}T13:00:00"
+    # a Daily Faceoff confirmed start today or later ends the cut, as his appearance will (handoff 698)
+    conf_day = {}
+    for by_d in confirmed.values():
+        for d, g in by_d.items():
+            if d >= today.isoformat() and d > conf_day.get(g, ""):
+                conf_day[g] = d
     for team_r in rosters.values():
         for gid, _, pos in team_r:
             items = ((dfo_news or {}).get("recent") or {}).get(str(gid)) or ()
-            since = max(f"{last_app[gid]}T20:00:00" if gid in last_app else "", oldest)
+            seen = max(last_app.get(gid, ""), conf_day.get(gid, ""))
+            since = max(f"{seen}T20:00:00" if seen else "", oldest)
             inj = [r for r in items if r.get("cat") == "inj" and r["ts"] > since]
             if pos == "G" and inj and not {"ret", "full"} & set(inj[-1].get("f") or ()):
                 goalie_dfo[gid] = GOALIE_DFO_INJ_CAPS
-                goalie_dfo_day[gid] = inj[-1]["ts"][:10]  # for his details (handoff 695)
+                goalie_dfo_day[gid] = str(note_date(inj[-1]["ts"]))  # the ET date, for his details (handoffs 695, 697)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
     g_ages = {gid: (today - b).days / 365.25 for gid, b in births.items() if b}  # the goalies' age cut (handoff 640)
@@ -3110,7 +3117,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             raw_season = goalie_season.get(pid, 0.0) * fpg_s if pid else 0.0
             if pid:
                 why["g_season_share"] = round(goalie_season.get(pid, 0.0), 2)  # for the page's Season line (handoff 605)
-                if pid in goalie_dfo_day and goalie_inj.get(pid, 1.0) > 0:  # the news cut his starts; not when ESPN has him at 0 (695)
+                # the news cut his starts: not when ESPN has him at 0 (695), nor when no healthy partner without the news takes them (699)
+                if pid in goalie_dfo_day and goalie_inj.get(pid, 1.0) > 0 and any(
+                        g != pid and g not in goalie_dfo and goalie_inj.get(g, 1.0) > 0
+                        for g, _, pos in rosters.get(roster_team.get(pid, team), []) if pos == "G"):
                     why["dfo_inj"] = goalie_dfo_day[pid]
                 why["season_pps"] = round(fpg_s, 2)  # the Season's pts/start (handoff 641)
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0

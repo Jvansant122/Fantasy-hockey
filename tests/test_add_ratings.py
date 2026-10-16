@@ -2975,20 +2975,27 @@ def test_goalie_dfo_injury_news_caps_his_starts(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "load_news", lambda: {})
 
-    def toronto(items):
-        news = {"fetched": "2099-01-01T00:00Z", "recent": {"11": items}}
+    def toronto(items, also=None, starters=()):
+        news = {"fetched": "2099-01-01T00:00Z", "recent": {"11": items, **(also or {})}}
         players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
-        rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news=news)
+        rating.add_ratings(players, 2027, TODAY, MONDAY, list(starters), dfo_news=news)
         return {p["name"]: p for p in players}
     base = toronto([])
     hurt = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}])
     back = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}, {"ts": f"{TODAY}T02:00:00", "cat": "inj", "f": ["ret"]}])
     old = toronto([{"ts": "2026-09-01T01:00:00", "cat": "inj", "f": []}])
     assert hurt["Joseph Woll"]["cr_games"] < base["Joseph Woll"]["cr_games"]
-    assert hurt["Joseph Woll"]["cr_why"]["dfo_inj"] == str(TODAY) and "dfo_inj" not in base["Joseph Woll"]["cr_why"]  # handoff 695
+    # handoffs 695, 697: the news's ET date (01:00 UTC is the evening before)
+    assert hurt["Joseph Woll"]["cr_why"]["dfo_inj"] == str(TODAY - timedelta(days=1)) and "dfo_inj" not in base["Joseph Woll"]["cr_why"]
+    both = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}], also={"12": [{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}]})
+    assert "dfo_inj" not in both["Joseph Woll"]["cr_why"]  # handoff 699: no healthy partner without the news takes his starts
     assert hurt["Anthony Stolarz"]["cr_games"] > base["Anthony Stolarz"]["cr_games"]
     assert back["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
     assert old["Joseph Woll"]["cr_games"] == base["Joseph Woll"]["cr_games"]
+    # handoff 698: Daily Faceoff confirms him for tonight, so his news no longer cuts the games after
+    conf = [{"date": str(TODAY), "games": [{"team": "TOR", "goalie": "Joseph Woll", "status": "Confirmed"}]}]
+    c_hurt = toronto([{"ts": f"{TODAY}T01:00:00", "cat": "inj", "f": []}], starters=conf)
+    assert c_hurt["Joseph Woll"]["cr_games"] == pytest.approx(toronto([], starters=conf)["Joseph Woll"]["cr_games"])
 
 
 # handoffs 681 and 683: pinned lines from #205-#206 (hunt14/audit6)
