@@ -549,7 +549,7 @@ function why(p) {
         + (own !== fpg ? `; this week priced at ${fpg}: pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)${by ? `, then ${by}` : ""}` : ""));
     // what the Season rating is made of (handoff 605)
     // no share of the remaining starts: the rating is 0, not 0.32 (handoff 636)
-    if (w.dfo_inj) parts.push(`Daily Faceoff injury news on ${w.dfo_inj} with no return or full-practice word: his chance to start is cut to a fifth for his team's next game and about a third after (goalies with such news started 6-15% of next games)`);
+    if (w.dfo_inj) parts.push(`Daily Faceoff injury news on ${dayLabel(w.dfo_inj)} with no return or full-practice word: his chance to start is cut to a fifth for his team's next game and about a third after (goalies with such news started 6-15% of next games)`);
     if (p.cr_season != null && w.g_season_share === 0) parts.push(`Season: ${n(p.cr_season)} pts per team game (no share of his team's remaining starts expected)`);
     else if (p.cr_season != null && w.g_season_share != null && (w.season_pps ?? w.mover_pps ?? w.own_pps) != null) parts.push(`Season: ${n(p.cr_season)} pts per team game = 0.32 + 0.72 × his expected share of his team's remaining starts (${Math.round(w.g_season_share * 100)}%) × ${(+(w.season_pps ?? w.mover_pps ?? w.own_pps)).toFixed(2)} pts per start` + (w.mover_pps != null ? " (his last-season rate adjusted for his new team)" : ""));
   } else {
