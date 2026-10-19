@@ -548,7 +548,7 @@ def comeback_logit(tg, played, scratch_list, pid):
 
 def scratch_streak(tg, played, scratch_list, pid, n=5):
     """Games of his current absence (his team's games since the last one he played for it, oldest first in tg) on whose
-    healthy-scratch list he is, reading only the absence's last n games; an unreadable list counts as not scratched."""
+    NHL scratch list he is, reading only the absence's last n games; an unreadable list counts as not scratched."""
     gap = next((k for k, x in enumerate(reversed(tg)) if x in played), len(tg))
     lists = [scratch_list(x) for x in tg[len(tg) - gap:][-n:]] if gap else []
     return sum(l is not None and pid in l for l in lists)
@@ -580,8 +580,8 @@ def dress_by_game(base, n, sat_last, cap, shift=0.0, by_game=()):
 
 
 def load_scratches(s, game_ids):
-    """{game id: NHL ids on its healthy-scratch list} from the game page's right rail, which lists healthy scratches
-    only, not the injured. A game whose list can't be read or isn't posted is left out."""
+    """{game id: NHL ids on its scratch list} from the game page's right rail, which lists healthy scratches and also
+    injured players not on IR (day-to-day ones included). A game whose list can't be read or isn't posted is left out."""
     def rail(gid):
         try:
             return nhl_get(s, f"{NHL_WEB}/gamecenter/{gid}/right-rail").json().get("gameInfo") or {}
@@ -3421,10 +3421,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     q = min(max(season_boost.predict(boost_dress, boost_x[pid]), 0.01), 0.99)
                     z += BOOST_DRESS_W * (math.log(q / (1 - q)) - z)
                     boost_q = q
-                # a defenseman in a healthy-scratch streak early in the season comes back more (handoff 729); the NHL's
-                # scratch list also names the injured, so not one ESPN lists as hurt
+                # a defenseman on the NHL scratch list for a streak early in the season comes back more (handoff 729); the
+                # list also names injured players not on IR, and the lift was measured on them too (handoff 730)
                 tgn = len(team_games.get(team, []))
-                if p["pos"] == "D" and sat_last and not p.get("injury") and not traded and tgn < SEASON_SCRATCH_D_GAMES:
+                if p["pos"] == "D" and sat_last and not traded and tgn < SEASON_SCRATCH_D_GAMES:
                     k = scratch_streak(tg, {g["game"] for g in gl if g["team"] == team}, scratch_list, pid)
                     news_z += SEASON_SCRATCH_D_LOGIT * min(k, 5) / 5 * max(1 - tgn / SEASON_SCRATCH_D_GAMES, 0)
                 season = rest_share = 1 / (1 + math.exp(-(z + news_z)))

@@ -1377,7 +1377,7 @@ A skater who sat his team's last game but is back in Daily Faceoff's fresh lines
 
 ## 210. Scratched defensemen early in the season
 
-A defenseman who has been a healthy scratch for several games early in the season dresses for more of the rest of it than the Season rating expected: in 2023-26, defensemen scratched 3 or more games within their team's first 12 played 53-60% of the rest against 42-46% predicted, while forwards were already on target. The Season chance to play for a scratched defenseman now rises with the length of the streak (up to 5 games) and fades out by his team's 20th game (handoff 729). The ranking improved in every held-out season, for all players and for free agents, and beat 100 of 100 shuffled placebos.
+A defenseman who has been on the NHL scratch list (which also names injured players not on IR) for several games early in the season dresses for more of the rest of it than the Season rating expected: in 2023-26, defensemen scratched 3 or more games within their team's first 12 played 53-60% of the rest against 42-46% predicted, while forwards were already on target. The Season chance to play for a scratched defenseman now rises with the length of the streak (up to 5 games) and fades out by his team's 20th game (handoff 729). Injured defensemen on the list keep the lift: they were the most under-predicted group, playing 68% of the rest against 56-61% predicted (handoff 730). The ranking improved in every held-out season, for all players and for free agents, and beat 100 of 100 shuffled placebos.
 
 ## What the independent review changed
 
