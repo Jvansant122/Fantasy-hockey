@@ -1,4 +1,4 @@
-"""Daily Faceoff's next-game floors survive the Week lineup step (week_slack), handoff 720."""
+"""Daily Faceoff's next-game floors survive the Week lineup step (week_slack), handoffs 720-721."""
 import os
 import sys
 
@@ -34,3 +34,15 @@ def test_floor_respects_the_cap_and_short_groups():
     rows = [_row(i, 0.97, regular=True) for i in range(5)] + [_row(99, 0.7, floor0=0.9)]  # fewer than 12: no slack
     rating.week_slack(rows, {}, None, None)
     assert rows[-1]["p"]["cr_dress_next"] >= 0.9
+
+
+def test_regular_in_fresh_lines_gets_the_next_game_floor():
+    """Handoff 721: a regular in his team's fresh lines gets at least 0.95 for the team's next game, not a later one."""
+    out = _run([_row(99, rating.DFO_LINEUP_NEXT, floor0=rating.DFO_LINEUP_NEXT),
+                _row(98, 0.8, floor0=rating.DFO_IN_LINES_NEXT, regular=True),
+                _row(97, 0.8, floor0=rating.DFO_IN_LINES_NEXT, regular=True, j0=1)])
+    assert out[12] >= rating.DFO_LINEUP_NEXT
+    assert out[13] >= rating.DFO_IN_LINES_NEXT
+    assert out[14] < rating.DFO_IN_LINES_NEXT
+    assert out[0] < 0.97
+    assert rating.DFO_LINEUP_NEXT < rating.DFO_IN_LINES_NEXT < 1
