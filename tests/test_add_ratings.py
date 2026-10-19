@@ -716,6 +716,31 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     assert all(b < u for b, u in zip(base, up)) and max(rating.dress_by_game(0.9, 3, True, 0.3, rating.SCRATCH_LOGIT["F"])) <= 0.3
 
 
+def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkeypatch, tmp_path):
+    """Handoff 729: a defenseman on the healthy-scratch list early in the season dresses for more of the rest of it than the
+    Season share says: + 0.8 x min(k, 5)/5 on the Season logit, fading to 0 at the team's 20th game. Not when the list
+    doesn't have him, and never for forwards."""
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def mcavoy(**kw):
+        fake = FakeSession(**kw)
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(101, "Auston Matthews", "TOR", "C")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY)
+        return players[0]
+    assert rating.SEASON_SCRATCH_D_LOGIT > 0 and rating.SEASON_SCRATCH_D_GAMES == 20
+    on, off = mcavoy()["cr_season"], mcavoy(scratched=())["cr_season"]
+    monkeypatch.setattr(rating, "SEASON_SCRATCH_D_LOGIT", 0.0)
+    assert on > mcavoy()["cr_season"] + 0.01  # sat game 3 as a scratch: k = 1, 4 team games in
+    assert off == mcavoy(scratched=())["cr_season"]
+    tg = list(range(10))
+    look = lambda x: {7} if x in (6, 8, 9) else set()
+    assert rating.scratch_streak(tg, {0, 1, 2, 3, 4}, look, 7) == 3  # out games 5-9, scratched in 6, 8 and 9
+    assert rating.scratch_streak(tg, set(range(9)), look, 7) == 1 and rating.scratch_streak(tg, set(tg), look, 7) == 0
+    assert rating.scratch_streak(tg, {0}, lambda x: {7}, 7) == 5  # only the absence's last 5 games are read
+    assert rating.scratch_streak(tg, {0}, lambda x: None, 7) == 0  # unreadable lists count as not scratched
+
+
 def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     """Dressed for the last game but played under 40% of his average ice time: big dress cut for the next games, until
     ESPN flags him; 40-55% a small one for two games (findings 165)."""

@@ -546,6 +546,20 @@ def comeback_logit(tg, played, scratch_list, pid):
     return BACK_SCRATCH_LOGIT if scratched else 0.0
 
 
+def scratch_streak(tg, played, scratch_list, pid, n=5):
+    """Games of his current absence (his team's games since the last one he played for it, oldest first in tg) on whose
+    healthy-scratch list he is, reading only the absence's last n games; an unreadable list counts as not scratched."""
+    gap = next((k for k, x in enumerate(reversed(tg)) if x in played), len(tg))
+    lists = [scratch_list(x) for x in tg[len(tg) - gap:][-n:]] if gap else []
+    return sum(l is not None and pid in l for l in lists)
+
+
+# a defenseman in a 3+ game healthy-scratch streak early in the season dresses for more of the rest than the Season share
+# says (0.53-0.60 vs 0.42-0.46; forwards calibrated): + 0.8 x min(k, 5)/5 on the logit, fading to 0 at the team's 20th
+# game (findings 527, handoff 729)
+SEASON_SCRATCH_D_LOGIT, SEASON_SCRATCH_D_GAMES = 0.8, 20
+
+
 # the Season rating's rest-of-season dress share for a skater in his first 1-10 games for a new team (0.62-0.67 against
 # 0.71-0.72 actual, findings 158)
 NEW_TEAM_SEASON_LOGIT, NEW_TEAM_SEASON_GAMES = 0.3, 10
@@ -2960,6 +2974,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for gl in by_player.values():
         if team_games.get(gl[-1]["team"]):
             comeback_logit(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]}, want.add, gl[-1]["id"])
+            if gl[-1].get("pos") == "D" and len(team_games[gl[-1]["team"]]) < SEASON_SCRATCH_D_GAMES:  # handoff 729
+                scratch_streak(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]},
+                               lambda x: want.add(x), gl[-1]["id"])
     want -= tried
     tried |= want
     scratches.update(load_scratches(s, want))
@@ -3404,6 +3421,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     q = min(max(season_boost.predict(boost_dress, boost_x[pid]), 0.01), 0.99)
                     z += BOOST_DRESS_W * (math.log(q / (1 - q)) - z)
                     boost_q = q
+                # a defenseman in a healthy-scratch streak early in the season comes back more (handoff 729)
+                tgn = len(team_games.get(team, []))
+                if p["pos"] == "D" and sat_last and not traded and tgn < SEASON_SCRATCH_D_GAMES:
+                    k = scratch_streak(tg, {g["game"] for g in gl if g["team"] == team}, scratch_list, pid)
+                    news_z += SEASON_SCRATCH_D_LOGIT * min(k, 5) / 5 * max(1 - tgn / SEASON_SCRATCH_D_GAMES, 0)
                 season = rest_share = 1 / (1 + math.exp(-(z + news_z)))
                 season *= fpg_s
             elif cleared_new:
