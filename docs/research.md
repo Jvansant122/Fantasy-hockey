@@ -1379,6 +1379,14 @@ A skater who sat his team's last game but is back in Daily Faceoff's fresh lines
 
 A defenseman who has been on the NHL scratch list (which also names injured players not on IR) for several games early in the season dresses for more of the rest of it than the Season rating expected: in 2023-26, defensemen scratched 3 or more games within their team's first 12 played 53-60% of the rest against 42-46% predicted, while forwards were already on target. The Season chance to play for a scratched defenseman now rises with the length of the streak (up to 5 games) and fades out by his team's 20th game (handoff 729). Injured defensemen on the list keep the lift: they were the most under-predicted group, playing 68% of the rest against 56-61% predicted (handoff 730). The ranking improved in every held-out season, for all players and for free agents, and beat 100 of 100 shuffled placebos.
 
+## 211. Goalies early in the season
+
+Three changes from a 15-season replay of the goalie start model (handoffs 731-733, findings 528):
+
+- A goalie who changed teams over the summer and isn't his new team's no. 1 starts its next game less often than the model said while the team has played 16 or fewer games (22% against 28%, 14 of 15 seasons). His chance for that game now comes down.
+- The goalie who started opening night starts the team's second game more often than the model said (74% against 61%, 14 of 15 seasons), unless it is the second night of a back-to-back. His chance for that game now goes up.
+- Season rating: last season's goalie split now counts as 15 team games instead of 10 (better in 13 of 15 seasons).
+
 ## What the independent review changed
 
 | Review point | Outcome |
