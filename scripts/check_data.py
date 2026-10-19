@@ -27,6 +27,12 @@ SEASON_GAMES = 84  # NHL games a team plays
 # ESPN scoring period 1 of the 2027 season (sp 7 = Mon Oct 5, 2026): the day-0 the nights' sp count from, used only when
 # the data has no sp1_date (fetch.py publishes ESPN's own); the check is skipped once the data is 300+ days past it
 SP1 = date(2026, 9, 29)
+# rating.py's DFO_LINEUP_NEXT / DFO_IN_LINES_NEXT and the idle caps (IDLE_DRESS, NOT_PLAYING_DRESS) that may sit under
+# them; a test keeps them in step
+DFO_FLOORS = (0.9, 0.95)
+IDLE_CAPS = (0.5, 0.2, 0.1)
+# rules that only warn until a run at every time of day has kept them (P9: no evening run checked yet, handoff 743)
+SOFT_RULES = {"P9"}
 
 
 def problems(data):
@@ -125,9 +131,10 @@ def _night_dates(data):
     return out
 
 
-def rules(data):
+def rules(data, soft=False):
     """Rules every published version keeps (findings 215: across all 61 versions to Oct 11 these catch the overnight
-    shift, a made-up game, starts for a goalie with no games and the first-puck bugs, with no false alarms)."""
+    shift, a made-up game, starts for a goalie with no games and the first-puck bugs, with no false alarms). soft: also
+    the SOFT_RULES, which warnings() prints instead of blocking."""
     out, nights, players, rated = [], data["nights"], data["players"], data["rated"]
     sps = [n["sp"] for n in nights]
     ahead = [n["sp"] for n in nights if not n["past"]]
@@ -153,7 +160,7 @@ def rules(data):
         teams = sum(n["sp"] in v for k, v in team_nights.items() if k != "FA")
         if teams > 2 * n["games"]:
             out.append(f"N2 {n['date']}: {teams} teams play but {n['games']} games")
-    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2", "P7", "G4", "G6")}
+    bad = {k: [] for k in ("P2", "P3", "P4", "P5", "P6", "G1", "S1", "S2", "P7", "G4", "G6", "P8", "P9")}
     for p in players:
         nm = f"{p['name']} ({p['team']})"
         pn = p.get("nights") or []
@@ -169,6 +176,20 @@ def rules(data):
         # P3 expected games between 0 and games left (a made-up game, findings 182)
         if g > p["games_left"] + EPS or g < 0:
             bad["P3"].append(f"{nm} cr_games {g} with {p['games_left']} left")
+        # P8 once tonight's game starts the page takes out tonight's chance (dropStarted), not a whole game, so what is
+        # left stays within the games left after tonight (handoff 719)
+        if today_sp in pn and ts and data.get("updated_utc") and ts > data["updated_utc"] and p["games_left"]:
+            t = (p.get("cr_why") or {}).get("p_today") if p["pos"] == "G" else p.get("cr_dress_next", p.get("cr_dress"))
+            if g - min(max(t or 0.0, 0.0), 1.0) > p["games_left"] - 1 + EPS:
+                bad["P8"].append(f"{nm} cr_games {g} less tonight's {t} above {p['games_left']} - 1")
+        # P9 Daily Faceoff's next-game floors survive every later step (handoffs 720-722)
+        q = p.get("cr_dress_next")
+        if p["pos"] != "G" and p.get("dfo_out") is False and not p.get("injury") and p.get("owner") != "waivers" \
+                and q is not None and q > 0.001 and q not in IDLE_CAPS and p["games_left"] and p["games_left"] == want \
+                and not (ts and data.get("updated_utc") and ts <= data["updated_utc"]):
+            f = DFO_FLOORS[0] if p.get("sat_last") else DFO_FLOORS[1] if _gp(p) else None
+            if f is not None and q < f - 0.001:
+                bad["P9"].append(f"{nm} cr_dress_next {q} under Daily Faceoff's {f} ({'sat' if p.get('sat_last') else 'played'} last game, in the lines)")
         # P4 Week = points a game x expected games
         if abs(cr - fpg * g) > 0.006 + 0.005 * (g + abs(fpg)):
             bad["P4"].append(f"{nm} cr {cr} != {fpg} x {g}")
@@ -209,7 +230,7 @@ def rules(data):
         es = why.get("exp_starts") if p["pos"] == "G" else None
         if es is not None and (es > p["games_left"] + EPS or why.get("team_games", p["games_left"]) < es - EPS):
             bad["G1"].append(f"{nm} exp_starts {es} of {why.get('team_games')} team games, {p['games_left']} left")
-    out += [f"{k} {len(v)} players, e.g. {v[:3]}" for k, v in bad.items() if v]
+    out += [f"{k} {len(v)} players, e.g. {v[:3]}" for k, v in bad.items() if v and (soft or k not in SOFT_RULES)]
     out += week_rules(data, ahead)
     if rated:
         # G2 a team's goalies' expected starts sum to at most its games left
@@ -289,6 +310,8 @@ def warnings(data, prev):
     if not data.get("rated"):
         return out
     players = data["players"]
+    # the rules still on probation warn rather than block (SOFT_RULES)
+    out += [e for e in rules(data, soft=True) if e.split(" ", 1)[0] in SOFT_RULES]
     # W5 the Predicted winners tab came out empty (each part fails alone and publishes empty, findings 450)
     w = data.get("winners") or {}
     if not w.get("games"):
