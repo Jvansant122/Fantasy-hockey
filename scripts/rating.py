@@ -3308,7 +3308,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             else:
                 df_ = dress_features(gl, team, tg, f, today) if model.dress_lr else None
                 # the Week logistic reads dressed3/10 on its fit convention, old-team games kept (handoff 717); the
-                # Season logistic keeps df_
+                # Season logistic reads df_w too (handoff 718)
                 df_w = dress_features(gl, team, tg, {**f, **{f"dressed{n}": dressed_any_team(gl, tg, team_games, n) for n in (3, 10)}},
                                       today) if df_ and not traded else df_
                 p_dress = base_dress = model.dress_logit(df_w) if df_ else model.dress(f["dressed3"], f["dressed10"])
