@@ -725,12 +725,13 @@ def main():
         preseason_projections(players, season)
     except Exception as e:  # noqa: BLE001 - the rating falls back to today's projection
         print(f"Preseason projections failed, using today's: {e!r}", file=sys.stderr)
-    winners = {}
+    winners, info = {}, {}
     try:
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
         add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left),
-                    reschedule=reschedule, dfo_news=news, winners=winners)
+                    reschedule=reschedule, dfo_news=news, winners=winners, info=info,
+                    relineup=lambda last: leads.mark_lineups(players, lineups, ESPN_TO_NHL, last))
         for p in players:  # goalie start chances by night, keyed like nights (findings 236)
             if p["pos"] == "G" and "cr_g_nights" in p:
                 # only nights he counts for: a waiver goalie's nights before he clears aren't his (handoff 492)
@@ -799,6 +800,7 @@ def main():
         "updated": datetime.now(ET).strftime("%a %b %-d, %-I:%M %p ET"),
         "updated_date": today_et.isoformat(),
         "first_start": first_start,  # today's first puck, UTC: adds after it count from tomorrow (findings 179)
+        "stats_missing": info.get("stats_missing", 0),  # last night's finished games the NHL hasn't posted yet (handoff 753)
         "updated_utc": run_utc,  # the page compares it with each player's today_start (findings 178)
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,

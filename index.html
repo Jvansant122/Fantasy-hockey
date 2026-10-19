@@ -1610,7 +1610,9 @@ fetch("data/players.json", { cache: "no-store" })
     // an overnight run (midnight to ESPN's ~3:30 AM rollover) already has last night's games (findings 183)
     const etDay = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
     if (stale(d) && d.updated_utc && etDay(d.updated_utc) === etDay(Date.now()))
-      $("stale").textContent = "These numbers are from an overnight update, before ESPN moved to today. Last night's games are in, but tonight's lineup cards wait for the 6 AM ET refresh.";
+      $("stale").textContent = d.stats_missing
+        ? `These numbers are from an overnight update, before ESPN moved to today. Last night's games are out of Week and Games, but the NHL hasn't posted stats for ${d.stats_missing} of them yet, so ratings don't include how those players did; the 6 AM ET refresh adds them.`
+        : "These numbers are from an overnight update, before ESPN moved to today. Last night's games are in, but tonight's lineup cards wait for the 6 AM ET refresh.";
     // a run today that hasn't landed 45 minutes after its time: say the numbers are older (handoff 465)
     const slot = lastSlot();
     if ($("stale").hidden && !stale(d) && slot[0] === etParts(Date.now())[0] && etParts(Date.now())[1] - slot[1] > 45 && slotMissing(d, slot)) {

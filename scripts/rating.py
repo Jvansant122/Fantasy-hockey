@@ -2875,7 +2875,7 @@ def predicted_games(players, by_player, prev, rosters, team_games, team_dates, s
 
 
 def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
-                dfo_news=None, winners=None):
+                dfo_news=None, winners=None, relineup=None, info=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
 
     starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
@@ -2934,6 +2934,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     team_dates = {}  # each team's played game dates (ET)
     for g in goalie_games:
         team_dates.setdefault(g["team"], set()).add(g["date"][:10])
+    # Daily Faceoff lines count for the next game unless posted before the last game in the history loaded here, not the
+    # last game that started 4+ hours ago: overnight the NHL posts last night's stats late (findings 543, handoff 752)
+    if relineup is not None:
+        relineup({t: week_starts.get((t, d)) or f"{d}T23:00:00Z" for t, d in ((t, max(ds)) for t, ds in team_dates.items())})
+    if info is not None:  # last night's finished games not yet in the history, for the overnight banner (handoff 753)
+        last = history_end(today).isoformat()
+        info["stats_missing"] = sum(1 for (home, d), r in week_results.items() if d == last
+                                    and r.get("state") in winners_model.FINAL_STATES and d not in team_dates.get(home, ()))
     # came on in relief in his team's latest game (findings 170)
     relief = {}
     for g in goalie_games:

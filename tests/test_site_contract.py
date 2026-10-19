@@ -225,6 +225,18 @@ def playoff_like(data, start, nights, today, weeks, period):
         else:
             p["cr_games"] = min(p.get("cr_games") or 0, p["games_left"])
         p["cr"] = round((p.get("cr_fpg") or 0) * p["cr_games"], 2)
+    teams = {}  # each goalie is capped at half on his own, so a third goalie can push the team past its games (G2)
+    for p in x["players"]:
+        if p["pos"] == "G" and "exp_starts" in (p.get("cr_why") or {}):
+            teams.setdefault(p["team"], []).append(p)
+    for gs in teams.values():
+        tot, gl = sum(g["cr_why"]["exp_starts"] for g in gs), max(g["games_left"] for g in gs)
+        for g in gs if tot > gl else ():
+            w = g["cr_why"]
+            w["exp_starts"] = g["cr_games"] = round(w["exp_starts"] * gl / tot, 2)
+            left = [s for s in g["nights"] if s >= tsp]
+            g["cr_g_nights"] = {str(s): round(g["cr_games"] / len(left), 2) for s in left} if left else {}
+            g["cr"] = round((g.get("cr_fpg") or 0) * g["cr_games"], 2)
     return x
 
 
