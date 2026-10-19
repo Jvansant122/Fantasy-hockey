@@ -9,7 +9,7 @@ import pytest
 
 import check_data
 from conftest import ROOT
-from test_page import _mine, browser, data, open_page, server  # noqa: F401 - pytest fixtures
+from test_page import _card, _mine, browser, data, open_page, server  # noqa: F401 - pytest fixtures
 
 THU_SP_INDEX = 3  # Thursday of a Monday-Sunday matchup
 
@@ -478,3 +478,103 @@ def test_activate_from_ir_drop_is_not_offered_a_replacement(browser, server, dat
         ctx.close()
     assert seen >= len(d["teams"]) // 2, seen
     assert not bad, bad[:3]
+
+
+# ---------------------------------------------------------------- cards: one roster spot, one plan (handoffs 724-728)
+def _plans(page):
+    """Who each card drops, the Drop list's lines, the Trade ideas' chips and whether Best moves holds everything."""
+    return page.evaluate("""() => {
+      const cards = [...document.querySelectorAll('#upgrades .upg')];
+      const find = re => cards.find(c => re.test(c.innerText));
+      const lines = c => c ? [...c.querySelectorAll(':scope > div:not(.sub)')].map(l => l.innerText) : [];
+      const drops = [];
+      const m1 = find(/^Activate from IR/)?.innerText.match(/drop (.+?) first/);
+      if (m1) drops.push(['activate', m1[1], find(/^Activate from IR/).innerText]);
+      for (const l of lines(find(/^Mid-week swaps/))) if (l.includes('→')) drops.push(['swap', l.split(/[\\n→]/)[0].trim(), l]);
+      for (const l of lines(find(/^Best \\d* ?moves?\\b/))) { const m = l.match(/ for (.+?)(?: \\+| \\(|$)/m); if (m && !l.startsWith('Add ')) drops.push(['best', m[1].trim(), l]); }
+      const st = find(/^Stream a goalie/)?.innerText.match(/drop (.+?)(?: \\(or trade him: see Trade ideas\\))? to add him/);
+      if (st) drops.push(['stream', st[1], find(/^Stream a goalie/).innerText]);
+      const sh = find(/^IR stash/)?.innerText.match(/drop (.+?)(?: \\(or trade him: see Trade ideas\\))?, add him/);
+      if (sh) drops.push(['stash', sh[1], find(/^IR stash/).innerText]);
+      return {
+        drops,
+        dropList: lines(find(/^Drop list/)),
+        chips: lines(find(/^Trade ideas/)).map(l => (l.match(/^Offer (.+?)(?: \\([FD]\\))? for /) || [])[1]).filter(Boolean),
+        held: !!find(/^Best moves · none today/),
+      };
+    }""")
+
+
+def _ir_full(data):
+    """Every team with a healthy player in its IR slot and a full roster (the Activate, stash and Drop list cards all show)."""
+    d = copy.deepcopy(data)
+    for t in d["teams"]:
+        sk = [p for p in _mine(d, t) if p["pos"] != "G" and not p["ir"] and not p.get("injury")]
+        if sk:
+            sk[-1]["ir"] = True
+    d["roster_max"] = min(sum(not p["ir"] for p in _mine(d, t)) for t in d["teams"])
+    return d
+
+
+def test_one_roster_spot_one_plan(browser, server, data):  # noqa: F811
+    """No player is dropped by two cards (Activate from IR, Mid-week swaps, Best moves, Stream, IR stash), and a card's drop
+    is never offered 'replace with' on the Drop list (handoffs 723-725). Every card that drops a Trade-ideas chip says so (726).
+    The Drop list's 'replace with' adds, with the other cards' adds, stay within the moves left, and none under 'none today'
+    (727)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    bad, seen = [], 0
+    for scen, d, clock, used in (("live", data, None, None), ("ir-full", _ir_full(data), None, None),
+                                 ("thursday", _ir_full(_thursday(data)[0]), _et(15, 10), 2)):
+        if used is not None:
+            for t in d["teams"]:
+                t["moves_used"] = used
+        ctx, page, errors = open_page(browser, server, data=d, clock=clock)
+        for t in d["teams"]:
+            page.select_option("#team", str(t["id"]))
+            r = _plans(page)
+            names = [n for _, n, _ in r["drops"]]
+            seen += len(names)
+            if len(names) != len(set(names)):
+                bad.append((scen, t["id"], "dropped twice", r["drops"]))
+            for name in names:
+                line = next((l for l in r["dropList"] if l.startswith(name)), "")
+                if "replace with" in line:
+                    bad.append((scen, t["id"], "card drop offered a replacement", line))
+            for card, name, text in r["drops"]:
+                if name in r["chips"] and card != "swap" and "Trade ideas" not in text:
+                    bad.append((scen, t["id"], "trade chip dropped silently", card, name))
+            n = _adds_offered(page)
+            replace = sum("replace with" in l for l in r["dropList"])
+            left = 7 - (used if used is not None else (t.get("moves_used") or 0))
+            if t.get("moves_used") is not None and sum(n.values()) + replace > left:
+                bad.append((scen, t["id"], "adds beyond moves left", n, replace, left))
+            if r["held"] and replace:
+                bad.append((scen, t["id"], "replace with under none today"))
+        assert errors == []
+        ctx.close()
+    assert seen, "no card dropped anyone"
+    assert not bad, bad[:4]
+
+
+def test_activated_ir_player_takes_the_open_roster_spot(browser, server, data):  # noqa: F811
+    """One open roster spot and a healthy IR player: activating takes the spot, so Best moves still names a drop and the IR
+    stash counts the roster as full (handoff 728)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _ir_full(data)
+    d["roster_max"] += 1  # the fullest rosters now have one open spot
+    ctx, page, errors = open_page(browser, server, data=d)
+    checked = 0
+    for t in d["teams"]:
+        if sum(not p["ir"] for p in _mine(d, t)) + 1 != d["roster_max"] or not any(p["ir"] for p in _mine(d, t)):
+            continue
+        page.select_option("#team", str(t["id"]))
+        checked += 1
+        best = _card(page, "Best").split("\n")[1:]
+        assert not any(l.startswith("Add ") for l in best), (t["id"], best)
+        stash = _card(page, "IR stash")
+        assert not stash or "roster is full" in stash, (t["id"], stash)
+    assert checked
+    assert errors == []
+    ctx.close()
