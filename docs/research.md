@@ -1371,6 +1371,10 @@ Three small changes for skaters returning after missing five or more team games 
 
 The Week chance-to-play model was fit counting every game a skater played for any team within that team's own recent games. The site counted only his current team's games, so a skater traded in the last ten games looked as if he had missed his old team's games. The Week model now reads them the way it was fit. On 2010-26 player-weeks where the two counts differ, the base model's error fell 10.9%, better in all 16 seasons. On the full current stack the gain is small (0.2-0.4% on those rows), because the boosted weekly model already corrects most of it. The points model is unchanged. On Oct 16's data three skaters moved by 0.01. The Season rating's chance-to-play model was fit the same way and now reads the same counts (handoff 718): held out after the boosted blend, better in all four seasons 2022-26, about 3% on the affected players, whose predicted share rises from 0.71 to 0.73 against 0.77 actual. Two skaters' Season ratings rose by 0.02 on Oct 16.
 
+## 209. Daily Faceoff's lines, after the lineup step
+
+A skater who sat his team's last game but is back in Daily Faceoff's fresh lines gets at least 90% for the team's next game (section 174). That floor was set before the step that adjusts every skater for open lineup spots, which could then pull it back down, so the site published 62 of 78 such rows from Oct 15-18 under 90% (Hyman at 61%) while all 78 played. The floor is now applied again after that step, to the team's next game only (handoff 720).
+
 ## What the independent review changed
 
 | Review point | Outcome |

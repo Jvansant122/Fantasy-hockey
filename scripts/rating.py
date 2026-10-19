@@ -1992,6 +1992,15 @@ def week_missing_regulars(prev, by_player, team_games, dfo_news, now_utc, now_te
     return out
 
 
+def lineup_floor(r, per_game):
+    """Daily Faceoff's next-game floor (r["floor0"]) on the team's next game, after the lineup step moved it (handoff 720).
+    Only when his first counted game is the team's next game, under that game's cap; the lineup sums are unchanged."""
+    f = r.get("floor0")
+    if f is None or r.get("j0", 0) or not per_game or per_game[0] <= 0.001:
+        return per_game
+    return [min(max(per_game[0], f), r["caps"][0])] + list(per_game[1:])
+
+
 def week_slack(rows, boost_x, boost_week, missing=None):
     """Open lineup spots per team game in the Week (handoff 489, findings 402): per NHL team, position group and remaining
     game date, LINEUP_SPOTS minus the summed per-game Week chances of its skaters with games this season (team = his
@@ -2058,6 +2067,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
             if any(regs):
                 r["per_game"] = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), c) for q, z, c in zip(r["per_game"], regs, r["caps"])]
+            r["per_game"] = lineup_floor(r, r["per_game"])
             if r["per_game"] != r.get("before", r["per_game"]):  # ... but keep the trip and absence shifts
                 p["cr_games"] = round(sum(r["per_game"]), 2)
                 p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
@@ -2067,6 +2077,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         slack = [(LINEUP_SPOTS[r["isD"]] - sums[(r["team"], r["isD"], d)]) / 3 for d in r["dates"]]
         per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0) + z))), c)
                     for q, s, z, c in zip(r["per_game"], slack, regs, r["caps"])]
+        per_game = lineup_floor(r, per_game)
         games = sum(per_game)
         p["cr_why"]["week_slack"] = round(3 * slack[0], 1)
         p["cr_games"] = round(games, 2)
@@ -3666,6 +3677,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   and note["days_left"] is not None and 0 <= note["days_left"] <= 7 else None,
                                   "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
                                   "low_scorer": toi_rank == "lowest" and scored,  # handoff 362
+                                  # Daily Faceoff's next-game floor, kept through the lineup step (handoff 720)
+                                  "floor0": DFO_LINEUP_NEXT if in_lines else None,
                                   })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
