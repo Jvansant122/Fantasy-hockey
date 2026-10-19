@@ -3421,9 +3421,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     q = min(max(season_boost.predict(boost_dress, boost_x[pid]), 0.01), 0.99)
                     z += BOOST_DRESS_W * (math.log(q / (1 - q)) - z)
                     boost_q = q
-                # a defenseman in a healthy-scratch streak early in the season comes back more (handoff 729)
+                # a defenseman in a healthy-scratch streak early in the season comes back more (handoff 729); the NHL's
+                # scratch list also names the injured, so not one ESPN lists as hurt
                 tgn = len(team_games.get(team, []))
-                if p["pos"] == "D" and sat_last and not traded and tgn < SEASON_SCRATCH_D_GAMES:
+                if p["pos"] == "D" and sat_last and not p.get("injury") and not traded and tgn < SEASON_SCRATCH_D_GAMES:
                     k = scratch_streak(tg, {g["game"] for g in gl if g["team"] == team}, scratch_list, pid)
                     news_z += SEASON_SCRATCH_D_LOGIT * min(k, 5) / 5 * max(1 - tgn / SEASON_SCRATCH_D_GAMES, 0)
                 season = rest_share = 1 / (1 + math.exp(-(z + news_z)))
