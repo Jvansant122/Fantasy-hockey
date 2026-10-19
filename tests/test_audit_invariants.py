@@ -422,3 +422,21 @@ def test_every_rating_why_key_is_read_by_the_page():
     # shown through boost_week_move / used by check_data / the logit move, shown as missing_regs_pp (handoff 604)
     internal = {"boost_week", "season_pts", "missing_regs"}
     assert not keys - used - internal, sorted(keys - used - internal)
+
+
+# ---------------------------------------------------------------- a lineup cut after week_slack keeps Daily Faceoff's next-game floor (722)
+def test_lineup_cuts_keep_the_dfo_floor(monkeypatch, tmp_path):
+    """The returning-regular and newcomer cuts run after week_slack. A skater in his team's fresh Daily Faceoff lines keeps
+    the next-game floor (721) through them; later games still take the cut, and games stay the sum of the chances."""
+    from datetime import datetime, timezone
+    from test_add_ratings import espn, rate, rating
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    for name, fn, ret in (("displaced", "displaced_skaters", {1: (0.12, "R")}), ("newcomer", "roster_moves", ({1: (0.12, "N")}, {}))):
+        for lines in (False, None):
+            with monkeypatch.context() as m:
+                m.setattr(rating, fn, lambda *a, **k: ret)
+                p = rate(m, tmp_path, [dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z",
+                                            dfo_out=lines)])["Auston Matthews"]
+            assert name in p["cr_why"]
+            assert (p["cr_dress_next"] >= rating.DFO_IN_LINES_NEXT) == (lines is False), (name, lines, p["cr_dress_next"])
+            assert p["cr_games"] == pytest.approx(p["games_left"] * p["cr_dress"], abs=0.02)
