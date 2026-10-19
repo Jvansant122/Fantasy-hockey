@@ -2004,6 +2004,21 @@ def lineup_floor(r, per_game):
     return [min(max(per_game[0], f), r["caps"][0])] + list(per_game[1:])
 
 
+def cut_next(p, cut, floor=None):
+    """A lineup cut after week_slack (returning regular, newcomer): every game loses `cut`, but the team's next game keeps
+    Daily Faceoff's floor when he has one, under his own chance before the cut (handoff 722)."""
+    old = p["cr_dress_next"]
+    nxt = max(0.0, old - cut)
+    if floor is not None:
+        nxt = max(nxt, min(old, floor))
+    dress = max(0.0, p["cr_dress"] - cut)
+    games = p["games_left"] * dress + (nxt - max(0.0, old - cut))
+    p["cr_games"] = round(games, 2)
+    p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+    p["cr_dress"] = round(games / p["games_left"], 2) if p["games_left"] else round(dress, 2)
+    p["cr_dress_next"] = round(nxt, 2)
+
+
 def week_slack(rows, boost_x, boost_week, missing=None):
     """Open lineup spots per team game in the Week (handoff 489, findings 402): per NHL team, position group and remaining
     game date, LINEUP_SPOTS minus the summed per-game Week chances of its skaters with games this season (team = his
@@ -3790,6 +3805,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                for tm, w in missing_w.items() if len(team_games.get(tm, [])) >= MISSING_REG_MIN_TG}
     lineup_slack(lineup, boost_x, boost_dress, model, missing)
     week_slack(week_rows, boost_x, boost_week, week_missing_regulars(prev, by_player, team_games, dfo_news, now_utc, now_team))
+    # Daily Faceoff's next-game floors, kept through the cuts below (handoff 722)
+    floors = {r["pid"]: r["floor0"] for r in week_rows if r.get("floor0") is not None and not r.get("j0")}
 
     # a regular is back: the least-used skater at his position sits more than the dress model sees (findings section 63)
     by_nhl = {p["nhl_id"]: p for p in players if p.get("nhl_id") and p["pos"] != "G"}
@@ -3799,11 +3816,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for pid, (cut, regular) in displaced_skaters(by_player, team_games, healthy, pickable).items():
         p = by_nhl.get(pid)
         if p and p["cr_dress"]:
-            dress = max(0.0, p["cr_dress"] - cut)
-            p["cr_games"] = round(p["games_left"] * dress, 2)
-            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
-            p["cr_dress"] = round(dress, 2)
-            p["cr_dress_next"] = round(max(0.0, p["cr_dress_next"] - cut), 2)
+            cut_next(p, cut, floors.get(pid))
             p["cr_why"]["displaced"] = regular
     # trades and claims: a newcomer at his position sits the least-used skater; a departed D brings a sitting D in
     listed = {pid: ESPN_TO_NHL.get(p["team"], p["team"]) for pid, p in by_nhl.items() if p.get("team")}
@@ -3811,11 +3824,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     for pid, (cut, newcomer) in cuts.items():
         p = by_nhl.get(pid)
         if p and p["cr_dress"] and "displaced" not in p["cr_why"]:  # the same cut as a returning regular, not stacked
-            dress = max(0.0, p["cr_dress"] - cut)
-            p["cr_games"] = round(p["games_left"] * dress, 2)
-            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
-            p["cr_dress"] = round(dress, 2)
-            p["cr_dress_next"] = round(max(0.0, p["cr_dress_next"] - cut), 2)
+            cut_next(p, cut, floors.get(pid))
             p["cr_why"]["newcomer"] = newcomer
     for pid, gone in lifts.items():
         p = by_nhl.get(pid)
