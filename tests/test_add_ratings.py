@@ -700,10 +700,10 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_BY_GAME", {"win": (0.0,), "other": (0.0,)})  # ... and without the last-result lift (handoff 354)
     monkeypatch.setattr(rating, "load_news", lambda: {})
-    def mcavoy(**kw):
+    def mcavoy(injury=None, **kw):
         fake = FakeSession(**kw)
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
-        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(101, "Auston Matthews", "TOR", "C")]
+        players = [espn(104, "Charlie McAvoy", "BOS", "D", injury=injury), espn(101, "Auston Matthews", "TOR", "C")]
         rating.add_ratings(players, 2027, TODAY, MONDAY)
         return players[0]
     listed, unlisted, no_list = mcavoy(), mcavoy(scratched=()), mcavoy(rail_ok=False)
@@ -722,10 +722,10 @@ def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkey
     doesn't have him, and never for forwards."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "load_news", lambda: {})
-    def mcavoy(**kw):
+    def mcavoy(injury=None, **kw):
         fake = FakeSession(**kw)
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
-        players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(101, "Auston Matthews", "TOR", "C")]
+        players = [espn(104, "Charlie McAvoy", "BOS", "D", injury=injury), espn(101, "Auston Matthews", "TOR", "C")]
         rating.add_ratings(players, 2027, TODAY, MONDAY)
         return players[0]
     assert rating.SEASON_SCRATCH_D_LOGIT > 0 and rating.SEASON_SCRATCH_D_GAMES == 20
@@ -733,6 +733,10 @@ def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkey
     monkeypatch.setattr(rating, "SEASON_SCRATCH_D_LOGIT", 0.0)
     assert on > mcavoy()["cr_season"] + 0.01  # sat game 3 as a scratch: k = 1, 4 team games in
     assert off == mcavoy(scratched=())["cr_season"]
+    # the NHL's scratch list names the injured too: an ESPN-listed one gets no lift
+    flat = mcavoy(injury="DAY_TO_DAY")["cr_season"]
+    monkeypatch.setattr(rating, "SEASON_SCRATCH_D_LOGIT", 0.8)
+    assert mcavoy(injury="DAY_TO_DAY")["cr_season"] == flat
     tg = list(range(10))
     look = lambda x: {7} if x in (6, 8, 9) else set()
     assert rating.scratch_streak(tg, {0, 1, 2, 3, 4}, look, 7) == 3  # out games 5-9, scratched in 6, 8 and 9
