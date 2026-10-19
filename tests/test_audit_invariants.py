@@ -583,8 +583,8 @@ def test_activated_ir_player_takes_the_open_roster_spot(browser, server, data): 
 # ---------------------------------------------------------------- publish checks P8 and P9 (handoffs 743-744)
 def test_publish_check_keeps_daily_faceoffs_floors(data):
     """Handoffs 720 and 722 were the same bug twice: a later step pushed an in-lines skater under Daily Faceoff's
-    next-game floor and it reached the live site. P9 catches it (a warning until an evening run has kept it, handoff
-    743)."""
+    next-game floor and it reached the live site. P9 catches it and blocks publishing (a warning until
+    every run of Oct 19 kept it, handoff 743)."""
     import rating
     assert check_data.DFO_FLOORS == (rating.DFO_LINEUP_NEXT, rating.DFO_IN_LINES_NEXT)
     assert set(check_data.IDLE_CAPS) == {c for _, c in rating.IDLE_DRESS} | {rating.NOT_PLAYING_DRESS}
@@ -600,8 +600,7 @@ def test_publish_check_keeps_daily_faceoffs_floors(data):
         pytest.skip("no skater in Daily Faceoff's lines with a game ahead")
     p["cr_dress_next"] = 0.83
     assert [e for e in check_data.rules(d, soft=True) if e.startswith("P9")]
-    assert not [e for e in check_data.rules(d) if e.startswith("P9")]  # warns, doesn't block yet
-    assert [w for w in check_data.warnings(d, None) if w.startswith("P9")]
+    assert [e for e in check_data.rules(d) if e.startswith("P9")]  # blocks publishing
 
 
 def _rewound(data):

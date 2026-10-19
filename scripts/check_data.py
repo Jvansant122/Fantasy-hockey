@@ -31,8 +31,8 @@ SP1 = date(2026, 9, 29)
 # them; a test keeps them in step
 DFO_FLOORS = (0.9, 0.95)
 IDLE_CAPS = (0.5, 0.2, 0.1)
-# rules that only warn until a run at every time of day has kept them (P9: no evening run checked yet, handoff 743)
-SOFT_RULES = {"P9"}
+# rules that only warn until a run at every time of day has kept them (P9 blocks since Oct 19, every run clean, handoff 743)
+SOFT_RULES = set()
 
 
 def problems(data):
