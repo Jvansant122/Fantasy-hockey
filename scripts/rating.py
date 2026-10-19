@@ -618,6 +618,9 @@ CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the 
 DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.85))  # full minutes 0.85, not 0.75 (handoff 630)
 OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
+# dressed the last game, no ESPN status, in his team's fresh Daily Faceoff lines: next-game floor. Live Oct 9-18, 1,172 of
+# 1,185 dressed (site 0.96); held out Oct 16-18 Brier 0.0154 -> 0.0133 on those rows (findings 521, handoff 721)
+DFO_IN_LINES_NEXT = 0.95
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 # the Season rating's pts/start only: the shrink K by NHL starts over the last three seasons, under 50 / 50-100 / over 100
 # (hunt14/gseason, findings 485, handoff 641); the Week keeps PPS_PRIOR
@@ -3613,6 +3616,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 per_game[0] = min(per_game[0], OUT_TODAY_CAP)
                 dress_next = per_game[0]
             dfo_absent = p.get("dfo_out") is True and bool(gl) and bool(tg) and not sat_last and not p.get("injury")  # handoff 696; a team yet to play has no last game (710)
+            dfo_in = p.get("dfo_out") is False and bool(gl) and bool(tg) and not sat_last and not p.get("injury")  # handoff 721
             if dfo_absent and per_game and \
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
                 per_game[0] = min(per_game[0], DFO_ABSENT_TODAY_CAP)
@@ -3677,8 +3681,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   and note["days_left"] is not None and 0 <= note["days_left"] <= 7 else None,
                                   "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
                                   "low_scorer": toi_rank == "lowest" and scored,  # handoff 362
-                                  # Daily Faceoff's next-game floor, kept through the lineup step (handoff 720)
-                                  "floor0": DFO_LINEUP_NEXT if in_lines else None,
+                                  # Daily Faceoff's next-game floors, kept through the lineup step (handoffs 720-721)
+                                  "floor0": DFO_LINEUP_NEXT if in_lines else DFO_IN_LINES_NEXT if dfo_in else None,
                                   })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
