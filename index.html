@@ -845,6 +845,8 @@ function renderUpgrades() {
   // the whole roster outside the IR slot: myPlayers() already leaves out the injured (findings 181)
   const outs = roster.filter(p => p.pos !== "G" && !p.ir && (OUT.includes(p.injury) || (p.sat_last && p.dfo_out !== false && p.games_left > 0)));
   const swapSubs = new Set(), swapDrops = new Set(), dropped = new Set(), planFor = new Map();  // drop -> the card that drops him (handoff 647)
+  // Activate from IR's drop keeps his spot for the IR player, not for a free agent (handoff 723)
+  if (actDrop) planFor.set(actDrop.id, `Activate from IR: drop him to make room for ${irHealthy.map(p => p.name).join(", ")}`);
   // moves this team can still make this matchup (none counted when there is no count, or for next Monday's targets)
   const realLeft = !noMoves && cnt.limit && cnt.used != null ? Math.max(0, cnt.limit - cnt.used) : null;
   const nextWeek = noMoves || reset || nextCount;  // subs are for next week: show their Season rating, not this week's 0 games (findings 233)

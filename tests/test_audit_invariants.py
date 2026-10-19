@@ -440,3 +440,41 @@ def test_lineup_cuts_keep_the_dfo_floor(monkeypatch, tmp_path):
             assert name in p["cr_why"]
             assert (p["cr_dress_next"] >= rating.DFO_IN_LINES_NEXT) == (lines is False), (name, lines, p["cr_dress_next"])
             assert p["cr_games"] == pytest.approx(p["games_left"] * p["cr_dress"], abs=0.02)
+
+
+# ---------------------------------------------------------------- cards: Activate from IR's drop isn't offered a replacement (723)
+def _activate_vs_drop_list(page):
+    return page.evaluate("""() => {
+      const cards = [...document.querySelectorAll('#upgrades .upg')];
+      const act = cards.find(c => /^Activate from IR/.test(c.innerText));
+      const m = act && act.innerText.match(/drop (.+?) first/);
+      if (!m) return null;
+      const drop = cards.find(c => /^Drop list/.test(c.innerText));
+      const line = drop && [...drop.querySelectorAll(':scope > div')].map(l => l.innerText).find(t => t.startsWith(m[1]));
+      return {name: m[1], line: line || ""};
+    }""")
+
+
+def test_activate_from_ir_drop_is_not_offered_a_replacement(browser, server, data):  # noqa: F811
+    """With a full roster, Activate from IR says "drop X first" so the healthy IR player gets X's spot. The Drop list must not
+    then offer "X ... replace with <free agent>", which would fill that spot (handoff 723)."""
+    d = copy.deepcopy(data)
+    for t in d["teams"]:  # a healthy player sits in each team's IR slot
+        sk = [p for p in _mine(d, t) if p["pos"] != "G" and not p["ir"] and not p.get("injury")]
+        if sk:
+            sk[-1]["ir"] = True
+    d["roster_max"] = min(sum(not p["ir"] for p in _mine(d, t)) for t in d["teams"])  # every roster is full
+    seen, bad = 0, []
+    for case in (data, d):
+        ctx, page, errors = open_page(browser, server, data=case)
+        for t in case["teams"]:
+            page.select_option("#team", str(t["id"]))
+            r = _activate_vs_drop_list(page)
+            if r:
+                seen += 1
+                if "replace with" in r["line"]:
+                    bad.append((t["id"], r["line"]))
+        assert errors == []
+        ctx.close()
+    assert seen >= len(d["teams"]) // 2, seen
+    assert not bad, bad[:3]
