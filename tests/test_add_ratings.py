@@ -3543,3 +3543,28 @@ def test_season_dress_logistic_reads_the_fit_convention(monkeypatch, tmp_path):
     rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")],
          fake=FakeSession(moved={1: 2}))
     assert seen and all(f["dressed3"] == 1.0 and f["dressed10"] == 1.0 for f in seen)
+
+
+def test_lines_count_against_the_last_game_in_the_loaded_history(monkeypatch, tmp_path):
+    """Handoff 752: overnight the NHL posts last night's stats late, so lines posted after the last game in the history
+    the rating loaded are for his next game, though fetch's clock (a game started 4+ hours ago) would drop them. The
+    rating re-marks the lines against its own history, and reports finished games of last night not in it (753)."""
+    import leads
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    lineups = {"BOS": {"updated": "2026-10-08T15:00:00Z", "players": [["Charlie McAvoy", "d1"]]}}
+    def run(relineup):
+        players = [espn(104, "Charlie McAvoy", "BOS", "D")]
+        leads.mark_lineups(players, lineups, rating.ESPN_TO_NHL, {"BOS": "2026-10-08T23:00:00Z"})  # fetch's clock
+        assert players[0]["dfo_out"] is None
+        seen, info = [], {}
+        hook = (lambda last: (seen.append(last), leads.mark_lineups(players, lineups, rating.ESPN_TO_NHL, last))) if relineup else None
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [], relineup=hook, info=info)
+        return players[0], seen, info
+    kept, seen, info = run(True)
+    assert seen and seen[0]["BOS"].startswith(PAST[-1])  # the last game the history holds
+    assert kept["sat_last"] and kept["dfo_out"] is False and kept["cr_dress_next"] >= rating.DFO_LINEUP_NEXT
+    assert info["stats_missing"] == 0
+    dropped, _, _ = run(False)
+    assert dropped["cr_dress_next"] < rating.DFO_LINEUP_NEXT
