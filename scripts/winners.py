@@ -22,6 +22,7 @@ DEPTH_DRESS = (0.85, 0.4, 0.1)  # played the team's last game / one of its last 
 # Fantasy matchups: game-to-game spread of fantasy points (2021-26 player-games around each player's own mean, findings 451)
 SKATER_SD = (0.4, 0.5)  # sd = 0.4 + 0.5 x his FP per dressed game
 GOALIE_SD = 3.33  # per start
+GAME_MINUTES = 150  # puck drop to final, for the rest of a game in progress (handoff 750)
 MATCHUP_SD_SCALE = 1.04  # league matchup margins run ~8% wider than the summed player spreads (handoff 505)
 FANTASY_SLOTS = {"F": 9, "D": 5, "UTL": 1, "G": 2}
 FINAL_STATES = ("OFF", "FINAL")
@@ -176,26 +177,59 @@ def night_values(p, today_sp, started_today):
     return {sp: (e, d * _skater_sd(m) ** 2 + d * (1 - d) * m ** 2) for sp in nights}
 
 
+def _in_progress(p, today_sp, now_iso):
+    """(expected FP, variance) still to come in his game tonight once it has started: ESPN's points so far hold only what
+    it has produced yet, so the rest counts by the share of a GAME_MINUTES game left (findings 542, handoff 750)."""
+    try:
+        gone = (datetime.fromisoformat(now_iso.replace("Z", "+00:00"))
+                - datetime.fromisoformat(p["today_start"].replace("Z", "+00:00"))).total_seconds() / 60
+    except (TypeError, ValueError):
+        return 0.0, 0.0
+    frac = max(0.0, 1 - gone / GAME_MINUTES)
+    if not frac or not p.get("cr"):
+        return 0.0, 0.0
+    m = p.get("cr_fpg") or 0.0
+    if p["pos"] == "G":
+        s = {int(k): v for k, v in (p.get("cr_g_nights") or {}).items()}.get(today_sp, 0.0)
+        return frac * s * m, frac * (s * GOALIE_SD ** 2 + s * (1 - s) * m ** 2)
+    d = p.get("cr_dress") or 0.0
+    return frac * d * m, frac * (d * _skater_sd(m) ** 2 + d * (1 - d) * m ** 2)
+
+
+def _take(left, grp):
+    """Take one lineup slot of his group (a skater past his group's slots takes UTL); False when none is left."""
+    if left.get(grp, 0) > 0:
+        left[grp] -= 1
+    elif grp != "G" and left["UTL"] > 0:
+        left["UTL"] -= 1
+    else:
+        return False
+    return True
+
+
 def team_projection(roster, today_sp, sps, now_iso):
     """Expected fantasy points (and variance) still to come for one fantasy team: each night the best expected lineup,
-    9 F, 5 D, 1 UTL (any skater) and 2 G, from players not on IR."""
+    9 F, 5 D, 1 UTL (any skater) and 2 G, from players not on IR. Players in a lineup slot whose game tonight has
+    started add the rest of that game (handoff 750) and keep their slot tonight (handoff 751)."""
     vals = []
+    mean = var = 0.0
+    left_today = dict(FANTASY_SLOTS)
     for p in roster:
         if p.get("ir"):
             continue
         started = bool(p.get("today_start")) and p["today_start"] <= now_iso
         vals.append((p, night_values(p, today_sp, started)))
-    mean = var = 0.0
+        if started and not p.get("bench") and today_sp in (p.get("nights") or []):
+            _take(left_today, _group(p["pos"]))
+            e, vr = _in_progress(p, today_sp, now_iso)
+            mean += e
+            var += vr
     for sp in sps:
         cands = [(v[sp], _group(p["pos"]), p) for p, v in vals if sp in v]
         cands.sort(key=lambda x: -x[0][0])
-        left = dict(FANTASY_SLOTS)
+        left = left_today if sp == today_sp else dict(FANTASY_SLOTS)
         for (e, vr), grp, p in cands:
-            if left.get(grp, 0) > 0:
-                left[grp] -= 1
-            elif grp != "G" and left["UTL"] > 0:
-                left["UTL"] -= 1
-            else:
+            if not _take(left, grp):
                 continue
             mean += e
             var += vr

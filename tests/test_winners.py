@@ -128,3 +128,21 @@ def test_matchup_spread_is_widened(monkeypatch):
     narrow = run()
     assert wide["sd"] == round(1.04 * narrow["sd"] / 1.0, 1) or abs(wide["sd"] - 1.04 * narrow["sd"]) < 0.11
     assert 0.5 < wide["p_home"] < narrow["p_home"]
+
+
+def test_games_in_progress_count_their_rest_and_keep_their_slots():
+    """ESPN's points so far hold only what tonight's started games have produced yet: each started player in a lineup slot
+    adds the rest of his game by the share of GAME_MINUTES left (handoff 750), and holds his slot tonight so the night
+    never fills more than 9 F / 5 D / 1 UTL / 2 G (handoff 751)."""
+    start, now = "2026-10-14T23:00:00Z", "2026-10-15T00:15:00Z"  # 75 minutes in: half the game left
+    on = [fa(i, "C", 1.0, [16], today_start=start) for i in range(10)]  # 10 skater slots, all started tonight
+    later = [fa(20 + i, "C", 5.0, [16], today_start="2026-10-15T02:00:00Z") for i in range(3)]
+    mean, var = winners.team_projection(on + later, 16, [16], now)
+    assert abs(mean - 10 * 0.5 * 1.0) < 1e-6 and var > 0  # no free slot left for the later game's forwards
+    mean, _ = winners.team_projection(on[:7] + later, 16, [16], now)
+    assert abs(mean - (7 * 0.5 + 3 * 5.0)) < 1e-6  # 7 slots held, 3 left for the later game
+    bench = [dict(p, bench=True) for p in on]  # a started player on ESPN's bench holds no slot and adds nothing
+    assert abs(winners.team_projection(bench + later, 16, [16], now)[0] - 15.0) < 1e-6
+    assert winners.team_projection(on, 16, [16], "2026-10-15T01:40:00Z")[0] == 0  # past 150 minutes: nothing left
+    g = fa(50, "G", 3.0, [16], cr_games=1.0, cr_g_nights={"16": 0.8}, today_start=start)
+    assert abs(winners.team_projection([g], 16, [16], now)[0] - 0.5 * 0.8 * 3.0) < 1e-6
