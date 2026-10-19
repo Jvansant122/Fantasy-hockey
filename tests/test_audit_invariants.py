@@ -86,14 +86,19 @@ def _thursday(data, run_hour=10):
         p["today_start"] = d["first_start"] if tonight in pn else None
         if p.get("owner") != "waivers":
             p["games_left"] = sum(sp in ahead for sp in pn)
-        if p.get("cr_games") is not None:
-            p["cr_games"] = min(p["cr_games"], p["games_left"])
-            p["cr"] = round((p.get("cr_fpg") or 0) * p["cr_games"], 2)
         why = p.get("cr_why") or {}
         if p["pos"] == "G" and why:
             why.pop("tonight", None)
             why["p_today"] = (p.get("cr_g_nights") or {}).get(str(tonight), 0.0) if tonight in pn else 0.0
             why.pop("p_today_pre", None)
+        if p.get("cr_games") is not None:
+            # dropStarted takes out tonight's chance, not a whole game, so cap at what the page will keep (handoff 719)
+            cap = p["games_left"]
+            if tonight in pn and cap > 0:
+                t = why.get("p_today") if p["pos"] == "G" else p.get("cr_dress_next", p.get("cr_dress"))
+                cap = cap - 1 + min(max(t or 0.0, 0.0), 1.0)
+            p["cr_games"] = round(min(p["cr_games"], cap), 2)
+            p["cr"] = round((p.get("cr_fpg") or 0) * p["cr_games"], 2)
     return d, tonight
 
 
