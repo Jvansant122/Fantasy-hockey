@@ -687,7 +687,7 @@ def test_roster_size_rules(browser, server, data):
     assert errors == []
     ctx.close()
     # an open spot: the first add needs no drop, and activating needs none either
-    d["roster_max"], team["moves_used"], team["moves_used_next"] = non_ir + 1, 0, 0
+    d["roster_max"], team["moves_used"], team["moves_used_next"] = non_ir + 2, 0, 0  # two open spots: activating takes one with no drop, and the first add takes the other
     ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     assert "roster is full" not in _card(page, "Activate from IR")
