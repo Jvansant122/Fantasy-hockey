@@ -146,3 +146,16 @@ def test_games_in_progress_count_their_rest_and_keep_their_slots():
     assert winners.team_projection(on, 16, [16], "2026-10-15T01:40:00Z")[0] == 0  # past 150 minutes: nothing left
     g = fa(50, "G", 3.0, [16], cr_games=1.0, cr_g_nights={"16": 0.8}, today_start=start)
     assert abs(winners.team_projection([g], 16, [16], now)[0] - 0.5 * 0.8 * 3.0) < 1e-6
+
+
+def test_a_last_game_in_progress_still_counts_its_rest():
+    """After puck drop cr holds only later games, so it is 0 when tonight is his last game of the matchup (every Sunday
+    game); the rest of that game still counts (handoff 754). A player with no rating adds nothing."""
+    start, now = "2026-10-14T23:00:00Z", "2026-10-15T00:15:00Z"  # 75 minutes in: half the game left
+    sk = fa(1, "C", 0, [16], today_start=start)
+    sk["cr_fpg"] = 2.0
+    g = fa(50, "G", 0, [16], cr_games=0, cr_g_nights={"16": 1.0}, today_start=start)
+    g["cr_fpg"] = 3.0
+    assert abs(winners.team_projection([sk, g], 16, [16], now)[0] - (0.5 * 2.0 + 0.5 * 3.0)) < 1e-6
+    bare = {"id": 2, "pos": "C", "nights": [16], "team_id": 1, "today_start": start}
+    assert winners.team_projection([bare], 16, [16], now)[0] == 0

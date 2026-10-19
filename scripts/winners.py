@@ -186,7 +186,7 @@ def _in_progress(p, today_sp, now_iso):
     except (TypeError, ValueError):
         return 0.0, 0.0
     frac = max(0.0, 1 - gone / GAME_MINUTES)
-    if not frac or not p.get("cr"):
+    if not frac or p.get("cr") is None:  # cr 0 after puck drop: tonight is his last game of the matchup (handoff 754)
         return 0.0, 0.0
     m = p.get("cr_fpg") or 0.0
     if p["pos"] == "G":
