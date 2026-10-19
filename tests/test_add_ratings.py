@@ -733,10 +733,10 @@ def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkey
     monkeypatch.setattr(rating, "SEASON_SCRATCH_D_LOGIT", 0.0)
     assert on > mcavoy()["cr_season"] + 0.01  # sat game 3 as a scratch: k = 1, 4 team games in
     assert off == mcavoy(scratched=())["cr_season"]
-    # the NHL's scratch list names the injured too: an ESPN-listed one gets no lift
+    # the NHL's scratch list names the injured too, and they get the lift as measured (handoff 730)
     flat = mcavoy(injury="DAY_TO_DAY")["cr_season"]
     monkeypatch.setattr(rating, "SEASON_SCRATCH_D_LOGIT", 0.8)
-    assert mcavoy(injury="DAY_TO_DAY")["cr_season"] == flat
+    assert mcavoy(injury="DAY_TO_DAY")["cr_season"] > flat + 0.01
     tg = list(range(10))
     look = lambda x: {7} if x in (6, 8, 9) else set()
     assert rating.scratch_streak(tg, {0, 1, 2, 3, 4}, look, 7) == 3  # out games 5-9, scratched in 6, 8 and 9
