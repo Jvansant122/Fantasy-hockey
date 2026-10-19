@@ -1375,6 +1375,10 @@ The Week chance-to-play model was fit counting every game a skater played for an
 
 A skater who sat his team's last game but is back in Daily Faceoff's fresh lines gets at least 90% for the team's next game (section 174). That floor was set before the step that adjusts every skater for open lineup spots, which could then pull it back down, so the site published 62 of 78 such rows from Oct 15-18 under 90% (Hyman at 61%) while all 78 played. The floor is now applied again after that step, to the team's next game only (handoff 720). Regulars who played the last game, have no ESPN status and are in their team's fresh Daily Faceoff lines now get at least 95% for the team's next game (handoff 721): live Oct 9-18 they dressed 1,172 of 1,185 games (0.989) against a site average of 0.958. Fit on Oct 9-15 and checked on Oct 16-18, the forecast error on those rows fell from 0.0154 to 0.0133. Two later cuts (a regular coming back, or a newcomer at his position, taking the least-used skater's spot) now keep these next-game floors too; later games in the week still take the cut (handoff 722).
 
+## 210. Scratched defensemen early in the season
+
+A defenseman who has been a healthy scratch for several games early in the season dresses for more of the rest of it than the Season rating expected: in 2023-26, defensemen scratched 3 or more games within their team's first 12 played 53-60% of the rest against 42-46% predicted, while forwards were already on target. The Season chance to play for a scratched defenseman now rises with the length of the streak (up to 5 games) and fades out by his team's 20th game (handoff 729). The ranking improved in every held-out season, for all players and for free agents, and beat 100 of 100 shuffled placebos.
+
 ## What the independent review changed
 
 | Review point | Outcome |
