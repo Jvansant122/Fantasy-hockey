@@ -3568,3 +3568,19 @@ def test_lines_count_against_the_last_game_in_the_loaded_history(monkeypatch, tm
     assert info["stats_missing"] == 0
     dropped, _, _ = run(False)
     assert dropped["cr_dress_next"] < rating.DFO_LINEUP_NEXT
+
+
+def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
+    """Handoff 755: on a Monday the last loaded game is from last week, outside week_starts, so its real start comes from
+    fetch's schedule (starts=); 23:00 UTC is only the fallback, which would take a late game's pregame lines as next-game."""
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "load_news", lambda: {})
+    def last(starts):
+        seen = []
+        rating.add_ratings([espn(104, "Charlie McAvoy", "BOS", "D")], 2027, TODAY, MONDAY, [], relineup=seen.append,
+                           starts=starts)
+        return seen[0]["BOS"]
+    d = last(None)[:10]
+    assert last(None) == f"{d}T23:00:00Z"
+    assert last({("BOS", d): f"{d}T23:59:00Z"}) == f"{d}T23:59:00Z"

@@ -726,11 +726,15 @@ def main():
     except Exception as e:  # noqa: BLE001 - the rating falls back to today's projection
         print(f"Preseason projections failed, using today's: {e!r}", file=sys.stderr)
     winners, info = {}, {}
+    # every game's real start by (NHL team, ET date), for lines judged before this week (handoff 755)
+    et_starts = {(ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()),
+                  datetime.fromisoformat(v.replace("Z", "+00:00")).astimezone(ET).date().isoformat()): v
+                 for t in teams.values() for v in t.get("starts", {}).values() if v}
     try:
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
         add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left),
-                    reschedule=reschedule, dfo_news=news, winners=winners, info=info,
+                    reschedule=reschedule, dfo_news=news, winners=winners, info=info, starts=et_starts,
                     relineup=lambda last: leads.mark_lineups(players, lineups, ESPN_TO_NHL, last))
         for p in players:  # goalie start chances by night, keyed like nights (findings 236)
             if p["pos"] == "G" and "cr_g_nights" in p:
