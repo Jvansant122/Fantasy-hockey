@@ -314,7 +314,7 @@ Tapping an injured player shows "usually back in about N games" (or the note's t
 
 ## 8. Goalie Season rating
 
-**What it uses:** his share of his team's starts: three quarters from this season (blended with last season's split over 10 games) and a quarter from recent form, each game counting half as much every 5 team games back (PR #37). Then:
+**What it uses:** his share of his team's starts: three quarters from this season (blended with last season's split over 15 games) and a quarter from recent form, each game counting half as much every 5 team games back (PR #37). Then:
 - × **0.88** for every goalie (PR #76, was 0.93 in PR #62): starts that go to goalies not on the roster yet, and shares spreading over a whole season.
 - A **traded or claimed** goalie's share counts only the team's games since his first start for it (PR #58).
 - A goalie who **left his last start with no decision** gets × 0.68 until he starts again or is confirmed (PR #67). The share he loses goes to his healthy partners (PR #92), and a goalie ESPN already lists as out isn't cut twice.

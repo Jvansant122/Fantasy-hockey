@@ -147,7 +147,7 @@ WEEK_PPS_KEEP, WEEK_SCHED_SLOPE, LEAGUE_PPS_PRIOR = 0.4, 3.0, 300
 XFP_SHARE_F, XFP_SHARE_D, XFP_PRIOR_GOALS = (0.51, 0.46), (0.32, 0.57), 15
 LUCK_MIN_GP, LUCK_GAP = 15, 0.15
 EARLY_SHARE_K, EARLY_SHARE_GAMES = 6, 10  # goalie start shares shrink toward last season's split (findings section 41)
-SEASON_SHARE_K = 10  # Season rating: games of last season's goalie split blended into this season's
+SEASON_SHARE_K = 15  # Season rating: games of last season's goalie split blended into this season's
 # usage x efficiency skater inputs (correlation research section 4): shrinkage minutes and last season's weight
 UX_PRIOR_MIN, UX_PRIOR_PP_MIN, UX_PREV_W = 300.0, 60.0, 0.5
 UX_STATS = {"goals": 2, "assists": 1, "shots": 0.1, "hits": 0.1, "blockedShots": 0.5}
@@ -195,6 +195,12 @@ LAST6_OTHER_LOGITS = {"110101": -0.6, "11101": -1.0, "00111": -1.2}
 # three goalies started the last 10: the next start goes to the recent ones more than the model sees; a cut to each of
 # the three whose latest start was 3+ team games ago (findings 247: 0.20 against 0.12 actual, Brier -1.8%, every season)
 THREE_GOALIE_IDLE_LOGIT = -1.0
+# a goalie who changed teams over the summer and isn't the no. 1 starts the team's next game less often while the team has
+# played 16 or fewer (0.275 predicted vs 0.224 actual, 14 of 15 seasons; findings 528 (3), handoff 731)
+OFFSEASON_MOVER_NEXT_LOGIT, OFFSEASON_MOVER_GAMES = -0.35, 16
+# the team's opening-night starter starts its next game more often in its first 2 games, not night 2 of a back-to-back
+# (findings 528 (4), handoff 733)
+OPENING_STARTER_LOGIT, OPENING_STARTER_GAMES = 0.3, 2
 # the no. 1 on a team where 3+ goalies started the last 10, every game after the next (handoff 626): his week starts were
 # 1.315 against 1.454 actual on such teams, 2021-26
 THREE_GOALIE_NO1_LOGIT = 0.5
@@ -2501,7 +2507,7 @@ def back_from_spell(seq, gid):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=()):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -2526,7 +2532,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     opp: {date: opponent strength} (opponent_strength); nonwins: {goalie id: straight starts without a win}. With nonwins
     given, the no. 1's logit moves by opponent, form and days of rest (findings 262-263).
     start_wins: whether each start in starts_by_team[team] was a win; with it the no. 1's next game moves after a split
-    back-to-back and after a backup's last result (findings 264-267)."""
+    back-to-back and after a backup's last result (findings 264-267).
+    off_movers: goalies with starts last season whose last team then wasn't this one (handoff 731)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -2692,6 +2699,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 z += NO1_SPLIT_B2B * split \
                     + NO1_AFTER_BACKUP_LOSS * bool(backup and backup[-1] == len(seq) - 1 and not start_wins[-1]) \
                     + NO1_AFTER_BACKUP_WIN * bool(backup and 2 <= len(seq) - backup[-1] <= 3 and start_wins[backup[-1]])
+            if ahead == 0 and gid in off_movers and gid != no1 and len(seq) <= OFFSEASON_MOVER_GAMES:  # handoff 731
+                z += OFFSEASON_MOVER_NEXT_LOGIT
+            if seq and gid == seq[0] and ahead == 0 and len(seq) <= OPENING_STARTER_GAMES and gap != 1:  # handoff 733
+                z += OPENING_STARTER_LOGIT
             if ahead == 0 and gid in idle3:
                 z += THREE_GOALIE_IDLE_LOGIT
             # three or more goalies started the last 10: the no. 1 gets more of the games after the next (handoff 626; the
@@ -3166,7 +3177,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             last_start.get(team), movers, relief.get(team, ()), goalie_gone, nights, save_pcts, pulled,
                             {d for d, _, home in week_games.get(team, []) if not home},
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
-                            likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo)
+                            likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo,
+                            {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team})  # handoff 731
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)

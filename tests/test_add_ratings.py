@@ -349,6 +349,27 @@ def test_early_season_backup_not_written_off():
     assert late[2] < early[2]
 
 
+def test_early_season_goalie_rules(monkeypatch):
+    """Handoffs 731 and 733: a summer mover who isn't the no. 1 starts the next game less often while the team has played
+    16 or fewer; the opening-night starter starts it more often in the team's first 2 games, not on night 2 of a
+    back-to-back."""
+    model = rating.Model()
+    assert rating.OFFSEASON_MOVER_NEXT_LOGIT < 0 and rating.OPENING_STARTER_LOGIT > 0 and rating.SEASON_SHARE_K == 15
+    nxt = ["2026-10-14"]
+    def next_game(hist, dates=nxt, **kw):
+        return rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 14), **kw)
+    three = [("2026-10-08", 1), ("2026-10-10", 1), ("2026-10-12", 2)]
+    assert next_game(three, off_movers={2})[2] < next_game(three)[2]
+    assert next_game(three, off_movers={1})[1] == next_game(three)[1]  # not the no. 1's
+    late = [(f"2026-09-{d:02d}", 1 if d % 3 else 2) for d in range(1, 30, 2)] + three
+    assert next_game(late, off_movers={2})[2] == next_game(late)[2]  # past the team's 16th game
+    two = [("2026-10-10", 1), ("2026-10-12", 2)]
+    on, b2b = next_game(two)[1], next_game([("2026-10-10", 1), ("2026-10-13", 2)])[1]
+    monkeypatch.setattr(rating, "OPENING_STARTER_LOGIT", 0.0)
+    assert on > next_game(two)[1]
+    assert b2b == next_game([("2026-10-10", 1), ("2026-10-13", 2)])[1]  # night 2 of a back-to-back
+
+
 def test_sat_last_game_drops_dress_chance():
     """A regular who sat the team's last game plays far fewer games next week (correlation research section 6)."""
     model = rating.Model()
