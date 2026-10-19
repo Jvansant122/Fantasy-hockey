@@ -3484,3 +3484,12 @@ def test_week_dress_logistic_reads_the_fit_convention(monkeypatch, tmp_path):
     monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: seen.append(dict(f)) or real(self, f))
     rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], fake=FakeSession(moved={1: 2}))
     assert seen and all(f["dressed3"] == 1.0 and f["dressed10"] == 1.0 for f in seen)
+
+
+def test_season_dress_logistic_reads_the_fit_convention(monkeypatch, tmp_path):
+    """Handoff 718: the Season dress logistic gets the same fit-convention dressed3/10 as the Week's (717)."""
+    seen, real = [], rating.season_dress_features
+    monkeypatch.setattr(rating, "season_dress_features", lambda *a, **kw: seen.append(dict(a[4])) or real(*a, **kw))
+    rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")],
+         fake=FakeSession(moved={1: 2}))
+    assert seen and all(f["dressed3"] == 1.0 and f["dressed10"] == 1.0 for f in seen)
