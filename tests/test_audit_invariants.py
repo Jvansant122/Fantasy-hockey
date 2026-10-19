@@ -578,3 +578,57 @@ def test_activated_ir_player_takes_the_open_roster_spot(browser, server, data): 
     assert checked
     assert errors == []
     ctx.close()
+
+
+# ---------------------------------------------------------------- publish checks P8 and P9 (handoffs 743-744)
+def test_publish_check_keeps_daily_faceoffs_floors(data):
+    """Handoffs 720 and 722 were the same bug twice: a later step pushed an in-lines skater under Daily Faceoff's
+    next-game floor and it reached the live site. P9 catches it (a warning until an evening run has kept it, handoff
+    743)."""
+    import rating
+    assert check_data.DFO_FLOORS == (rating.DFO_LINEUP_NEXT, rating.DFO_IN_LINES_NEXT)
+    assert set(check_data.IDLE_CAPS) == {c for _, c in rating.IDLE_DRESS} | {rating.NOT_PLAYING_DRESS}
+    if not data.get("rated"):
+        pytest.skip("no ratings in this data")
+    assert not [e for e in check_data.rules(data, soft=True) if e.startswith("P9")]
+    d = copy.deepcopy(data)
+    started = lambda p: p.get("today_start") and d.get("updated_utc") and p["today_start"] <= d["updated_utc"]
+    p = next((p for p in d["players"] if p["pos"] != "G" and p.get("dfo_out") is False and not p.get("injury")
+              and p.get("owner") != "waivers" and p.get("games_left") and (p.get("cr_dress_next") or 0) > 0.001
+              and not started(p) and (p.get("sat_last") or (p.get("cr_why") or {}).get("gp"))), None)
+    if p is None:
+        pytest.skip("no skater in Daily Faceoff's lines with a game ahead")
+    p["cr_dress_next"] = 0.83
+    assert [e for e in check_data.rules(d, soft=True) if e.startswith("P9")]
+    assert not [e for e in check_data.rules(d) if e.startswith("P9")]  # warns, doesn't block yet
+    assert [w for w in check_data.warnings(d, None) if w.startswith("P9")]
+
+
+def _rewound(data):
+    """The data as a run before the matchup's first night."""
+    d = json.loads(json.dumps(data))
+    nights = d["nights"][-7:]
+    for n in d["nights"]:
+        n["past"] = n["sp"] < nights[0]["sp"]
+    ahead = {n["sp"] for n in nights}
+    for p in d["players"]:
+        old = p.get("games_left") or 0
+        if p.get("owner") != "waivers":
+            p["games_left"] = sum(sp in ahead for sp in p.get("nights") or [])
+        p["today_start"] = None
+        if p.get("cr_games") is not None:
+            q = p.get("cr_dress") if p["pos"] != "G" else (p["cr_games"] / old if old else 0.5)
+            p["cr_games"] = round(p["cr_games"] + max(p["games_left"] - old, 0) * min(max(q or 0.0, 0.0), 1.0), 2)
+            p["cr"] = round((p.get("cr_fpg") or 0) * p["cr_games"], 2)
+    return d
+
+
+@pytest.mark.parametrize("rewind", [False, True])
+def test_thursday_fixture_keeps_the_publish_rules(data, rewind):
+    """The Thursday fixture's handoff 719 bug only failed the page test on Monday-Wednesday data; rewinding the data
+    to before the matchup's first night makes the check fail on every weekday (handoff 744)."""
+    if not data.get("rated"):
+        pytest.skip("no ratings in this data")
+    d, tonight = _thursday(_rewound(data) if rewind else data)
+    assert any(tonight in (p.get("nights") or []) and p.get("cr_games") is not None for p in d["players"])
+    assert not [e for e in check_data.rules(d) if e[:2] in ("P3", "P4", "P8")]
