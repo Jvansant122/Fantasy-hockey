@@ -2861,6 +2861,155 @@ def predicted_games(players, by_player, prev, rosters, team_games, team_dates, s
                                    goalie_sv, lines, now_utc, xgd, line_date)
 
 
+def team_history(goalie_games):
+    """Each team's game order this season (every game has goalie rows), its starters (date, id), whether each start won,
+    its latest starter (id, last_start_shift) and its played game dates (ET)."""
+    team_games, starts_by_team, last_start, start_wins = {}, {}, {}, {}
+    for g in sorted(goalie_games, key=lambda g: g["date"]):
+        if g["game"] not in team_games.setdefault(g["team"], []):
+            team_games[g["team"]].append(g["game"])
+        if g["started"]:
+            starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
+            start_wins.setdefault(g["team"], []).append(bool(g["wins"]))
+            last_start[g["team"]] = (g["id"], last_start_shift(g))  # the latest start wins
+    team_dates = {}
+    for g in goalie_games:
+        team_dates.setdefault(g["team"], set()).add(g["date"][:10])
+    return team_games, starts_by_team, last_start, start_wins, team_dates
+
+
+def goalie_flags(goalie_games, team_games):
+    """relief: {team: goalies who came on in relief in its latest game} (findings 170); movers: goalies who started for two
+    NHL teams this season; pulled: goalies whose own latest start was under PULLED_TOI (findings 330 (3))."""
+    relief = {}
+    for g in goalie_games:
+        if not g["started"] and g["toi"] > 0 and team_games.get(g["team"]) and g["game"] == team_games[g["team"]][-1]:
+            relief.setdefault(g["team"], set()).add(g["id"])
+    start_teams = {}
+    for g in goalie_games:
+        if g["started"]:
+            start_teams.setdefault(g["id"], set()).add(g["team"])
+    movers = {gid for gid, teams in start_teams.items() if len(teams) > 1}
+    latest = {}
+    for g in sorted(goalie_games, key=lambda g: g["date"]):
+        if g["started"]:
+            latest[g["id"]] = g
+    pulled = {gid for gid, g in latest.items() if g["toi"] < PULLED_TOI}
+    return relief, movers, pulled
+
+
+def goalie_points_per_start(goalie_games, prev_goalies, base, g_starts3):
+    """Each goalie's points per start this season, shrunk over 15 starts (findings sections 27 and 60). Returns own
+    {id: [fp, starts]}, prior (his last-season pts/start, itself shrunk to the league mean `base` over 15 starts, findings
+    section 60), the Week's pps, the Season's pps_season (shrunk by his last three seasons' starts, handoff 641) and the
+    league's pts/start this season for this week's pricing (findings 231 (8))."""
+    own = {}
+    for g in goalie_games:
+        if g["started"]:
+            t = own.setdefault(g["id"], [0.0, 0])
+            t[0] += g["fp"]; t[1] += 1
+    prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp, *_) in prev_goalies.items() if n}
+    pps = {gid: (fp + prior.get(gid, base) * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
+    season_k = lambda gid: next(k for top, k in SEASON_PPS_K if g_starts3.get(gid, 0) < top)
+    pps_season = {gid: (fp + prior.get(gid, base) * season_k(gid)) / (n + season_k(gid)) for gid, (fp, n) in own.items()}
+    league_pps = (sum(fp for fp, _ in own.values()) + base * LEAGUE_PPS_PRIOR) / (sum(n for _, n in own.values()) + LEAGUE_PPS_PRIOR)
+    return own, prior, pps, pps_season, league_pps
+
+
+def scratch_lists_wanted(by_player, team_games):
+    """Game ids whose scratch lists the comeback and early-season D scratch rules will ask for: each skater's window on his
+    latest team, a superset (handoff 729 for the D)."""
+    want = set()
+    for gl in by_player.values():
+        if team_games.get(gl[-1]["team"]):
+            comeback_logit(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]}, want.add, gl[-1]["id"])
+            if gl[-1].get("pos") == "D" and len(team_games[gl[-1]["team"]]) < SEASON_SCRATCH_D_GAMES:
+                scratch_streak(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]},
+                               lambda x: want.add(x), gl[-1]["id"])
+    return want
+
+
+def name_index(by_player, prev, goalie_games):
+    """NHL name index for matching ESPN players: {normalized name: {NHL id: (team, pos)}}."""
+    index = {}
+
+    def add(pid, name, team, pos):
+        index.setdefault(norm(name), {})[pid] = (team, pos)
+    for pid, gl in by_player.items():
+        add(pid, gl[-1]["name"], gl[-1]["team"], gl[-1]["pos"])
+    for pid, t in prev.items():
+        if pid not in by_player:
+            add(pid, t["name"], None, t["pos"])
+    for g in goalie_games:
+        add(g["id"], g["name"], g["team"], "G")
+    return index
+
+
+def dfo_starters(starters, index, rosters, today):
+    """Daily Faceoff's starting goalies from today on, matched to NHL ids: confirmed {team: {date: id}}, tonight
+    {team: (id, status)} and likely {team: {date: id}} (handoff 617). A confirmed starter not in the NHL data yet (a new
+    call-up) is 'unmatched:<name>', so the team's other goalies sit (findings 217)."""
+    confirmed, tonight, likely = {}, {}, {}
+    for page in starters:
+        for g in page.get("games", []):
+            cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")] \
+                or [pid for pid, (t, pos) in nickname_cands(index, g.get("goalie"), g.get("team")).items() if pos == "G"] \
+                or [pid for pid in index.get(norm(g.get("goalie") or ""), {})
+                    if pid in {q for q, _, qpos in rosters.get(g.get("team"), ()) if qpos == "G"}]
+            # ... "Matthew" Murray (findings 175); the last: traded or claimed, no game for his new team yet (handoff 454)
+            if not page.get("date") or page["date"] < today.isoformat():
+                continue
+            if not cands and g.get("status") == "Confirmed" and g.get("goalie"):
+                confirmed.setdefault(g["team"], {})[page["date"]] = f"unmatched:{g['goalie']}"
+                if page["date"] == today.isoformat():
+                    tonight[g["team"]] = (f"unmatched:{g['goalie']}", "Confirmed")
+            if len(cands) != 1:
+                continue
+            if page["date"] == today.isoformat():
+                tonight[g["team"]] = (cands[0], g.get("status"))
+            if g.get("status") == "Confirmed":
+                confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
+            elif g.get("status") == "Likely":
+                likely.setdefault(g["team"], {})[page["date"]] = cands[0]
+    return confirmed, tonight, likely
+
+
+def goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today):
+    """Rostered goalies with Daily Faceoff injury news since their last appearance (handoff 679): posted after 20:00 UTC on
+    that date, at most GOALIE_DFO_INJ_DAYS old; a confirmed start today or later ends the cut, as his appearance will
+    (handoff 698). Returns ({id: GOALIE_DFO_INJ_CAPS}, {id: the news' ET date}) (handoffs 695, 697)."""
+    goalie_dfo, goalie_dfo_day = {}, {}
+    last_app = {gid: max(d for d, _ in v) for gid, v in goalie_dates.items()}
+    oldest = f"{today - timedelta(days=GOALIE_DFO_INJ_DAYS)}T13:00:00"
+    conf_day = {}
+    for by_d in confirmed.values():
+        for d, g in by_d.items():
+            if d >= today.isoformat() and d > conf_day.get(g, ""):
+                conf_day[g] = d
+    for team_r in rosters.values():
+        for gid, _, pos in team_r:
+            items = ((dfo_news or {}).get("recent") or {}).get(str(gid)) or ()
+            seen = max(last_app.get(gid, ""), conf_day.get(gid, ""))
+            since = max(f"{seen}T20:00:00" if seen else "", oldest)
+            inj = [r for r in items if r.get("cat") == "inj" and r["ts"] > since]
+            if pos == "G" and inj and not {"ret", "full"} & set(inj[-1].get("f") or ()):
+                goalie_dfo[gid] = GOALIE_DFO_INJ_CAPS
+                goalie_dfo_day[gid] = str(note_date(inj[-1]["ts"]))
+    return goalie_dfo, goalie_dfo_day
+
+
+def team_venues(goalie_games, week_games):
+    """NHL team: {date: home?} for its games played (goalie logs) and this week's schedule (handoff 500)."""
+    venue = {}
+    for g in goalie_games:
+        if g.get("home") is not None:
+            venue.setdefault(g["team"], {})[g["date"][:10]] = g["home"]
+    for team, gs in week_games.items():
+        for d, _, home in gs:
+            venue.setdefault(team, {})[d] = home
+    return venue
+
+
 def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
                 dfo_news=None, winners=None, relineup=None, info=None, starts=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
@@ -2908,18 +3057,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     opp_str, nonwins = opponent_strength(goalie_games, prev_pct), nonwin_streaks(goalie_games)
     forms = team_form(goalie_games)  # streaks and last margin, for the lineup shifts (handoffs 340-342)
 
-    # team game order this season (every game has goalie rows) and the starter of each
-    team_games, starts_by_team, last_start, start_wins = {}, {}, {}, {}
-    for g in sorted(goalie_games, key=lambda g: g["date"]):
-        if g["game"] not in team_games.setdefault(g["team"], []):
-            team_games[g["team"]].append(g["game"])
-        if g["started"]:
-            starts_by_team.setdefault(g["team"], []).append((g["date"], g["id"]))
-            start_wins.setdefault(g["team"], []).append(bool(g["wins"]))
-            last_start[g["team"]] = (g["id"], last_start_shift(g))  # the latest start wins
-    team_dates = {}  # each team's played game dates (ET)
-    for g in goalie_games:
-        team_dates.setdefault(g["team"], set()).add(g["date"][:10])
+    team_games, starts_by_team, last_start, start_wins, team_dates = team_history(goalie_games)
     # Daily Faceoff lines count for the next game unless posted before the last game in the history loaded here, not the
     # last game that started 4+ hours ago: overnight the NHL posts last night's stats late (findings 543, handoff 752)
     if relineup is not None:
@@ -2928,21 +3066,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         last = history_end(today).isoformat()
         info["stats_missing"] = sum(1 for (home, d), r in week_results.items() if d == last
                                     and r.get("state") in winners_model.FINAL_STATES and d not in team_dates.get(home, ()))
-    # came on in relief in his team's latest game (findings 170)
-    relief = {}
-    for g in goalie_games:
-        if not g["started"] and g["toi"] > 0 and team_games.get(g["team"]) and g["game"] == team_games[g["team"]][-1]:
-            relief.setdefault(g["team"], set()).add(g["id"])
-    start_teams = {}
-    for g in goalie_games:
-        if g["started"]:
-            start_teams.setdefault(g["id"], set()).add(g["team"])
-    movers = {gid for gid, teams in start_teams.items() if len(teams) > 1}  # started for two NHL teams this season
-    latest = {}  # each goalie's own latest start (findings 330 (3))
-    for g in sorted(goalie_games, key=lambda g: g["date"]):
-        if g["started"]:
-            latest[g["id"]] = g
-    pulled = {gid for gid, g in latest.items() if g["toi"] < PULLED_TOI}
+    relief, movers, pulled = goalie_flags(goalie_games, team_games)
     scratches = load_scratches(s, {tg[-1] for tg in team_games.values() if tg})
     tried = {tg[-1] for tg in team_games.values() if tg}
 
@@ -2951,21 +3075,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             tried.add(gid)
             scratches.update(load_scratches(s, {gid}))
         return scratches.get(gid)
-    # each goalie's points per start this season, shrunk over 15 starts (findings sections 27 and 60)
     base = model.g["points_per_start"]
-    own = {}
-    for g in goalie_games:
-        if g["started"]:
-            t = own.setdefault(g["id"], [0.0, 0])
-            t[0] += g["fp"]; t[1] += 1
-    # the prior is his own last-season pts/start, itself shrunk to the league mean over 15 starts (findings section 60)
-    prior = {gid: (fp + base * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (n, fp, *_) in prev_goalies.items() if n}
-    pps = {gid: (fp + prior.get(gid, base) * PPS_PRIOR) / (n + PPS_PRIOR) for gid, (fp, n) in own.items()}
-    # the Season's pts/start: the same blend, shrunk by his last three seasons' starts (handoff 641)
-    season_k = lambda gid: next(k for top, k in SEASON_PPS_K if g_starts3.get(gid, 0) < top)
-    pps_season = {gid: (fp + prior.get(gid, base) * season_k(gid)) / (n + season_k(gid)) for gid, (fp, n) in own.items()}
-    # the league's points per start this season, for this week's pricing (findings 231 (8))
-    league_pps = (sum(fp for fp, _ in own.values()) + base * LEAGUE_PPS_PRIOR) / (sum(n for _, n in own.values()) + LEAGUE_PPS_PRIOR)
+    own, prior, pps, pps_season, league_pps = goalie_points_per_start(goalie_games, prev_goalies, base, g_starts3)
     by_player = {}
     for g in sorted(games, key=lambda g: g["date"]):
         by_player.setdefault(g["id"], []).append(g)
@@ -2974,29 +3085,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     fewest = lowest_toi(by_player, team_games)  # for the depth skaters' minutes rank (handoff 360)
     fill_back = fillins_back(by_player, team_games)  # fill-ins whose regular is just back (handoff 713)
     # the older scratch lists that players just back ask scratch_list for, read side by side now rather than one by one in
-    # the loop below (about 30 calls, 8 s; speed audit, Oct 12 2026): each skater's window on his latest team, a superset
-    want = set()
-    for gl in by_player.values():
-        if team_games.get(gl[-1]["team"]):
-            comeback_logit(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]}, want.add, gl[-1]["id"])
-            if gl[-1].get("pos") == "D" and len(team_games[gl[-1]["team"]]) < SEASON_SCRATCH_D_GAMES:  # handoff 729
-                scratch_streak(team_games[gl[-1]["team"]], {g["game"] for g in gl if g["team"] == gl[-1]["team"]},
-                               lambda x: want.add(x), gl[-1]["id"])
-    want -= tried
+    # the loop below (about 30 calls, 8 s; speed audit, Oct 12 2026)
+    want = scratch_lists_wanted(by_player, team_games) - tried
     tried |= want
     scratches.update(load_scratches(s, want))
 
-    # NHL name index for matching ESPN players
-    index = {}
-    def add(pid, name, team, pos):
-        index.setdefault(norm(name), {})[pid] = (team, pos)
-    for pid, gl in by_player.items():
-        add(pid, gl[-1]["name"], gl[-1]["team"], gl[-1]["pos"])
-    for pid, t in prev.items():
-        if pid not in by_player:
-            add(pid, t["name"], None, t["pos"])
-    for g in goalie_games:
-        add(g["id"], g["name"], g["team"], "G")
+    index = name_index(by_player, prev, goalie_games)
     rosters = {}
     # every team with a game this week or this season: one with no game this week keeps its goalies' Season (findings 230)
     teams = sorted(set(sched) | set(team_games))
@@ -3005,7 +3099,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         for pid, name, pos in rosters[team]:
             known = index.get(norm(name), {})
             if pid not in known or known[pid][0] is None:
-                add(pid, name, team, pos)
+                index.setdefault(norm(name), {})[pid] = (team, pos)
     on_roster = {pid for r in rosters.values() for pid, _, _ in r}
     # missed all or most of last season (Barkov): the season before instead of a newcomer's prior, for players on a current
     # NHL roster or with games this season, so retired players don't come back (findings 216)
@@ -3058,29 +3152,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         return None if p.get("team") == "FA" and pid in claimed else pid
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
-    confirmed, tonight, likely = {}, {}, {}
-    for page in starters:
-        for g in page.get("games", []):
-            cands = [pid for pid, (t, pos) in index.get(norm(g.get("goalie") or ""), {}).items() if pos == "G" and t == g.get("team")] \
-                or [pid for pid, (t, pos) in nickname_cands(index, g.get("goalie"), g.get("team")).items() if pos == "G"] \
-                or [pid for pid in index.get(norm(g.get("goalie") or ""), {})
-                    if pid in {q for q, _, qpos in rosters.get(g.get("team"), ()) if qpos == "G"}]
-            # ... "Matthew" Murray (findings 175); the last: traded or claimed, no game for his new team yet (handoff 454)
-            if not page.get("date") or page["date"] < today.isoformat():
-                continue
-            if not cands and g.get("status") == "Confirmed" and g.get("goalie"):
-                # a confirmed starter not in the NHL data yet (a new call-up): the team's other goalies sit (findings 217)
-                confirmed.setdefault(g["team"], {})[page["date"]] = f"unmatched:{g['goalie']}"
-                if page["date"] == today.isoformat():
-                    tonight[g["team"]] = (f"unmatched:{g['goalie']}", "Confirmed")
-            if len(cands) != 1:
-                continue
-            if page["date"] == today.isoformat():
-                tonight[g["team"]] = (cands[0], g.get("status"))
-            if g.get("status") == "Confirmed":
-                confirmed.setdefault(g["team"], {})[page["date"]] = cands[0]
-            elif g.get("status") == "Likely":  # handoff 617
-                likely.setdefault(g["team"], {})[page["date"]] = cands[0]
+    confirmed, tonight, likely = dfo_starters(starters, index, rosters, today)
     # ESPN lists him as a free agent ('FA') but he has played this season and an NHL roster has him: his team's games
     # (Bunting, findings 230)
     roster_team = {pid: team for team, r in rosters.items() for pid, _, _ in r}
@@ -3140,25 +3212,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 goalie_inj[pid] = INJURY_DRESS[p["injury"]]
                 if p["id"] in notes and injury_note(notes[p["id"]], today)["season"]:
                     goalie_gone.add(pid)
-    # Daily Faceoff injury news since his last appearance (handoff 679): posted after 20:00 UTC on that date, at most 14 days old
-    goalie_dfo, goalie_dfo_day = {}, {}
-    last_app = {gid: max(d for d, _ in v) for gid, v in goalie_dates.items()}
-    oldest = f"{today - timedelta(days=GOALIE_DFO_INJ_DAYS)}T13:00:00"
-    # a Daily Faceoff confirmed start today or later ends the cut, as his appearance will (handoff 698)
-    conf_day = {}
-    for by_d in confirmed.values():
-        for d, g in by_d.items():
-            if d >= today.isoformat() and d > conf_day.get(g, ""):
-                conf_day[g] = d
-    for team_r in rosters.values():
-        for gid, _, pos in team_r:
-            items = ((dfo_news or {}).get("recent") or {}).get(str(gid)) or ()
-            seen = max(last_app.get(gid, ""), conf_day.get(gid, ""))
-            since = max(f"{seen}T20:00:00" if seen else "", oldest)
-            inj = [r for r in items if r.get("cat") == "inj" and r["ts"] > since]
-            if pos == "G" and inj and not {"ret", "full"} & set(inj[-1].get("f") or ()):
-                goalie_dfo[gid] = GOALIE_DFO_INJ_CAPS
-                goalie_dfo_day[gid] = str(note_date(inj[-1]["ts"]))  # the ET date, for his details (handoffs 695, 697)
+    goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
     g_ages = {gid: (today - b).days / 365.25 for gid, b in births.items() if b}  # the goalies' age cut (handoff 640)
@@ -3183,13 +3237,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     unmatched = 0
     lineup = []  # skaters with games this season, for the lineup-slot step (findings 370)
     week_rows = []  # skaters' per-game Week chances by date, for the per-game lineup step (handoff 489)
-    venue = {}  # NHL team: {date: home?} for its games played (goalie logs) and this week's schedule (handoff 500)
-    for g in goalie_games:
-        if g.get("home") is not None:
-            venue.setdefault(g["team"], {})[g["date"][:10]] = g["home"]
-    for team, gs in week_games.items():
-        for d, _, home in gs:
-            venue.setdefault(team, {})[d] = home
+    venue = team_venues(goalie_games, week_games)
     drift_rows = []  # every skater's Season FP/G, for the league-wide scoring drift (handoff 405)
     season_open = min((g["date"] for g in games), default=None)
     injury_log = []
