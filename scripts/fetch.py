@@ -726,6 +726,7 @@ def main():
     except Exception as e:  # noqa: BLE001 - the rating falls back to today's projection
         print(f"Preseason projections failed, using today's: {e!r}", file=sys.stderr)
     winners, info = {}, {}
+    espn_team = {ESPN_TO_NHL.get(p["team"].upper(), p["team"].upper()): p["team"] for p in players}  # NHL -> the data's abbrev
     # every game's real start by (NHL team, ET date), for lines judged before this week (handoff 755)
     et_starts = {(ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()),
                   datetime.fromisoformat(v.replace("Z", "+00:00")).astimezone(ET).date().isoformat()): v
@@ -805,6 +806,9 @@ def main():
         "updated_date": today_et.isoformat(),
         "first_start": first_start,  # today's first puck, UTC: adds after it count from tomorrow (findings 179)
         "stats_missing": info.get("stats_missing", 0),  # last night's finished games the NHL hasn't posted yet (handoff 753)
+        # start chances by night of NHL-roster goalies not in ESPN's pool, by ESPN team (the publish check's G5 sums)
+        "g_unlisted": {espn_team.get(t, t): {str(sp): q for sp, q in nights_by_sp(by_d, today_et, today_sp).items()}
+                       for t, by_d in info.get("g_unlisted", {}).items()},
         "updated_utc": run_utc,  # the page compares it with each player's today_start (findings 178)
         "team": team_names.get(my_team["id"]) if my_team else None,
         "matchup_period": period,

@@ -37,7 +37,8 @@ def test_no_module_level_name_is_defined_twice():
 # ---------------------------------------------------------------- 2. publish checks P7, G4, G5 (453, 446, 454)
 def test_publish_check_catches_unrated_ghosts_and_zeroed_backups(data):
     assert not [e for e in check_data.rules(data) if e[:2] in ("P7", "G4")]
-    assert not [w for w in check_data.warnings(data, None) if w.startswith("G5")]
+    if "g_unlisted" in data:  # a call-up ESPN doesn't list holds part of his team's nights; older data can't sum them
+        assert not [w for w in check_data.warnings(data, None) if w.startswith("G5")]
     if not data["rated"]:
         return
     # P7: a retired name ESPN lists on a team, rated from the league-average prior (handoff 453)
@@ -631,3 +632,24 @@ def test_thursday_fixture_keeps_the_publish_rules(data, rewind):
     d, tonight = _thursday(_rewound(data) if rewind else data)
     assert any(tonight in (p.get("nights") or []) and p.get("cr_games") is not None for p in d["players"])
     assert not [e for e in check_data.rules(d) if e[:2] in ("P3", "P4", "P8")]
+
+
+def test_g5_counts_goalies_espn_does_not_list(data):
+    """A call-up on the NHL roster but not in ESPN's pool holds part of his team's night (FLA Oct 20: Schmid 0.47 on night 2
+    of a back-to-back); the published g_unlisted chances fill the sum, so G5 stays quiet, and it still fires without them."""
+    d = copy.deepcopy(data)
+    ahead = {str(n["sp"]) for n in d["nights"] if not n["past"]}
+    gs = [q for q in d["players"] if q["pos"] == "G" and q["team"] != "FA" and q.get("owner") != "waivers"
+          and any(sp in ahead for sp in (q.get("cr_g_nights") or {}))]
+    if not gs:
+        pytest.skip("no goalie nights ahead")
+    team = gs[0]["team"]
+    sp = next(sp for sp in gs[0]["cr_g_nights"] if sp in ahead)
+    for q in d["players"]:
+        if q["pos"] == "G" and q["team"] == team and sp in (q.get("cr_g_nights") or {}):
+            q["cr_g_nights"][sp] = round(q["cr_g_nights"][sp] * 0.47, 2)
+    total = sum(q["cr_g_nights"].get(sp, 0) for q in d["players"] if q["pos"] == "G" and q["team"] == team)
+    d["g_unlisted"] = {}
+    assert any(w.startswith("G5") and f"'{team}', '{sp}'" in w for w in check_data.warnings(d, None))
+    d["g_unlisted"] = {team: {sp: round(1 - total, 2)}}
+    assert not any(w.startswith("G5") and f"'{team}', '{sp}'" in w for w in check_data.warnings(d, None))
