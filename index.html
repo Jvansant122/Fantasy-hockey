@@ -551,7 +551,8 @@ function why(p) {
     // no share of the remaining starts: the rating is 0, not 0.32 (handoff 636)
     if (w.dfo_inj) parts.push(`Daily Faceoff injury news on ${dayLabel(w.dfo_inj)} with no return or full-practice word: his chance to start is cut to a fifth for his team's next game and about a third after (goalies with such news started 6-15% of next games)`);
     if (p.cr_season != null && w.g_season_share === 0) parts.push(`Season: ${n(p.cr_season)} pts per team game (no share of his team's remaining starts expected)`);
-    else if (p.cr_season != null && w.g_season_share != null && (w.season_pps ?? w.mover_pps ?? w.own_pps) != null) parts.push(`Season: ${n(p.cr_season)} pts per team game = 0.32 + 0.72 × his expected share of his team's remaining starts (${Math.round(w.g_season_share * 100)}%) × ${(+(w.season_pps ?? w.mover_pps ?? w.own_pps)).toFixed(2)} pts per start` + (w.mover_pps != null ? " (his last-season rate adjusted for his new team)" : ""));
+    else if (p.cr_season != null && w.g_season_share != null && (w.season_pps ?? w.mover_pps ?? w.own_pps) != null) parts.push(`Season: ${n(p.cr_season)} pts per team game = 0.32 + 0.72 × his expected share of his team's remaining starts (${Math.round(w.g_season_share * 100)}%) × ${(+(w.season_pps ?? w.mover_pps ?? w.own_pps)).toFixed(2)} pts per start` + (w.mover_pps != null ? " (his last-season rate adjusted for his new team)" : "")
+      + (w.adp_pull != null && Math.abs(w.adp_pull - 1) >= 0.01 ? `, then ${w.adp_pull > 1 ? "+" : "\u2212"}${Math.round(Math.abs(w.adp_pull - 1) * 100)}% toward his ESPN draft position (early season only)` : ""));
   } else {
     // no NHL record: rated 0 and said so below, not a formula with a 0% chance (handoff 607); the chance is over the games
     // left, since tonight's game drops out of cr_games once it starts (handoff 645)
@@ -569,6 +570,8 @@ function why(p) {
       "indefinite": "injury news says out indefinitely or long-term"};
     if (w.espn_blend && p.proj_ppg != null) parts.push(`Season pts/game pulled ${Math.round(w.espn_blend * 100)}% of the way toward ESPN's preseason projection (${n(w.espn_proj ?? p.proj_ppg)}); the pull fades as he plays games`);
     // this week's lineup fit, next game (handoff 603); the Season line below is the rest of the season's
+    // the first weeks: Week pts/game toward ESPN's draft market (handoff 759)
+    if (w.adp_week != null && Math.abs(w.adp_week - 1) >= 0.01) wk.push(`Week pts/game ${w.adp_week > 1 ? "+" : "\u2212"}${Math.round(Math.abs(w.adp_week - 1) * 100)}% toward his ESPN draft position (first weeks only)`);
     if (w.week_slack != null && Math.abs(w.week_slack) >= 0.5) wk.push(w.week_slack > 0
       ? `This week his team has about ${n(w.week_slack)} open ${p.pos === "D" ? "defense" : "forward"} spots in its next game, so he should play more`
       : `This week his team has about ${n(-w.week_slack)} more likely ${p.pos === "D" ? "defensemen" : "forwards"} than lineup spots in its next game (counting regulars due back), so he may sit more`);
