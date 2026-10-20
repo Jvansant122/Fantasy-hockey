@@ -68,3 +68,36 @@ def test_a_free_agent_without_team_games_takes_the_league_median():
     assert rating.team_games_of({"team": "FA"}, {"TOR": [1] * 4, "BOS": [1] * 6, "MTL": [1] * 8}) == 6
     assert rating.team_games_of({"team": "TOR"}, {"TOR": [1] * 4}) == 4
     assert rating.team_games_of({"team": "LA"}, {"LAK": [1] * 3}) == 3
+
+
+def test_season_range_follows_the_pulled_season(monkeypatch, tmp_path):
+    """Handoff 761: after the ADP pull the Season's 80% range is rebuilt around the pulled Season, so a skater in the same
+    tier keeps the same distances to its ends as without ADP."""
+    import test_add_ratings as T
+    monkeypatch.setattr(rating.requests, "Session", lambda: T.FakeSession())
+    monkeypatch.setattr(rating, "ADP_MIN_DISTINCT", 2)
+    names = [(101, "Auston Matthews", "TOR", "C"), (104, "Charlie McAvoy", "BOS", "D"), (106, "Elias Pettersson", "TOR", "C"),
+             (107, "Elias N. Pettersson", "TOR", "D"), (108, "Zack Bolduc", "BOS", "LW"), (110, "Ryan Spooner", "BOS", "C")]
+
+    def go(adps, k):
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / f"log{k}.jsonl")
+        ps = [dict(T.espn(*n), adp=adps.get(n[0])) for n in names]
+        rating.add_ratings(ps, 2027, T.TODAY, T.MONDAY, [])
+        return {p["id"]: p for p in ps}
+    base = go({}, 0)
+    order = sorted(base, key=lambda i: base[i]["cr_season"])  # lowest Season gets the best ADP: the pull reverses it
+    pulled = go({pid: 10.0 + 20 * r for r, pid in enumerate(order)}, 1)
+    cuts = rating.Model().season_range_table["cuts"]
+    checked = 0
+    for pid, p in pulled.items():
+        w, b = p["cr_why"], base[pid]["cr_why"]
+        if not (w.get("adp_pull") and abs(w["adp_pull"] - 1) >= 0.05 and w.get("season_range") and b.get("season_range")):
+            continue
+        lo_cut, hi_cut = cuts["D" if p["pos"] == "D" else "F"]
+        tier = lambda s: 0 if s < lo_cut else 1 if s < hi_cut else 2
+        if tier(p["cr_season"]) != tier(base[pid]["cr_season"]) or min(b["season_range"][0], w["season_range"][0]) == 0:
+            continue
+        checked += 1
+        assert w["season_range"][1] - p["cr_season"] == pytest.approx(b["season_range"][1] - base[pid]["cr_season"], abs=0.02)
+        assert p["cr_season"] - w["season_range"][0] == pytest.approx(base[pid]["cr_season"] - b["season_range"][0], abs=0.02)
+    assert checked
