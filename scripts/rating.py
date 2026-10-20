@@ -213,6 +213,11 @@ B2B_NIGHT2_RESTED_NO1_LOGIT = 0.6
 # at K team games; off when ESPN's ADP has under MIN distinct values (its stored 2025-26 ADP is all 230). Held out
 # Spearman +0.014 / +0.010 (2023-24 / 2024-25) at the Oct 20 Monday, 0.6 in both folds (findings 556, handoff 757)
 ADP_PULL_C, ADP_PULL_K, ADP_MIN_DISTINCT = 0.6, 20, 20
+# the same pull within goalies, on the Season: goalie board +0.025 / +0.021 held out (findings 557, handoff 758)
+ADP_PULL_C_G, ADP_MIN_DISTINCT_G = 1.0, 10
+# the Week's pts/game toward the draft market in the first weeks, its own factor (757's on the Week loses in 2024-25):
+# next-week FP/G Spearman +0.0064 / +0.0049 held out, both folds c 0.4 (findings 557, handoff 759)
+ADP_WEEK_C, ADP_WEEK_K = 0.4, 12
 # no. 1 back from 5+ team games without a start, his first start back in the team's last 2 games: next game 0.363 vs 0.247,
 # later 0.433 vs 0.357 (hunt14 gback, findings 514; handoff 711: 15 of 15 seasons better at +0.5, +0.7 and up worse in 2023-24)
 BACK_SPELL_GAMES, BACK_SPELL_SHARE, BACK_NO1_LOGIT = 5, 0.5, 0.5
@@ -2055,6 +2060,15 @@ def _avg_rank(vals):
     return out
 
 
+def team_games_of(p, team_games):
+    """His ESPN team's NHL games so far, or the league median when his team has none listed (a free agent)."""
+    t = ESPN_TO_NHL.get(p["team"], p["team"])
+    if t in team_games:
+        return len(team_games[t])
+    counts = sorted(len(v) for v in team_games.values())
+    return counts[len(counts) // 2] if counts else 0
+
+
 def adp_pull(players, team_games):
     """Early season: move each skater's Season toward ESPN's draft market (handoff 757). The factor multiplies cr_season
     and season_pts alike, so the share and its checks hold and a 0 stays 0."""
@@ -2063,7 +2077,7 @@ def adp_pull(players, team_games):
         return
     q_adp, q_v = _avg_rank([-p["adp"] for p in pool]), _avg_rank([p["cr_season"] for p in pool])
     for p, qa, qv in zip(pool, q_adp, q_v):
-        e = max(1 - len(team_games.get(ESPN_TO_NHL.get(p["team"], p["team"]), [])) / ADP_PULL_K, 0)
+        e = max(1 - team_games_of(p, team_games) / ADP_PULL_K, 0)
         f = math.exp(ADP_PULL_C * e * (qa - qv))
         if f == 1:
             continue
@@ -2072,6 +2086,35 @@ def adp_pull(players, team_games):
         if why.get("season_pts") is not None:
             why["season_pts"] = round(why["season_pts"] * f, 2)
         why["adp_pull"], why["adp"] = round(f, 3), p["adp"]
+
+
+def adp_pull_goalies(players, team_games):
+    """Handoff 758: the same early-season pull within goalies, on the Season only. A Season of 0 stays 0 and out of the pool."""
+    pool = [p for p in players if p["pos"] == "G" and p.get("cr_matched") and p.get("adp") is not None
+            and (p.get("cr_season") or 0) > 0]
+    if len({p["adp"] for p in pool}) < ADP_MIN_DISTINCT_G:
+        return
+    q_adp, q_v = _avg_rank([-p["adp"] for p in pool]), _avg_rank([p["cr_season"] for p in pool])
+    for p, qa, qv in zip(pool, q_adp, q_v):
+        f = math.exp(ADP_PULL_C_G * max(1 - team_games_of(p, team_games) / ADP_PULL_K, 0) * (qa - qv))
+        if f != 1:
+            p["cr_season"] = round(p["cr_season"] * f, 2)
+            p.setdefault("cr_why", {}).update(adp_pull=round(f, 3), adp=p["adp"])
+
+
+def adp_week_pull(players, team_games):
+    """Handoff 759: in the first weeks each skater's Week pts/game moves toward the draft market, by its own factor."""
+    pool = [p for p in players if p["pos"] != "G" and p.get("cr_matched") and p.get("adp") is not None
+            and p.get("cr_fpg") is not None and (p.get("cr_why") or {}).get("season_pts") is not None]
+    if len({p["adp"] for p in pool}) < ADP_MIN_DISTINCT:
+        return
+    q_adp, q = _avg_rank([-p["adp"] for p in pool]), _avg_rank([p["cr_fpg"] for p in pool])
+    for p, qa, qf in zip(pool, q_adp, q):
+        f = math.exp(ADP_WEEK_C * max(1 - team_games_of(p, team_games) / ADP_WEEK_K, 0) * (qa - qf))
+        if f != 1:
+            p["cr_fpg"] = round(p["cr_fpg"] * f, 2)
+            p["cr"] = round(p["cr_fpg"] * (p.get("cr_games") or 0), 2)
+            p["cr_why"]["adp_week"] = round(f, 3)
 
 
 def week_slack(rows, boost_x, boost_week, missing=None):
@@ -3972,6 +4015,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_why"]["no_record"] = True
 
     adp_pull(players, team_games)
+    adp_pull_goalies(players, team_games)
+    adp_week_pull(players, team_games)
 
     # percentile within F / D / G among the players on the site
     groups = {}
