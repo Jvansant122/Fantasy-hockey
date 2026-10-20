@@ -4015,6 +4015,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_why"]["no_record"] = True
 
     adp_pull(players, team_games)
+    for r in drift_rows:  # the Season's 80% range follows the pulled Season, as after the drift (handoff 761)
+        why = r["p"]["cr_why"]
+        if why.get("adp_pull") is not None and why.get("season_range") is not None:
+            rng, _ = model.season_range(r["p"]["cr_season"], *r["range"])
+            if rng:
+                why["season_range"] = rng
     adp_pull_goalies(players, team_games)
     adp_week_pull(players, team_games)
 

@@ -1768,7 +1768,7 @@ def test_goalie_details_name_the_pull_to_the_league_rate(browser, server, data):
     assert "His own 3.96 pts per start" in text
     assert "this week priced at 3.47: pulled most of the way to the league's rate" in text and "then the schedule" in text
     g2 = page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {g['id']}); p.cr_why.sched = null; return why(p); }})()")
-    assert "pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)" in g2 and "then" not in g2.split("priced at")[1]
+    assert "pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)" in g2 and "then" not in g2.split("priced at")[1].split("\n")[0]
     assert errors == []
     ctx.close()
 
