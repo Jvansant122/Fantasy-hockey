@@ -583,6 +583,8 @@ function why(p) {
        w.boost_fpg != null ? `${n(w.boost_fpg)} pts/game from here` : ""].filter(Boolean).join(" and ") + "; the Season rating moves part of the way toward it");
     // the league-wide forward / defense scoring shift in his Season pts/game (handoffs 405, 444)
     if (w.drift && Math.abs(w.drift) >= 0.01) parts.push(`Season pts/game ${w.drift > 0 ? "+" : "\u2212"}${Math.abs(w.drift).toFixed(2)} for a league-wide ${p.pos === "D" ? "defense" : "forward"} scoring shift this season`);
+    // early season: the Season moved toward ESPN's draft market (handoff 757), shown at 1% or more
+    if (w.adp_pull != null && Math.abs(w.adp_pull - 1) >= 0.01) parts.push(`Season ${w.adp_pull > 1 ? "+" : "\u2212"}${Math.round(Math.abs(w.adp_pull - 1) * 100)}% toward where ESPN drafters took him (ADP ${w.adp}); this fades out by about 20 team games`);
     if (w.season_news?.length) parts.push(`Season share uses Daily Faceoff news: ${w.season_news.map(k => NEWS_TXT[k] || k).join("; ")}`);
     if (w.gp) parts.push(`Stats: ice time ${n(w.toi5)} min a game, last 5 (${n(w.toi)} this season) · power play ${n(w.pp5)} min a game · ${n(w.sog)} shots a game` + (p.pos === "D" ? ` · ${n(w.blk)} blocks a game` : "") + ` · ${w.gp} games`);
     else parts.push("No NHL games yet this season");
