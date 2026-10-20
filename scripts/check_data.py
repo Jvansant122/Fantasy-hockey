@@ -339,6 +339,8 @@ def warnings(data, prev):
             for sp, q in (p.get("cr_g_nights") or {}).items():
                 if int(sp) in ahead:
                     g_night[(p["team"], sp)] = g_night.get((p["team"], sp), 0.0) + q
+    for (t, sp) in g_night:  # a call-up ESPN doesn't list holds the rest of the night
+        g_night[(t, sp)] += (data.get("g_unlisted") or {}).get(t, {}).get(sp, 0.0)
     off = sorted((t, sp, round(v, 2)) for (t, sp), v in g_night.items() if not 0.6 <= v <= 1.02)
     if off:
         out.append(f"G5 team nights whose goalie start chances don't sum to about 1: {off[:5]}")

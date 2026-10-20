@@ -3240,6 +3240,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         kept = {gid for gid in set(exp) | set(sea) if (gid in mine if roster_g else gid not in goalie_exp)}
         for src, dst in ((nights, goalie_nights), (exp, goalie_exp), (tod, goalie_today), (sea, goalie_season)):
             dst.update({gid: v for gid, v in src.items() if gid in kept})
+    if info is not None:  # starts held by NHL-roster goalies ESPN doesn't list (a call-up), so G5 can sum each team-night
+        listed = {pid for p in players if p["pos"] == "G" for pid in (pid_of.get(p["id"]),) if pid}
+        unlisted = {}
+        for gid, by_d in goalie_nights.items():
+            if gid not in listed and gid in roster_team:
+                for d, q in by_d.items():
+                    t = unlisted.setdefault(roster_team[gid], {})
+                    t[d] = round(t.get(d, 0.0) + q, 2)
+        info["g_unlisted"] = unlisted
 
     unmatched = 0
     lineup = []  # skaters with games this season, for the lineup-slot step (findings 370)
