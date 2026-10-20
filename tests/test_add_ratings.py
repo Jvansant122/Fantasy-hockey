@@ -3538,3 +3538,24 @@ def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
     d = last(None)[:10]
     assert last(None) == f"{d}T23:00:00Z"
     assert last({("BOS", d): f"{d}T23:59:00Z"}) == f"{d}T23:59:00Z"
+
+
+def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
+    """Handoff 756: the backup started night 1 of a back-to-back, so the rested no. 1's chance for night 2 gets +0.6 logit
+    (team sum kept); the later game, a no. 1 start yesterday, a day off between, and a Confirmed backup don't move."""
+    import math
+    lo = lambda v: math.log(v / (1 - v))
+    def nights(lift, last, last_day="2026-10-21", **kw):
+        monkeypatch.setattr(rating, "B2B_NIGHT2_RESTED_NO1_LOGIT", lift)
+        hist = [(f"2026-10-{2 * i + 1:02d}", g) for i, g in enumerate([1, 1, 2, 1, 1, 2, 1, 1, 1])] + [(last_day, last)]
+        out = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 20}, ["2026-10-22", "2026-10-25"],
+                             date(2026, 10, 22), by_date=out, **kw)
+        return out
+    a, b = nights(0.0, 2), nights(0.6, 2)
+    assert lo(b[1]["2026-10-22"]) - lo(a[1]["2026-10-22"]) == pytest.approx(0.6, abs=1e-6)
+    assert b[1]["2026-10-22"] + b[2]["2026-10-22"] == pytest.approx(a[1]["2026-10-22"] + a[2]["2026-10-22"])
+    assert b[1]["2026-10-25"] == pytest.approx(a[1]["2026-10-25"])
+    assert nights(0.6, 1)[1] == pytest.approx(nights(0.0, 1)[1])  # the no. 1 started night 1
+    assert nights(0.6, 2, "2026-10-20")[1] == pytest.approx(nights(0.0, 2, "2026-10-20")[1])  # a day off between
+    assert nights(0.6, 2, confirmed={"2026-10-22": 2})[2]["2026-10-22"] == 1.0

@@ -206,6 +206,9 @@ RESTED_NO1_LOGIT = 0.05
 # another goalie started the team's last game, win or lose: the no. 1 started 0.571 of the games after vs 0.528 given; on
 # the reported chance, every game left (handoff 364, ledger 2137: 15 of 15 seasons better at +0.1, the chain version weaker)
 NO1_AFTER_OTHER_LOGIT = 0.1
+# night 2 of a back-to-back after another goalie started night 1: the rested no. 1 started 0.865 of those games vs
+# 0.809 given, 2021-26 (findings 551, ledger 2706, handoff 756); the next game only
+B2B_NIGHT2_RESTED_NO1_LOGIT = 0.6
 # no. 1 back from 5+ team games without a start, his first start back in the team's last 2 games: next game 0.363 vs 0.247,
 # later 0.433 vs 0.357 (hunt14 gback, findings 514; handoff 711: 15 of 15 seasons better at +0.5, +0.7 and up worse in 2023-24)
 BACK_SPELL_GAMES, BACK_SPELL_SHARE, BACK_NO1_LOGIT = 5, 0.5, 0.5
@@ -2740,6 +2743,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         if seq and seq[-1] != no1 and no1 in q and 0 < q[no1] < 1:  # handoff 364
             was = q[no1]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_LOGIT)))
+            q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
+        if ahead == 1 and gap == 1 and seq and seq[-1] != no1 and no1 in q and 0 < q[no1] < 1:  # handoff 756
+            was = q[no1]
+            now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + B2B_NIGHT2_RESTED_NO1_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
         lk = (likely_dfo or {}).get(d)
         if lk in q and q[lk] < LIKELY_START_FLOOR:
