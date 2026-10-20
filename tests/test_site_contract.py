@@ -52,11 +52,11 @@ def test_check_catches_broken_data(data):
 
 
 def test_page_only_reads_fields_the_data_has(data):
-    """Every p.<field> in index.html exists on some player (cr_news and pending_drop are optional: only present with news or a drop after the first puck;
+    """Every p.<field> in index.html exists on some player (pending_drop is optional: only present with a drop after the first puck;
     proj_gp until the first data run after it shipped, as the page shows "–" without it)."""
     html = (ROOT / "index.html").read_text()
     used = set(re.findall(r"\bp\.([a-z_][a-z0-9_]*)", html))
-    have = set().union(*(p.keys() for p in data["players"])) | {"cr_news", "pending_drop", "proj_gp"}
+    have = set().union(*(p.keys() for p in data["players"])) | {"pending_drop", "proj_gp"}
     assert not used - have, used - have
 
 

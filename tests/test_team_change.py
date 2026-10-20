@@ -8,7 +8,6 @@ def run(monkeypatch, tmp_path, players, **fake):
     f = FakeSession(**fake)
     monkeypatch.setattr(rating.requests, "Session", lambda: f)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     moved = []
 
     def reschedule(p, team):  # fetch.py's: the new team's games this week (TOR 2, BOS none)

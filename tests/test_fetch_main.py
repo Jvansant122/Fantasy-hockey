@@ -49,7 +49,6 @@ def run_fetch(monkeypatch, tmp_path, now_utc, league=None, nhl=None, fail=(), st
     monkeypatch.setattr(rating, "utcnow", lambda: now_utc)
     monkeypatch.setattr(rating, "et_date", lambda: now_utc.astimezone(ET).date())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(fetch, "DATA_PATH", tmp_path / "players.json")
     monkeypatch.setattr(fetch, "PRESEASON_FILE", tmp_path / "espn_preseason.json")
     monkeypatch.setattr(leads, "LOG_DIR", tmp_path / "log")

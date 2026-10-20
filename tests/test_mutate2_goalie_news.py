@@ -12,7 +12,6 @@ def _toronto(monkeypatch, tmp_path, items, starters=(), woll=None, stolarz=None)
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     (tmp_path / "injury_log.jsonl").unlink(missing_ok=True)
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     news = {"fetched": "2099-01-01T00:00Z", "recent": {"11": items}}
     players = [espn(111, "Joseph Woll", "TOR", "G", injury=woll), espn(112, "Anthony Stolarz", "TOR", "G", injury=stolarz)]
     rating.add_ratings(players, 2027, TODAY, MONDAY, list(starters), dfo_news=news)

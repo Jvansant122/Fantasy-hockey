@@ -6,10 +6,6 @@ Goalies: expected starts (logistic start model on recent start share and back-to
 
 Model weights live in model/rating_model.json (fit by model/train.py on 2021-26 data). Inputs come from the
 NHL stats API and MoneyPuck. Research and validation: the project's research/claude-rating folder.
-
-News hook: data/news.json (optional) can carry up to NEWS_CAP flagged players. Each entry shows its flag and
-source in the tooltip; it only changes the numbers when "apply" is true, and then only through games, starts
-or a capped FP/G multiplier, never the rating directly.
 """
 import json
 import math
@@ -648,7 +644,6 @@ SEASON_PPS_K = ((50, 8), (100, 15), (float("inf"), 30))
 # older goalies lose Season start share with games left: share - 0.009 x (team games left / 82) x years over 30
 # (findings 484, handoff 640); not handed to partners
 GOALIE_AGE_SEASON = 0.009
-NEWS_CAP = 25
 OFFSEASON_MOVER_MULT = 0.965  # skater on a new team since last season: leave-one-season-out 0.963-0.970 (findings 230)
 OFFSEASON_MOVER_MULT_WEEK = 0.98  # the Week's: movers score 0.973-0.990 of the current Week ridge (findings 464, handoff 667)
 # forwards back 1-3 games from 5+ missed team games: next week 0.92-0.97 of the Week ridge (hunt14/sback, findings 515;
@@ -2800,14 +2795,6 @@ def recently_flagged(today):
     return out
 
 
-def load_news():
-    path = ROOT / "data" / "news.json"
-    if not path.exists():
-        return {}
-    items = json.loads(path.read_text()).get("players", {})
-    return dict(list(items.items())[:NEWS_CAP])
-
-
 def utcnow():
     return datetime.now(timezone.utc)
 
@@ -2920,7 +2907,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     save_pcts = shrunk_save_pcts(goalie_games, prev_goalies)
     opp_str, nonwins = opponent_strength(goalie_games, prev_pct), nonwin_streaks(goalie_games)
     forms = team_form(goalie_games)  # streaks and last margin, for the lineup shifts (handoffs 340-342)
-    news = load_news()
 
     # team game order this season (every game has goalie rows) and the starter of each
     team_games, starts_by_team, last_start, start_wins = {}, {}, {}, {}
@@ -3212,7 +3198,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if pid is None:
             unmatched += 1
         inj = INJURY_DRESS.get(p.get("injury") or "", 1.0)
-        n = news.get(str(p["id"])) or {}
         why = {}
         sat_last = False
         if p["pos"] == "G":
@@ -3246,8 +3231,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # dropped after today's first puck: his team keeps him only until ESPN's overnight rollover (findings 241 (3))
             if p.get("pending_drop"):
                 starts = min(starts, goalie_today.get(pid, 0.0) if pid and p["games_left"] else 0.0)
-            if n.get("apply") and n.get("starts") is not None:
-                starts = max(0.0, min(float(n["starts"]), p["games_left"]))
             fpg = pps.get(pid, prior.get(pid, base)) if pid else base
             why["own_pps"] = round(fpg, 2)  # his own, before tonight's line and the schedule (findings 232)
             # changed teams since last season: the last-season part of his Season pts/start moves by the teams' points% gap
@@ -3499,12 +3482,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     shift += toi_chg
                 season = rest_share * max(fpg_t + shift, 0.0)
             season_pts = season / rest_share if rest_share > 0 else None
-            if n.get("apply"):
-                if n.get("dress") is not None:
-                    p_dress = max(0.0, min(float(n["dress"]), 1.0))
-                    base_dress = None  # the news call replaces the lineup model
-                if n.get("fpg_mult") is not None:
-                    fpg *= max(0.8, min(float(n["fpg_mult"]), 1.2))
             note = injury_note(notes[p["id"]], today) if p.get("injury") and p["id"] in notes else None
             if note and note["long_why"] == "unclear":  # only "unclear when he'll return": dressed 25-30% of games (audit5)
                 note = {**note, "long": False, "long_why": None}
@@ -3828,8 +3805,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_matched"] = pid is not None
         p["nhl_id"] = pid
         p["cr_why"] = why
-        if n:
-            p["cr_news"] = {k: n.get(k) for k in ("flag", "source", "quote", "apply") if n.get(k) is not None}
 
     season_drift(drift_rows, model)
     # each team's last-season regulars with no NHL game yet this season, on his LAST-SEASON team, whatever his status now
@@ -3914,5 +3889,5 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                                today.isoformat())
         except Exception as e:  # noqa: BLE001
             print(f"Predicted winners failed: {e!r}", file=sys.stderr)
-    print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data, {len(news)} news entries")
+    print(f"Claude Rating: {len(players)} players, {unmatched} not matched to NHL data")
     return unmatched

@@ -651,7 +651,6 @@ function why(p) {
   if (bwm) wk.push(`players with his record and recent absences usually play ${bwm > 0 ? "more" : "less"} than his own trend says (${bwm > 0 ? "+" : "\u2212"}${Math.round(Math.abs(bwm) * 100)} percentage points on his chance to play this week)`);
   if (p.cr_why?.displaced) wk.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push(p.cr_why?.no_record ? "not found in NHL stats and no games this season or last, so rated 0 (likely retired or in the minors)" : "not on an NHL roster and no NHL game this season, so treated as unlikely to play");
-  if (p.cr_news) parts.push(`News: ${p.cr_news.flag || ""}${p.cr_news.source ? ` (${p.cr_news.source})` : ""}${p.cr_news.apply ? "" : ", not applied"}`);
   parts.splice(p.pos !== "G" && w.no_record ? 0 : 1, 0, ...wk);
   // each reason is its own line, so each starts with a capital (handoff 650)
   return parts.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join("\n");
@@ -673,7 +672,7 @@ function cells(p) {
   const pos = p.slots.filter(s => s !== "F").join("/") || p.pos;
   const teamName = p.team_id != null && state.who === "every" && !onMyTeam(p) ? (state.teamNames[p.team_id] || "") : "";
   const tags = (onMyTeam(p) ? '<span class="tag own">yours</span>' : "") + (teamName ? `<span class="tag">${esc(teamName)}</span>` : "") + wvTag(p) +
-    (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") + (p.cr_news ? '<span class="tag news">news</span>' : "") +
+    (p.ir ? '<span class="tag">IR</span>' : p.injury ? `<span class="tag inj">${esc(injLabel(p))}</span>` : "") +
     (p.cr_why?.tonight?.status === "Confirmed" && dfoTonight(p) ? `<span class="tag ${p.cr_why.tonight.starting ? "news" : "inj"}">${p.cr_why.tonight.starting ? "starts tonight" : "sits tonight"}</span>` : "");
   const og = tOpen(p);
   return {

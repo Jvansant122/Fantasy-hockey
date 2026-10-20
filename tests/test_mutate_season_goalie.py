@@ -25,7 +25,6 @@ class LessIce(FakeSession):  # last season's ice time `less` seconds under this 
 def _toi_chg(monkeypatch, tmp_path, fake):
     monkeypatch.setattr(rating.requests, "Session", lambda: fake)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     return players[0]["cr_why"].get("toi_chg")

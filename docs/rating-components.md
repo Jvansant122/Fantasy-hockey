@@ -417,10 +417,6 @@ Once a game starts its pick is frozen at the last pre-game value (`winners.freez
 
 **Fantasy matchups.** Each league matchup: ESPN's points so far plus each roster's rest-of-week projection, filling the best lineup each night (9 F, 5 D, UTL, 2 G, IR left out) from the Week ratings (a skater's Week spread evenly over his nights left, a goalie's start chance by night × his points per start). The win chance assumes independent nights with a spread per player-game of 0.4 + 0.5 × FP per dressed game for skaters and 3.33 per goalie start (2021-26 player-games), widened 4% because whole matchups swing more than their players add up to (PR #178). Not backtested (no past league weeks); graded from the logs as the season goes.
 
-## Built but switched off
-
-A hand-written news hook (`data/news.json`) can adjust up to 25 players' games, starts or points per game (capped at ±20%). No news file is published, so it changes nothing today. Daily Faceoff covers what it was meant for: confirmed starters for goalies (part 6), and injury and roster news for skaters' Week and Season chances to play (parts 2 and 4).
-
 ## Tested and left out
 
 Each was checked over past seasons and moved the ranking by no more than a rounding error, or made decisions worse. Some ideas once listed here have since shipped in a new form: two-seasons-ago stats (PR #111), age (PRs #116, #122), finishing luck (PR #118), next man up on the power play (PR #109), boosted models (PRs #146, #163) and open lineup spots in place of a roster-crunch input (PR #148).

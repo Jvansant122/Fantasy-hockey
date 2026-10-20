@@ -31,7 +31,7 @@ def test_skater_season_constants_keep_their_researched_direction():
     assert R.PRESEASON_INJURED["short"] > R.PRESEASON_INJURED["long"] > R.PRESEASON_INJURED["season"] == 0  # findings 74
     assert R.DURABLE_OUT[0] > 0 > R.DURABLE_OUT[1]  # findings 330 (4)
     assert 0 < R.BOOST_DRESS_W < 1 and R.BOOST_FPG_BLEND[0] > 0 > R.BOOST_FPG_BLEND[1]
-    assert 0.9 < R.OFFSEASON_MOVER_MULT < 1 and R.NEWS_CAP > 0 and R.NEWS_STALE_DAYS > 0
+    assert 0.9 < R.OFFSEASON_MOVER_MULT < 1 and R.NEWS_STALE_DAYS > 0
     assert R.SEASON_TOI_CHG_C < 0 < R.SEASON_TOI_CHG_CAP and R.MISSING_REG_C < 0  # handoffs 507, 512, 509
     assert R.MISSING_REG_MIN_TG >= 1  # findings 402 tested teams with 3+ games: none before his team has played (509)
     assert R.NEWS_SURGERY < 0 and R.NEWS_INDEFINITE < 0 and R.NEWS_SEASON_OUT < R.NEWS_SURGERY
