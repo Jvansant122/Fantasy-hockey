@@ -85,7 +85,6 @@ def test_summer_movers_are_goalies_who_started_for_another_team(monkeypatch, tmp
     monkeypatch.setattr(rating, "goalie_starts", lambda model, team, *a, **kw: seen.__setitem__(team, set(a[-1])) or real(model, team, *a, **kw))
     monkeypatch.setattr(rating.requests, "Session", lambda: NoStarts())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G"), espn(113, "Jeremy Swayman", "BOS", "G")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     assert seen["TOR"] & {11, 12} == {12} and 13 not in seen["BOS"]

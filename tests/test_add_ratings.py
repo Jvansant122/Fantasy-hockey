@@ -169,7 +169,6 @@ def run(monkeypatch, tmp_path):
     fake = FakeSession()
     monkeypatch.setattr(rating.requests, "Session", lambda: fake)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})  # ignore any real data/news.json
     players = [
         espn(101, "Auston Matthews", "TOR", "C"),
         espn(102, "Morgan Rielly", "TOR", "D", injury="DAY_TO_DAY"),
@@ -243,7 +242,6 @@ def test_confirmed_starter_on_waivers_leaves_tonight_to_his_team(monkeypatch, tm
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
     woll = dict(espn(111, "Joseph Woll", "TOR", "G", games_left=2), owner="other", today_start="2026-10-09T23:00:00Z")
@@ -263,7 +261,6 @@ def test_waiver_goalie_starts_come_from_the_nights_after_he_clears(monkeypatch, 
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     woll = dict(espn(111, "Joseph Woll", "TOR", "G", games_left=2), owner="other", today_start="2026-10-09T23:00:00Z")
     stolarz = dict(espn(112, "Anthony Stolarz", "TOR", "G", games_left=1), owner="waivers", today_start=None)
@@ -299,7 +296,6 @@ def test_tonights_line_prices_the_goalie_start(monkeypatch, tmp_path):
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     monkeypatch.setattr(rating, "team_strength", lambda s, season: {})  # isolate the line from schedule pricing
     starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
@@ -720,7 +716,6 @@ def test_healthy_scratch_comes_back_more_often(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
     monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_BY_GAME", {"win": (0.0,), "other": (0.0,)})  # ... and without the last-result lift (handoff 354)
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(injury=None, **kw):
         fake = FakeSession(**kw)
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
@@ -742,7 +737,6 @@ def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkey
     Season share says: + 0.8 x min(k, 5)/5 on the Season logit, fading to 0 at the team's 20th game. Not when the list
     doesn't have him, and never for forwards."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(injury=None, **kw):
         fake = FakeSession(**kw)
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
@@ -770,7 +764,6 @@ def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     """Dressed for the last game but played under 40% of his average ice time: big dress cut for the next games, until
     ESPN flags him; 40-55% a small one for two games (findings 165)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     def matthews(toi=None, injury=None):
         fake = FakeSession(short_last={1: toi} if toi is not None else None)
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
@@ -805,7 +798,6 @@ def test_just_back_in_the_lineup(monkeypatch, tmp_path):
     that wasn't mostly scratches: plays more (+0.4) (findings 168)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     def matthews(**kw):
         fake = FakeSession(missed={1: {2}}, **kw)
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
@@ -832,7 +824,6 @@ def test_just_traded_skater_dresses_more(monkeypatch, tmp_path):
     4th game with the team, nothing (findings 155)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the shift on its own, without the weekly boosted model over it
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "dressed_any_team", lambda gl, tg, team_games, n: 0.5)  # off the 0.99 ceiling (handoff 717)
     def matthews(moved, logit):
         monkeypatch.setattr(rating, "NEW_TEAM_LOGIT", logit)
@@ -857,7 +848,6 @@ def test_traded_before_first_game_for_new_team(monkeypatch, tmp_path):
     """ESPN lists him on a new team but he hasn't played for it: his old team's later games aren't misses and the
     new-team shift applies (findings 159)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     def mcavoy(espn_team):
         fake = FakeSession(scratched=())
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
@@ -885,7 +875,6 @@ def test_confirmed_starter_matches_daily_faceoff_spelling(monkeypatch, tmp_path)
     # Daily Faceoff's "Matthew Murray" is the NHL's "Matt Murray": same team, last name, first two letters (findings 175)
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out = {}
     for spelling in ("Joseph Woll", "Joey Woll", "Jake Woll"):
         players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
@@ -904,7 +893,6 @@ def test_confirmed_starter_matches_daily_faceoff_spelling(monkeypatch, tmp_path)
 def test_status_cleared_before_he_is_back(monkeypatch, tmp_path):
     # ESPN dropped a status this week and he hasn't played since: a suspension served or an injury healed (findings 172-173)
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out = {}
     for name, flagged in (("none", ()), ("cleared", (110, 102)), ("old", ())):
         log = tmp_path / f"{name}.jsonl"
@@ -935,7 +923,6 @@ def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
     # no ESPN status, sat the last game, Daily Faceoff's lines have him: 14 of 14 dressed next game (findings 174)
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out = {}
     for dfo in (None, True, False):
         players = [dict(espn(104, "Charlie McAvoy", "BOS", "D"), dfo_out=dfo)]
@@ -954,7 +941,6 @@ def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
 def test_opening_games_cut_short(monkeypatch, tmp_path):
     # two games this season, the latest a few minutes: points a game averaged with leaving it out (findings 171)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out = {}
     for name, games in (("off", 0), ("on", 3)):
         monkeypatch.setattr(rating, "SHORT_OPENING_GAMES", games)
@@ -1172,7 +1158,6 @@ def test_goalie_game_that_already_started(monkeypatch, tmp_path):
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 23, 30, tzinfo=timezone.utc))
     starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Anthony Stolarz", "status": "Confirmed"}]}]
     out = {}
@@ -1193,7 +1178,6 @@ def test_goalie_espn_columns_use_nhl_starts(monkeypatch, tmp_path):
     # ESPN's start count can run a game behind its points (findings 182): This yr/G and Proj/G use NHL starts
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [dict(espn(pid, name, team, "G"), gp=1, cur_ppg=99.0, ppg=50.0, proj_ppg=3.0, last_ppg=2.5) for pid, name, team in
                [(111, "Joseph Woll", "TOR"), (112, "Anthony Stolarz", "TOR"), (113, "Jeremy Swayman", "BOS")]]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
@@ -1207,7 +1191,6 @@ def test_goalie_espn_columns_use_nhl_starts(monkeypatch, tmp_path):
 def test_cleared_boost_skips_a_player_who_played_since_the_flag(monkeypatch, tmp_path):
     # McAvoy played Oct 5 and sat Oct 7: a flag from Oct 3 was played through, one from Oct 6 is fresh (findings 183)
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out = {}
     for day in (None, "2026-10-03", "2026-10-06"):
         log = tmp_path / f"{day}.jsonl"
@@ -1267,7 +1250,6 @@ def test_unsigned_player_counts_as_not_playing(monkeypatch, tmp_path):
     # ESPN team "FA" and no NHL games this season: 0.1 to dress, week and Season alike (Kane, Tarasenko; findings 216)
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(missed={1: {0, 1, 2, 3}}))
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(101, "Auston Matthews", "FA", "C")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     p = players[0]
@@ -1277,7 +1259,6 @@ def test_unsigned_player_counts_as_not_playing(monkeypatch, tmp_path):
 def test_player_who_missed_last_season_uses_the_one_before(monkeypatch, tmp_path):
     # no games last season (Barkov): the season before, not a newcomer's prior (findings 216)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out, fakes = {}, {"plain": FakeSession(), "away": FakeSession(away_last={1})}
     for name, fake in fakes.items():
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
@@ -1336,7 +1317,6 @@ def rate(monkeypatch, tmp_path, players, fake=None, starters=(), injuries=None, 
     log = tmp_path / "injury_log.jsonl"
     log.unlink(missing_ok=True)
     monkeypatch.setattr(rating, "INJURY_LOG", log)
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     rating.add_ratings(players, 2027, TODAY, MONDAY, list(starters), injuries=injuries, **kw)
     return {p["name"]: p for p in players}
 
@@ -1956,7 +1936,6 @@ def test_daily_faceoff_news_reaches_the_season_rating(monkeypatch, tmp_path):
         fake = FakeSession()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(101, "Auston Matthews", "TOR", "C"), espn(102, "Morgan Rielly", "TOR", "D", injury="OUT")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news=news)
         return {p["name"]: p for p in players}
@@ -1977,7 +1956,6 @@ def test_espn_preseason_projection_pulls_the_season_fpg(monkeypatch, tmp_path):
         fake = FakeSession()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")]
         players[0]["proj_ppg"] = proj
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
@@ -2014,7 +1992,6 @@ def test_weekly_boosted_dress_model_moves_the_week_toward_its_share(monkeypatch,
     """Handoff 411: each remaining game's dress logit moves 0.8 x (logit(b) - logit(his mean)); injury caps still hold."""
     import season_boost
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     real = season_boost.load
 
     def run(b, w=0.8, injury=None):
@@ -2036,7 +2013,6 @@ def test_week_news_lands_on_top_of_the_weekly_boosted_model(monkeypatch, tmp_pat
     435: week_news records the news's real effect on his chance."""
     import season_boost
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     real = season_boost.load
     monkeypatch.setattr(rating.season_boost, "load", lambda n: {"features": [], "baseline": 0.5, "trees": []} if n == "week" else real(n))
     monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", 0.0)  # news players don't get it; keep both runs alike (handoff 355)
@@ -2210,7 +2186,6 @@ def test_season_drift_moves_a_group_whose_scoring_runs_ahead_of_its_season_ratin
 def test_sent_down_skater_with_no_games_left_still_rates(monkeypatch, tmp_path):
     """A send-down with no games left this week moves nothing and must not break the run (handoffs 407, 412)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     news = {"fetched": "2099-01-01T00:00Z", "recent": {str(i): [{"ts": "2099-01-01T00:00:00", "cat": "move", "f": ["down"]}] for i in range(1, 10)}}
     for gl in (0, 3):
@@ -2224,7 +2199,6 @@ def test_predicted_winners_cover_the_week(monkeypatch, tmp_path):
     game, and the stronger team (TOR outscored BOS last season and this) favoured at home."""
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D"),
                espn(111, "Joseph Woll", "TOR", "G"), espn(113, "Jeremy Swayman", "BOS", "G")]
     winners = {}
@@ -2241,7 +2215,6 @@ def test_predicted_winners_cover_the_week(monkeypatch, tmp_path):
 def test_predicted_winners_without_team_xg(monkeypatch, tmp_path):
     """MoneyPuck's team file missing: the picks fall back to the goal-differential coefficients (handoff 449)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     out = {}
     for miss in (False, True):
         monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(no_team_xg=miss))
@@ -2301,7 +2274,6 @@ def test_traded_goalie_keeps_his_confirmed_start(monkeypatch, tmp_path):
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     real = rating.roster
     def moved(s, team, goalie_games=()):  # Swayman claimed by TOR, all his games so far for BOS
@@ -2353,7 +2325,6 @@ def test_a_fresh_call_up_with_no_game_yet_plays_one_game_in_four(monkeypatch, tm
         fake = FakeSession(missed={1: {0, 1, 2, 3}})
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         p = espn(101, "Auston Matthews", "TOR", "C", games_left=2, injury=injury)
         news = {"injuries": {}, "roster-moves": {"1": {"ts": ts, "up": True}}, "fetched": rating.utcnow().strftime("%Y-%m-%dT%H:%MZ")}
         rating.add_ratings([p], 2027, TODAY, MONDAY, [], dfo_news=news)
@@ -2403,7 +2374,6 @@ def test_early_opponents_who_leaked_goals_last_season_lift_the_week(monkeypatch,
         fake = FakeSession()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         monkeypatch.setattr(rating, "opp_last_ga", lambda s, season: opp)
         players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
@@ -2454,7 +2424,6 @@ def test_early_ice_time_change_is_pulled_back(monkeypatch, tmp_path):
         fake = LessIceLastSeason()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return {p["name"]: p for p in players}
@@ -2476,7 +2445,6 @@ def test_healthy_regulars_dress_a_little_more(monkeypatch, tmp_path):
         fake = FakeSession()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return {p["name"]: p for p in players}
@@ -2495,7 +2463,6 @@ def test_last_seasons_regulars_yet_to_play_cut_their_teams_season_share(monkeypa
         fake = FakeSession()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return {p["name"]: p for p in players}
@@ -2528,7 +2495,6 @@ def test_ice_time_change_skips_a_game_he_left_hurt(monkeypatch, tmp_path):
     fake = FakeSession(short_last={1: 240})
     monkeypatch.setattr(rating.requests, "Session", lambda: fake)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(101, "Auston Matthews", "TOR", "C"), espn(103, "David Pastrnak", "BOS", "RW")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     assert "toi_chg" not in players[0]["cr_why"]
@@ -2554,7 +2520,6 @@ def test_depth_skaters_who_fought_keep_their_spot(monkeypatch, tmp_path):
         fake = Fight()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return {p["name"]: p for p in players}
@@ -2571,7 +2536,6 @@ def test_scratch_lifts_keep_their_size_after_the_weekly_model(monkeypatch, tmp_p
         fake = FakeSession()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         monkeypatch.setattr(rating, "left_early_teammates", lambda *a: {("BOS", True): {999: 0}} if left else {})
         players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
@@ -2587,7 +2551,6 @@ def test_last_result_scratch_shift_is_by_game(monkeypatch, tmp_path):
     moves his next game, not the rest of the week."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
-    monkeypatch.setattr(rating, "load_news", lambda: {})
 
     def mcavoy(by_game):
         monkeypatch.setattr(rating, "SCRATCH_LAST_RESULT_BY_GAME", {"win": by_game, "other": by_game})
@@ -2623,7 +2586,6 @@ def test_depth_forwards_special_teams_role(monkeypatch, tmp_path):
         fake = Role()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return {p["name"]: p for p in players}
@@ -2650,7 +2612,6 @@ def test_scratch_with_a_power_play_role_returns_less(monkeypatch, tmp_path):
         fake = PP()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(104, "Charlie McAvoy", "BOS", "D"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return players[0]
@@ -2677,7 +2638,6 @@ def test_lowest_minutes_depth_skater_sits_more(monkeypatch, tmp_path):
         fake = Rank()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        monkeypatch.setattr(rating, "load_news", lambda: {})
         players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         return players[0]
@@ -2788,7 +2748,6 @@ class PostponedSunday(FakeSession):
 def test_postponed_game_isnt_counted(monkeypatch, tmp_path):
     monkeypatch.setattr(rating.requests, "Session", lambda: PostponedSunday())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     gs = [dict(espn(111, "Joseph Woll", "TOR", "G", games_left=1)), dict(espn(112, "Anthony Stolarz", "TOR", "G", games_left=1)),
           dict(espn(113, "Jeremy Swayman", "BOS", "G", games_left=1))]  # ESPN: only tonight left
@@ -2863,7 +2822,6 @@ def _bolduc4(monkeypatch, tmp_path, points=0, bios=None):
     fake = F()
     monkeypatch.setattr(rating.requests, "Session", lambda: fake)
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(107, "Zack Bolduc", "BOS", "RW"), espn(103, "David Pastrnak", "BOS", "RW")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [])
     return players[0]
@@ -3024,7 +2982,6 @@ def test_goalie_dfo_injury_news_caps_his_starts(monkeypatch, tmp_path):
     start chance at 0.2 next game and 0.35 later; his partner takes the rest. Return words, or news before his last game, don't."""
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
 
     def toronto(items, also=None, starters=()):
         news = {"fetched": "2099-01-01T00:00Z", "recent": {"11": items, **(also or {})}}
@@ -3302,7 +3259,6 @@ def test_goalie_dfo_factor_is_min_with_espn_and_per_game():
 def _woll(monkeypatch, tmp_path, items):
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
     rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news={"fetched": "2099-01-01T00:00Z", "recent": {"11": items}})
     return players[0]["cr_games"]
@@ -3552,7 +3508,6 @@ def test_lines_count_against_the_last_game_in_the_loaded_history(monkeypatch, tm
     import leads
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     lineups = {"BOS": {"updated": "2026-10-08T15:00:00Z", "players": [["Charlie McAvoy", "d1"]]}}
     def run(relineup):
         players = [espn(104, "Charlie McAvoy", "BOS", "D")]
@@ -3575,7 +3530,6 @@ def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
     fetch's schedule (starts=); 23:00 UTC is only the fallback, which would take a late game's pregame lines as next-game."""
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     def last(starts):
         seen = []
         rating.add_ratings([espn(104, "Charlie McAvoy", "BOS", "D")], 2027, TODAY, MONDAY, [], relineup=seen.append,

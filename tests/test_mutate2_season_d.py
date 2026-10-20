@@ -12,7 +12,6 @@ from test_add_ratings import espn, FakeSession, TODAY, MONDAY
 def _share(monkeypatch, tmp_path, who, **kw):
     """His rest-of-season dress share as the Season rating set it (the row handed to lineup_slack)."""
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-    monkeypatch.setattr(rating, "load_news", lambda: {})
     fake = FakeSession(**kw)
     monkeypatch.setattr(rating.requests, "Session", lambda: fake)
     seen, real = {}, rating.lineup_slack
