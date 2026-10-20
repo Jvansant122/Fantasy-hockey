@@ -651,6 +651,8 @@ def main():
             "bench": slot == 7,  # ESPN's bench: a started player there holds no lineup slot (findings 233)
             "injury": p.get("injuryStatus") if p.get("injured") or p.get("injuryStatus") not in (None, "ACTIVE") else None,
             "owned": round((p.get("ownership") or {}).get("percentOwned", 0), 1),
+            # ESPN's average draft position, for the early-season Season pull (handoff 757)
+            "adp": round(a, 1) if isinstance(a := (p.get("ownership") or {}).get("averageDraftPosition"), (int, float)) else None,
             "gp": gp,
             "ppg": round(ppg, 2) if ppg is not None else None,
             "cur_ppg": cur,

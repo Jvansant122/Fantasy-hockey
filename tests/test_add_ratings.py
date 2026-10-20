@@ -3559,3 +3559,48 @@ def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     assert nights(0.6, 1)[1] == pytest.approx(nights(0.0, 1)[1])  # the no. 1 started night 1
     assert nights(0.6, 2, "2026-10-20")[1] == pytest.approx(nights(0.0, 2, "2026-10-20")[1])  # a day off between
     assert nights(0.6, 2, confirmed={"2026-10-22": 2})[2]["2026-10-22"] == 1.0
+
+
+def _adp_pool(n=24, games=0):
+    """n skaters on TOR, ADP 10, 20, ... and Season the reverse of the market, plus a goalie and a hurt 0."""
+    ps = [{"id": i, "pos": "C", "team": "TOR", "adp": 10.0 * (i + 1), "cr_season": 10.0 + i, "cr_why": {"season_pts": 20.0 + i}}
+          for i in range(n)]
+    ps.append({"id": 900, "pos": "G", "team": "TOR", "adp": 5.0, "cr_season": 30.0, "cr_why": {}})
+    ps.append({"id": 901, "pos": "D", "team": "TOR", "adp": 15.0, "cr_season": 0.0, "injury": "OUT", "cr_why": {"season_pts": 0.0}})
+    return ps, {"TOR": [None] * games}
+
+
+def test_adp_pull_moves_the_season_toward_the_draft_market():
+    """Handoff 757: early on, a skater drafted high with a low Season moves up and a late pick with a high Season moves
+    down; Season and season_pts move together; goalies and a hurt 0 stay put."""
+    ps, tg = _adp_pool()
+    before = {p["id"]: (p["cr_season"], p["cr_why"].get("season_pts")) for p in ps}
+    rating.adp_pull(ps, tg)
+    top, last = ps[0], ps[23]
+    assert top["cr_season"] > before[0][0] and top["cr_why"]["adp_pull"] > 1
+    assert last["cr_season"] < before[23][0] and last["cr_why"]["adp_pull"] < 1
+    assert top["cr_season"] / top["cr_why"]["season_pts"] == pytest.approx(before[0][0] / before[0][1], abs=0.01)
+    assert ps[24]["cr_season"] == 30.0 and "adp_pull" not in ps[24]["cr_why"]
+    assert ps[25]["cr_season"] == 0.0
+
+
+def test_adp_pull_is_off_when_ranks_agree_late_or_adp_is_flat():
+    import math
+    ps, tg = _adp_pool(games=20)  # team games at ADP_PULL_K: faded out
+    rating.adp_pull(ps, tg)
+    assert all("adp_pull" not in p["cr_why"] for p in ps)
+    ps, tg = _adp_pool()
+    ps = ps[:25]  # without the hurt 0, whose Season can't follow his ADP
+    for p in ps[:24]:
+        p["cr_season"] = 300.0 - p["adp"]  # Season ranks the same as the market
+    rating.adp_pull(ps, tg)
+    assert all(p["cr_why"].get("adp_pull", 1) == 1 for p in ps[:24])
+    ps, tg = _adp_pool()
+    for p in ps:
+        p["adp"] = 230.0 if p["id"] > 5 else p["adp"]  # ESPN's stored 2025-26 ADP: too few distinct values
+    rating.adp_pull(ps, tg)
+    assert all("adp_pull" not in p["cr_why"] for p in ps)
+    ps, tg = _adp_pool(games=10)  # half faded: the exponent is half the day-one one
+    rating.adp_pull(ps, tg)
+    q = rating._avg_rank([-p["adp"] for p in ps[:24] + ps[25:]])[0] - rating._avg_rank([p["cr_season"] for p in ps[:24] + ps[25:]])[0]
+    assert ps[0]["cr_why"]["adp_pull"] == pytest.approx(math.exp(rating.ADP_PULL_C * 0.5 * q), abs=1e-3)
