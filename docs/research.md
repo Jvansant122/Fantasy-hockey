@@ -766,7 +766,7 @@ In the league's logs Kempe drew claims from three teams and Eriksson Ek from two
 
 ## 98. Sunday: use every move before it expires
 
-Moves don't carry over between matchups. At 2 PM on Sunday, Oct 11, 9 of the 12 teams had between 1 and 7 moves left, 40 in all, and they vanish at the overnight rollover. An add made on Sunday before the first game still counts in the ending matchup. The page only ever showed 2 Best moves, but the extra moves were worth 2.8 to 9.1 keep points per team (findings 231). On the matchup's last night, before its first game, Best moves now lists every move you have left, with a note that unused moves expire tonight. After the first puck it goes back to two.
+Moves don't carry over between matchups. At 2 PM on Sunday, Oct 11, 9 of the 12 teams had between 1 and 7 moves left, 40 in all, and they vanish at the overnight rollover. An add made on Sunday before the first game still counts in the ending matchup. The page only ever showed 2 Best moves, but the extra moves were worth 2.8 to 9.1 keep points per team (findings 231). On the matchup's last night, before its first game, Best moves now lists every move you have left, with a note that unused moves expire tonight. After the first puck it goes back to two. Since Oct 24 (handoff 801, findings 4063-4064) those last-night adds are ranked with next week's games counted too, since they play from Monday: over 79 Sundays in four seasons that scored about 0.9 more points per add the next week, with no loss over the following month. Each line says how many games the player has next week.
 
 ## 99. Three fixes to recent page changes
 
