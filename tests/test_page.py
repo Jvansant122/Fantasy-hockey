@@ -1451,6 +1451,39 @@ def _strong_fas(d, n=3):
     return d
 
 
+def test_last_call_counts_next_weeks_games(browser, server, data):
+    """Handoff 801: on the matchup's last night the expiring moves' adds play from Monday, so Best moves ranks them by keep
+    plus next week's games: a 4-game add beats a 2-game one a shade higher on the Season, and each line says its games."""
+    from datetime import datetime, timezone
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _sunday(data)
+    team = d["teams"][0]
+    for p in _mine(d, team):
+        p.update(ir=False, injury=None, sat_last=False)
+    fas = [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] not in ("G", "D") and not p.get("injury")]
+    top = max(p.get("cr_season") or 0 for p in fas)
+    a = fas[0]
+    b = next(p for p in fas if p["team"] != a["team"])
+    last = d["nights"][-1]["sp"]
+    sps = list(range(last + 1, last + 8))
+    d["season_weeks"] = [{"week": 99, "sps": sps, "label": "Oct 12-18", "dates": [f"{w} {12 + i}" for i, w in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])],
+                          "games": {str(sp): 8 for sp in sps}, "light": []}]
+    tn = d.setdefault("team_nights", {})
+    tn[a["team"]] = [sp for sp in tn.get(a["team"], []) if sp <= last] + sps[0:7:2]  # 4 games next week
+    tn[b["team"]] = [sp for sp in tn.get(b["team"], []) if sp <= last] + sps[1:5:2]  # 2 games
+    for p, extra in ((a, 1.0), (b, 1.05)):  # b is a shade higher on the Season alone (+0.35 keep)
+        p.update(cr_season=top + extra, cr=1.0, games_left=1, today_start=d["first_start"])
+    ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 11, 20, 0, tzinfo=timezone.utc))
+    page.select_option("#team", str(team["id"]))
+    best = _card(page, "Best")
+    assert "expire tonight" in best and "counting next week's games" in best, best
+    lines = [l for l in best.split("\n") if a["name"] in l or b["name"] in l]
+    assert lines and lines[0].startswith(a["name"]) and "4 games next week" in lines[0], lines
+    assert errors == []
+    ctx.close()
+
+
 def test_monday_before_rollover_says_nothing_expires(browser, server, data):
     """Monday 0-4 AM, Sunday's data still has Sunday as tonight: no 'expire tonight ... before the first game' (handoff 210)."""
     from datetime import datetime, timezone
