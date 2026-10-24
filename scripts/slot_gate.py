@@ -22,10 +22,12 @@ def latest_slot(now):
 
 
 def should_skip(updated_utc, now):
+    """A run starting up to EARLY before a slot works for that slot (handoff 800: GitHub ran the 12:37 PM cron at 12:34
+    on Sat Oct 24, it compared against the 9:10 slot and skipped, and the midday data waited until 1:12 PM)."""
     if not updated_utc:
         return False
     published = datetime.fromisoformat(updated_utc.replace("Z", "+00:00"))
-    return published >= latest_slot(now) - EARLY
+    return published >= latest_slot(now + EARLY) - EARLY
 
 
 if __name__ == "__main__":
