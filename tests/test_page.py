@@ -1442,6 +1442,15 @@ def _sunday(data):
     return d
 
 
+def _strong_fas(d, n=3):
+    """Lift the n best healthy free-agent forwards a full point a game on the Season (7 keep points), so Best moves has a
+    pick worth the 3.5-point bar whatever the committed data's free-agent pool looks like (Oct 24's had none for team 1)."""
+    fas = [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] not in ("G", "D") and not p.get("injury")]
+    for p in sorted(fas, key=lambda p: -((p.get("cr") or 0) + 7 * (p.get("cr_season") or 0)))[:n]:
+        p["cr_season"] = (p.get("cr_season") or 0) + 1.0
+    return d
+
+
 def test_monday_before_rollover_says_nothing_expires(browser, server, data):
     """Monday 0-4 AM, Sunday's data still has Sunday as tonight: no 'expire tonight ... before the first game' (handoff 210)."""
     from datetime import datetime, timezone
@@ -1467,7 +1476,7 @@ def test_swap_ir_move_isnt_an_open_spot_twice(browser, server, data):
     only the player who actually fits the open IR slot is told to move to IR (handoff 211)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _sunday(data)  # Sunday after the first puck: no night left to hold moves for
+    d = _strong_fas(_sunday(data))  # Sunday after the first puck: no night left to hold moves for
     d["move_limit"] = 7
     team = d["teams"][0]
     team["moves_used"] = 0
@@ -1567,7 +1576,7 @@ def test_ir_stash_counts_best_moves(browser, server, data):
     """IR stash needs a move left after Best moves takes its picks (handoff 216)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _weekday(data, 5)  # Saturday morning: one move held for Sunday (handoff 207)
+    d = _strong_fas(_weekday(data, 5), 1)  # Saturday morning: one move held for Sunday (handoff 207)
     d["move_limit"] = 7
     team = d["teams"][0]
     roster = _mine(d, team)
@@ -1621,7 +1630,7 @@ def test_player_dropped_after_first_puck_frees_his_spot(browser, server, data):
     from datetime import datetime, timezone
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    d = _sunday(data)
+    d = _strong_fas(_sunday(data), 1)
     team = d["teams"][0]
     roster = _mine(d, team)
     for p in roster:

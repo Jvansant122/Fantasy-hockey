@@ -541,6 +541,17 @@ def test_backup_run_skips_once_the_latest_slot_published():
     assert slot_gate.should_skip(None, utc(2026, 11, 2, 11, 15)) is False
 
 
+def test_backup_run_just_before_a_slot_runs_for_that_slot():
+    """Handoff 800: the 12:37 PM cron started at 12:34 ET on Sat Oct 24 with main last published at 9:12 AM; it skipped
+    against the 9:10 slot, so the matinee goalies confirmed by 12:38 never reached the page before the 1 PM puck."""
+    import slot_gate
+    from datetime import timezone as tz
+    utc = lambda *a: datetime(*a, tzinfo=tz.utc)
+    assert slot_gate.should_skip("2026-10-24T13:12:15Z", utc(2026, 10, 24, 16, 34)) is False
+    assert slot_gate.should_skip("2026-10-24T16:35:00Z", utc(2026, 10, 24, 16, 36)) is True  # 12:35 counts for 12:40
+    assert slot_gate.should_skip("2026-10-24T13:12:15Z", utc(2026, 10, 24, 16, 25)) is True  # 12:25: still the 9:10 slot
+
+
 def test_lineup_cutoff_is_the_last_finished_game_not_the_one_on_now():
     """A game in progress isn't the team's last game yet: its lineup, posted before its puck drop, still counts, and the
     cutoff is the game before it (handoff 491: Makar flagged as sat last game 22 minutes after DFO listed him)."""
