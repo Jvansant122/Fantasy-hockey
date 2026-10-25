@@ -1451,14 +1451,9 @@ def _strong_fas(d, n=3):
     return d
 
 
-def test_last_call_counts_next_weeks_games(browser, server, data):
-    """Handoff 801: on the matchup's last night the expiring moves' adds play from Monday, so Best moves ranks them by keep
-    plus next week's games: a 4-game add beats a 2-game one a shade higher on the Season, and each line says its games."""
-    from datetime import datetime, timezone
-    if not data.get("rated"):
-        pytest.skip("needs rated data")
-    d = _sunday(data)
-    team = d["teams"][0]
+def _next_week_pair(d, team):
+    """Two healthy free-agent forwards on different teams, both well above team's weakest: a has 4 games next week and b 2,
+    with b a shade higher on the Season alone (+0.35 keep). Next week is a made-up week after the data's last night."""
     for p in _mine(d, team):
         p.update(ir=False, injury=None, sat_last=False)
     fas = [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] not in ("G", "D") and not p.get("injury")]
@@ -1472,16 +1467,55 @@ def test_last_call_counts_next_weeks_games(browser, server, data):
     tn = d.setdefault("team_nights", {})
     tn[a["team"]] = [sp for sp in tn.get(a["team"], []) if sp <= last] + sps[0:7:2]  # 4 games next week
     tn[b["team"]] = [sp for sp in tn.get(b["team"], []) if sp <= last] + sps[1:5:2]  # 2 games
-    for p, extra in ((a, 1.0), (b, 1.05)):  # b is a shade higher on the Season alone (+0.35 keep)
+    for p, extra in ((a, 1.0), (b, 1.05)):
         p.update(cr_season=top + extra, cr=1.0, games_left=1, today_start=d["first_start"])
+    return a, b
+
+
+def _first_of(page, a, b):
+    best = _card(page, "Best")
+    lines = [l for l in best.split("\n") if a["name"] in l or b["name"] in l]
+    assert lines, best
+    return best, lines[0]
+
+
+def test_last_call_counts_next_weeks_games(browser, server, data):
+    """Handoff 801: on the matchup's last night the expiring moves' adds play from Monday, so Best moves ranks them by keep
+    plus next week's games: a 4-game add beats a 2-game one a shade higher on the Season, and each line says its games."""
+    from datetime import datetime, timezone
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d = _sunday(data)
+    team = d["teams"][0]
+    a, b = _next_week_pair(d, team)
     ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 11, 20, 0, tzinfo=timezone.utc))
     page.select_option("#team", str(team["id"]))
-    best = _card(page, "Best")
-    assert "expire tonight" in best and "counting next week's games" in best, best
-    lines = [l for l in best.split("\n") if a["name"] in l or b["name"] in l]
-    assert lines and lines[0].startswith(a["name"]) and "4 games next week" in lines[0], lines
+    best, first = _first_of(page, a, b)
+    assert "expire tonight" in best and "tonight's adds play from Monday" in best, best
+    assert first.startswith(a["name"]) and "4 games next week" in first, first
     assert errors == []
     ctx.close()
+
+
+def test_late_week_counts_next_weeks_games(browser, server, data):
+    """Handoff 802: Thursday to Saturday the adds stay on the roster into next week, so next week's games count too;
+    Monday to Wednesday and a two-week round rank by the flat keep as before."""
+    from datetime import datetime, timezone
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    for day, weeks, counts in ((3, 1, True), (5, 1, True), (1, 1, False), (3, 2, False)):
+        d = _weekday(data, day)
+        d["matchup_weeks"] = weeks
+        team = d["teams"][0]
+        team["moves_used"] = 0
+        a, b = _next_week_pair(d, team)
+        ctx, page, errors = open_page(browser, server, data=d, clock=datetime(2026, 10, 5 + day, 14, 30, tzinfo=timezone.utc))
+        page.select_option("#team", str(team["id"]))
+        best, first = _first_of(page, a, b)
+        assert first.startswith((a if counts else b)["name"]), (day, weeks, first)
+        assert ("next week" in best) == counts, (day, weeks, best)
+        assert errors == []
+        ctx.close()
 
 
 def test_monday_before_rollover_says_nothing_expires(browser, server, data):

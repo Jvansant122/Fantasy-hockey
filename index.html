@@ -993,7 +993,7 @@ function renderUpgrades() {
   }
   const best = [];  // Best moves' picks: the IR stash's move budget counts them (findings 240)
   let lastCall = false, spare = 2;  // ... and the moves Best moves holds for nights to come (findings 291 (1))
-  let nextGames = () => null;  // the last call's games next week, per player (handoff 801)
+  let nextGames = () => null, lateWeek = false;  // games next week, per player, on the last call and Thursday-Saturday (handoffs 801-802)
   // Best moves (research findings 68, handoff 488): the biggest keep-value gains over your weakest player at the same position
   // none in the final once the moves are gone: nothing after it counts (findings 232)
   if (d.rated && !seasonDone) {
@@ -1018,8 +1018,11 @@ function renderUpgrades() {
     // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
     const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);
     // the last call's adds play from Monday: next week's games count on top of the flat keep (handoff 801: 4 seasons, 79
-    // Sundays, +0.9 points per expiring add the next week and no keep cost over the next month)
-    const nextWeek = lastCall ? (d.season_weeks || []).find(w => w.sps?.[0] > d.nights[d.nights.length - 1].sp) : null;
+    // Sundays, +0.9 points per expiring add the next week and no keep cost over the next month); so do Thursday to Saturday's,
+    // which stay on the roster into next week (handoff 802: 232 days, +0.6 per add through next week, every season ahead).
+    // Not Monday to Wednesday, nor inside a two-week round, whose Week rating already holds its second week
+    lateWeek = !noMoves && !d.final_matchup && !(d.matchup_weeks > 1) && ["Thu", "Fri", "Sat"].includes((tonight?.date || "").slice(0, 3));
+    const nextWeek = lastCall || lateWeek ? (d.season_weeks || []).find(w => w.sps?.[0] > d.nights[d.nights.length - 1].sp) : null;
     nextGames = p => nextWeek ? nextWeek.sps.filter(sp => (d.team_nights?.[p.team] || []).includes(sp)).length : null;
     const val = p => nextWeek ? (p.cr ?? 0) + (p.cr_season ?? 0) * (nextGames(p) + KEEP_GAMES) : addVal(p);
     const pick = () => {
@@ -1057,7 +1060,7 @@ function renderUpgrades() {
     // its own line, so a phone doesn't fold it behind 'why' (findings 238); no game today means ESPN's rollover is the deadline
     const expire = lastCall ? `You have ${realLeft} move${realLeft === 1 ? "" : "s"} left, and the ones you don't use expire tonight: add next week's targets ${puck ? `before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : "before ESPN's overnight rollover (about 3 AM ET)"}. Next Monday starts with a fresh set.` : "";
     // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same
-    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position${lastCall && best.some(m => nextGames(m.fa) != null) ? ", counting next week's games, since tonight's adds play from Monday" : ""}.</span>${expire ? `<div class="sub warn">${esc(expire)}</div>` : ""}
+    if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position${best.some(m => nextGames(m.fa) != null) ? `, counting next week's games, since ${lastCall ? "tonight's adds play from Monday" : "this week's adds stay on your roster into next week"}` : ""}.</span>${expire ? `<div class="sub warn">${esc(expire)}</div>` : ""}
       ${best.map((m, i) => i < freeSpots
         ? `<div>Add ${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))}${nextGames(m.fa) != null ? ` · ${nextGames(m.fa)} game${nextGames(m.fa) === 1 ? "" : "s"} next week` : ""} (open roster spot, no drop needed)</span> <span class="up">${gainTxt(m.gain)}</span></div>`
         : `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))}${nextGames(m.fa) != null ? ` · ${nextGames(m.fa)} game${nextGames(m.fa) === 1 ? "" : "s"} next week` : ""} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span>${!noMoves && d.rated && !d.final_matchup ? `<span class="sub"> (${score(m.fa) - score(m.worst) >= 0 ? "+" : "−"}${fmt(Math.abs(score(m.fa) - score(m.worst)))} this week)</span>` : ""}${chips.has(m.worst.id) ? '<span class="sub"> · try trading him first (Trade ideas)</span>' : ""}</div>`).join("")}</div>`);
