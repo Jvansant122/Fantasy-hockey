@@ -1497,13 +1497,13 @@ def test_last_call_counts_next_weeks_games(browser, server, data):
     ctx.close()
 
 
-def test_late_week_counts_next_weeks_games(browser, server, data):
-    """Handoff 802: Thursday to Saturday the adds stay on the roster into next week, so next week's games count too;
-    Monday to Wednesday and a two-week round rank by the flat keep as before."""
+def test_every_day_counts_next_weeks_games(browser, server, data):
+    """Handoffs 802-803: every day's adds stay on the roster into next week, so next week's games count too; a two-week
+    round, whose Week rating already holds its second week, ranks by the flat keep as before."""
     from datetime import datetime, timezone
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    for day, weeks, counts in ((3, 1, True), (5, 1, True), (1, 1, False), (3, 2, False)):
+    for day, weeks, counts in ((3, 1, True), (5, 1, True), (0, 1, True), (1, 1, True), (3, 2, False)):
         d = _weekday(data, day)
         d["matchup_weeks"] = weeks
         team = d["teams"][0]
