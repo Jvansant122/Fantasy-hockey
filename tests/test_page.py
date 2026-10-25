@@ -255,7 +255,9 @@ def test_stream_card_follows_the_first_puck(browser, server, data):
     now = datetime.now(timezone.utc)
     if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
         pytest.skip("needs rated data with a night left")
-    for first, want in ((now + timedelta(hours=3), "Add before the first game at"), (now - timedelta(hours=1), "plays from tomorrow")):
+    # after the puck an add plays from tomorrow, or from Monday on the matchup's last night
+    last = next(n for n in data["nights"] if not n["past"]) is data["nights"][-1]
+    for first, want in ((now + timedelta(hours=3), "Add before the first game at"), (now - timedelta(hours=1), "plays from Monday" if last else "plays from tomorrow")):
         d = json.loads(json.dumps(data))
         d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
         d["first_start"], d["move_limit"] = iso(first), None
@@ -1703,7 +1705,9 @@ def test_player_dropped_after_first_puck_frees_his_spot(browser, server, data):
     for p in roster:
         p.update(ir=False, injury=None, sat_last=False)
     d["roster_max"], d["ir_slots"] = len(roster), 1
-    gone = min((p for p in roster if p["pos"] != "G"), key=lambda p: (p.get("cr") or 0) + 7 * (p.get("cr_season") or 0))
+    # the Drop list keeps 11 healthy F and 6 D (handoff 643): the weakest from a position with one to spare
+    fw, dm = [p for p in roster if p["pos"] not in ("G", "D")], [p for p in roster if p["pos"] == "D"]
+    gone = min((fw if len(fw) > 11 else []) + (dm if len(dm) > 6 else []), key=lambda p: (p.get("cr") or 0) + 7 * (p.get("cr_season") or 0))
     clock = datetime(2026, 10, 11, 22, 0, tzinfo=timezone.utc)  # Sun 6 PM ET, after the first puck
     for pending in (False, True):
         gone["pending_drop"] = pending

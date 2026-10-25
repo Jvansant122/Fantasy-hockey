@@ -1387,6 +1387,10 @@ Three changes from a 15-season replay of the goalie start model (handoffs 731-73
 - The goalie who started opening night starts the team's second game more often than the model said (74% against 61%, 14 of 15 seasons), unless it is the second night of a back-to-back. His chance for that game now goes up.
 - Season rating: last season's goalie split now counts as 15 team games instead of 10 (better in 13 of 15 seasons).
 
+## 212. A third goalie who is his team's no. 1 isn't the stream drop
+
+With three healthy goalies, the Stream card dropped the one with the lowest keep value who wasn't starting that night. That goalie could be a real starter: on Sunday Oct 25 the card told one team to drop Dostal (Anaheim's no. 1) to stream Schmid. Over 4 seasons (1,850 nights with a third goalie), dropping a goalie expected to start more than 55% of his team's games for one night's stream lost about 1.9 points over the following month, in 3 of 4 seasons. Dropping a real backup still gained (+1.1 to +1.4). **The Stream card now drops a skater instead when the third goalie is his team's no. 1, and the Goalies card says to keep him** (handoff 805, findings 4077).
+
 ## What the independent review changed
 
 | Review point | Outcome |
