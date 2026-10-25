@@ -993,7 +993,7 @@ function renderUpgrades() {
   }
   const best = [];  // Best moves' picks: the IR stash's move budget counts them (findings 240)
   let lastCall = false, spare = 2;  // ... and the moves Best moves holds for nights to come (findings 291 (1))
-  let nextGames = () => null, lateWeek = false;  // games next week, per player, on the last call and Thursday-Saturday (handoffs 801-802)
+  let nextGames = () => null, oneWeek = false;  // games next week, per player, in one-week matchups (handoffs 801-803)
   // Best moves (research findings 68, handoff 488): the biggest keep-value gains over your weakest player at the same position
   // none in the final once the moves are gone: nothing after it counts (findings 232)
   if (d.rated && !seasonDone) {
@@ -1018,11 +1018,11 @@ function renderUpgrades() {
     // a waiver claim on the last night goes through after the rollover, so it uses next matchup's move (findings 239)
     const claimLate = p => lastCall && p.owner === "waivers" && !d.nights.some(n => n.date === p.clears);
     // the last call's adds play from Monday: next week's games count on top of the flat keep (handoff 801: 4 seasons, 79
-    // Sundays, +0.9 points per expiring add the next week and no keep cost over the next month); so do Thursday to Saturday's,
-    // which stay on the roster into next week (handoff 802: 232 days, +0.6 per add through next week, every season ahead).
-    // Not Monday to Wednesday, nor inside a two-week round, whose Week rating already holds its second week
-    lateWeek = !noMoves && !d.final_matchup && !(d.matchup_weeks > 1) && ["Thu", "Fri", "Sat"].includes((tonight?.date || "").slice(0, 3));
-    const nextWeek = lastCall || lateWeek ? (d.season_weeks || []).find(w => w.sps?.[0] > d.nights[d.nights.length - 1].sp) : null;
+    // Sundays, +0.9 points per expiring add the next week and no keep cost over the next month); so do every other day's,
+    // which stay on the roster into next week (handoffs 802-803: 465 days, +0.6 per add Thu-Sat and +0.5 Mon-Wed through
+    // next week, every season ahead). Not inside a two-week round, whose Week rating already holds its second week
+    oneWeek = !noMoves && !d.final_matchup && !(d.matchup_weeks > 1);
+    const nextWeek = lastCall || oneWeek ? (d.season_weeks || []).find(w => w.sps?.[0] > d.nights[d.nights.length - 1].sp) : null;
     nextGames = p => nextWeek ? nextWeek.sps.filter(sp => (d.team_nights?.[p.team] || []).includes(sp)).length : null;
     const val = p => nextWeek ? (p.cr ?? 0) + (p.cr_season ?? 0) * (nextGames(p) + KEEP_GAMES) : addVal(p);
     const pick = () => {
