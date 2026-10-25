@@ -214,8 +214,10 @@ def playoff_like(data, start, nights, today, weeks, period):
              matchup_period=period, season_weeks=[], team_nights={})
     sps = [n["sp"] for n in x["nights"]]
     for p in x["players"]:
-        if p.get("today_start") and p["today_start"] <= data["updated_utc"]:
-            p["dfo_out"] = None  # started before the run: kept the pre-puck chance, from before Daily Faceoff's lines (P9 skips him)
+        if not p["games_left"] or p.get("today_start") and p["today_start"] <= data["updated_utc"]:
+            # no game left, or started before the run: his next-game chance was never floored by Daily Faceoff's lines
+            # (P9 skips him in the real data), so the made-up games below don't hold him to it either
+            p["dfo_out"] = None
         p["nights"] = [] if p["team"] == "FA" else sps[::2]
         p["games"], p["games_left"], p["today_start"] = len(p["nights"]), sum(s >= tsp for s in p["nights"]), None
         w = p.get("cr_why") or {}

@@ -440,6 +440,8 @@ function score(p) { return state.data.rated ? p.cr : (p.ppg || 0) * p.games_left
 // from their share of starts, so a starter with a light week isn't dropped (findings 116). The Stream card stays night by night.
 const KEEP_GAMES = 7;  // flat on purpose: real games in weeks 2-3 scored worse in a season-long decision replay (findings 91)
 // In the final there are no later weeks to keep a player for, so keep value is this matchup alone (findings 109).
+// his team's no. 1: over 0.55 of its remaining starts expected, or of its last 10 without a Season share (handoff 805)
+const teamNo1 = p => p.pos === "G" && ((p.cr_why?.g_season_share ?? p.cr_why?.share10) ?? 0) > 0.55;
 function keep(p) { return state.data.rated && !state.data.final_matchup ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
 
 // a goalie already in net still fills his slot: started() zeroes his p_today, so use the one from before (findings 183, 213)
@@ -948,9 +950,12 @@ function renderUpgrades() {
       // a full roster needs a drop for the stream: name it (handoff 463); with 3 healthy goalies, the third goalie, as the
       // Goalies card says (handoff 601); else the lowest skater no other card drops, so the stream is built again after
       // Best moves picks its drops (handoff 600)
+      // a third goalie who is his team's no. 1 stays: the skater drop instead (handoff 805: dropping a starter for one
+      // night's stream lost 1.9 points over the next month, 3 of 4 seasons)
       const goalies3 = roster.filter(p => !p.ir && !OUT.includes(p.injury) && p.pos === "G").sort((a, b) => keep(a) - keep(b));
+      const g3 = goalies3.length >= 3 ? goalies3.find(p => !startsTonight(p)) ?? goalies3[0] : null;
       const sDropPick = () => freeSpots > 0 || !streams.length || locked ? null
-        : goalies3.length >= 3 ? goalies3.find(p => !startsTonight(p)) ?? goalies3[0]
+        : g3 && !teamNo1(g3) ? g3
         : dropOrder.find(p => !swapDrops.has(p.id) && !dropped.has(p.id));
       streamCard = (note, sDrop = sDropPick()) => { streamDrop = sDrop; const sDropTxt = sDrop ? ` Your roster is full: drop ${sDrop.name}${chipTxt(sDrop)} to add him.` : ""; return `<div class="upg"><b>${streamTitle}</b> <span class="drop">· ${open} open G slot${open > 1 ? "s" : ""} on ${esc(slotNight.date)}, ${esc(left)}.${esc(before)}${esc(sDropTxt)}${esc(cap)}</span>
         ${note ? `<div class="sub">${esc(note)}</div>` : locked && d.final_matchup && lastNight ? '<div class="sub">Tonight\'s first game has started and it\'s the season\'s last night: nothing added now counts.</div>'
@@ -1125,9 +1130,10 @@ function renderUpgrades() {
     ${[...myGoalies.filter(p => locked || !startsTonight(p)), ...myGoalies.filter(p => !locked && startsTonight(p))].slice(0, myGoalies.length - 3).map(gLine).join("")}</div>`);
   // nothing to stream for once the final's moves or nights are gone (findings 232)
   else if (myGoalies.length === 3 && !(d.final_matchup && (noMoves || (locked && lastNight)))) {
-    // not tonight's starter: dropping him empties a slot tonight (findings 233)
+    // not tonight's starter: dropping him empties a slot tonight (findings 233); nor his team's no. 1 (handoff 805)
     const gDrop = myGoalies.find(p => locked || !startsTonight(p)) ?? myGoalies[0];
-    cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from ${nextStart}, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
+    if (teamNo1(gDrop)) cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· ${esc(gDrop.name)}, your third goalie, starts most of his team's games, so keep him: a goalie stream takes a skater's spot instead. In past seasons dropping a no. 1 for one night's stream lost about 2 points over the next month.</span></div>`);
+    else cards.push(`<div class="upg fold"><b>Goalies</b> <span class="drop">· your third goalie spot is your stream slot: ${noMoves ? `no moves left this matchup, so from ${nextStart}, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
       : locked && lastNight ? `tonight's first game has started and it's the matchup's last night, so an add now counts in the next matchup: from Monday, when a G slot is open, drop ${esc(gDrop.name)} for a confirmed starter.`
       : locked ? `tonight's first game has started, so an add now counts from tomorrow: when a G slot is open tomorrow, drop ${esc(gDrop.name)} for a confirmed starter.`
       // no G slot open tonight when two of them start (handoff 622)

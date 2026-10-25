@@ -377,3 +377,40 @@ def test_likely_starter_details_say_how_it_is_counted(browser, server, data):  #
     assert "likely, so his chance is cut to 10% or less" in text, text
     assert errors == []
     ctx.close()
+
+
+def test_stream_card_keeps_a_third_goalie_who_is_his_teams_no1(browser, server, data):  # noqa: F811
+    """Handoff 805: the Stream card's third-goalie drop skips a goalie expected to start over 0.55 of his team's games
+    (dropping a no. 1 for one night lost 1.9 points over the next month) and drops a skater instead; the Goalies card says
+    to keep him. A backup (0.3) is still the drop."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    seen = {}
+    for share in (0.3, 0.7):
+        d, tonight = _thursday(data)
+        _stream_setup(d, tonight)
+        thirds = {}
+        for t in d["teams"]:
+            gs = sorted([p for p in _mine(d, t, "G") if not p["ir"] and p.get("injury") not in ("OUT", "INJURY_RESERVE", "SUSPENSION")
+                         and p.get("cr_why")], key=_keep)
+            if len(gs) == 3:
+                gs[0]["cr_why"]["g_season_share"] = share
+                thirds[t["id"]] = gs[0]["name"]
+        if not thirds:
+            pytest.skip("no 3-goalie team")
+        ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 16))
+        for tid, name in thirds.items():
+            page.select_option("#team", str(tid))
+            cards = _cards(page)
+            st = next((c for c in cards if c.startswith("Stream")), "")
+            m = re.search(r"Your roster is full: drop (.+?)( \(or trade him: see Trade ideas\))? to add him", st)
+            goalies = next((c for c in cards if c.startswith("Goalies") and "third goalie" in c), "")
+            seen.setdefault(tid, {})[share] = (m.group(1) if m else None, goalies, name)
+        assert errors == []
+        ctx.close()
+    backups = [tid for tid, v in seen.items() if v[0.3][0] == v[0.3][2]]
+    assert backups, seen  # some team's stream drops its backup third goalie
+    for tid in backups:
+        drop, goalies, name = seen[tid][0.7]
+        assert drop and drop != name, (tid, drop, name)
+        assert f"{name}, your third goalie, starts most of his team's games, so keep him" in goalies, goalies
