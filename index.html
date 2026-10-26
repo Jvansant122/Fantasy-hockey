@@ -1580,7 +1580,8 @@ function renderWinners() {
   }
   const games = w.games || [], rec = w.record || {};
   $("nhlhead").innerHTML = "Claude's win chance for each game: each skater's NHL points (goals + assists) per game × his chance to dress from the player projections, the likely starting goalie's save%, each team's expected-goal differential from MoneyPuck (with goal differential as the fallback if MoneyPuck is unavailable), home ice and back-to-backs. In tests on past seasons, where each season was predicted only from the seasons before it, it picked the winner about 60% of the time (always picking the home team: 54%). On the 1,651 games with archived betting lines, its win chances were about as accurate as the closing line's."
-    + (rec.games ? ` <b>This week: ${rec.right} of ${rec.games} right</b> (always picking the home team: ${rec.home_right} of ${rec.games}).` : "");
+    + (rec.games ? ` <b>This week: ${rec.right} of ${rec.games} right</b> (always picking the home team: ${rec.home_right} of ${rec.games}).`
+      : w.record_last?.games ? ` <b>Last week: ${w.record_last.right} of ${w.record_last.games} right</b> (always picking the home team: ${w.record_last.home_right} of ${w.record_last.games}).` : "");
   // days with games still to play first; finished days after them, folded to one line each (handoff 480)
   const days = [...new Set(games.map(g => g.date))];
   const final = g => g.home_score != null;

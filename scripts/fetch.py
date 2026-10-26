@@ -17,6 +17,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import leads
+import rating
 import winners as winners_model
 from rating import ESPN_TO_NHL, add_ratings
 
@@ -324,18 +325,41 @@ def preseason_projections(players, season, seed=PRESEASON_SEED, path=None):
         Path(path).write_text(json.dumps({"season": season, "proj": {**keep, **added}}, separators=(",", ":"), sort_keys=True))
 
 
-def previous_winners(path=DATA_PATH):
-    """The last published NHL games, for the win chances frozen at puck drop."""
+def previous_winners(path=None, key="games"):
+    """The last published NHL games, for the win chances frozen at puck drop (or another part of the tab, by key)."""
     try:
-        return (json.loads(path.read_text()).get("winners") or {}).get("games") or []
+        return (json.loads((path or DATA_PATH).read_text()).get("winners") or {}).get(key) or ([] if key == "games" else None)
     except (OSError, ValueError, AttributeError):
-        return []
+        return [] if key == "games" else None
+
+
+def last_week_record(s, previous, week_start):
+    """Right / wrong over the whole of last week's NHL games, Sunday's included: on the first run of a week, last week's
+    games from the previous run finished with the NHL's final scores; later runs keep the published one (handoff 808)."""
+    prev_monday = (datetime.fromisoformat(week_start) - timedelta(days=7)).date().isoformat()
+    if any(isinstance(o, dict) and o.get("date") and o["date"] < week_start for o in previous):
+        results = {}
+        try:
+            rating.week_schedule(s, datetime.fromisoformat(prev_monday).date(), results=results)
+        except Exception as e:  # noqa: BLE001 - grade what the previous run had
+            print(f"Last week's NHL scores unavailable: {e!r}", file=sys.stderr)
+        rec = winners_model.record(winners_model.finish_last_week(previous, week_start, results))
+        return {"week": prev_monday, **rec} if rec["games"] else None
+    old = previous_winners(key="record_last")
+    return old if isinstance(old, dict) and old.get("week") == prev_monday else None
 
 
 def predicted_winners(winners, s, league_url, period, players, team_names, today_sp, matchup_sps, run_utc, week_start=None):
     """The Predicted winners tab: this week's NHL games (the rating's, each pick frozen at puck drop) and the league's
     fantasy matchups. Either part can fail alone and publishes empty."""
-    games = winners_model.freeze(winners.get("games") or [], previous_winners(), week_start)
+    previous = previous_winners()
+    games = winners_model.freeze(winners.get("games") or [], previous, week_start)
+    record_last = None
+    if week_start:
+        try:
+            record_last = last_week_record(s, previous, week_start)
+        except Exception as e:  # noqa: BLE001 - never let the tab block the update
+            print(f"Last week's record failed: {e!r}", file=sys.stderr)
     matchups = []
     try:  # points so far this matchup, from ESPN's scoreboard view
         sched = get(s, league_url, ["mMatchupScore", "mScoreboard"], scoringPeriodId=today_sp).get("schedule") or []
@@ -347,7 +371,8 @@ def predicted_winners(winners, s, league_url, period, players, team_names, today
         print(f"Fantasy matchups failed, publishing without them: {e!r}", file=sys.stderr)
     print(f"Predicted winners: {len(games)} NHL games ({sum(g.get('p_home') is not None for g in games)} with a pick), "
           f"{len(matchups)} fantasy matchups")
-    return {"games": games, "record": winners_model.record(games), "matchups": matchups}
+    return {"games": games, "record": winners_model.record(games), "matchups": matchups,
+            **({"record_last": record_last} if record_last else {})}
 
 
 def sp1_date(night_dates):

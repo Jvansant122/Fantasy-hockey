@@ -1393,6 +1393,10 @@ With three healthy goalies, the Stream card dropped the one with the lowest keep
 
 Which goalie counts as a no. 1 is now judged by his last 10 team games: one who started 6 or more of them is kept. Over the same 4 seasons, dropping such a goalie lost about 3.5 points per swap, against 1.9 when judged by season share, and it caught live cases the season share missed (Kochetkov and Kuemper on Oct 25) (handoff 806, findings 4082, 4087).
 
+## 213. Last week's NHL picks record
+
+The Predicted winners tab's weekly record restarted with the first Monday run, before Sunday's games had final scores, so Sunday never counted (Oct 18 and 25; week 4 read 27 of 43 instead of 31 of 48). **The first run of a new week now finishes last week's games with the NHL's final scores and shows "Last week: X of Y right" until the new week has a result** (handoff 808, findings 4100).
+
 ## What the independent review changed
 
 | Review point | Outcome |
