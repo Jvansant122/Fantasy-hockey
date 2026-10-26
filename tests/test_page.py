@@ -275,13 +275,15 @@ def test_stream_card_follows_the_first_puck(browser, server, data):
 
 def test_goalie_in_net_fills_his_slot_and_swaps_need_games(browser, server, data):
     """A started goalie still counts as starting tonight; Mid-week swaps never offer a free agent with no games left (findings 183)."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
     iso = lambda dt: dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    now = datetime.now(timezone.utc)
+    # the data's own clock, so overnight data (Mon 0-4 AM ET, Sunday's numbers) reads as it did when published
+    now = datetime.fromisoformat(data["updated_utc"].replace("Z", "+00:00")) + timedelta(minutes=1)
     if not data.get("rated") or not any(not n["past"] for n in data["nights"]):
         pytest.skip("needs rated data with a night left")
     d = json.loads(json.dumps(data))
-    d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()
+    d["updated_date"] = now.astimezone(ZoneInfo("America/New_York")).date().isoformat()
     d["first_start"], d["move_limit"] = iso(now + timedelta(hours=3)), None
     team = next(t for t in d["teams"] if sum(p["pos"] == "G" and str(p.get("team_id")) == str(t["id"]) for p in d["players"]) >= 2)
     goalies = [p for p in d["players"] if p["pos"] == "G" and str(p.get("team_id")) == str(team["id"])]
@@ -298,7 +300,7 @@ def test_goalie_in_net_fills_his_slot_and_swaps_need_games(browser, server, data
     for p in d["players"]:
         if p["owner"] in ("freeagent", "waivers"):
             p["games_left"] = 0
-    ctx, page, errors = open_page(browser, server, data=d)
+    ctx, page, errors = open_page(browser, server, data=d, clock=now)
     page.select_option("#team", str(team["id"]))
     text = page.locator("#upgrades").inner_text()
     assert "open G slot" not in text  # both G slots filled, one goalie already in net
@@ -2027,7 +2029,10 @@ def test_phone_hides_the_season_percentile(browser, server, data):
     """Phones show no percentile badge next to Season, with or without All columns (handoff 417)."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
-    ctx, page, errors = open_page(browser, server, phone=True)
+    from datetime import datetime, timedelta
+    # the data's own clock: on overnight data the page treats Week as last night's and drops its badge
+    at = datetime.fromisoformat(data["updated_utc"].replace("Z", "+00:00")) + timedelta(minutes=1)
+    ctx, page, errors = open_page(browser, server, phone=True, clock=at)
     page.select_option("#team", str(data["teams"][0]["id"]))
     shown = """(key => { const i = [...document.querySelectorAll('#head th')].findIndex(th => th.dataset.k === key);
       return [...document.querySelectorAll('#rows tr[data-id]')].map(r => r.children[i]?.querySelector('.pct')).filter(b => b && b.offsetParent).length; })"""
