@@ -148,6 +148,21 @@ def freeze(games, previous, week_start=None):
     return sorted(games + keep, key=lambda g: (g["date"], g.get("start") or "", g["home"])) if keep else games
 
 
+def finish_last_week(previous, week_start, results):
+    """Last week's games from the previous run, with any final scores it lacked filled in from results (the NHL's
+    schedule for that week): the first run of a new week drops them, so Sunday's games were never graded (handoff 808)."""
+    out = []
+    for o in previous or []:
+        if not isinstance(o, dict) or not o.get("date") or o["date"] >= week_start:
+            continue
+        g, res = dict(o), (results or {}).get((o.get("home"), o["date"])) or {}
+        if g.get("home_won") is None and res.get("state") in FINAL_STATES and res.get("home_score") is not None:
+            g.update(home_score=res["home_score"], away_score=res["away_score"], last=res.get("last"),
+                     home_won=res["home_score"] > res["away_score"])
+        out.append(g)
+    return out
+
+
 def record(games):
     """Right / wrong / home-team-right over this week's finished games with a pre-game pick."""
     done = [g for g in games if g.get("home_won") is not None and g.get("p_home") is not None]

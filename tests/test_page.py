@@ -2191,6 +2191,23 @@ def test_predicted_winners_tab(browser, server, data, phone):
     ctx.close()
 
 
+def test_predicted_winners_shows_last_weeks_record_until_this_weeks_first_result(browser, server, data):
+    """Handoff 808: Monday's page shows last week's whole record (Sunday's games included) until this week has a result."""
+    d = with_winners(data)
+    d["winners"]["record_last"] = {"week": "2026-10-19", "games": 48, "right": 31, "home_right": 26}
+    ctx, page, errors = open_page(browser, server, d)
+    page.click("#tab-win")
+    head = page.locator("#nhlhead").inner_text()
+    assert "This week: 0 of 1 right" in head and "Last week" not in head
+    d["winners"]["record"] = {"games": 0, "right": 0, "home_right": 0}
+    ctx.close()
+    ctx, page, errors2 = open_page(browser, server, d)
+    page.click("#tab-win")
+    assert "Last week: 31 of 48 right (always picking the home team: 26 of 48)" in page.locator("#nhlhead").inner_text()
+    assert errors == errors2 == []
+    ctx.close()
+
+
 def test_predicted_winners_before_the_first_run(browser, server, data):
     """Data from before the tab shipped has no winners: the tab says when they come, with no error."""
     d = json.loads(json.dumps(data))

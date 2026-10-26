@@ -159,3 +159,39 @@ def test_a_last_game_in_progress_still_counts_its_rest():
     assert abs(winners.team_projection([sk, g], 16, [16], now)[0] - (0.5 * 2.0 + 0.5 * 3.0)) < 1e-6
     bare = {"id": 2, "pos": "C", "nights": [16], "team_id": 1, "today_start": start}
     assert winners.team_projection([bare], 16, [16], now)[0] == 0
+
+
+def _last_week():
+    """Last week's games as the Sunday-evening run published them: Saturday's graded, Sunday's still in progress."""
+    return [dict(game(day="2026-10-10", started=True, p=0.6, frozen=True), home_score=3, away_score=1, home_won=True),
+            dict(game(home="MTL", day="2026-10-11", started=True, p=0.7, frozen=True), state="LIVE"),
+            dict(game(home="OTT", day="2026-10-11", started=True, p=None), state="LIVE")]
+
+
+def test_last_weeks_games_are_finished_with_the_final_scores():
+    """Handoff 808: the first run of a new week grades Sunday's games, which the Sunday runs saw only in progress."""
+    results = {("MTL", "2026-10-11"): {"state": "OFF", "home_score": 2, "away_score": 4, "last": "REG"},
+               ("OTT", "2026-10-11"): {"state": "OFF", "home_score": 5, "away_score": 1}}
+    done = winners.finish_last_week(_last_week() + [game(day="2026-10-13")], "2026-10-12", results)
+    assert [g["home"] for g in done] == ["TOR", "MTL", "OTT"]  # not this week's game
+    assert winners.record(done) == {"games": 2, "right": 1, "home_right": 1}  # OTT had no pick
+    assert winners.record(winners.finish_last_week(_last_week(), "2026-10-12", {}))["games"] == 1  # scores unavailable
+
+
+def test_last_week_record_survives_the_monday_reset(monkeypatch, tmp_path):
+    """Handoff 808: the first run of a week publishes last week's whole record, and later runs keep it."""
+    import json
+    import fetch
+    import rating
+
+    def sched(s, monday, games=None, weeks=1, starts=None, results=None, names=None):
+        assert monday.isoformat() == "2026-10-05"
+        results[("MTL", "2026-10-11")] = {"state": "OFF", "home_score": 6, "away_score": 2}
+        return {}
+    monkeypatch.setattr(rating, "week_schedule", sched)
+    monkeypatch.setattr(fetch, "DATA_PATH", tmp_path / "players.json")
+    first = fetch.last_week_record(None, _last_week(), "2026-10-12")
+    assert first == {"week": "2026-10-05", "games": 2, "right": 2, "home_right": 2}
+    (tmp_path / "players.json").write_text(json.dumps({"winners": {"games": [game(day="2026-10-12")], "record_last": first}}))
+    assert fetch.last_week_record(None, fetch.previous_winners(), "2026-10-12") == first
+    assert fetch.last_week_record(None, fetch.previous_winners(), "2026-10-19") is None  # a week later it's gone
