@@ -172,8 +172,9 @@ def test_no_moves_left_says_so(browser, server, data):
     """A team at its move limit sees its adds as next Monday's targets (findings 146)."""
     capped = json.loads(json.dumps(data))
     capped["move_limit"] = capped.get("move_limit") or 7
+    capped["move_limit_next"] = capped["move_limit"]  # after Sunday's first puck the page counts next matchup's moves (565)
     for t in capped["teams"]:
-        t["moves_used"] = capped["move_limit"]
+        t["moves_used"] = t["moves_used_next"] = capped["move_limit"]
     ctx, page, errors = open_page(browser, server, data=capped)
     found = False
     for t in data["teams"]:
@@ -489,8 +490,9 @@ def test_gains_say_their_unit(browser, server, data):
     ctx.close()
     capped = json.loads(json.dumps(data))
     capped["move_limit"] = capped.get("move_limit") or 7
+    capped["move_limit_next"] = capped["move_limit"]  # after Sunday's first puck the page counts next matchup's moves (565)
     for t in capped["teams"]:
-        t["moves_used"] = capped["move_limit"]
+        t["moves_used"] = t["moves_used_next"] = capped["move_limit"]
     ctx, page, errors2 = open_page(browser, server, data=capped)
     gains = []
     for t in data["teams"]:
@@ -511,7 +513,7 @@ def test_waiver_claim_note(browser, server, data):
         t["waiver_rank"], t["moves_used"] = i + 1, 0
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(d["teams"][2]["id"]))
-    note = page.locator("#upgrades .wvnote").inner_text()
+    note = page.locator("#upgrades .wvnote").last.inner_text()  # after Sunday's first puck a next-matchup note comes first
     assert "A losing claim uses no move" in note and f"#3 of {len(d['teams'])}" in note
     # without the waiver order the note still shows, minus the rank
     for t in d["teams"]:
@@ -519,7 +521,7 @@ def test_waiver_claim_note(browser, server, data):
     ctx.close()
     ctx, page, errors2 = open_page(browser, server, data=d)
     page.select_option("#team", str(d["teams"][2]["id"]))
-    assert "waiver order" not in page.locator("#upgrades .wvnote").inner_text()
+    assert "waiver order" not in page.locator("#upgrades .wvnote").last.inner_text()
     assert errors == errors2 == []
     ctx.close()
 
@@ -543,9 +545,9 @@ def test_last_night_before_first_puck_uses_every_move(browser, server, data):
         d["first_start"] = iso(first) if first else None
         for p in d["players"]:
             p["today_start"] = iso(first) if first and d["nights"][-1]["sp"] in (p.get("nights") or []) else None
-        d["move_limit"] = 7
+        d["move_limit"] = d["move_limit_next"] = 7
         for t in d["teams"]:
-            t["moves_used"] = used
+            t["moves_used"] = t["moves_used_next"] = used
         # enough free agents worth a move whatever the day's data (late on a Thursday only 2 were)
         fas = sorted((p for p in d["players"] if p.get("owner") == "freeagent" and p["pos"] != "G" and p.get("cr") is not None),
                      key=lambda p: -(p.get("cr_season") or 0))[:8]
@@ -580,9 +582,9 @@ def test_swaps_and_best_moves_share_the_moves_left(browser, server, data):
     if not data.get("rated"):
         pytest.skip("needs rated data")
     d = json.loads(json.dumps(data))
-    d["move_limit"] = 7
+    d["move_limit"] = d["move_limit_next"] = 7
     for t in d["teams"]:
-        t["moves_used"] = 5  # 2 left
+        t["moves_used"] = t["moves_used_next"] = 5  # 2 left (this matchup's or, after Sunday's first puck, the next one's)
     for t in d["teams"]:
         sk = sorted((p for p in _mine(d, t) if p["pos"] != "G" and not p["ir"]), key=lambda p: p.get("cr_season") or 0)
         for p in sk[:3]:  # the weakest three are out: Best moves would want to drop them too
@@ -932,9 +934,9 @@ def test_drop_list_and_goalie_cards(browser, server, data):
     if not data.get("rated"):
         pytest.skip("needs rated data")
     capped = json.loads(json.dumps(data))
-    capped["move_limit"] = 7
+    capped["move_limit"] = capped["move_limit_next"] = 7
     for t in capped["teams"]:
-        t["moves_used"] = 7
+        t["moves_used"] = t["moves_used_next"] = 7
     ctx, page, errors = open_page(browser, server, data=capped)
     for t in capped["teams"]:
         page.select_option("#team", str(t["id"]))

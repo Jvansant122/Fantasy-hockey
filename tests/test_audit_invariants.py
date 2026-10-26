@@ -529,7 +529,7 @@ def test_one_roster_spot_one_plan(browser, server, data):  # noqa: F811
                                  ("thursday", _ir_full(_thursday(data)[0]), _et(15, 10), 2)):
         if used is not None:
             for t in d["teams"]:
-                t["moves_used"] = used
+                t["moves_used"] = t["moves_used_next"] = used
         ctx, page, errors = open_page(browser, server, data=d, clock=clock)
         for t in d["teams"]:
             page.select_option("#team", str(t["id"]))
@@ -547,7 +547,10 @@ def test_one_roster_spot_one_plan(browser, server, data):  # noqa: F811
                     bad.append((scen, t["id"], "trade chip dropped silently", card, name))
             n = _adds_offered(page)
             replace = sum("replace with" in l for l in r["dropList"])
-            left = 7 - (used if used is not None else (t.get("moves_used") or 0))
+            # the page's counter: after the matchup's last first puck, next matchup's moves (findings 290 (1), 565)
+            nxt = page.evaluate("(() => { const d = state.data, n = d.nights.find(n => !n.past); return !!n && n === d.nights[d.nights.length - 1] && !!d.first_start && new Date(d.first_start) <= new Date() && !d.final_matchup; })()")
+            used_now = t.get("moves_used_next") if nxt else t.get("moves_used")
+            left = 7 - (used if used is not None else (used_now or 0))
             if t.get("moves_used") is not None and sum(n.values()) + replace > left:
                 bad.append((scen, t["id"], "adds beyond moves left", n, replace, left))
             if r["held"] and replace:
