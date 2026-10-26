@@ -360,7 +360,7 @@ def test_skater_with_no_nhl_record_shows_no_week_formula(browser, server, data):
 
 def test_likely_starter_details_say_how_it_is_counted(browser, server, data):  # noqa: F811
     """Handoff 634: a rostered goalie Daily Faceoff lists as Likely to start on the next night still to play reads
-    'likely, counted as at least 90% to start' (and a Likely non-starter 'cut to 10% or less'), not 'not yet counted'.
+    'likely, counted as at least 95% to start' (and a Likely non-starter 'cut to 5% or less'), not 'not yet counted'.
     Kills: I50."""
     from datetime import datetime
     clock = datetime.fromisoformat(data["updated_utc"].replace("Z", "+00:00"))
@@ -371,18 +371,19 @@ def test_likely_starter_details_say_how_it_is_counted(browser, server, data):  #
     if gid is None or page.evaluate("stale(state.data)"):
         pytest.skip("no goalie with a game still to start on the next night")
     text = page.evaluate(f"why(state.data.players.find(p => p.id === {gid}))")
-    assert "likely, counted as at least 90% to start" in text, text
+    assert "likely, counted as at least 95% to start" in text, text
     page.evaluate(f"state.data.players.find(p => p.id === {gid}).cr_why.tonight.starting = false")
     text = page.evaluate(f"why(state.data.players.find(p => p.id === {gid}))")
-    assert "likely, so his chance is cut to 10% or less" in text, text
+    assert "likely, so his chance is cut to 5% or less" in text, text
     assert errors == []
     ctx.close()
 
 
 def test_stream_card_keeps_a_third_goalie_who_is_his_teams_no1(browser, server, data):  # noqa: F811
-    """Handoff 805: the Stream card's third-goalie drop skips a goalie expected to start over 0.55 of his team's games
-    (dropping a no. 1 for one night lost 1.9 points over the next month) and drops a skater instead; the Goalies card says
-    to keep him. A backup (0.3) is still the drop."""
+    """Handoffs 805, 806: the Stream card's third-goalie drop skips a goalie who started over 0.55 of his team's last 10
+    games (dropping one for one night lost 3.5 points over the next month) and drops a skater instead; the Goalies card
+    says to keep him. A backup (0.3) is still the drop. The model's Season share is set the other way round, so only the
+    last-10 share decides."""
     if not data.get("rated"):
         pytest.skip("needs rated data")
     seen = {}
@@ -394,7 +395,7 @@ def test_stream_card_keeps_a_third_goalie_who_is_his_teams_no1(browser, server, 
             gs = sorted([p for p in _mine(d, t, "G") if not p["ir"] and p.get("injury") not in ("OUT", "INJURY_RESERVE", "SUSPENSION")
                          and p.get("cr_why")], key=_keep)
             if len(gs) == 3:
-                gs[0]["cr_why"]["g_season_share"] = share
+                gs[0]["cr_why"]["share10"], gs[0]["cr_why"]["g_season_share"] = share, 1 - share
                 thirds[t["id"]] = gs[0]["name"]
         if not thirds:
             pytest.skip("no 3-goalie team")

@@ -293,7 +293,7 @@ The biggest gain left in the research was knowing tonight's starting goalie (sec
 
 - The site updates at **9 AM, 12:30 PM and 5 PM ET**. Starters are usually confirmed after the morning skate, so the midday run is the one that matters. (A 6 AM run was added later, section 50.)
 - A goalie Daily Faceoff marks **Confirmed** for tonight or tomorrow gets that game as a certain start, and his partner gets zero. A confirmed start on the first night of a back-to-back also lowers his chance of starting the second night. The row shows a "starts tonight" or "sits tonight" tag.
-- "Likely" and unconfirmed goalies are shown when you tap the row but don't change the rating yet, until the log shows how often they're right. (Changed later: a "Likely" starter now counts as at least 90% to start that game, section 173.)
+- "Likely" and unconfirmed goalies are shown when you tap the row but don't change the rating yet, until the log shows how often they're right. (Changed later: a "Likely" starter now counts as at least 95% to start that game, section 173.)
 
 Every update also saves a log (in `data/log`) of things that might help but need live data to test:
 
@@ -1228,7 +1228,7 @@ When a player is listed as out for one game, the site lets him back in once that
 
 ## 173. Daily Faceoff's "likely" starting goalies
 
-Daily Faceoff tags some goalies "Likely" before the team confirms. On the live days measured, the tagged goalie started nearly every time, more often than the site's own start chance said. The site now gives a goalie Daily Faceoff tags as likely at least a 90% chance to start that game, and lowers his teammates' chances to match. Later games are unchanged.
+Daily Faceoff tags some goalies "Likely" before the team confirms. On the live days measured, the tagged goalie started nearly every time, more often than the site's own start chance said. The site now gives a goalie Daily Faceoff tags as likely at least a 90% chance to start that game, and lowers his teammates' chances to match. Later games are unchanged. With more live days (Oct 8-24), the earliest "Likely" tag for each game was right 61 times out of 61, so **the floor is now 95%** (handoff 807, findings 4083). "Confirmed" stays certain.
 
 ## 174. The Season range by time of season
 
@@ -1390,6 +1390,8 @@ Three changes from a 15-season replay of the goalie start model (handoffs 731-73
 ## 212. A third goalie who is his team's no. 1 isn't the stream drop
 
 With three healthy goalies, the Stream card dropped the one with the lowest keep value who wasn't starting that night. That goalie could be a real starter: on Sunday Oct 25 the card told one team to drop Dostal (Anaheim's no. 1) to stream Schmid. Over 4 seasons (1,850 nights with a third goalie), dropping a goalie expected to start more than 55% of his team's games for one night's stream lost about 1.9 points over the following month, in 3 of 4 seasons. Dropping a real backup still gained (+1.1 to +1.4). **The Stream card now drops a skater instead when the third goalie is his team's no. 1, and the Goalies card says to keep him** (handoff 805, findings 4077).
+
+Which goalie counts as a no. 1 is now judged by his last 10 team games: one who started 6 or more of them is kept. Over the same 4 seasons, dropping such a goalie lost about 3.5 points per swap, against 1.9 when judged by season share, and it caught live cases the season share missed (Kochetkov and Kuemper on Oct 25) (handoff 806, findings 4082, 4087).
 
 ## What the independent review changed
 

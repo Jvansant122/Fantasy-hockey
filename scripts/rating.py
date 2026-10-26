@@ -277,9 +277,10 @@ INJURED_TAKER_WEIGHT = 0.5  # an injured partner's weight when a goalie's lost S
 # he starts next more often (0.47 against 0.58 after a pulled starter; third goalies and call-ups 0.23 against 0.47):
 # start-logit shifts for the next game and later games, plus more for one with 0-3 of the last 20 starts (findings 170)
 RELIEF_LOGITS, RELIEF_RARE_LOGIT, RELIEF_RARE_STARTS = (1.2, 0.9), 0.5, 3
-# Daily Faceoff's "Likely" starter starts that game at least this often: 23 of 23 live, Oct 8-14, while the site gave
-# 0.64-0.75 (findings 463 (6), handoff 617; live-only, no archive of the tags). Re-grade at the Oct 30 review
-LIKELY_START_FLOOR = 0.90
+# Daily Faceoff's "Likely" starter starts that game at least this often: the earliest Likely tag per team-game was right
+# 61 of 61 live, Oct 8-24 (Wilson 95% lower bound 0.941), while the site gave 0.64-0.75 (findings 463 (6), 4083;
+# handoffs 617, 807; live-only, no archive of the tags)
+LIKELY_START_FLOOR = 0.95
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -2169,6 +2170,8 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         sums[key] += (missing or {}).get(key[:2], 0.0)
     for r in rows:
         p = r["p"]
+        if not r["dates"]:  # no game of his own left (a free agent after the first puck): in the sums only
+            continue
         # handoffs 355 and 356, not in the sums above
         reg = (HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0) \
             + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch")) \
@@ -3823,7 +3826,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # a depth skater who fought in his last game (handoff 356)
             fought = bool(gl) and not sat_last and not traded and not early and not p.get("injury") and base_dress is not None \
                 and gl[-1]["toi"] < DEPTH_TOI["D" if p["pos"] == "D" else "F"] and gl[-1].get("pim", 0) >= FIGHT_PIM
-            if gl and pid and per_game:
+            # a free agent whose only game left is tonight's, after the first puck, keeps a row for the lineup sums (his game
+            # in "others"): without it he fell back to the boosted share and moved his teammates (findings 565)
+            if gl and pid and (per_game or out_idx):
                 caps = [min(cap, inj)] * len(per_game)
                 if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p) and not skip:
                     caps[0] = min(caps[0], OUT_TODAY_CAP)
