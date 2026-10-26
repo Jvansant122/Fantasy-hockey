@@ -440,8 +440,8 @@ function score(p) { return state.data.rated ? p.cr : (p.ppg || 0) * p.games_left
 // from their share of starts, so a starter with a light week isn't dropped (findings 116). The Stream card stays night by night.
 const KEEP_GAMES = 7;  // flat on purpose: real games in weeks 2-3 scored worse in a season-long decision replay (findings 91)
 // In the final there are no later weeks to keep a player for, so keep value is this matchup alone (findings 109).
-// his team's no. 1: over 0.55 of its remaining starts expected, or of its last 10 without a Season share (handoff 805)
-const teamNo1 = p => p.pos === "G" && (p.cr_why?.share10 ?? 0) > 0.55;  // 6+ of his team's last 10 starts (handoff 806)
+// his team's no. 1: 6+ of his team's last 10 starts (handoffs 805, 806)
+const teamNo1 = p => p.pos === "G" && (p.cr_why?.share10 ?? 0) > 0.55;
 function keep(p) { return state.data.rated && !state.data.final_matchup ? p.cr + KEEP_GAMES * (p.cr_season ?? 0) : score(p); }
 
 // a goalie already in net still fills his slot: started() zeroes his p_today, so use the one from before (findings 183, 213)

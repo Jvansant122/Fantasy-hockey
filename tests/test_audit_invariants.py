@@ -550,7 +550,9 @@ def test_one_roster_spot_one_plan(browser, server, data):  # noqa: F811
             # the page's counter: after the matchup's last first puck, next matchup's moves (findings 290 (1), 565)
             nxt = page.evaluate("(() => { const d = state.data, n = d.nights.find(n => !n.past); return !!n && n === d.nights[d.nights.length - 1] && !!d.first_start && new Date(d.first_start) <= new Date() && !d.final_matchup; })()")
             used_now = t.get("moves_used_next") if nxt else t.get("moves_used")
-            left = 7 - (used if used is not None else (used_now or 0))
+            # the page's limit: 6 in the first matchup, 14 in a two-week playoff round (fetch.matchup_days)
+            limit = (d.get("move_limit_next") if nxt else d.get("move_limit")) or 7
+            left = limit - (used if used is not None else (used_now or 0))
             if t.get("moves_used") is not None and sum(n.values()) + replace > left:
                 bad.append((scen, t["id"], "adds beyond moves left", n, replace, left))
             if r["held"] and replace:
