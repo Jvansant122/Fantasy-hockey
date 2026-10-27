@@ -2671,8 +2671,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             cut = 1.0 if gid in season_out else (1 - NO_DECISION_SEASON) if (
                 last_start and last_start[0] == gid and last_start[1][:1] == (NO_DECISION_LOGIT,) and gid not in confirmed.values()
                 and injury.get(gid, 1.0) > 0) else 0.0
-            if not cut and gid in pulled:
-                season_share[gid] = max(season_share[gid] - PULLED_SEASON, 0.0)
+            if not cut and gid in pulled:  # a healthy one keeps the same floor, or an age-floored backup hit 0 (rule G4, Reimer Oct 27)
+                floor = min(season_share[gid], GOALIE_SEASON_FLOOR) if injury.get(gid, 1.0) > 0 else 0.0
+                season_share[gid] = max(season_share[gid] - PULLED_SEASON, floor)
             if cut:
                 moved += season_share[gid] * cut
                 season_share[gid] *= 1 - cut

@@ -1754,6 +1754,22 @@ def test_pulled_goalie_loses_a_little_season_share():
     assert run({1}, nd)[0] == run((), nd)[0]
 
 
+
+def test_pulled_old_backup_keeps_a_season_share():
+    """Rule G4: an old backup whose age cut left him at the healthy floor and who was then pulled keeps a share above 0,
+    so the Season rating isn't zeroed while the Week still expects him to start (Reimer NYR, Oct 27); an injured one
+    (ESPN at 0) still drops to 0."""
+    model = rating.Model()
+    hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), 1 if i % 3 else 2) for i in range(9)]
+    def run(pulled, injury=None):
+        sea = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, ["2026-10-20"], date(2026, 10, 20),
+                             today_p={}, season_share=sea, pulled=pulled, ages={2: 90}, team_left=82, injury=injury)
+        return sea[2]
+    assert run(()) == pytest.approx(rating.GOALIE_SEASON_FLOOR)  # the age cut stops at the floor
+    assert run({2}) > 0
+    assert run({2}, {2: 0.0}) == 0
+
 def test_durable_skater_out_long_comes_back_sooner():
     """Out 6+ team games: last season's dress rate raises the Season dress share, FP/G lowers it a little; players out
     fewer games are unchanged (findings 330 (4), handoff 273)."""
