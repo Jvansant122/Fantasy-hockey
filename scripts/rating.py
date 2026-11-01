@@ -3238,12 +3238,28 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # an unsigned ESPN free agent with a rostered player's name (the other Matt Murray) isn't that player (findings 241 (4))
     claimed = {name_match(q) for q in players if q.get("team") != "FA"} - {None}
 
+    fa_starter = {}  # ESPN id -> 'unmatched:<name>' key of a confirmed starter the NHL data doesn't have yet (handoff 819)
+
     def match(p):
+        if p["id"] in fa_starter:
+            return fa_starter[p["id"]]
         pid = name_match(p)
         return None if p.get("team") == "FA" and pid in claimed else pid
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
     confirmed, tonight, likely = dfo_starters(starters, index, rosters, today)
+    # a confirmed starter on no NHL roster yet (Brossoit for ANA, Nov 1): his ESPN row takes the confirmed start (a free
+    # agent's row plays that team's games), so the team's night still sums to 1 (handoff 819). He stays unmatched (no NHL id)
+    for team, by_d in sorted(confirmed.items()):
+        for key in sorted({k for k in by_d.values() if isinstance(k, str) and k.startswith("unmatched:")}):
+            # his ESPN row: on that team already (ESPN caught up first, Brossoit by 10 AM), or a free agent we can move
+            rows = [q for q in players if q["pos"] == "G" and norm(q["name"]) == norm(key[len("unmatched:"):])
+                    and q["id"] not in fa_starter and name_match(q) is None
+                    and (ESPN_TO_NHL.get(q["team"], q["team"]) == team or (q.get("team") == "FA" and reschedule))]
+            if len(rows) == 1:
+                fa_starter[rows[0]["id"]] = key
+                if rows[0].get("team") == "FA":
+                    reschedule(rows[0], team)
     # ESPN lists him as a free agent ('FA') but he has played this season and an NHL roster has him: his team's games
     # (Bunting, findings 230)
     roster_team = {pid: team for team, r in rosters.items() for pid, _, _ in r}
@@ -3325,12 +3341,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         for src, dst in ((nights, goalie_nights), (exp, goalie_exp), (tod, goalie_today), (sea, goalie_season)):
             dst.update({gid: v for gid, v in src.items() if gid in kept})
     if info is not None:  # starts held by NHL-roster goalies ESPN doesn't list (a call-up), so G5 can sum each team-night
-        listed = {pid for p in players if p["pos"] == "G" for pid in (pid_of.get(p["id"]),) if pid}
+        # (a row ESPN lists as a free agent isn't on a team's nights either; handoff 819)
+        listed = {pid for p in players if p["pos"] == "G" and p.get("team") != "FA" for pid in (pid_of.get(p["id"]),) if pid}
+        unmatched_team = {k: t for t, by_d in confirmed.items() for k in by_d.values() if str(k).startswith("unmatched:")}
         unlisted = {}
         for gid, by_d in goalie_nights.items():
-            if gid not in listed and gid in roster_team:
+            home = roster_team.get(gid) or unmatched_team.get(gid)
+            if gid not in listed and home:
                 for d, q in by_d.items():
-                    t = unlisted.setdefault(roster_team[gid], {})
+                    t = unlisted.setdefault(home, {})
                     t[d] = round(t.get(d, 0.0) + q, 2)
         info["g_unlisted"] = unlisted
 
@@ -3952,8 +3971,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
         p["cr_dress_next"] = None if p_dress is None else round(dress_next, 2)  # his team's next game: tonight cards
         p["sat_last"] = sat_last
-        p["cr_matched"] = pid is not None
-        p["nhl_id"] = pid
+        p["cr_matched"] = pid is not None and p["id"] not in fa_starter
+        p["nhl_id"] = None if p["id"] in fa_starter else pid
         p["cr_why"] = why
 
     season_drift(drift_rows, model)
@@ -4016,7 +4035,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
     for p in players:
-        if not p["cr_matched"] and not p.get("gp") and not p.get("last_gp") and not p.get("proj_ppg"):
+        if not p["cr_matched"] and not p.get("gp") and not p.get("last_gp") and not p.get("proj_ppg") and p["id"] not in fa_starter:
             p["cr"], p["cr_season"], p["cr_games"], p["cr_dress"], p["cr_dress_next"] = 0.0, 0.0, 0.0, 0.0, 0.0
             p["cr_why"]["no_record"] = True
 

@@ -553,6 +553,9 @@ def test_one_roster_spot_one_plan(browser, server, data):  # noqa: F811
             # the page's limit: 6 in the first matchup, 14 in a two-week playoff round (fetch.matchup_days)
             limit = (d.get("move_limit_next") if nxt else d.get("move_limit")) or 7
             left = limit - (used if used is not None else (used_now or 0))
+            if left <= 0 and not nxt and not d.get("final_matchup"):
+                # no moves left this matchup: the cards plan adds for the next one, with its moves (findings 233; team 5 Nov 1)
+                left = (d.get("move_limit_next") or limit) - (t.get("moves_used_next") or 0)
             if t.get("moves_used") is not None and sum(n.values()) + replace > left:
                 bad.append((scen, t["id"], "adds beyond moves left", n, replace, left))
             if r["held"] and replace:

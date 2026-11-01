@@ -2017,6 +2017,9 @@ def test_next_weeks_moves_hold_three(browser, server, data):
     team = d["teams"][0]
     sk = min((p for p in _mine(d, team) if p["pos"] != "G" and not p.get("ir")), key=lambda p: p.get("cr_season") or 0)  # a sub can beat him
     sk.update(sat_last=True, dfo_out=None, games_left=1, injury=None)
+    for p in _mine(d, team):  # a healthy IR player would take his spot instead (Activate from IR, handoff 728; Chabot Nov 1)
+        if p.get("ir") and p.get("injury") not in ("OUT", "INJURY_RESERVE"):
+            p["injury"] = "INJURY_RESERVE"
     ctx, page, errors = open_page(browser, server, data=d, clock=SUN_6PM)
     page.select_option("#team", str(team["id"]))
     swaps = _card(page, "Mid-week swaps")
