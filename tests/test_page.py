@@ -1106,7 +1106,9 @@ def test_goalie_slots_follow_start_chances_and_new_details(browser, server, data
         for i in range(min(8, rows(page))):
             page.locator("#rows tr[data-id]").nth(i).click()
             text = page.locator("#rows tr.why").inner_text()
-            assert "His own 3.10 pts per start" in text or "expects him in about 45% of the rest" in text, text
+            # an unmatched goalie Daily Faceoff confirms (handoff 819) has only the league's prior: no own rate (handoff 607)
+            assert "His own 3.10 pts per start" in text or "expects him in about 45% of the rest" in text \
+                or "not on an nhl roster" in text.lower(), text
             assert "his team's last 10" not in text
         assert errors == []
         ctx.close()

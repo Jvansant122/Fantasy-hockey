@@ -657,7 +657,9 @@ function why(p) {
   const bwm = p.cr_why?.boost_week_move;
   if (bwm) wk.push(`players with his record and recent absences usually play ${bwm > 0 ? "more" : "less"} than his own trend says (${bwm > 0 ? "+" : "\u2212"}${Math.round(Math.abs(bwm) * 100)} percentage points on his chance to play this week)`);
   if (p.cr_why?.displaced) wk.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
-  if (!p.cr_matched) parts.push(p.cr_why?.no_record ? "not found in NHL stats and no games this season or last, so rated 0 (likely retired or in the minors)" : "not on an NHL roster and no NHL game this season, so treated as unlikely to play");
+  if (!p.cr_matched) parts.push(p.cr_why?.no_record ? "not found in NHL stats and no games this season or last, so rated 0 (likely retired or in the minors)"
+    : p.cr_why?.dfo_unlisted ? "not on an NHL roster yet, but Daily Faceoff confirms him to start, so he takes that start at the league's usual points per start"
+    : "not on an NHL roster and no NHL game this season, so treated as unlikely to play");
   parts.splice(p.pos !== "G" && w.no_record ? 0 : 1, 0, ...wk);
   // each reason is its own line, so each starts with a capital (handoff 650)
   return parts.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join("\n");
