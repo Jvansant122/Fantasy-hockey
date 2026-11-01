@@ -3248,15 +3248,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
     confirmed, tonight, likely = dfo_starters(starters, index, rosters, today)
-    # a confirmed starter on no NHL roster yet whom ESPN lists as a free agent (Brossoit for ANA, Nov 1): his ESPN row
-    # plays that team's games and takes the confirmed start, so the team's night still sums to 1 (handoff 819)
+    # a confirmed starter on no NHL roster yet (Brossoit for ANA, Nov 1): his ESPN row takes the confirmed start (a free
+    # agent's row plays that team's games), so the team's night still sums to 1 (handoff 819). He stays unmatched (no NHL id)
     for team, by_d in sorted(confirmed.items()):
         for key in sorted({k for k in by_d.values() if isinstance(k, str) and k.startswith("unmatched:")}):
-            rows = [q for q in players if q["pos"] == "G" and q.get("team") == "FA" and norm(q["name"]) == norm(key[len("unmatched:"):])
-                    and q["id"] not in fa_starter and name_match(q) is None]
-            if len(rows) == 1 and reschedule:
+            # his ESPN row: on that team already (ESPN caught up first, Brossoit by 10 AM), or a free agent we can move
+            rows = [q for q in players if q["pos"] == "G" and norm(q["name"]) == norm(key[len("unmatched:"):])
+                    and q["id"] not in fa_starter and name_match(q) is None
+                    and (ESPN_TO_NHL.get(q["team"], q["team"]) == team or (q.get("team") == "FA" and reschedule))]
+            if len(rows) == 1:
                 fa_starter[rows[0]["id"]] = key
-                reschedule(rows[0], team)
+                if rows[0].get("team") == "FA":
+                    reschedule(rows[0], team)
     # ESPN lists him as a free agent ('FA') but he has played this season and an NHL roster has him: his team's games
     # (Bunting, findings 230)
     roster_team = {pid: team for team, r in rosters.items() for pid, _, _ in r}
@@ -3968,8 +3971,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_dress"] = None if p_dress is None else round(p_dress, 2)
         p["cr_dress_next"] = None if p_dress is None else round(dress_next, 2)  # his team's next game: tonight cards
         p["sat_last"] = sat_last
-        p["cr_matched"] = pid is not None
-        p["nhl_id"] = pid
+        p["cr_matched"] = pid is not None and p["id"] not in fa_starter
+        p["nhl_id"] = None if p["id"] in fa_starter else pid
         p["cr_why"] = why
 
     season_drift(drift_rows, model)
@@ -4032,7 +4035,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
     for p in players:
-        if not p["cr_matched"] and not p.get("gp") and not p.get("last_gp") and not p.get("proj_ppg"):
+        if not p["cr_matched"] and not p.get("gp") and not p.get("last_gp") and not p.get("proj_ppg") and p["id"] not in fa_starter:
             p["cr"], p["cr_season"], p["cr_games"], p["cr_dress"], p["cr_dress_next"] = 0.0, 0.0, 0.0, 0.0, 0.0
             p["cr_why"]["no_record"] = True
 
