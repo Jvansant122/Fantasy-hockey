@@ -3972,6 +3972,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         p["cr_dress_next"] = None if p_dress is None else round(dress_next, 2)  # his team's next game: tonight cards
         p["sat_last"] = sat_last
         p["cr_matched"] = pid is not None and p["id"] not in fa_starter
+        if p["id"] in fa_starter:
+            why["dfo_unlisted"] = True  # the page says why an unmatched goalie has a start (handoff 819)
         p["nhl_id"] = None if p["id"] in fa_starter else pid
         p["cr_why"] = why
 

@@ -3641,6 +3641,7 @@ def test_confirmed_starter_espn_lists_as_free_agent_takes_the_night(monkeypatch,
     assert b["team"] == "TOR" and night(b) > 0.95 and b["cr_why"]["tonight"]["starting"], b
     assert night(ps["Joseph Woll"]) < 0.05 and night(ps["Anthony Stolarz"]) < 0.05
     assert not info["g_unlisted"].get("TOR") and b["nhl_id"] is None and not b["cr_matched"] and b["cr"] > 0
+    assert b["cr_why"]["dfo_unlisted"] and not ps["Joseph Woll"]["cr_why"].get("dfo_unlisted")
     ps = rate(monkeypatch, tmp_path, goalies()[:2] + [espn(120, "Laurent Brossoit", "TOR", "G")], starters=starters)
     assert night(ps["Laurent Brossoit"]) > 0.95 and night(ps["Joseph Woll"]) < 0.05  # ESPN already lists him on the team
     info = {}
