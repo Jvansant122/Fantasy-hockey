@@ -3620,3 +3620,28 @@ def test_adp_pull_is_off_when_ranks_agree_late_or_adp_is_flat():
     rating.adp_pull(ps, tg)
     q = rating._avg_rank([-p["adp"] for p in ps[:24] + ps[25:]])[0] - rating._avg_rank([p["cr_season"] for p in ps[:24] + ps[25:]])[0]
     assert ps[0]["cr_why"]["adp_pull"] == pytest.approx(math.exp(rating.ADP_PULL_C * 0.5 * q), abs=1e-3)
+
+
+def test_confirmed_starter_espn_lists_as_free_agent_takes_the_night(monkeypatch, tmp_path):
+    """Daily Faceoff confirms a goalie on no NHL roster yet whom ESPN lists as a free agent (Brossoit for ANA, Nov 1): his
+    ESPN row plays the team's games and takes the start, the team's goalies sit, and the night still sums to 1 (handoff 819).
+    With no way to move his row, the start goes to g_unlisted instead, so G5 can still sum the night."""
+    starters = [{"date": "2026-10-09", "games": [{"team": "TOR", "goalie": "Laurent Brossoit", "status": "Confirmed"}]}]
+
+    def goalies():
+        return [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G"),
+                espn(120, "Laurent Brossoit", "FA", "G", games_left=0)]
+
+    def reschedule(p, team):
+        p.update(team="TOR", games_left=3)
+    info = {}
+    ps = rate(monkeypatch, tmp_path, goalies(), starters=starters, reschedule=reschedule, info=info)
+    night = lambda p: (p.get("cr_g_nights") or {}).get("2026-10-09", 0.0)
+    b = ps["Laurent Brossoit"]
+    assert b["team"] == "TOR" and night(b) > 0.95 and b["cr_why"]["tonight"]["starting"], b
+    assert night(ps["Joseph Woll"]) < 0.05 and night(ps["Anthony Stolarz"]) < 0.05
+    assert not info["g_unlisted"].get("TOR")
+    info = {}
+    ps = rate(monkeypatch, tmp_path, goalies(), starters=starters, info=info)
+    assert ps["Laurent Brossoit"]["team"] == "FA" and night(ps["Joseph Woll"]) + night(ps["Anthony Stolarz"]) < 0.05
+    assert info["g_unlisted"]["TOR"].get("2026-10-09", 0) > 0.95, info

@@ -4,12 +4,13 @@ on:
   schedule:
     # GitHub delays or drops scheduled runs at the top of the hour (only 3 scheduled runs had ever fired by Oct 10, up to 3.5 hours
     # late, and the first 6 AM run never came), so runs sit off the hour and the morning one has two backups.
-    - cron: "7 10 * * *"   # 6 AM ET (5 AM in winter): the morning page shows today, after ESPN's ~3 AM waiver run (findings 123)
-    - cron: "41 10 * * *"  # morning backup
-    - cron: "19 11 * * *"  # morning backup
-    - cron: "13 13 * * *"  # 9 AM ET daily (8 AM in winter)
-    - cron: "37 16 * * *"  # 12:30 PM ET (11:30 AM in winter): goalie starters confirmed after morning skates
-    - cron: "9 21 * * *"   # 5 PM ET (4 PM in winter): last starter check before games
+    # Times are UTC set for EST (Nov 1, 2026 to Mar 14, 2027, handoff 433); shift each back one hour when DST starts.
+    - cron: "7 11 * * *"   # 6 AM ET (EST; 7 10 in summer EDT): the morning page shows today, after ESPN's ~3 AM waiver run (findings 123)
+    - cron: "41 11 * * *"  # morning backup
+    - cron: "19 12 * * *"  # morning backup
+    - cron: "13 14 * * *"  # 9 AM ET daily (EST; 13 13 in summer)
+    - cron: "37 17 * * *"  # 12:30 PM ET (EST; 37 16 in summer): goalie starters confirmed after morning skates
+    - cron: "9 22 * * *"   # 5 PM ET (EST; 9 21 in summer): last starter check before games
   workflow_dispatch:
 
 permissions:

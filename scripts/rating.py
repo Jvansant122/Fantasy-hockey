@@ -3238,12 +3238,25 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # an unsigned ESPN free agent with a rostered player's name (the other Matt Murray) isn't that player (findings 241 (4))
     claimed = {name_match(q) for q in players if q.get("team") != "FA"} - {None}
 
+    fa_starter = {}  # ESPN id -> 'unmatched:<name>' key of a confirmed starter the NHL data doesn't have yet (handoff 819)
+
     def match(p):
+        if p["id"] in fa_starter:
+            return fa_starter[p["id"]]
         pid = name_match(p)
         return None if p.get("team") == "FA" and pid in claimed else pid
 
     # Daily Faceoff confirmed starters (research section 7: worth about a third of a streamed goalie's points)
     confirmed, tonight, likely = dfo_starters(starters, index, rosters, today)
+    # a confirmed starter on no NHL roster yet whom ESPN lists as a free agent (Brossoit for ANA, Nov 1): his ESPN row
+    # plays that team's games and takes the confirmed start, so the team's night still sums to 1 (handoff 819)
+    for team, by_d in sorted(confirmed.items()):
+        for key in sorted({k for k in by_d.values() if isinstance(k, str) and k.startswith("unmatched:")}):
+            rows = [q for q in players if q["pos"] == "G" and q.get("team") == "FA" and norm(q["name"]) == norm(key[len("unmatched:"):])
+                    and q["id"] not in fa_starter and name_match(q) is None]
+            if len(rows) == 1 and reschedule:
+                fa_starter[rows[0]["id"]] = key
+                reschedule(rows[0], team)
     # ESPN lists him as a free agent ('FA') but he has played this season and an NHL roster has him: his team's games
     # (Bunting, findings 230)
     roster_team = {pid: team for team, r in rosters.items() for pid, _, _ in r}
@@ -3325,12 +3338,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         for src, dst in ((nights, goalie_nights), (exp, goalie_exp), (tod, goalie_today), (sea, goalie_season)):
             dst.update({gid: v for gid, v in src.items() if gid in kept})
     if info is not None:  # starts held by NHL-roster goalies ESPN doesn't list (a call-up), so G5 can sum each team-night
-        listed = {pid for p in players if p["pos"] == "G" for pid in (pid_of.get(p["id"]),) if pid}
+        # (a row ESPN lists as a free agent isn't on a team's nights either; handoff 819)
+        listed = {pid for p in players if p["pos"] == "G" and p.get("team") != "FA" for pid in (pid_of.get(p["id"]),) if pid}
+        unmatched_team = {k: t for t, by_d in confirmed.items() for k in by_d.values() if str(k).startswith("unmatched:")}
         unlisted = {}
         for gid, by_d in goalie_nights.items():
-            if gid not in listed and gid in roster_team:
+            home = roster_team.get(gid) or unmatched_team.get(gid)
+            if gid not in listed and home:
                 for d, q in by_d.items():
-                    t = unlisted.setdefault(roster_team[gid], {})
+                    t = unlisted.setdefault(home, {})
                     t[d] = round(t.get(d, 0.0) + q, 2)
         info["g_unlisted"] = unlisted
 
