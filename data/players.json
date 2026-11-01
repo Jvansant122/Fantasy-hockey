@@ -1,5 +1,5 @@
 {
- "updated": "Sun Nov 1, 10:31 AM ET",
+ "updated": "Sun Nov 1, 10:35 AM ET",
  "updated_date": "2026-11-01",
  "first_start": "2026-11-01T18:00:00Z",
  "stats_missing": 0,
@@ -8,7 +8,7 @@
    "34": 1.0
   }
  },
- "updated_utc": "2026-11-01T15:31:30Z",
+ "updated_utc": "2026-11-01T15:35:15Z",
  "team": "New York Mess",
  "matchup_period": 5,
  "matchup_weeks": 1,
@@ -5430,6 +5430,76 @@
    "cr_season_pct": 92
   },
   {
+   "id": 3026526,
+   "name": "Laurent Brossoit",
+   "team": "ANA",
+   "games": 3,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    29,
+    31,
+    34
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-01T18:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 1.3,
+   "adp": 230.0,
+   "gp": 0,
+   "ppg": -3.4,
+   "cur_ppg": null,
+   "last_ppg": -3.4,
+   "last_gp": 1,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "34": 1.0
+   },
+   "cr": 2.75,
+   "cr_fpg": 2.75,
+   "cr_season": 0.44,
+   "proj_gp": 4,
+   "cr_games": 1.0,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": false,
+   "nhl_id": null,
+   "cr_why": {
+    "exp_starts": 1.0,
+    "team_games": 1,
+    "share10": 0.0,
+    "n10": 10,
+    "tonight": {
+     "starting": true,
+     "status": "Confirmed"
+    },
+    "own_pps": 2.89,
+    "g_season_share": 0.06,
+    "season_pps": 2.89,
+    "line": {
+     "win_prob": 0.48,
+     "pps": 2.75
+    },
+    "gs": 0,
+    "p_today": 1.0,
+    "p_today_pre": 1.0
+   },
+   "cr_pct": 98,
+   "cr_season_pct": 49
+  },
+  {
    "id": 3114727,
    "name": "Leon Draisaitl",
    "team": "EDM",
@@ -5585,7 +5655,7 @@
     "adp_pull": 1.027,
     "adp": 88.1
    },
-   "cr_pct": 98,
+   "cr_pct": 97,
    "cr_season_pct": 94
   },
   {
@@ -6088,7 +6158,7 @@
     "adp_pull": 0.998,
     "adp": 230.0
    },
-   "cr_pct": 97,
+   "cr_pct": 96,
    "cr_season_pct": 53
   },
   {
@@ -6750,7 +6820,7 @@
     "missing_regs_pp": -0.008,
     "lineup_slack": 0.9,
     "missing_regs": -0.09,
-    "week_slack": 0.7,
+    "week_slack": 0.6,
     "adp_pull": 0.99,
     "adp": 106.6
    },
@@ -9220,7 +9290,7 @@
     "adp_pull": 1.017,
     "adp": 181.6
    },
-   "cr_pct": 96,
+   "cr_pct": 95,
    "cr_season_pct": 85
   },
   {
@@ -10812,7 +10882,7 @@
     "adp_pull": 0.95,
     "adp": 220.0
    },
-   "cr_pct": 95,
+   "cr_pct": 94,
    "cr_season_pct": 86
   },
   {
@@ -10978,7 +11048,7 @@
     "missing_regs_pp": -0.006,
     "lineup_slack": 0.9,
     "missing_regs": -0.09,
-    "week_slack": 0.7,
+    "week_slack": 0.6,
     "adp_pull": 0.997,
     "adp": 215.0
    },
@@ -12822,7 +12892,7 @@
     "missing_regs_pp": -0.008,
     "lineup_slack": 0.9,
     "missing_regs": -0.09,
-    "week_slack": 0.7,
+    "week_slack": 0.6,
     "adp_pull": 0.94,
     "adp": 230.0
    },
@@ -15128,6 +15198,90 @@
    "cr_season_pct": 54
   },
   {
+   "id": 4697402,
+   "name": "Braden Schneider",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    28,
+    34
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-01T18:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "DAY_TO_DAY",
+   "owned": 1.4,
+   "adp": 229.9,
+   "gp": 14,
+   "ppg": 1.27,
+   "cur_ppg": 1.07,
+   "last_ppg": 1.42,
+   "last_gp": 82,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 1.11,
+   "cr_fpg": 1.35,
+   "cr_season": 1.07,
+   "proj_gp": 73,
+   "cr_games": 0.82,
+   "cr_dress": 0.82,
+   "cr_dress_next": 0.82,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482073,
+   "cr_why": {
+    "toi5": 17.89,
+    "toi": 17.47,
+    "pp5": 0.0,
+    "sog": 1.43,
+    "blk": 1.14,
+    "gp": 14,
+    "last_fpg": 1.42,
+    "xfp": {
+     "gp": 14,
+     "fpg": 1.07,
+     "xfpg": 1.18
+    },
+    "season_fpg": 1.34,
+    "opp_last": {
+     "ga": 0.044,
+     "move": 0.005
+    },
+    "boost_week": -0.43,
+    "boost_week_move": -0.06,
+    "season_pts": 1.26,
+    "boost_dress": 0.89,
+    "boost_fpg": 1.35,
+    "season_range": [
+     0.6,
+     1.45
+    ],
+    "back": {
+     "games": "0-1"
+    },
+    "drift": -0.012,
+    "missing_regs_pp": -0.011,
+    "lineup_slack": 0.9,
+    "missing_regs": -0.09,
+    "week_slack": 0.6,
+    "adp_pull": 0.95,
+    "adp": 229.9
+   },
+   "cr_pct": 82,
+   "cr_season_pct": 54
+  },
+  {
    "id": 3024798,
    "name": "Nate Schmidt",
    "team": "UTA",
@@ -15206,7 +15360,7 @@
     "adp_pull": 0.999,
     "adp": 229.8
    },
-   "cr_pct": 82,
+   "cr_pct": 81,
    "cr_season_pct": 39
   },
   {
@@ -15381,90 +15535,6 @@
    },
    "cr_pct": 81,
    "cr_season_pct": 38
-  },
-  {
-   "id": 4697402,
-   "name": "Braden Schneider",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    28,
-    34
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-01T18:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "DAY_TO_DAY",
-   "owned": 1.4,
-   "adp": 229.9,
-   "gp": 14,
-   "ppg": 1.27,
-   "cur_ppg": 1.07,
-   "last_ppg": 1.42,
-   "last_gp": 82,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 1.09,
-   "cr_fpg": 1.35,
-   "cr_season": 1.07,
-   "proj_gp": 73,
-   "cr_games": 0.81,
-   "cr_dress": 0.81,
-   "cr_dress_next": 0.81,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482073,
-   "cr_why": {
-    "toi5": 17.89,
-    "toi": 17.47,
-    "pp5": 0.0,
-    "sog": 1.43,
-    "blk": 1.14,
-    "gp": 14,
-    "last_fpg": 1.42,
-    "xfp": {
-     "gp": 14,
-     "fpg": 1.07,
-     "xfpg": 1.18
-    },
-    "season_fpg": 1.34,
-    "opp_last": {
-     "ga": 0.044,
-     "move": 0.005
-    },
-    "boost_week": -0.49,
-    "boost_week_move": -0.07,
-    "season_pts": 1.26,
-    "boost_dress": 0.89,
-    "boost_fpg": 1.35,
-    "season_range": [
-     0.6,
-     1.45
-    ],
-    "back": {
-     "games": "0-1"
-    },
-    "drift": -0.012,
-    "missing_regs_pp": -0.011,
-    "lineup_slack": 0.9,
-    "missing_regs": -0.09,
-    "week_slack": 0.7,
-    "adp_pull": 0.95,
-    "adp": 229.9
-   },
-   "cr_pct": 81,
-   "cr_season_pct": 54
   },
   {
    "id": 4755684,
@@ -18562,7 +18632,7 @@
     "missing_regs_pp": -0.015,
     "lineup_slack": 0.9,
     "missing_regs": -0.09,
-    "week_slack": 0.7,
+    "week_slack": 0.6,
     "adp_pull": 1.018,
     "adp": 229.9
    },
@@ -19101,7 +19171,7 @@
     "adp_pull": 0.926,
     "adp": 228.2
    },
-   "cr_pct": 94,
+   "cr_pct": 93,
    "cr_season_pct": 83
   },
   {
@@ -19260,7 +19330,7 @@
     "adp_pull": 1.005,
     "adp": 229.8
    },
-   "cr_pct": 93,
+   "cr_pct": 92,
    "cr_season_pct": 61
   },
   {
@@ -19339,7 +19409,7 @@
     "missing_regs_pp": -0.014,
     "lineup_slack": 0.9,
     "missing_regs": -0.09,
-    "week_slack": 0.7,
+    "week_slack": 0.6,
     "adp_pull": 0.939,
     "adp": 230.1
    },
@@ -19599,7 +19669,7 @@
     "adp_pull": 0.976,
     "adp": 229.8
    },
-   "cr_pct": 92,
+   "cr_pct": 91,
    "cr_season_pct": 63
   },
   {
@@ -20014,7 +20084,7 @@
     "adp_pull": 0.975,
     "adp": 230.4
    },
-   "cr_pct": 91,
+   "cr_pct": 90,
    "cr_season_pct": 54
   },
   {
@@ -20352,7 +20422,7 @@
     "adp_pull": 0.996,
     "adp": 230.2
    },
-   "cr_pct": 90,
+   "cr_pct": 89,
    "cr_season_pct": 52
   },
   {
@@ -32334,64 +32404,6 @@
    "cr_season_pct": 65
   },
   {
-   "id": 3026526,
-   "name": "Laurent Brossoit",
-   "team": "ANA",
-   "games": 3,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    29,
-    31,
-    34
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-01T18:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 1.3,
-   "adp": 230.0,
-   "gp": 0,
-   "ppg": -3.4,
-   "cur_ppg": null,
-   "last_ppg": -3.4,
-   "last_gp": 1,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {},
-   "cr": 0.0,
-   "cr_fpg": 2.82,
-   "cr_season": 0.0,
-   "proj_gp": 0,
-   "cr_games": 0.0,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": false,
-   "nhl_id": null,
-   "cr_why": {
-    "exp_starts": 0.0,
-    "team_games": 1,
-    "share10": null,
-    "n10": 10,
-    "own_pps": 2.89,
-    "gs": null,
-    "p_today": 0.0,
-    "p_today_pre": 0.0
-   },
-   "cr_pct": 0,
-   "cr_season_pct": 0
-  },
-  {
    "id": 4915856,
    "name": "Dmitri Voronkov",
    "team": "CBJ",
@@ -36910,7 +36922,7 @@
     "adp": 229.6
    },
    "cr_pct": 0,
-   "cr_season_pct": 49
+   "cr_season_pct": 48
   },
   {
    "id": 5364138,
