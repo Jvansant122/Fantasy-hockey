@@ -1,5 +1,5 @@
 {
- "updated": "Sun Nov 1, 10:35 AM ET",
+ "updated": "Sun Nov 1, 10:46 AM ET",
  "updated_date": "2026-11-01",
  "first_start": "2026-11-01T18:00:00Z",
  "stats_missing": 0,
@@ -8,7 +8,7 @@
    "34": 1.0
   }
  },
- "updated_utc": "2026-11-01T15:35:15Z",
+ "updated_utc": "2026-11-01T15:46:17Z",
  "team": "New York Mess",
  "matchup_period": 5,
  "matchup_weeks": 1,
@@ -4949,7 +4949,7 @@
     "away": "EDM",
     "home_name": "Rangers",
     "away_name": "Oilers",
-    "p_home": 0.519,
+    "p_home": 0.52,
     "inputs": {
      "pts": [
       8.36,
@@ -5083,10 +5083,10 @@
      "id": 9,
      "name": "I'm In Agony.. Robert.",
      "now": 90.4,
-     "rest": 8.6,
-     "total": 99.0
+     "rest": 8.8,
+     "total": 99.2
     },
-    "p_home": 0.277,
+    "p_home": 0.266,
     "sd": 5.9
    },
    {
@@ -5202,6 +5202,78 @@
    "cr_season_pct": 99
   },
   {
+   "id": 4697705,
+   "name": "Dylan Garand",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    28,
+    34
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-01T23:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 9,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 46.3,
+   "adp": 226.8,
+   "gp": 8,
+   "ppg": 2.48,
+   "cur_ppg": 3.1,
+   "last_ppg": 6.07,
+   "last_gp": 3,
+   "proj_ppg": 2.29,
+   "clears": null,
+   "dfo_out": null,
+   "proj_ppg_pre": 2.29,
+   "cr_g_nights": {
+    "34": 1.0
+   },
+   "cr": 3.12,
+   "cr_fpg": 3.12,
+   "cr_season": 1.49,
+   "proj_gp": 48,
+   "cr_games": 1.0,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482193,
+   "cr_why": {
+    "exp_starts": 1.0,
+    "team_games": 1,
+    "share10": 0.7,
+    "n10": 10,
+    "tonight": {
+     "starting": true,
+     "status": "Confirmed"
+    },
+    "own_pps": 3.31,
+    "g_season_share": 0.57,
+    "season_pps": 3.26,
+    "line": {
+     "win_prob": 0.53,
+     "pps": 3.12
+    },
+    "gs": 8,
+    "p_today": 1.0,
+    "p_today_pre": 1.0,
+    "adp_pull": 0.897,
+    "adp": 226.8
+   },
+   "cr_pct": 99,
+   "cr_season_pct": 90
+  },
+  {
    "id": 3895074,
    "name": "Connor McDavid",
    "team": "EDM",
@@ -5284,78 +5356,6 @@
    },
    "cr_pct": 100,
    "cr_season_pct": 100
-  },
-  {
-   "id": 4697705,
-   "name": "Dylan Garand",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    28,
-    34
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-01T23:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 9,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 46.3,
-   "adp": 226.8,
-   "gp": 8,
-   "ppg": 2.48,
-   "cur_ppg": 3.1,
-   "last_ppg": 6.07,
-   "last_gp": 3,
-   "proj_ppg": 2.29,
-   "clears": null,
-   "dfo_out": null,
-   "proj_ppg_pre": 2.29,
-   "cr_g_nights": {
-    "34": 0.95
-   },
-   "cr": 2.95,
-   "cr_fpg": 3.12,
-   "cr_season": 1.49,
-   "proj_gp": 48,
-   "cr_games": 0.95,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482193,
-   "cr_why": {
-    "exp_starts": 0.95,
-    "team_games": 1,
-    "share10": 0.7,
-    "n10": 10,
-    "tonight": {
-     "starting": true,
-     "status": "Unconfirmed"
-    },
-    "own_pps": 3.31,
-    "g_season_share": 0.57,
-    "season_pps": 3.26,
-    "line": {
-     "win_prob": 0.53,
-     "pps": 3.12
-    },
-    "gs": 8,
-    "p_today": 0.95,
-    "p_today_pre": 0.95,
-    "adp_pull": 0.897,
-    "adp": 226.8
-   },
-   "cr_pct": 99,
-   "cr_season_pct": 90
   },
   {
    "id": 4565259,
@@ -5494,7 +5494,8 @@
     },
     "gs": 0,
     "p_today": 1.0,
-    "p_today_pre": 1.0
+    "p_today_pre": 1.0,
+    "dfo_unlisted": true
    },
    "cr_pct": 98,
    "cr_season_pct": 49
@@ -12852,8 +12853,8 @@
    "proj_ppg": null,
    "clears": null,
    "dfo_out": false,
-   "cr": 1.3,
-   "cr_fpg": 1.31,
+   "cr": 1.29,
+   "cr_fpg": 1.3,
    "cr_season": 1.02,
    "proj_gp": 77,
    "cr_games": 0.99,
@@ -15253,7 +15254,7 @@
      "fpg": 1.07,
      "xfpg": 1.18
     },
-    "season_fpg": 1.34,
+    "season_fpg": 1.33,
     "opp_last": {
      "ga": 0.044,
      "move": 0.005
@@ -19394,7 +19395,7 @@
      "ga": 0.044,
      "move": 0.005
     },
-    "boost_week": 0.65,
+    "boost_week": 0.72,
     "season_pts": 1.24,
     "boost_dress": 0.81,
     "boost_fpg": 1.4,
@@ -20352,78 +20353,6 @@
    },
    "cr_pct": 72,
    "cr_season_pct": 6
-  },
-  {
-   "id": 3870,
-   "name": "James Reimer",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    28,
-    34
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-01T18:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.3,
-   "adp": 230.2,
-   "gp": 1,
-   "ppg": 2.41,
-   "cur_ppg": -2.0,
-   "last_ppg": 2.55,
-   "last_gp": 13,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "34": 0.05
-   },
-   "cr": 0.15,
-   "cr_fpg": 2.75,
-   "cr_season": 0.5,
-   "proj_gp": 10,
-   "cr_games": 0.05,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8473503,
-   "cr_why": {
-    "exp_starts": 0.05,
-    "team_games": 1,
-    "share10": 0.1,
-    "n10": 10,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed"
-    },
-    "own_pps": 2.39,
-    "mover_pps": 2.01,
-    "g_season_share": 0.12,
-    "season_pps": 2.01,
-    "line": {
-     "win_prob": 0.53,
-     "pps": 2.75
-    },
-    "gs": 1,
-    "p_today": 0.05,
-    "p_today_pre": 0.05,
-    "adp_pull": 0.996,
-    "adp": 230.2
-   },
-   "cr_pct": 89,
-   "cr_season_pct": 52
   },
   {
    "id": 5188341,
@@ -24279,7 +24208,7 @@
     "n10": 10,
     "tonight": {
      "starting": false,
-     "status": "Unconfirmed"
+     "status": "Confirmed"
     },
     "own_pps": 3.33,
     "g_season_share": 0.0,
@@ -31261,7 +31190,7 @@
     "n10": 10,
     "tonight": {
      "starting": false,
-     "status": "Unconfirmed"
+     "status": "Confirmed"
     },
     "own_pps": 2.98,
     "mover_pps": 2.55,
@@ -40242,6 +40171,74 @@
    "cr_season_pct": 0
   },
   {
+   "id": 3870,
+   "name": "James Reimer",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    28,
+    34
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-01T18:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.3,
+   "adp": 230.2,
+   "gp": 1,
+   "ppg": 2.41,
+   "cur_ppg": -2.0,
+   "last_ppg": 2.55,
+   "last_gp": 13,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "34": 0.0
+   },
+   "cr": 0.0,
+   "cr_fpg": 2.62,
+   "cr_season": 0.5,
+   "proj_gp": 10,
+   "cr_games": 0.0,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8473503,
+   "cr_why": {
+    "exp_starts": 0.0,
+    "team_games": 1,
+    "share10": 0.1,
+    "n10": 10,
+    "tonight": {
+     "starting": false,
+     "status": "Confirmed"
+    },
+    "own_pps": 2.39,
+    "mover_pps": 2.01,
+    "g_season_share": 0.12,
+    "season_pps": 2.01,
+    "gs": 1,
+    "p_today": 0.0,
+    "p_today_pre": 0.0,
+    "adp_pull": 0.996,
+    "adp": 230.2
+   },
+   "cr_pct": 0,
+   "cr_season_pct": 52
+  },
+  {
    "id": 4378671,
    "name": "Jack Drury",
    "team": "NSH",
@@ -45462,7 +45459,7 @@
     "n10": 10,
     "tonight": {
      "starting": false,
-     "status": "Unconfirmed"
+     "status": "Confirmed"
     },
     "own_pps": 2.56,
     "g_season_share": 0.0,
