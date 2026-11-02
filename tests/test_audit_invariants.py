@@ -661,3 +661,37 @@ def test_g5_counts_goalies_espn_does_not_list(data):
     assert any(w.startswith("G5") and f"'{team}', '{sp}'" in w for w in check_data.warnings(d, None))
     d["g_unlisted"] = {team: {sp: round(1 - total, 2)}}
     assert not any(w.startswith("G5") and f"'{team}', '{sp}'" in w for w in check_data.warnings(d, None))
+
+
+def test_stream_add_is_one_of_the_days_adds(browser, server, data):  # noqa: F811
+    """Mid-week with every move left, a confirmed free-agent starter tonight and plenty of free agents worth an add: Best
+    moves plus the Stream card offer at most MOVES_PER_DAY adds (handoff 488). The Best moves loop capped itself at
+    MOVES_PER_DAY without the stream's add and offered 4 + 1 (team 10, Nov 2 data)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d, tonight = _thursday(data)
+    fa_g = next((p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")
+                 and tonight in (p.get("nights") or [])), None)
+    if fa_g is None:
+        pytest.skip("no free-agent goalie plays tonight")
+    fa_g.update(injury=None, games_left=max(fa_g["games_left"], 1), today_start=d["first_start"])
+    fa_g["cr_why"]["tonight"] = {"starting": True, "status": "Confirmed"}
+    for p in d["players"]:  # free-agent skaters well worth adding, so Best moves fills every add it may offer
+        if p["pos"] != "G" and p["owner"] == "freeagent" and not p.get("injury") and p.get("cr_season") is not None:
+            p["cr_season"] += 2.0
+    for t in d["teams"]:
+        t["moves_used"] = 0
+    for n in d["nights"][-3:-1]:  # no games Friday or Saturday: one night to hold a move for, so spare moves aren't the cap
+        n["games"] = 0
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 10))
+    per_day, bad, streamed = page.evaluate("MOVES_PER_DAY"), [], 0
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        n = _adds_offered(page)
+        streamed += n["stream"]
+        if n["best"] + n["stream"] > per_day:
+            bad.append((t["id"], n))
+    assert errors == []
+    ctx.close()
+    assert streamed, "no team was offered tonight's stream"
+    assert not bad, bad[:4]

@@ -1044,7 +1044,8 @@ function renderUpgrades() {
       // every add worth 3.5+ keep points (handoff 488); the final, where keep is just this round's points, keeps 0.5
       return top && (d.final_matchup || noMoves ? top.gain > 0.5 : top.gain >= MOVE_MIN_GAIN) ? top : null;
     };
-    for (let i = 0; i < (lastCall ? movesLeft - streamNeed : Math.min(MOVES_PER_DAY, spare, movesLeft - streamNeed)); i++) {
+    // tonight's stream add is one of the day's adds and one of the spare moves too, as on the Drop list (handoff 488)
+    for (let i = 0; i < (lastCall ? movesLeft - streamNeed : Math.min(MOVES_PER_DAY, spare, movesLeft) - streamNeed); i++) {
       const top = pick();
       if (!top) break;
       added.add(top.fa.id); dropped.add(top.worst.id); best.push(top);

@@ -2139,7 +2139,8 @@ def test_details_explain_week_fit_goalie_season_and_game_dates(browser, server, 
     g["cr_g_nights"] = {str(nt["sp"]): 0.18}
     u = next(p for p in d["players"] if p["pos"] == "G" and p is not g)
     u.update(cr_matched=False)
-    u["cr_why"] = {k: v for k, v in u["cr_why"].items() if k != "no_record"}
+    # an unmatched goalie has no NHL record: no record flag and no moved-team rate (mover_pps), whichever goalie comes first
+    u["cr_why"] = {k: v for k, v in u["cr_why"].items() if k not in ("no_record", "mover_pps")}
     ctx, page, errors = open_page(browser, server, data=d, clock=_run_clock(d))  # the run's own time, not a later day's
     whyof = lambda p: page.evaluate(f"why(state.data.players.find(p => p.id === {p['id']}))")
     wa, wb, wg, wu = whyof(a), whyof(b), whyof(g), whyof(u)
