@@ -3605,7 +3605,7 @@ def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
 
 def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     """Handoff 756: the backup started night 1 of a back-to-back, so the rested no. 1's chance for night 2 gets +0.6 logit
-    (team sum kept); the later game, a no. 1 start yesterday, a day off between, and a Confirmed backup don't move."""
+    (team sum kept; re-sized to -0.1 by handoff 832); the later game, a no. 1 start yesterday, a day off between, and a Confirmed backup don't move."""
     import math
     lo = lambda v: math.log(v / (1 - v))
     def nights(lift, last, last_day="2026-10-21", **kw):
@@ -3622,6 +3622,29 @@ def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     assert nights(0.6, 1)[1] == pytest.approx(nights(0.0, 1)[1])  # the no. 1 started night 1
     assert nights(0.6, 2, "2026-10-20")[1] == pytest.approx(nights(0.0, 2, "2026-10-20")[1])  # a day off between
     assert nights(0.6, 2, confirmed={"2026-10-22": 2})[2]["2026-10-22"] == 1.0
+
+
+def test_no1_cut_after_his_backup_starts_two_straight(monkeypatch):
+    """Handoff 832: a rested next game after another goalie started the team's last 2+ games: the no. 1's chance gets
+    NO1_AFTER_OTHER_RUN_LOGIT (team sum kept); one backup start, night 2 and the later game don't move."""
+    import math
+    lo = lambda v: math.log(v / (1 - v))
+    k = rating.NO1_AFTER_OTHER_RUN_LOGIT
+    assert k < 0
+    def nights(cut, tail, last_day="2026-10-21"):
+        monkeypatch.setattr(rating, "NO1_AFTER_OTHER_RUN_LOGIT", cut)
+        seq = [1, 1, 2, 1, 1, 2, 1, 1, 1] + tail
+        hist = [(f"2026-10-{i + 1:02d}", g) for i, g in enumerate(seq[:-1])] + [(last_day, seq[-1])]
+        out = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 20}, ["2026-10-23", "2026-10-26"],
+                             date(2026, 10, 23), by_date=out)
+        return out
+    a, b = nights(0.0, [2, 2]), nights(k, [2, 2])
+    assert lo(b[1]["2026-10-23"]) - lo(a[1]["2026-10-23"]) == pytest.approx(k, abs=1e-6)
+    assert b[1]["2026-10-23"] + b[2]["2026-10-23"] == pytest.approx(a[1]["2026-10-23"] + a[2]["2026-10-23"])
+    assert b[1]["2026-10-26"] == pytest.approx(a[1]["2026-10-26"])
+    assert nights(k, [1, 2])[1] == pytest.approx(nights(0.0, [1, 2])[1])  # one backup start
+    assert nights(k, [2, 2], "2026-10-22")[1] == pytest.approx(nights(0.0, [2, 2], "2026-10-22")[1])  # night 2
 
 
 def _adp_pool(n=24, games=0):
