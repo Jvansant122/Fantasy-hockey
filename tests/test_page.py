@@ -2399,7 +2399,9 @@ def test_day_to_day_goalie_counts_toward_the_goalie_spots(browser, server, data)
         team = d["teams"][0]
         for p in _mine(d, team, "G"):
             p["team_id"], p["owner"] = None, "freeagent"
-        gs = [p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")][:extra + 1]
+        # not a team's no. 1 (6+ of its last 10): the card keeps him instead of naming the stream slot (handoff 805; Nov 6 data)
+        gs = [p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")
+              and (p["cr_why"].get("share10") or 0) <= 0.55][:extra + 1]
         for i, p in enumerate(gs):
             p.update(team_id=team["id"], owner=str(team["id"]), ir=False, injury="DAY_TO_DAY" if i == 0 else None)
         ctx, page, errors = open_page(browser, server, data=d)

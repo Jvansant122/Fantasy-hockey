@@ -164,6 +164,9 @@ BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
 BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its last: last starter's next-game logit (findings 196)
 # second night of a back-to-back, night-1 starter's logit: the team's no. 1 rests more, a backup who played goes again (findings 200)
 B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
+# ... and a further push for that backup when he also started the game before night 1, a run of 2+ (handoff 830: 2021-26
+# night-2 replay, 169 cases shown 0.05-0.09 vs 0.14-0.28 started, under-called in 5 of 5 seasons; held-out Brier -1.6%)
+B2B_NIGHT2_OTHER_RUN = 0.8
 # back-to-backs still ahead in the week, the no. 1's start logit (most starts in the team's last 20, ties to the last starter):
 # night 1 (every one still ahead this week, findings 277), night 2 of that pair, night 2 of a pair further ahead, and every other game except the
 # shipped night-2 case above. 2021-26 replay of 12,960 team-game mornings: Brier -0.6%, no. 1 week-sum error -0.7%, better
@@ -2728,7 +2731,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             recent = [g for g in seq[-20:] if g in cands]
             top = max((recent.count(g) for g in set(recent)), default=0)
             night2_no1 = bool(recent) and recent.count(seq[-1]) == top
-            rested = B2B_NIGHT2_NO1 if night2_no1 else B2B_NIGHT2_OTHER
+            rested = B2B_NIGHT2_NO1 if night2_no1 else \
+                B2B_NIGHT2_OTHER + (B2B_NIGHT2_OTHER_RUN if len(seq) >= 2 and seq[-2] == seq[-1] else 0.0)
             after_rest = seq[-1] == no1  # the game after night 2 goes back to him (handoff 223)
         b2b = float(bool(log) and (day - log[-1][0]).days == 1)
         week = [gid for gd, gid in log if (day - gd).days <= 7]
