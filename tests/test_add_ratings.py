@@ -1004,6 +1004,28 @@ def test_second_night_of_a_back_to_back(monkeypatch):
     assert p(2, on) > p(2, off) + 0.01  # goalie 2 is the backup
 
 
+def test_backup_on_a_run_goes_again_on_night_2(monkeypatch):
+    """Night 2: a backup who started night 1 and the game before (a run of 2+) gets B2B_NIGHT2_OTHER_RUN on top; one start,
+    or the no. 1 on a run, nothing more (handoff 830)."""
+    model = rating.Model()
+
+    def p(tail, run_logit):
+        monkeypatch.setattr(rating, "B2B_NIGHT2_OTHER_RUN", run_logit)
+        seq = [1, 1, 1, 2] * 3 + tail  # goalie 1 is the no. 1
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq[:-1])]
+        night1 = date.fromisoformat(hist[-1][0]) + timedelta(days=2)
+        hist.append((night1.isoformat(), seq[-1]))
+        nxt = night1 + timedelta(days=1)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
+        return out
+    assert rating.B2B_NIGHT2_OTHER_RUN > 0
+    on, off = p([1, 2, 2], rating.B2B_NIGHT2_OTHER_RUN), p([1, 2, 2], 0.0)
+    assert on[2] > off[2] + 0.02 and on[1] < off[1]  # the partner gives up the same chance
+    assert p([1, 1, 2], rating.B2B_NIGHT2_OTHER_RUN)[2] == pytest.approx(p([1, 1, 2], 0.0)[2])  # one start: the old rule only
+    assert p([2, 1, 1], rating.B2B_NIGHT2_OTHER_RUN)[1] == pytest.approx(p([2, 1, 1], 0.0)[1])  # the no. 1 on a run: nothing
+
+
 def test_starter_five_to_seven_straight_is_due_a_rest(monkeypatch):
     """The last starter on a 5-7 start run gets -1.0 next game; 4 or 8+ straight, nothing (findings 202)."""
     model = rating.Model()
