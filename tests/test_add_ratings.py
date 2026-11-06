@@ -990,6 +990,7 @@ def test_last_starter_after_a_long_team_break(monkeypatch):
 
 def test_second_night_of_a_back_to_back(monkeypatch):
     """Night 2: the no. 1 who played night 1 rests more, a backup who played night 1 goes again more (findings 200)."""
+    monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     model = rating.Model()
 
     def p(last_gid, shifts):
@@ -1276,6 +1277,7 @@ def test_history_runs_to_last_night_in_an_overnight_run(monkeypatch):
 
 def test_back_to_back_no1_early_in_the_season(monkeypatch):
     """Through a team's 10th game the no. 1 on night 2 gets an extra shift after the split; from the 11th, none (findings 213)."""
+    monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     model = rating.Model()
 
     def p(n_games, early):
@@ -1498,6 +1500,7 @@ def test_season_out_share_also_goes_to_hurt_partners():
 
 def test_back_to_back_no1_counts_only_goalies_still_here(monkeypatch):
     """Night 2: the no. 1 is the most-used of the goalies still on the team, not a departed one (findings 234)."""
+    monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     model = rating.Model()
     seq = [9] * 12 + [2, 1, 2, 2]  # 9 was traded away; 2 is the no. 1 now and started night 1
     hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
@@ -3606,6 +3609,7 @@ def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
 def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     """Handoff 756: the backup started night 1 of a back-to-back, so the rested no. 1's chance for night 2 gets +0.6 logit
     (team sum kept; re-sized to -0.1 by handoff 832); the later game, a no. 1 start yesterday, a day off between, and a Confirmed backup don't move."""
+    monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     import math
     lo = lambda v: math.log(v / (1 - v))
     def nights(lift, last, last_day="2026-10-21", **kw):
@@ -3645,6 +3649,28 @@ def test_no1_cut_after_his_backup_starts_two_straight(monkeypatch):
     assert b[1]["2026-10-26"] == pytest.approx(a[1]["2026-10-26"])
     assert nights(k, [1, 2])[1] == pytest.approx(nights(0.0, [1, 2])[1])  # one backup start
     assert nights(k, [2, 2], "2026-10-22")[1] == pytest.approx(nights(0.0, [2, 2], "2026-10-22")[1])  # night 2
+
+
+def test_night_2_favourite_capped_until_daily_faceoff_says(monkeypatch):
+    """Handoff 833: night 2 of a back-to-back, no goalie's reported chance above NIGHT2_CAP (the rest shared by the others'
+    odds); a rested game, and a Likely or Confirmed starter, aren't capped."""
+    cap = rating.NIGHT2_CAP
+    assert 0.5 < cap < 1
+    def night(c, last_day="2026-10-21", **kw):
+        monkeypatch.setattr(rating, "NIGHT2_CAP", c)
+        hist = [(f"2026-10-{i + 1:02d}", g) for i, g in enumerate([1] * 18)] + [(last_day, 2)]
+        out = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2, 3], {"TOR": hist}, {1: 60, 2: 20, 3: 2}, ["2026-10-22"],
+                             date(2026, 10, 22), today_p=out, **kw)
+        return out
+    free = night(1.0)
+    assert free[1] > cap  # the no. 1 back after his backup's night 1
+    capped = night(cap)
+    assert capped[1] == pytest.approx(cap) and sum(capped.values()) == pytest.approx(1.0)
+    assert capped[2] / capped[3] == pytest.approx(free[2] / free[3])
+    assert night(cap, likely_dfo={"2026-10-22": 1})[1] > cap
+    assert night(cap, confirmed={"2026-10-22": 1})[1] == 1.0
+    assert night(cap, "2026-10-20")[1] == pytest.approx(night(1.0, "2026-10-20")[1])  # a day off: not night 2
 
 
 def _adp_pool(n=24, games=0):

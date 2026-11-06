@@ -224,6 +224,11 @@ B2B_NIGHT2_RESTED_NO1_LOGIT = -0.1
 # shown (findings 4374, handoff 832); on the reported chance, the next game only. Sized on every goalie of those team-games:
 # Brier -0.9%, leave-one-season-out picks -0.2/-0.3, 4 of 5 seasons better
 NO1_AFTER_OTHER_RUN_LOGIT = -0.2
+# night 2 of a back-to-back, before Daily Faceoff confirms: no goalie's reported chance above NIGHT2_CAP, the rest shared
+# by the others' odds (favourites shown 0.91-0.92 vs 0.78-0.88 started, 5 of 5 seasons; findings 4377, handoff 833). Sized on
+# every goalie of 2021-26 night-2 team-nights, opponents passed: Brier -1.09%, leave-one-season-out -0.95%, 4 of 5 seasons
+# better and 2024-25 flat (0.88 was worse in 2023-25)
+NIGHT2_CAP = 0.90
 # early season, each skater's Season moves toward ESPN's draft market: x exp(C x E x (ADP pct - Season pct)), E fading to 0
 # at K team games; off when ESPN's ADP has under MIN distinct values (its stored 2025-26 ADP is all 230). Held out
 # Spearman +0.014 / +0.010 (2023-24 / 2024-25) at the Oct 20 Monday, 0.6 in both folds (findings 556, handoff 757)
@@ -2858,6 +2863,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             was = q[no1]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_RUN_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
+        fav = max(q, key=q.get) if q else None
+        if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav != (likely_dfo or {}).get(d) and len(q) > 1:  # handoff 833
+            rest = sum(v for gid, v in q.items() if gid != fav)
+            q = {gid: NIGHT2_CAP if gid == fav else (v / rest * (1 - NIGHT2_CAP) if rest else (1 - NIGHT2_CAP) / (len(q) - 1))
+                 for gid, v in q.items()}
         lk = (likely_dfo or {}).get(d)
         if lk in q and q[lk] < LIKELY_START_FLOOR:
             # Daily Faceoff's "Likely" starter: at least LIKELY_START_FLOOR for that game, the rest split by the model's
