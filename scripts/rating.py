@@ -216,8 +216,14 @@ RESTED_NO1_LOGIT = 0.05
 # the reported chance, every game left (handoff 364, ledger 2137: 15 of 15 seasons better at +0.1, the chain version weaker)
 NO1_AFTER_OTHER_LOGIT = 0.1
 # night 2 of a back-to-back after another goalie started night 1: the rested no. 1 started 0.865 of those games vs
-# 0.809 given, 2021-26 (findings 551, ledger 2706, handoff 756); the next game only
-B2B_NIGHT2_RESTED_NO1_LOGIT = 0.6
+# 0.809 given, 2021-26 (findings 551, ledger 2706, handoff 756); the next game only. Handoff 832 re-sized it from +0.6 on
+# the fuller replay (week window, form, opponents passed as live): the no. 1 was shown 0.860 vs 0.741 started; every goalie
+# of those team-nights Brier -4.8%, leave-one-season-out picks 0.0/-0.1, 4 of 5 seasons better (findings 4374)
+B2B_NIGHT2_RESTED_NO1_LOGIT = -0.1
+# a rested next game (not night 2) after another goalie started the team's last 2+ games: the no. 1 started 0.385 vs 0.443
+# shown (findings 4374, handoff 832); on the reported chance, the next game only. Sized on every goalie of those team-games:
+# Brier -0.9%, leave-one-season-out picks -0.2/-0.3, 4 of 5 seasons better
+NO1_AFTER_OTHER_RUN_LOGIT = -0.2
 # early season, each skater's Season moves toward ESPN's draft market: x exp(C x E x (ADP pct - Season pct)), E fading to 0
 # at K team games; off when ESPN's ADP has under MIN distinct values (its stored 2025-26 ADP is all 230). Held out
 # Spearman +0.014 / +0.010 (2023-24 / 2024-25) at the Oct 20 Monday, 0.6 in both folds (findings 556, handoff 757)
@@ -2846,6 +2852,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         if ahead == 1 and gap == 1 and seq and seq[-1] != no1 and no1 in q and 0 < q[no1] < 1:  # handoff 756
             was = q[no1]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + B2B_NIGHT2_RESTED_NO1_LOGIT)))
+            q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
+        if ahead == 1 and gap != 1 and len(seq) >= 2 and seq[-1] != no1 and seq[-2] == seq[-1] and no1 in q \
+                and 0 < q[no1] < 1:  # handoff 832
+            was = q[no1]
+            now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_RUN_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
         lk = (likely_dfo or {}).get(d)
         if lk in q and q[lk] < LIKELY_START_FLOOR:

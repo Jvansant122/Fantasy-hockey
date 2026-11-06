@@ -953,7 +953,9 @@ def test_drop_list_and_goalie_cards(browser, server, data):
     team = d["teams"][0]
     for p in _mine(d, team, "G"):
         p["team_id"] = None
-    gs = [p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_why")][:3]
+    # not teams' no. 1s (6+ of their last 10): a no. 1 third goalie gets the keep card instead (handoff 805; Nov 6 data)
+    gs = [p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_why")
+          and (p["cr_why"].get("share10") or 0) <= 0.55][:3]
     for i, p in enumerate(gs):
         p.update(team_id=team["id"], owner="other", ir=False, injury=None, cr=1.0 + i, cr_season=0.5 + i)
         p["cr_why"]["tonight"] = {"starting": i == 0, "status": "Confirmed"}
