@@ -3673,6 +3673,32 @@ def test_night_2_favourite_capped_until_daily_faceoff_says(monkeypatch):
     assert night(cap, "2026-10-20")[1] == pytest.approx(night(1.0, "2026-10-20")[1])  # a day off: not night 2
 
 
+def test_pulled_starter_cut_less_than_a_full_bad_game(monkeypatch):
+    """Handoff 834: a pull (under 45 minutes, 3+ against) gets PULLED_NEXT_LOGIT next game when rested and PULLED_NIGHT2_LOGIT
+    on night 2, not BAD_START_LOGIT; a full game with 5+ against keeps BAD_START_LOGIT."""
+    rested, n2 = rating.PULLED_NEXT_LOGIT, rating.PULLED_NIGHT2_LOGIT
+    assert rating.BAD_START_LOGIT < rested < n2
+    pulled = rating.last_start_shift({"ga": 4, "toi": 1800, "wins": 0, "losses": 1, "otl": 0})
+    full = rating.last_start_shift({"ga": 5, "toi": 3600, "wins": 0, "losses": 1, "otl": 0})
+    assert isinstance(pulled, rating.PulledShift) and not isinstance(full, rating.PulledShift) and tuple(pulled) == tuple(full)
+    model = rating.Model()
+
+    def run(shift, last_day, r=rested, n=n2):
+        monkeypatch.setattr(rating, "PULLED_NEXT_LOGIT", r)
+        monkeypatch.setattr(rating, "PULLED_NIGHT2_LOGIT", n)
+        monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)
+        hist = [(f"2026-10-{i + 1:02d}", g) for i, g in enumerate([1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1])] + [(last_day, 1)]
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, ["2026-10-22", "2026-10-24"],
+                             date(2026, 10, 22), by_date=out, last_start=(1, shift))
+        return out[1]
+    for day in ("2026-10-20", "2026-10-21"):  # rested, then night 2
+        assert run(pulled, day)["2026-10-22"] > run(full, day)["2026-10-22"] + 0.02
+        assert run(full, day) == pytest.approx(run(full, day, -3.0, -3.0))  # a full game doesn't read the pull constants
+    assert run(pulled, "2026-10-20", r=rating.BAD_START_LOGIT)["2026-10-22"] == pytest.approx(run(full, "2026-10-20")["2026-10-22"])
+    assert run(pulled, "2026-10-21", n=rating.BAD_START_LOGIT)["2026-10-22"] == pytest.approx(run(full, "2026-10-21")["2026-10-22"])
+
+
 def _adp_pool(n=24, games=0):
     """n skaters on TOR, ADP 10, 20, ... and Season the reverse of the market, plus a goalie and a hurt 0."""
     ps = [{"id": i, "pos": "C", "team": "TOR", "adp": 10.0 * (i + 1), "cr_season": 10.0 + i, "cr_why": {"season_pts": 20.0 + i}}

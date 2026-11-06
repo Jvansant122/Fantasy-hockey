@@ -161,6 +161,12 @@ SEASON_GAMES = 84  # 2026-27 regular season per team (findings section 75); last
 PRESEASON_INJURED = {"short": 0.45, "long": 0.3, "season": 0.0}  # rest-of-season dress share, hurt before playing (findings 74)
 BAD_START_LOGIT = -1.0  # next-game start logit for a starter who gave up 5+, or was pulled after 3+ (findings 131, 163)
 BAD_START_LOGIT_2 = -0.3  # ... and in the team's game after next (findings 132)
+# a pull (under 45 minutes with 3+ against) rather than a full game with 5+ against: his next-game logit, rested and on night
+# 2 of a back-to-back, in place of BAD_START_LOGIT (pulled, rested 0.296 shown vs 0.390 started, night 2 0.060 vs 0.253, 5 of 5
+# seasons; findings 4378, handoff 834). Sized on every goalie of those 2021-26 team-games, opponents passed: rested -0.3 (Brier
+# -4.2%, leave-one-season-out -3.9%), night 2 +1.4 (79 cases: Brier -13%, 5 of 5 seasons; larger fit 2021-24 better but
+# not 2024-26)
+PULLED_NEXT_LOGIT, PULLED_NIGHT2_LOGIT = -0.3, 1.4
 BREAK_LOGITS = ((7, 1.5), (4, 0.4))  # team's next game 4-6 / 7+ days after its last: last starter's next-game logit (findings 196)
 # second night of a back-to-back, night-1 starter's logit: the team's no. 1 rests more, a backup who played goes again (findings 200)
 B2B_NIGHT2_NO1, B2B_NIGHT2_OTHER = -0.8, 0.9
@@ -416,8 +422,15 @@ def bad_start(g):
     return g["ga"] >= 5 or (g["toi"] < 45 * 60 and g["ga"] >= 3)
 
 
+class PulledShift(tuple):
+    """last_start_shift for a pulled starter: goalie_starts swaps the next game's shift for PULLED_NEXT_LOGIT or, on night 2
+    of a back-to-back, PULLED_NIGHT2_LOGIT (handoff 834)."""
+
+
 def last_start_shift(g):
     """Start-logit shifts for the goalie who started the team's last game: (next game, game after next)."""
+    if g["toi"] < 45 * 60 and g["ga"] >= 3:
+        return PulledShift((BAD_START_LOGIT, BAD_START_LOGIT_2))
     if bad_start(g):
         return (BAD_START_LOGIT, BAD_START_LOGIT_2)
     if g.get("wins"):
@@ -2766,7 +2779,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             raw[gid] = model.p_start({**shares[gid], "started_prev": prev_p[gid], "b2b": b2b, "started_prev_and_b2b": prev_p[gid] * b2b,
                                       "streak": streak, "days_since_start": min((day - last).days, 30) if last else 30,
                                       "team_games_7d": len(week), "starts_7d": week.count(gid), "streak_x_b2b": streak * b2b})
-            z = (shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0) + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
+            shift = shifts[ahead] if gid == shift_gid and ahead < len(shifts) else 0.0
+            if gid == shift_gid and ahead == 0 and isinstance(shifts, PulledShift):  # handoff 834
+                shift = PULLED_NIGHT2_LOGIT if gap == 1 else PULLED_NEXT_LOGIT
+            z = shift + (NEW_TEAM_START_LOGIT if gid in new_team else 0.0) \
                 + (rested if rested and gid == seq[-1] else 0.0) \
                 + (STREAK_LOGIT if on_streak and ahead == 0 and gid == seq[-1] else 0.0) \
                 + (ROTATION_LOGIT if rotating and ahead == 0 and gid == seq[-1] else 0.0) \
