@@ -1026,6 +1026,31 @@ def test_backup_on_a_run_goes_again_on_night_2(monkeypatch):
     assert p([2, 1, 1], rating.B2B_NIGHT2_OTHER_RUN)[1] == pytest.approx(p([2, 1, 1], 0.0)[1])  # the no. 1 on a run: nothing
 
 
+def test_runs_of_starts_outside_night_2(monkeypatch):
+    """A rested next game (not night 2): a backup on a run of 2+ gets RUN_BACKUP_LOGIT, the no. 1 on a run of 3-7 gets
+    RUN_NO1_LOGIT; a backup's single start, the no. 1 on 2 or 8+ straight, and night 2 get nothing (handoff 831)."""
+    model = rating.Model()
+
+    def p(tail, backup, no1, gap=2):
+        monkeypatch.setattr(rating, "RUN_BACKUP_LOGIT", backup)
+        monkeypatch.setattr(rating, "RUN_NO1_LOGIT", no1)
+        seq = [1, 1, 1, 2] * 3 + tail  # goalie 1 is the no. 1
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=gap)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
+        return out
+    assert rating.RUN_BACKUP_LOGIT > 0 > rating.RUN_NO1_LOGIT
+    b, n = rating.RUN_BACKUP_LOGIT, rating.RUN_NO1_LOGIT
+    assert p([1, 2, 2], b, n)[2] > p([1, 2, 2], 0.0, 0.0)[2] + 0.02  # backup on a run of 2
+    assert p([1, 1, 2], b, n)[2] == pytest.approx(p([1, 1, 2], 0.0, 0.0)[2])  # one start: nothing
+    assert p([1, 2, 2], b, n, gap=1)[2] == pytest.approx(p([1, 2, 2], 0.0, 0.0, gap=1)[2])  # night 2: 830's rule instead
+    for k in (3, 4, 7):
+        assert p([2] + [1] * k, b, n)[1] < p([2] + [1] * k, 0.0, 0.0)[1] - 0.02  # no. 1 on a run of 3-7
+    for k in (2, 8):
+        assert p([2] + [1] * k, b, n)[1] == pytest.approx(p([2] + [1] * k, 0.0, 0.0)[1])
+
+
 def test_starter_five_to_seven_straight_is_due_a_rest(monkeypatch):
     """The last starter on a 5-7 start run gets -1.0 next game; 4 or 8+ straight, nothing (findings 202)."""
     model = rating.Model()

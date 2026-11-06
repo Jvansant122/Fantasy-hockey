@@ -183,6 +183,12 @@ EARLY_NO_START_LOGIT = -0.75
 AFTER_NO1_REST_OTHER_LOGIT = -1.0
 # the last starter 5-7 straight team games in: rested next game more than the model sees; 8+ are workhorses (findings 202)
 STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
+# ... and outside night 2 of a back-to-back, next game: a last starter who isn't the no. 1 on a run of 2+ goes again more
+# (shown 0.33 vs 0.46 started, under in 5 of 5 seasons), a no. 1 on a run of 3-7 less (0.74 vs 0.65, over in 5 of 5);
+# 2021-26 replay of 9,539 rested games, findings 4371, handoff 831. Sized on every goalie of the team-game after the
+# chance is shared out (leave-one-season-out picks 0.9-1.1 and -0.6 to -0.8): Brier -4.7% and -1.7% on those team-games
+RUN_BACKUP_LOGIT, RUN_BACKUP_MIN = 0.9, 2
+RUN_NO1_LOGIT, RUN_NO1_RANGE = -0.6, (3, 7)
 ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
 PATTERN_LOGITS = {(3, True): 0.8, (3, False): -0.4, (4, False): -0.8}  # last starter's next game in a repeating A A B or
 # A A B B pattern: (period, the pattern keeps him in) -> shift; a period-4 stay gets nothing (findings 243)
@@ -2785,6 +2791,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 z += NO1_SPLIT_B2B * split \
                     + NO1_AFTER_BACKUP_LOSS * bool(backup and backup[-1] == len(seq) - 1 and not start_wins[-1]) \
                     + NO1_AFTER_BACKUP_WIN * bool(backup and 2 <= len(seq) - backup[-1] <= 3 and start_wins[backup[-1]])
+            if ahead == 0 and gap != 1 and seq and gid == seq[-1]:  # handoff 831
+                if gid != no1 and run >= RUN_BACKUP_MIN:
+                    z += RUN_BACKUP_LOGIT
+                elif gid == no1 and RUN_NO1_RANGE[0] <= run <= RUN_NO1_RANGE[1]:
+                    z += RUN_NO1_LOGIT
             if ahead == 0 and gid in off_movers and gid != no1 and len(seq) <= OFFSEASON_MOVER_GAMES:  # handoff 731
                 z += OFFSEASON_MOVER_NEXT_LOGIT
             if seq and gid == seq[0] and ahead == 0 and len(seq) <= OPENING_STARTER_GAMES and gap != 1:  # handoff 733
