@@ -320,9 +320,10 @@ SEASON_SHARE_SCALE = 0.88
 SAVE_GAP_SEASON = (0.008, 0.0485)
 # ... and each game's start logit (not night 2 of a back-to-back): + SAVE_GAP_NEXT x the same gap clipped at +-SAVE_GAP_CLIP
 # (no. 1 out-saving his partner by 1+ shown 0.615 vs 0.662 started, 1+ worse 0.458 vs 0.395, 5 of 5 seasons; findings 4393,
-# handoff 835). Re-measured on every goalie of 2021-26 rested team-games, opponents passed: Brier -1.05%, every
-# leave-one-season-out fold picks 0.3, 5 of 5 seasons better (0.6 worse)
-SAVE_GAP_NEXT, SAVE_GAP_CLIP = 0.3, 3.0
+# handoff 835). Handoff 836 re-sized it from 0.3 on every goalie of 2021-26 rested team-games after the team's chances are
+# shared out: all teams Brier -1.00% (0.3: -1.05%), two-goalie teams -0.93% (0.3: -0.84%, every held-out season picks 0.2),
+# a no. 1 out-saving his partner by 1+ shown 0.729 vs 0.722 started (0.3: 0.753); 5 of 5 seasons better
+SAVE_GAP_NEXT, SAVE_GAP_CLIP = 0.2, 3.0
 # a healthy goalie's Season share after the save% gap stays at least min(his share, 0.03), and a healthy goalie taking over
 # an out-for-season one's share weighs at least 0.1 (handoff 446)
 GOALIE_SEASON_FLOOR, GOALIE_TAKER_MIN = 0.03, 0.1
