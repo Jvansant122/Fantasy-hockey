@@ -318,6 +318,11 @@ SEASON_SHARE_SCALE = 0.88
 # start-weighted save% of the team's other starters this season, x 100), both shrunk as in shrunk_save_pcts; refit on
 # this function's own shares, 2023-26 goalie-Mondays (findings 330 (1), handoff 270)
 SAVE_GAP_SEASON = (0.008, 0.0485)
+# ... and each game's start logit (not night 2 of a back-to-back): + SAVE_GAP_NEXT x the same gap clipped at +-SAVE_GAP_CLIP
+# (no. 1 out-saving his partner by 1+ shown 0.615 vs 0.662 started, 1+ worse 0.458 vs 0.395, 5 of 5 seasons; findings 4393,
+# handoff 835). Re-measured on every goalie of 2021-26 rested team-games, opponents passed: Brier -1.05%, every
+# leave-one-season-out fold picks 0.3, 5 of 5 seasons better (0.6 worse)
+SAVE_GAP_NEXT, SAVE_GAP_CLIP = 0.3, 3.0
 # a healthy goalie's Season share after the save% gap stays at least min(his share, 0.03), and a healthy goalie taking over
 # an out-for-season one's share weighs at least 0.1 (handoff 446)
 GOALIE_SEASON_FLOOR, GOALIE_TAKER_MIN = 0.03, 0.1
@@ -2739,6 +2744,13 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     idle3 = three_goalie_idle(seq)
     plain = bool(seq) and not rotating and not pattern and not other_cut and not idle3
     prev_d = None
+    sv_gap = {}
+    if save_pcts:  # handoff 835: the season save% gap to the team's other starters, as SAVE_GAP_SEASON's
+        sv, lg = save_pcts
+        for gid in cands:
+            others = {x: seq.count(x) for x in set(seq) if x != gid}
+            gap_sv = (sv.get(gid, lg) - sum(sv.get(x, lg) * n for x, n in others.items()) / sum(others.values())) * 100 if others else 0.0
+            sv_gap[gid] = SAVE_GAP_NEXT * min(max(gap_sv, -SAVE_GAP_CLIP), SAVE_GAP_CLIP)
     recent20 = [g for g in seq[-20:] if g in cands]
     no1 = max(set(recent20), key=lambda g: (recent20.count(g), g == seq[-1])) if recent20 else None
     # an even tandem (top two within one start of the last 20): the no. 1's back-to-back shifts at half size (handoff 451)
@@ -2789,6 +2801,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 + (pattern if pattern and ahead == 0 and gid == seq[-1] else 0.0) \
                 + (other_cut if other_cut and ahead == 0 and gid != seq[-1] and gap != 1 else 0.0) \
                 + (ROTATION_LATER_LOGIT if rotating and ahead == 1 and gid == seq[-2] and not night_after else 0.0)
+            if sv_gap and not (gap == 1 if ahead == 0 else night_after):  # handoff 835: not night 2 of a back-to-back
+                z += sv_gap.get(gid, 0.0)
             if after_rest and ahead == 1 and gid != no1:
                 z += AFTER_NO1_REST_OTHER_LOGIT
             if gid == no1:  # back-to-backs still ahead, and his ordinary nights (findings 231)
