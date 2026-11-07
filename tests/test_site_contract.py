@@ -301,3 +301,27 @@ def test_check_reads_the_predicted_winners(data):
         assert check_data.problems(d), broken
     d["winners"] = {"games": [g], "record": {}, "matchups": [{"home": side, "away": {"id": 2}, "p_home": 0.5}]}
     assert check_data.problems(d)
+
+
+def test_next_game_dress_jump_after_a_lock_is_no_warning(data):
+    """X4 warns when next-game dress jumps 0.15+ with no game or status change, but not for a player whose lock passed
+    between the runs (his puck, or the first puck for a free agent): his next-game chance then moves on by design (handoff 837)."""
+    prev = copy.deepcopy(data)
+    prev["updated_utc"] = "2026-11-07T16:00:00Z"
+    now = copy.deepcopy(data)
+    now["updated_utc"], now["first_start"] = "2026-11-07T22:11:00Z", "2026-11-07T17:30:00Z"
+    old = {p["id"]: p for p in prev["players"]}
+    sk = [p for p in now["players"] if p["pos"] != "G" and p.get("cr_dress_next") is not None and p["id"] in old]
+    owned = next(p for p in sk if p.get("owner") not in ("freeagent", "waivers"))
+    fa = next(p for p in sk if p.get("owner") == "freeagent")
+    for p in (owned, fa):
+        old[p["id"]]["cr_dress_next"], p["cr_dress_next"] = 0.05, 0.6
+    owned["today_start"], fa["today_start"] = "2026-11-08T00:00:00Z", "2026-11-08T00:00:00Z"
+
+    def x4():
+        return " ".join(w for w in check_data.warnings(now, prev) if w.startswith("X4"))
+    assert owned["name"] in x4() and fa["name"] not in x4()  # the free agent locked at the first puck
+    owned["today_start"] = "2026-11-07T22:00:00Z"  # his own puck between the runs
+    assert owned["name"] not in x4()
+    owned["today_start"] = "2026-11-07T15:00:00Z"  # before the earlier run: still a warning
+    assert owned["name"] in x4()

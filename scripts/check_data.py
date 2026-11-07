@@ -383,9 +383,16 @@ def warnings(data, prev):
         if med > 0.02 or p90 > 0.05:
             out.append(f"X3s {len(d)} skaters without a new game moved Season: median {med:.3f}, 90th percentile {p90:.3f}")
     # X4 next-game dress up more than 0.15 with no game and no status change (a misfiring boost, findings 183 and 213)
+    # ... skipping a player whose lock passed between the two runs (his own puck, or the day's first puck for a free agent):
+    # cr_dress_next is then his next game's chance and leaves the game-day cap by design (handoff 837)
+    was, now = prev.get("updated_utc") or "", data.get("updated_utc") or ""
+
+    def locked_since(p):
+        locks = [p.get("today_start")] + ([data.get("first_start")] if p.get("owner") in ("freeagent", "waivers") else [])
+        return bool(was and now) and any(t and was < t <= now for t in locks)
     jumps = [p["name"] for p, o in same if p.get("cr_dress_next") is not None and o.get("cr_dress_next") is not None
              and p["cr_dress_next"] - o["cr_dress_next"] > 0.15 and p.get("injury") == o.get("injury")
-             and p.get("dfo_out") == o.get("dfo_out") and _gp(p) == _gp(o)]
+             and p.get("dfo_out") == o.get("dfo_out") and _gp(p) == _gp(o) and not locked_since(p)]
     if jumps:
         out.append(f"X4 {len(jumps)} skaters' next-game dress rose by over 0.15 with no game or status change: {jumps[:5]}")
     return out
