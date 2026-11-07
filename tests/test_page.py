@@ -426,7 +426,8 @@ def test_goalies_card_after_first_puck(browser, server, data):
     gs = [p for p in d["players"] if p["pos"] == "G"]
     for p in _mine(d, team, "G"):
         p["team_id"] = None
-    for p in [p for p in gs if p["owner"] in ("freeagent", "waivers")][:3]:
+    # not teams' no. 1s (6+ of their last 10): a no. 1 third goalie gets the keep card instead (handoff 805; Nov 7 data)
+    for p in [p for p in gs if p["owner"] in ("freeagent", "waivers") and ((p.get("cr_why") or {}).get("share10") or 0) <= 0.55][:3]:
         p.update(team_id=team["id"], owner=str(team["id"]), ir=False, injury=None)
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(team["id"]))
