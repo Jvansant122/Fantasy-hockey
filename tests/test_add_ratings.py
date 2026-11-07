@@ -1748,11 +1748,23 @@ def test_season_share_follows_the_save_pct_gap(monkeypatch):
         e = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, ["2026-10-20"], date(2026, 10, 20),
                                  today_p=today, season_share=sea, save_pcts=sp)
         return sea, e
+    k = rating.SAVE_GAP_NEXT
     (on, e_on), (off, e_off) = run((sv, lg)), run(None)
     gap1 = (sv[1] - sv[2]) * 100
     assert on[1] == pytest.approx(off[1] + rating.SAVE_GAP_SEASON[0] + rating.SAVE_GAP_SEASON[1] * gap1)
     assert on[2] == pytest.approx(off[2] + rating.SAVE_GAP_SEASON[0] - rating.SAVE_GAP_SEASON[1] * gap1)
-    assert e_on == e_off  # Season only
+    monkeypatch.setattr(rating, "SAVE_GAP_NEXT", 0.0)
+    assert run((sv, lg))[1] == e_off  # the Season term alone leaves nightly starts as they were
+    # handoff 835: the nightly term moves the better goalie up on a rested night, not on night 2 of a back-to-back
+    assert k > 0 and gap1 > 0
+    assert e_on[1] > e_off[1] + 0.02 and e_on[1] + e_on[2] == pytest.approx(e_off[1] + e_off[2])
+    def night2(c, sp):
+        monkeypatch.setattr(rating, "SAVE_GAP_NEXT", c)
+        today = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 30}, ["2026-10-18"], date(2026, 10, 18),
+                             today_p=today, save_pcts=sp)
+        return today
+    assert night2(k, (sv, lg)) == pytest.approx(night2(0.0, (sv, lg)))
 
 
 def test_goalie_season_is_on_the_skaters_scale(run):
