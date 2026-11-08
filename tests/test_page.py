@@ -8,6 +8,7 @@ import json
 import os
 import threading
 import re
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -195,7 +196,7 @@ def test_games_that_already_started_drop_out(browser, server, data):
     now = datetime.now(timezone.utc)
     late = reopen_tonight(json.loads(json.dumps(data)))
     late["updated_utc"] = iso(now - timedelta(hours=2))
-    late["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
+    late["updated_date"] = datetime.now(ZoneInfo("America/New_York")).date().isoformat()  # not stale
     sk = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and (p.get("cr") or 0) > 0)
     later = next(p for p in late["players"] if p["pos"] != "G" and p["games_left"] > 0 and p["id"] != sk["id"])
     sk["today_start"], later["today_start"] = iso(now - timedelta(hours=1)), iso(now + timedelta(hours=3))
@@ -260,7 +261,7 @@ def test_stream_card_follows_the_first_puck(browser, server, data):
     last = next(n for n in data["nights"] if not n["past"]) is data["nights"][-1]
     for first, want in ((now + timedelta(hours=3), "Add before the first game at"), (now - timedelta(hours=1), "plays from Monday" if last else "plays from tomorrow")):
         d = json.loads(json.dumps(data))
-        d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
+        d["updated_date"] = datetime.now(ZoneInfo("America/New_York")).date().isoformat()  # not stale
         d["first_start"], d["move_limit"] = iso(first), None
         for p in d["players"]:
             if p["pos"] == "G" and p.get("cr_why"):
@@ -312,7 +313,7 @@ def test_goalie_in_net_fills_his_slot_and_swaps_need_games(browser, server, data
 
 def _now_et():
     from datetime import datetime, timedelta, timezone
-    return datetime.now(timezone.utc), datetime.now(timezone(timedelta(hours=-4)))
+    return datetime.now(timezone.utc), datetime.now(ZoneInfo("America/New_York"))
 
 
 def _mine(d, team, pos=None):
@@ -541,7 +542,7 @@ def test_last_night_before_first_puck_uses_every_move(browser, server, data):
                                           (now + timedelta(hours=3), True, 1, True), (now + timedelta(hours=3), True, 6, False),
                                           (None, True, 1, True)):
         d = json.loads(json.dumps(data))
-        d["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()  # not stale
+        d["updated_date"] = datetime.now(ZoneInfo("America/New_York")).date().isoformat()  # not stale
         d["final_matchup"] = False
         for n in d["nights"]:
             n["past"] = n is not d["nights"][-1]
@@ -1086,7 +1087,7 @@ def test_goalie_slots_follow_start_chances_and_new_details(browser, server, data
         pytest.skip("needs rated data")
     from datetime import datetime, timedelta, timezone
     base = json.loads(json.dumps(data))
-    base["updated_date"] = datetime.now(timezone(timedelta(hours=-4))).date().isoformat()
+    base["updated_date"] = datetime.now(ZoneInfo("America/New_York")).date().isoformat()
     for n in base["nights"]:
         n["past"] = False  # tonight is the first night; the six after it use the per-night chances
     sps = [n["sp"] for n in base["nights"]]

@@ -339,3 +339,19 @@ def test_past_surgery_and_this_season_wording():
     assert f("He is likely to miss the remainder of this season.")["season"]
     assert f("After missing most of last season, he will miss 6-8 months and likely the remainder of this season.")["season"]
     assert not f("He missed time last season, but is healthy for the season.")["season"]
+
+
+def test_season_flag_skips_not_played_season_opener_and_other_players():
+    """Handoff 838 (findings 4448): Lyon's "has not played this season" and Korpisalo's "since Igor Shesterkin's
+    season-ending injury" are not season-ending news for them; real season-enders still are."""
+    f = lambda name, d, fd="": leads.news_flags({"playerName": name, "details": d, "fantasyDetails": fd})["season"]
+    assert not f("Alex Lyon", "Lyon (upper-body) returned to practice on Monday.",
+                 "Lyon suffered an upper-body injury in training camp and has not played this season, but returned to practice on Monday.")
+    assert not f("Joonas Korpisalo", "Korpisalo (lower-body) is expected to join the Rangers on their upcoming road trip.",
+                 "Rookie Dylan Garand has led the way between the pipes for the Rangers since Igor Shesterkin's season-ending injury. "
+                 "That said, Korpisalo should see a decent workload when he returns to action.")
+    assert not f("Nico Hischier", "Hischier (upper-body) will miss the season opener.")
+    assert f("Igor Shesterkin", "Shesterkin (knee) will be out for the rest of the season.")
+    assert f("Igor Shesterkin", "Igor Shesterkin's season-ending surgery went well, the Rangers said.")
+    assert f("Alex Lyon", "Lyon won't play this season after surgery.")
+    assert f("", "Rookie Dylan Garand starts since Igor Shesterkin's season-ending injury.")  # no name: no skip

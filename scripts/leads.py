@@ -146,10 +146,14 @@ NEWS_FILE = Path(__file__).resolve().parent.parent / "data" / "dfo_news.json"
 NEWS_DAYS, NEWS_KEEP_DAYS, NEWS_MAX_PAGES = 60, 365, 60
 # season-level wording (findings 360, 371): hunt 11b's flag, or a season phrase tied to an absence (handoff 401, idea 1114,
 # hunt13/n_fix.py): "fully healthy for the playoffs" and "ready for the season opener" no longer count
-NEWS_SEASON_907 = re.compile(r"(out for|miss|remainder of|rest of) (the|this|his) (regular )?season|season[- ]ending|out for the year", re.I)
-NEWS_SEASON = re.compile(r"(out|miss|sidelined|shut down|done|sit out)[^.]{0,40}(for (the|this|his) (rest of (the|this|his) |remainder of (the|this|his) )?(\d{4}-\d{2} )?(regular )?(season|campaign)|for the year|rest of (the|this|his) (\d{4}-\d{2} )?(regular )?(season|campaign)|remainder of (the|this|his) (\d{4}-\d{2} )?(regular )?(season|campaign))"
-                         r"|until (at least )?the playoffs|(?<!healthy )(?<!ready )(?<!back )(?<!available )(?<!return )(?<!in time )(?<!time )(before|for) the (start of the )?playoffs\b(?![^.]{0,30}(healthy|ready))|(not|won.t|will not|isn.t expected to) (return|play|be back)[^.]{0,30}(this season|this year|regular season|before the playoffs)"
+# handoff 838 (findings 4448): "has not played this season" isn't "won't play this season" (\b), "season opener / debut"
+# isn't a season, and a sentence naming someone else in the possessive without his last name ("since Igor Shesterkin's
+# season-ending injury" in Korpisalo's item) is about that player (NEWS_OTHER)
+NEWS_SEASON_907 = re.compile(r"(out for|miss|remainder of|rest of) (the|this|his) (regular )?season(?!\s+(opener|debut))|season[- ]ending|out for the year", re.I)
+NEWS_SEASON = re.compile(r"(out|miss|sidelined|shut down|done|sit out)[^.]{0,40}(for (the|this|his) (rest of (the|this|his) |remainder of (the|this|his) )?(\d{4}-\d{2} )?(regular )?(season|campaign)(?!\s+(opener|debut))|for the year|rest of (the|this|his) (\d{4}-\d{2} )?(regular )?(season|campaign)(?!\s+(opener|debut))|remainder of (the|this|his) (\d{4}-\d{2} )?(regular )?(season|campaign)(?!\s+(opener|debut)))"
+                         r"|until (at least )?the playoffs|(?<!healthy )(?<!ready )(?<!back )(?<!available )(?<!return )(?<!in time )(?<!time )(before|for) the (start of the )?playoffs\b(?![^.]{0,30}(healthy|ready))|(not|won.t|will not|isn.t expected to) (return|play|be back)\b[^.]{0,30}(this season|this year|regular season|before the playoffs)"
                          r"|season[- ]ending|season is over|end of the (regular )?season", re.I)
+NEWS_OTHER = re.compile(r"\b[A-Z][a-z]+(?:[-' ][A-Z][a-z]+)* [A-Z][a-zA-Z'-]+(?:'s|\u2019s)\b")
 NEWS_INDEFINITE = re.compile(r"indefinit|long[- ]term|extended period|foreseeable|significant (amount of )?time|considerable time|several months|multiple months", re.I)
 NEWS_LTIR = re.compile(r"long[- ]term injured reserve|LTIR", re.I)
 # a negation just before an indefinite phrase ("not expected to be a long-term issue") or a past season around either
@@ -158,7 +162,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 10  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 11  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -277,7 +281,9 @@ def news_flags(item):
     text = re.sub(r"\s+", " ", f'{item.get("details") or ""} {item.get("fantasyDetails") or ""}')
     details = re.sub(r"\s+", " ", item.get("details") or "")
     cat = item.get("newsCategoryName")
-    return {"season": bool(NEWS_SEASON_907.search(text)) or news_wording(text, NEWS_SEASON, neg=False),
+    me = (item.get("playerName") or "").split()[-1:]
+    sents = [x for x in re.split(r"(?<=[.!?])\s+", text) if not (me and me[0] not in x and NEWS_OTHER.search(x))]
+    return {"season": any(NEWS_SEASON_907.search(x) or news_wording(x, NEWS_SEASON, neg=False) for x in sents),
             "surgery": news_surgery(text), "indefinite": news_wording(text, NEWS_INDEFINITE),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text)),
             "cond": bool(re.search(r"conditioning", text, re.I)),  # a conditioning loan isn't a real send-down (handoff 688)
