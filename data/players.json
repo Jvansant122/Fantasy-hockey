@@ -1,10 +1,10 @@
 {
- "updated": "Sun Nov 8, 12:41 PM ET",
+ "updated": "Sun Nov 8, 12:54 PM ET",
  "updated_date": "2026-11-08",
  "first_start": "2026-11-08T18:00:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-08T17:41:24Z",
+ "updated_utc": "2026-11-08T17:53:54Z",
  "team": "New York Mess",
  "matchup_period": 6,
  "matchup_weeks": 1,
@@ -4823,11 +4823,11 @@
     "away": "FLA",
     "home_name": "Bruins",
     "away_name": "Panthers",
-    "p_home": 0.64,
+    "p_home": 0.635,
     "inputs": {
      "pts": [
       9.08,
-      8.17
+      8.32
      ],
      "gd": [
       0.81,
@@ -5104,8 +5104,8 @@
      "id": 12,
      "name": "New York Mess",
      "now": 110.2,
-     "rest": 18.8,
-     "total": 129.0
+     "rest": 19.4,
+     "total": 129.6
     },
     "away": {
      "id": 8,
@@ -5115,7 +5115,7 @@
      "total": 106.4
     },
     "p_home": 0.999,
-    "sd": 7.5
+    "sd": 7.6
    },
    {
     "home": {
@@ -5831,13 +5831,13 @@
      "xfpg": 2.23,
      "luck": "hot"
     },
-    "season_fpg": 2.55,
+    "season_fpg": 2.57,
     "opp_last": {
      "ga": 0.068,
      "move": 0.007
     },
     "boost_week": -0.32,
-    "season_pts": 2.47,
+    "season_pts": 2.48,
     "boost_dress": 0.92,
     "boost_fpg": 2.37,
     "espn_blend": 0.11,
@@ -5894,8 +5894,8 @@
    "clears": null,
    "dfo_out": false,
    "proj_ppg_pre": 2.48,
-   "cr": 2.44,
-   "cr_fpg": 2.46,
+   "cr": 2.45,
+   "cr_fpg": 2.47,
    "cr_season": 2.05,
    "proj_gp": 77,
    "cr_games": 0.99,
@@ -5937,7 +5937,7 @@
     "missing_regs_pp": -0.009,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.002,
     "adp": 16.8
    },
@@ -6257,7 +6257,7 @@
     "missing_regs_pp": -0.007,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 0.997,
     "adp": 54.0
    },
@@ -6602,7 +6602,7 @@
     "missing_regs_pp": -0.009,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.001,
     "adp": 29.6
    },
@@ -8225,7 +8225,7 @@
     "adp": 134.8
    },
    "cr_pct": 94,
-   "cr_season_pct": 83
+   "cr_season_pct": 82
   },
   {
    "id": 3114,
@@ -8609,7 +8609,7 @@
    "proj_ppg_pre": 1.63,
    "cr": 1.81,
    "cr_fpg": 1.83,
-   "cr_season": 1.59,
+   "cr_season": 1.6,
    "proj_gp": 79,
    "cr_games": 0.99,
    "cr_dress": 0.99,
@@ -8631,26 +8631,26 @@
      "xfpg": 1.85,
      "luck": "hot"
     },
-    "season_fpg": 1.76,
+    "season_fpg": 1.77,
     "opp_last": {
      "ga": -0.022,
      "move": -0.002
     },
     "boost_week": -0.6,
-    "season_pts": 1.72,
+    "season_pts": 1.73,
     "boost_dress": 0.93,
     "boost_fpg": 1.72,
     "espn_blend": 0.11,
     "espn_proj": 1.63,
     "season_range": [
-     1.02,
-     2.09
+     1.03,
+     2.1
     ],
     "drift": 0.002,
     "missing_regs_pp": -0.006,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 0.998,
     "adp": 161.3
    },
@@ -10360,7 +10360,7 @@
     "missing_regs_pp": -0.008,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.005,
     "adp": 146.5
    },
@@ -13299,7 +13299,7 @@
     "adp": 225.2
    },
    "cr_pct": 87,
-   "cr_season_pct": 66
+   "cr_season_pct": 67
   },
   {
    "id": 2564164,
@@ -13389,6 +13389,104 @@
    },
    "cr_pct": 86,
    "cr_season_pct": 61
+  },
+  {
+   "id": 4697395,
+   "name": "Anton Lundell",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 0,
+   "nights": [
+    35,
+    37,
+    40,
+    41
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-08T18:00:00Z",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "mine",
+   "team_id": 12,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 10.7,
+   "adp": 228.6,
+   "gp": 16,
+   "ppg": 1.47,
+   "cur_ppg": 1.3,
+   "last_ppg": 1.72,
+   "last_gp": 64,
+   "proj_ppg": 1.63,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 1.63,
+   "cr": 1.33,
+   "cr_fpg": 1.48,
+   "cr_season": 1.23,
+   "proj_gp": 71,
+   "cr_games": 0.9,
+   "cr_dress": 0.9,
+   "cr_dress_next": 0.9,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482113,
+   "cr_why": {
+    "toi5": 17.07,
+    "toi": 17.69,
+    "pp5": 1.17,
+    "sog": 2.69,
+    "blk": 0.5,
+    "gp": 16,
+    "last_fpg": 1.72,
+    "xfp": {
+     "gp": 16,
+     "fpg": 1.3,
+     "xfpg": 1.69,
+     "luck": "cold"
+    },
+    "season_fpg": 1.46,
+    "opp_last": {
+     "ga": -0.022,
+     "move": -0.002
+    },
+    "fills_in": true,
+    "week_news": {
+     "shift": 1.03,
+     "move": 0.158,
+     "why": [
+      "could return",
+      "set to return",
+      "day-to-day"
+     ]
+    },
+    "boost_week": -1.94,
+    "boost_week_move": -0.36,
+    "season_pts": 1.49,
+    "boost_dress": 0.79,
+    "boost_fpg": 1.49,
+    "espn_blend": 0.12,
+    "espn_proj": 1.63,
+    "season_range": [
+     0.77,
+     1.68
+    ],
+    "drift": 0.002,
+    "missing_regs_pp": -0.013,
+    "lineup_slack": 0.7,
+    "missing_regs": -0.09,
+    "week_slack": 0.7,
+    "adp_pull": 0.997,
+    "adp": 228.6
+   },
+   "cr_pct": 86,
+   "cr_season_pct": 64
   },
   {
    "id": 3904178,
@@ -13709,7 +13807,7 @@
       "depth_d"
      ]
     },
-    "season_pts": 1.34,
+    "season_pts": 1.35,
     "boost_dress": 0.78,
     "boost_fpg": 1.38,
     "season_range": [
@@ -13981,7 +14079,7 @@
     "missing_regs_pp": -0.008,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 0.958,
     "adp": 230.5
    },
@@ -14408,7 +14506,7 @@
     "adp_pull": 1.015,
     "adp": 103.3
    },
-   "cr_pct": 85,
+   "cr_pct": 84,
    "cr_season_pct": 64
   },
   {
@@ -14495,7 +14593,7 @@
     "adp_pull": 0.987,
     "adp": 229.6
    },
-   "cr_pct": 85,
+   "cr_pct": 84,
    "cr_season_pct": 60
   },
   {
@@ -15242,7 +15340,7 @@
     "adp_pull": 1.01,
     "adp": 226.3
    },
-   "cr_pct": 84,
+   "cr_pct": 83,
    "cr_season_pct": 54
   },
   {
@@ -15395,6 +15493,7 @@
     "season_news": [
      "called up"
     ],
+    "season_out_games": 0,
     "season_range": [
      0.46,
      1.59
@@ -15839,7 +15938,7 @@
     "adp_pull": 1.004,
     "adp": 227.7
    },
-   "cr_pct": 83,
+   "cr_pct": 82,
    "cr_season_pct": 56
   },
   {
@@ -15934,7 +16033,7 @@
     "adp_pull": 0.974,
     "adp": 229.8
    },
-   "cr_pct": 83,
+   "cr_pct": 82,
    "cr_season_pct": 55
   },
   {
@@ -16360,7 +16459,7 @@
     "adp_pull": 0.986,
     "adp": 229.9
    },
-   "cr_pct": 82,
+   "cr_pct": 81,
    "cr_season_pct": 41
   },
   {
@@ -16442,7 +16541,7 @@
     "adp_pull": 0.986,
     "adp": 229.8
    },
-   "cr_pct": 82,
+   "cr_pct": 81,
    "cr_season_pct": 49
   },
   {
@@ -18131,6 +18230,90 @@
    "cr_season_pct": 36
   },
   {
+   "id": 3946,
+   "name": "Lars Eller",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 0,
+   "nights": [
+    35,
+    37,
+    40,
+    41
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-08T18:00:00Z",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.4,
+   "adp": 230.0,
+   "gp": 17,
+   "ppg": 0.89,
+   "cur_ppg": 1.06,
+   "last_ppg": 0.72,
+   "last_gp": 68,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 1.06,
+   "cr_fpg": 1.07,
+   "cr_season": 0.83,
+   "proj_gp": 75,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8474189,
+   "cr_why": {
+    "toi5": 16.93,
+    "toi": 15.85,
+    "pp5": 0.92,
+    "sog": 1.06,
+    "blk": 0.65,
+    "gp": 17,
+    "last_fpg": 0.72,
+    "xfp": {
+     "gp": 17,
+     "fpg": 1.06,
+     "xfpg": 1.15
+    },
+    "season_fpg": 1.05,
+    "opp_last": {
+     "ga": -0.022,
+     "move": -0.002
+    },
+    "boost_week": -0.29,
+    "season_pts": 0.96,
+    "boost_dress": 0.84,
+    "boost_fpg": 0.97,
+    "age_adj": -0.08,
+    "season_range": [
+     0.37,
+     1.28
+    ],
+    "drift": 0.002,
+    "missing_regs_pp": -0.01,
+    "lineup_slack": 0.7,
+    "missing_regs": -0.09,
+    "week_slack": 0.7,
+    "adp_pull": 0.989,
+    "adp": 230.0
+   },
+   "cr_pct": 78,
+   "cr_season_pct": 28
+  },
+  {
    "id": 3151096,
    "name": "Victor Olofsson",
    "team": "VGK",
@@ -18468,90 +18651,6 @@
    },
    "cr_pct": 77,
    "cr_season_pct": 34
-  },
-  {
-   "id": 3946,
-   "name": "Lars Eller",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 0,
-   "nights": [
-    35,
-    37,
-    40,
-    41
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-08T18:00:00Z",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.4,
-   "adp": 230.0,
-   "gp": 17,
-   "ppg": 0.89,
-   "cur_ppg": 1.06,
-   "last_ppg": 0.72,
-   "last_gp": 68,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 1.05,
-   "cr_fpg": 1.06,
-   "cr_season": 0.83,
-   "proj_gp": 75,
-   "cr_games": 0.99,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8474189,
-   "cr_why": {
-    "toi5": 16.93,
-    "toi": 15.85,
-    "pp5": 0.92,
-    "sog": 1.06,
-    "blk": 0.65,
-    "gp": 17,
-    "last_fpg": 0.72,
-    "xfp": {
-     "gp": 17,
-     "fpg": 1.06,
-     "xfpg": 1.15
-    },
-    "season_fpg": 1.04,
-    "opp_last": {
-     "ga": -0.022,
-     "move": -0.002
-    },
-    "boost_week": -0.29,
-    "season_pts": 0.96,
-    "boost_dress": 0.84,
-    "boost_fpg": 0.97,
-    "age_adj": -0.08,
-    "season_range": [
-     0.37,
-     1.28
-    ],
-    "drift": 0.002,
-    "missing_regs_pp": -0.01,
-    "lineup_slack": 0.7,
-    "missing_regs": -0.09,
-    "week_slack": 1.1,
-    "adp_pull": 0.989,
-    "adp": 230.0
-   },
-   "cr_pct": 77,
-   "cr_season_pct": 28
   },
   {
    "id": 4316983,
@@ -18976,7 +19075,7 @@
     "adp_pull": 0.98,
     "adp": 230.3
    },
-   "cr_pct": 76,
+   "cr_pct": 75,
    "cr_season_pct": 31
   },
   {
@@ -19063,7 +19162,7 @@
     "adp_pull": 0.982,
     "adp": 230.8
    },
-   "cr_pct": 76,
+   "cr_pct": 75,
    "cr_season_pct": 32
   },
   {
@@ -19315,6 +19414,7 @@
     "season_news": [
      "called up"
     ],
+    "season_out_games": 0,
     "season_range": [
      0.37,
      1.01
@@ -19495,6 +19595,7 @@
     "season_news": [
      "called up"
     ],
+    "season_out_games": 0,
     "season_range": [
      0.41,
      1.05
@@ -19502,7 +19603,7 @@
     "drift": 0.002,
     "lineup_slack": -0.3,
     "week_slack": -0.1,
-    "adp_pull": 0.987,
+    "adp_pull": 0.986,
     "adp": 230.7
    },
    "cr_pct": 75,
@@ -19780,7 +19881,7 @@
     "adp": 229.9
    },
    "cr_pct": 74,
-   "cr_season_pct": 18
+   "cr_season_pct": 19
   },
   {
    "id": 3149633,
@@ -19867,7 +19968,7 @@
     "missing_regs_pp": -0.013,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.021,
     "adp": 229.6
    },
@@ -19952,6 +20053,7 @@
     "season_news": [
      "called up"
     ],
+    "season_out_games": 0,
     "season_range": [
      0.33,
      1.48
@@ -20117,7 +20219,7 @@
     },
     "toi_rank": "other",
     "boost_week": 0.4,
-    "season_pts": 1.02,
+    "season_pts": 1.01,
     "boost_dress": 0.87,
     "boost_fpg": 1.07,
     "espn_blend": 0.1,
@@ -20134,7 +20236,7 @@
     "adp_pull": 0.981,
     "adp": 230.8
    },
-   "cr_pct": 73,
+   "cr_pct": 72,
    "cr_season_pct": 32
   },
   {
@@ -20219,7 +20321,7 @@
     "adp_pull": 1.035,
     "adp": 229.3
    },
-   "cr_pct": 73,
+   "cr_pct": 72,
    "cr_season_pct": 26
   },
   {
@@ -20301,7 +20403,7 @@
     "adp_pull": 1.006,
     "adp": 229.8
    },
-   "cr_pct": 73,
+   "cr_pct": 72,
    "cr_season_pct": 28
   },
   {
@@ -20382,6 +20484,7 @@
     "season_news": [
      "called up"
     ],
+    "season_out_games": 0,
     "age_adj": 0.04,
     "season_range": [
      0.29,
@@ -20565,7 +20668,7 @@
     "adp_pull": 1.01,
     "adp": 229.8
    },
-   "cr_pct": 72,
+   "cr_pct": 71,
    "cr_season_pct": 22
   },
   {
@@ -20651,7 +20754,7 @@
     "adp_pull": 0.994,
     "adp": 230.0
    },
-   "cr_pct": 72,
+   "cr_pct": 71,
    "cr_season_pct": 25
   },
   {
@@ -21089,6 +21192,7 @@
     "season_news": [
      "called up"
     ],
+    "season_out_games": 0,
     "season_range": [
      0.29,
      1.02
@@ -21354,7 +21458,7 @@
     "adp_pull": 1.001,
     "adp": 230.0
    },
-   "cr_pct": 70,
+   "cr_pct": 69,
    "cr_season_pct": 14
   },
   {
@@ -21513,13 +21617,13 @@
     },
     "week_news": {
      "shift": 1.55,
-     "move": 0.346,
+     "move": 0.344,
      "why": [
       "practising"
      ]
     },
-    "boost_week": -1.4,
-    "boost_week_move": -0.32,
+    "boost_week": -1.42,
+    "boost_week_move": -0.33,
     "form": {
      "shift": -0.07,
      "why": [
@@ -21627,104 +21731,6 @@
    },
    "cr_pct": 69,
    "cr_season_pct": 10
-  },
-  {
-   "id": 4697395,
-   "name": "Anton Lundell",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 0,
-   "nights": [
-    35,
-    37,
-    40,
-    41
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-08T18:00:00Z",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "mine",
-   "team_id": 12,
-   "ir": false,
-   "bench": false,
-   "injury": "DAY_TO_DAY",
-   "owned": 10.7,
-   "adp": 228.6,
-   "gp": 16,
-   "ppg": 1.47,
-   "cur_ppg": 1.3,
-   "last_ppg": 1.72,
-   "last_gp": 64,
-   "proj_ppg": 1.63,
-   "clears": null,
-   "dfo_out": false,
-   "proj_ppg_pre": 1.63,
-   "cr": 0.73,
-   "cr_fpg": 1.48,
-   "cr_season": 1.19,
-   "proj_gp": 69,
-   "cr_games": 0.49,
-   "cr_dress": 0.49,
-   "cr_dress_next": 0.49,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482113,
-   "cr_why": {
-    "toi5": 17.07,
-    "toi": 17.69,
-    "pp5": 1.17,
-    "sog": 2.69,
-    "blk": 0.5,
-    "gp": 16,
-    "last_fpg": 1.72,
-    "xfp": {
-     "gp": 16,
-     "fpg": 1.3,
-     "xfpg": 1.69,
-     "luck": "cold"
-    },
-    "season_fpg": 1.46,
-    "opp_last": {
-     "ga": -0.022,
-     "move": -0.002
-    },
-    "week_news": {
-     "shift": 0.53,
-     "move": 0.0,
-     "why": [
-      "could return",
-      "day-to-day"
-     ]
-    },
-    "boost_week": 0.07,
-    "season_pts": 1.5,
-    "boost_dress": 0.79,
-    "boost_fpg": 1.49,
-    "espn_blend": 0.12,
-    "espn_proj": 1.63,
-    "season_range": [
-     0.73,
-     1.64
-    ],
-    "back": {
-     "games": "3"
-    },
-    "drift": 0.002,
-    "missing_regs_pp": -0.015,
-    "lineup_slack": 0.7,
-    "missing_regs": -0.09,
-    "week_slack": 1.1,
-    "adp_pull": 1.0,
-    "adp": 228.6
-   },
-   "cr_pct": 69,
-   "cr_season_pct": 61
   },
   {
    "id": 4874893,
@@ -21977,7 +21983,7 @@
     "missing_regs_pp": -0.022,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.022,
     "adp": 229.8
    },
@@ -23802,6 +23808,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 4,
     "age_adj": -0.06,
     "season_range": [
      0.0,
@@ -23984,6 +23991,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 3,
     "season_range": [
      0.0,
      0.72
@@ -24134,8 +24142,8 @@
    "proj_ppg_pre": 1.96,
    "cr": 0.06,
    "cr_fpg": 1.25,
-   "cr_season": 0.71,
-   "proj_gp": 33,
+   "cr_season": 0.7,
+   "proj_gp": 32,
    "cr_games": 0.05,
    "cr_dress": 0.05,
    "cr_dress_next": 0.05,
@@ -24178,8 +24186,8 @@
     "espn_proj": 1.96,
     "age_adj": -0.09,
     "season_range": [
-     0.46,
-     1.1
+     0.45,
+     1.09
     ],
     "back": {
      "games": "10"
@@ -24188,8 +24196,8 @@
     "missing_regs_pp": -0.023,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
-    "adp_pull": 1.046,
+    "week_slack": 0.7,
+    "adp_pull": 1.047,
     "adp": 219.6
    },
    "cr_pct": 66,
@@ -24636,6 +24644,7 @@
     "season_news": [
      "indefinite"
     ],
+    "season_out_games": 12,
     "season_range": [
      0.45,
      1.09
@@ -24733,6 +24742,7 @@
     "season_news": [
      "indefinite"
     ],
+    "season_out_games": 4,
     "age_adj": 0.04,
     "season_range": [
      0.21,
@@ -25066,13 +25076,13 @@
      "fpg": 1.31,
      "xfpg": 1.38
     },
-    "season_fpg": 1.03,
+    "season_fpg": 1.04,
     "opp_last": {
      "ga": -0.022,
      "move": -0.002
     },
     "boost_week": -0.37,
-    "season_pts": 1.13,
+    "season_pts": 1.14,
     "boost_dress": 0.66,
     "boost_fpg": 1.17,
     "season_range": [
@@ -25087,7 +25097,7 @@
     "missing_regs_pp": -0.022,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.025,
     "adp": 229.6
    },
@@ -25218,7 +25228,7 @@
    "dfo_out": true,
    "proj_ppg_pre": 2.23,
    "cr": 0.02,
-   "cr_fpg": 1.74,
+   "cr_fpg": 1.75,
    "cr_season": 0.55,
    "proj_gp": 24,
    "cr_games": 0.01,
@@ -25271,7 +25281,7 @@
     "missing_regs_pp": -0.021,
     "lineup_slack": 0.7,
     "missing_regs": -0.09,
-    "week_slack": 1.1,
+    "week_slack": 0.7,
     "adp_pull": 1.056,
     "adp": 203.7
    },
@@ -25357,6 +25367,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 7,
     "age_adj": 0.06,
     "season_range": [
      0.0,
@@ -26000,7 +26011,7 @@
    "proj_ppg_pre": 1.45,
    "cr": 0.0,
    "cr_fpg": 1.24,
-   "cr_season": 1.15,
+   "cr_season": 1.14,
    "proj_gp": 77,
    "cr_games": 0,
    "cr_dress": 0.98,
@@ -26029,8 +26040,8 @@
     "espn_proj": 1.45,
     "age_adj": 0.05,
     "season_range": [
-     0.68,
-     1.83
+     0.67,
+     1.82
     ],
     "exp": "rookie",
     "drift": 0.002,
@@ -26041,7 +26052,7 @@
     "adp": 224.9
    },
    "cr_pct": 0,
-   "cr_season_pct": 58
+   "cr_season_pct": 57
   },
   {
    "id": 2967072,
@@ -26270,6 +26281,7 @@
      "indefinite",
      "surgery"
     ],
+    "season_out_games": 14,
     "season_range": [
      0.37,
      1.01
@@ -27736,7 +27748,7 @@
    "proj_ppg_pre": 1.58,
    "cr": 0.0,
    "cr_fpg": 1.44,
-   "cr_season": 1.1,
+   "cr_season": 1.11,
    "proj_gp": 66,
    "cr_games": 0,
    "cr_dress": 0.91,
@@ -27759,14 +27771,14 @@
     },
     "season_fpg": 1.48,
     "toi_chg": 0.0,
-    "season_pts": 1.36,
+    "season_pts": 1.37,
     "boost_dress": 0.83,
     "boost_fpg": 1.42,
     "espn_blend": 0.17,
     "espn_proj": 1.58,
     "season_range": [
-     0.64,
-     1.55
+     0.65,
+     1.56
     ],
     "drift": 0.002,
     "missing_regs_pp": -0.013,
@@ -27776,7 +27788,7 @@
     "adp": 230.2
    },
    "cr_pct": 0,
-   "cr_season_pct": 54
+   "cr_season_pct": 55
   },
   {
    "id": 4697409,
@@ -28275,8 +28287,8 @@
    "clears": null,
    "dfo_out": false,
    "cr": 0.0,
-   "cr_fpg": 1.44,
-   "cr_season": 1.2,
+   "cr_fpg": 1.43,
+   "cr_season": 1.19,
    "proj_gp": 76,
    "cr_games": 0,
    "cr_dress": 0.97,
@@ -28297,23 +28309,23 @@
      "fpg": 1.46,
      "xfpg": 1.54
     },
-    "season_fpg": 1.38,
-    "season_pts": 1.36,
+    "season_fpg": 1.37,
+    "season_pts": 1.35,
     "boost_dress": 0.86,
     "boost_fpg": 1.38,
     "season_range": [
-     0.73,
-     1.58
+     0.72,
+     1.57
     ],
     "drift": -0.003,
     "missing_regs_pp": -0.006,
     "lineup_slack": 0.2,
     "missing_regs": -0.06,
-    "adp_pull": 0.983,
+    "adp_pull": 0.985,
     "adp": 229.5
    },
    "cr_pct": 0,
-   "cr_season_pct": 66
+   "cr_season_pct": 65
   },
   {
    "id": 3069687,
@@ -28453,7 +28465,7 @@
      "luck": "hot"
     },
     "season_fpg": 1.51,
-    "season_pts": 1.41,
+    "season_pts": 1.42,
     "boost_dress": 0.88,
     "boost_fpg": 1.51,
     "season_range": [
@@ -29006,6 +29018,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 6,
     "season_range": [
      0.0,
      0.83
@@ -30716,8 +30729,8 @@
    "dfo_out": false,
    "proj_ppg_pre": 1.33,
    "cr": 0.0,
-   "cr_fpg": 1.32,
-   "cr_season": 1.07,
+   "cr_fpg": 1.33,
+   "cr_season": 1.08,
    "proj_gp": 77,
    "cr_games": 0,
    "cr_dress": 0.96,
@@ -30738,26 +30751,26 @@
      "fpg": 1.46,
      "xfpg": 1.45
     },
-    "season_fpg": 1.29,
-    "season_pts": 1.2,
+    "season_fpg": 1.3,
+    "season_pts": 1.21,
     "boost_dress": 0.88,
     "boost_fpg": 1.3,
     "espn_blend": 0.12,
     "espn_proj": 1.33,
     "age_adj": -0.04,
     "season_range": [
-     0.61,
-     1.52
+     0.62,
+     1.53
     ],
     "drift": 0.002,
     "missing_regs_pp": -0.006,
     "lineup_slack": 0.9,
     "missing_regs": -0.06,
-    "adp_pull": 0.936,
+    "adp_pull": 0.935,
     "adp": 230.8
    },
    "cr_pct": 0,
-   "cr_season_pct": 51
+   "cr_season_pct": 52
   },
   {
    "id": 3041996,
@@ -32085,7 +32098,7 @@
    "dfo_out": false,
    "cr": 0.0,
    "cr_fpg": 0.87,
-   "cr_season": 0.68,
+   "cr_season": 0.69,
    "proj_gp": 64,
    "cr_games": 0,
    "cr_dress": 0.87,
@@ -32112,8 +32125,8 @@
     "boost_dress": 0.72,
     "boost_fpg": 0.93,
     "season_range": [
-     0.3,
-     1.14
+     0.31,
+     1.15
     ],
     "drift": -0.003,
     "lineup_slack": 0.2,
@@ -32934,7 +32947,7 @@
    "dfo_out": false,
    "proj_ppg_pre": 1.29,
    "cr": 0.0,
-   "cr_fpg": 1.47,
+   "cr_fpg": 1.48,
    "cr_season": 1.21,
    "proj_gp": 79,
    "cr_games": 0,
@@ -33176,8 +33189,8 @@
      "fpg": 1.51,
      "xfpg": 1.41
     },
-    "season_fpg": 1.35,
-    "season_pts": 1.3,
+    "season_fpg": 1.36,
+    "season_pts": 1.31,
     "boost_dress": 0.88,
     "boost_fpg": 1.38,
     "age_adj": 0.04,
@@ -36786,6 +36799,7 @@
     "season_news": [
      "surgery"
     ],
+    "season_out_games": 6,
     "season_range": [
      0.34,
      1.18
@@ -37732,7 +37746,7 @@
    "clears": null,
    "dfo_out": false,
    "cr": 0.0,
-   "cr_fpg": 1.32,
+   "cr_fpg": 1.31,
    "cr_season": 1.15,
    "proj_gp": 77,
    "cr_games": 0,
@@ -40529,7 +40543,7 @@
     "adp": 229.8
    },
    "cr_pct": 0,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 4378671,
@@ -41720,6 +41734,7 @@
     "season_news": [
      "indefinite"
     ],
+    "season_out_games": 4,
     "season_range": [
      0.0,
      0.67
@@ -41891,7 +41906,7 @@
     "adp": 230.0
    },
    "cr_pct": 0,
-   "cr_season_pct": 18
+   "cr_season_pct": 19
   },
   {
    "id": 5216884,
@@ -42433,6 +42448,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 9,
     "season_range": [
      0.0,
      0.61
@@ -42585,6 +42601,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 7,
     "age_adj": -0.05,
     "season_range": [
      0.0,
@@ -43229,12 +43246,12 @@
      "fpg": 0.83,
      "xfpg": 0.7
     },
-    "season_fpg": 0.95,
+    "season_fpg": 0.96,
     "depth_point": true,
     "toi_rank": "other",
     "st_role": "none",
     "fought": true,
-    "season_pts": 0.93,
+    "season_pts": 0.94,
     "boost_dress": 0.84,
     "boost_fpg": 0.88,
     "season_range": [
@@ -43382,6 +43399,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 6,
     "season_range": [
      0.0,
      0.45
@@ -43526,6 +43544,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 12,
     "season_range": [
      0.08,
      0.73
@@ -44155,7 +44174,7 @@
     "adp": 229.9
    },
    "cr_pct": 0,
-   "cr_season_pct": 23
+   "cr_season_pct": 22
   },
   {
    "id": 3683,
@@ -44322,7 +44341,7 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.0,
-   "cr_fpg": 1.36,
+   "cr_fpg": 1.35,
    "cr_season": 0.07,
    "proj_gp": 6,
    "cr_games": 0,
@@ -44344,15 +44363,16 @@
      "fpg": 1.43,
      "xfpg": 1.72
     },
-    "season_fpg": 1.28,
+    "season_fpg": 1.27,
     "toi_chg": 0.05,
-    "season_pts": 1.48,
+    "season_pts": 1.47,
     "boost_dress": 0.25,
     "boost_fpg": 1.44,
     "season_news": [
      "season-ending",
      "surgery"
     ],
+    "season_out_games": 13,
     "season_range": [
      0.0,
      0.53
@@ -44654,6 +44674,7 @@
     "season_news": [
      "sent down"
     ],
+    "season_out_games": 8,
     "season_range": [
      0.08,
      0.66
@@ -50271,7 +50292,7 @@
     "missing_regs_pp": -0.006,
     "lineup_slack": 0.5,
     "missing_regs": -0.09,
-    "adp_pull": 0.99,
+    "adp_pull": 0.991,
     "adp": 183.8
    },
    "cr_pct": 0,
@@ -50798,7 +50819,7 @@
      "fpg": 1.82,
      "xfpg": 1.83
     },
-    "season_fpg": 1.57,
+    "season_fpg": 1.56,
     "season_pts": 1.43,
     "boost_dress": 0.94,
     "boost_fpg": 1.35,
@@ -53186,7 +53207,7 @@
    "dfo_out": false,
    "proj_ppg_pre": 2.09,
    "cr": 0.0,
-   "cr_fpg": 2.23,
+   "cr_fpg": 2.22,
    "cr_season": 2.09,
    "proj_gp": 81,
    "cr_games": 0,
@@ -53905,7 +53926,7 @@
    "proj_ppg_pre": 2.02,
    "cr": 0.0,
    "cr_fpg": 2.12,
-   "cr_season": 1.87,
+   "cr_season": 1.88,
    "proj_gp": 78,
    "cr_games": 0,
    "cr_dress": 0.98,
@@ -53926,15 +53947,15 @@
      "fpg": 2.39,
      "xfpg": 2.33
     },
-    "season_fpg": 2.12,
-    "season_pts": 2.05,
+    "season_fpg": 2.14,
+    "season_pts": 2.06,
     "boost_dress": 0.89,
     "boost_fpg": 2.03,
     "espn_blend": 0.12,
     "espn_proj": 2.02,
     "season_range": [
-     1.3,
-     2.37
+     1.31,
+     2.38
     ],
     "drift": 0.002,
     "missing_regs_pp": -0.005,
@@ -53944,7 +53965,7 @@
     "adp": 102.1
    },
    "cr_pct": 0,
-   "cr_season_pct": 89
+   "cr_season_pct": 90
   },
   {
    "id": 5622,
@@ -54130,7 +54151,7 @@
    "proj_ppg_pre": 2.41,
    "cr": 0.0,
    "cr_fpg": 2.49,
-   "cr_season": 2.26,
+   "cr_season": 2.27,
    "proj_gp": 80,
    "cr_games": 0,
    "cr_dress": 0.98,
@@ -54159,8 +54180,8 @@
     "espn_blend": 0.1,
     "espn_proj": 2.41,
     "season_range": [
-     1.7,
-     2.66
+     1.71,
+     2.67
     ],
     "drift": -0.003,
     "missing_regs_pp": -0.008,
@@ -55954,12 +55975,10 @@
     "drift": 0.002,
     "missing_regs_pp": -0.003,
     "lineup_slack": 0.4,
-    "missing_regs": -0.04,
-    "adp_pull": 1.0,
-    "adp": 133.5
+    "missing_regs": -0.04
    },
    "cr_pct": 0,
-   "cr_season_pct": 83
+   "cr_season_pct": 82
   },
   {
    "id": 2563026,
@@ -57959,7 +57978,7 @@
     "adp": 225.8
    },
    "cr_pct": 0,
-   "cr_season_pct": 83
+   "cr_season_pct": 82
   },
   {
    "id": 4915850,
@@ -61835,6 +61854,7 @@
     "season_news": [
      "indefinite"
     ],
+    "season_out_games": 5,
     "age_adj": -0.07,
     "season_range": [
      0.44,
