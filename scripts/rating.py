@@ -348,11 +348,13 @@ NEW_PLAYER_SEASON, FEW_GAMES_SEASON, PART_TIMER_SEASON = 0.41, -0.26, 0.38
 # out now and sent down since his last game: a + b x ln(1 + team games out); in the lineup and called up in the last
 # NEWS_RECALL_DAYS: a + b x min(GP, 40)/40; latest injury item since his last game says season-ending / surgery
 NEWS_SENT_DOWN, NEWS_CALLED_UP, NEWS_RECALL_DAYS = (-0.82, 0.18), (-0.18, 0.18), 60
-NEWS_SEASON_OUT, NEWS_SURGERY = -1.5, -0.33
+# ... re-fit on the cleaned flag (NEWS_VERSION 12, handoff 841): LOSO -1.77 / -0.29 (held out -1.76 to -1.79); flagged rows
+# 2023-26 dressed 0.111 of the rest, shown 0.116 (was 0.142 at -1.5)
+NEWS_SEASON_OUT, NEWS_SURGERY = -1.8, -0.3
 # a conditioning loan: dressed 0.20-0.44 of the rest vs 0.11-0.18 predicted (hunt14/snotes, findings 505 (5), handoff 688)
 NEWS_CONDITIONING_SEASON = 0.5
 # Season dress logit for a skater out now from ESPN's own note: its stated timeline as a share of his team's games left
-# (findings 488, handoff 658), and out for the season when Daily Faceoff hasn't said so (handoff 659)
+# (findings 488, handoff 658), and out for the season (handoff 659; also when Daily Faceoff says so, handoff 841)
 SEASON_TIMELINE_C, ESPN_SEASON_OUT = -0.6, -3.0
 # ESPN-listed after playing his team's last game: dressed 0.61-0.70 of the rest vs 0.66-0.78 predicted (hunt14/snotes,
 # findings 505 (4), handoff 687); a note posted from the day before that game, not a personal, scratch or demotion note
@@ -3640,7 +3642,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 # missed his team's last game with an ESPN status: ESPN's stated timeline or out-for-the-season note (658-659)
                 tl = injury_note(notes[p["id"]], today) if sat_last and p.get("injury") and p["id"] in notes else None
                 if tl and tl["season"]:
-                    news_z += ESPN_SEASON_OUT if "season-ending" not in news_why else 0.0
+                    # on top of Daily Faceoff's season-ending term (handoff 841): 15 players flagged by both dressed 0.001 of the
+                    # rest; fitted on top -2.96 (held out -2.39 to -2.97)
+                    news_z += ESPN_SEASON_OUT
                 elif tl and tl["days_left"] is not None:
                     news_z += SEASON_TIMELINE_C * min(max(tl["days_left"], 0) / 2.2 / max(SEASON_GAMES - len(team_games.get(team, [])), 1), 1)
                 # still listed after playing his team's last game, from a note around that game (handoff 687)

@@ -1991,7 +1991,7 @@ def test_daily_faceoff_news_moves_the_season_dress_logit():
                              "4": {"ts": "2026-11-01T18:00:00", "down": False, "up": True},
                              "5": {"ts": "2026-08-01T18:00:00", "down": False, "up": True}}}
     f = rating.news_season_logit
-    assert f(news, 1, "2026-11-18", 1, 20, now) == (pytest.approx(-1.5 - 0.33), ["season-ending", "surgery"])
+    assert f(news, 1, "2026-11-18", 1, 20, now) == (pytest.approx(rating.NEWS_SEASON_OUT + rating.NEWS_SURGERY), ["season-ending", "surgery"])
     assert f(news, 2, "2026-11-15", 2, 20, now) == (0.0, [])  # the item came before his last game
     assert f(news, 3, "2026-11-17", 3, 10, now) == (pytest.approx(-0.82 + 0.18 * math.log(4)), ["sent down"])
     assert f(news, 3, "2026-11-19", 0, 10, now) == (0.0, [])  # back in the lineup: no send-down term
@@ -2002,7 +2002,7 @@ def test_daily_faceoff_news_moves_the_season_dress_logit():
     # findings 371: an earlier season-level or "indefinitely" item since his last game still counts under a milder latest one
     news["injuries"]["6"] = {"ts": "2026-11-19T20:00:00", "season": False, "surgery": False, "season_ts": "2026-11-16T20:00:00"}
     news["injuries"]["7"] = {"ts": "2026-11-19T20:00:00", "season": False, "surgery": False, "indefinite_ts": "2026-11-16T20:00:00"}
-    assert f(news, 6, "2026-11-15", 3, 20, now) == (pytest.approx(-1.5), ["season-ending"])
+    assert f(news, 6, "2026-11-15", 3, 20, now) == (pytest.approx(rating.NEWS_SEASON_OUT), ["season-ending"])
     assert f(news, 6, "2026-11-17", 1, 20, now) == (0.0, [])  # he played after it
     assert f(news, 7, "2026-11-15", 3, 20, now) == (pytest.approx(-0.3), ["indefinite"])
 
@@ -2992,6 +2992,20 @@ def test_espn_season_out_note_lowers_season_share(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "ESPN_SEASON_OUT", 0.0)
     off = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short)
     assert on["cr_season"] < off["cr_season"] and on["cr"] == 0
+
+
+def test_espn_season_out_note_adds_to_daily_faceoff_season_ending(monkeypatch, tmp_path):
+    """Handoff 841: when Daily Faceoff and ESPN both say out for the season, ESPN's cut adds to Daily Faceoff's (15 such
+    players 2023-26 dressed 0.001 of the rest)."""
+    assert rating.NEWS_SEASON_OUT == -1.8 and rating.NEWS_SURGERY == -0.3
+    short = "McAvoy (knee) will miss the remainder of the season."
+    news = {"injuries": {"4": {"ts": "2026-10-08T20:00:00", "season": True, "surgery": False}}, "roster-moves": {},
+            "fetched": rating.utcnow().strftime("%Y-%m-%dT%H:%MZ")}
+    on = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short, dfo_news=news)
+    assert on["cr_why"]["season_news"] == ["season-ending"]
+    monkeypatch.setattr(rating, "ESPN_SEASON_OUT", 0.0)
+    off = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", short, dfo_news=news)
+    assert on["cr_season"] < off["cr_season"]
 
 
 def test_offseason_mover_week_and_season_multipliers_differ(monkeypatch, tmp_path):
