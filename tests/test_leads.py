@@ -355,3 +355,16 @@ def test_season_flag_skips_not_played_season_opener_and_other_players():
     assert f("Igor Shesterkin", "Igor Shesterkin's season-ending surgery went well, the Rangers said.")
     assert f("Alex Lyon", "Lyon won't play this season after surgery.")
     assert f("", "Rookie Dylan Garand starts since Igor Shesterkin's season-ending injury.")  # no name: no skip
+
+
+def test_week_return_and_out_words_skip_other_players_sentences():
+    """Handoff 840 (findings 4455): "Cole Sillinger will return to the lineup in his place" in another player's item isn't
+    his return, and "Brandon Tanev will sit in his place" isn't his absence; his own sentences still count."""
+    f = lambda name, d, fd="": leads.news_flags({"playerName": name, "details": d, "fantasyDetails": fd})
+    hurt = f("Kent Johnson", "Johnson (upper-body) won't play Saturday against Boston.", "Cole Sillinger will return to the lineup in his place.")
+    assert not hurt["ret"] and hurt["out"]
+    healthy = f("Jordan Eberle", "Eberle is expected to be back in the lineup Tuesday.", "Brandon Tanev will sit in his place.")
+    assert not healthy["out"]
+    assert f("Kent Johnson", "Johnson will return to the lineup Saturday against the Maple Leafs.")["ret"]
+    assert f("Kent Johnson", "Johnson will sit Saturday against Boston.")["out"]
+    assert f("", "Cole Sillinger will return to the lineup in his place.")["ret"]  # no name: no skip
