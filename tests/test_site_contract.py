@@ -332,3 +332,14 @@ def test_next_game_dress_jump_after_a_lock_is_no_warning(data):
     assert owned["name"] not in x4()
     old[owned["id"]]["today_start"] = "2026-11-08T00:30:00Z"  # still ahead: the jump is a warning
     assert owned["name"] in x4()
+
+
+def test_s4_season_ending_line_is_higher_in_the_first_two_missed_games(data):
+    """Handoff 842 (findings 4457): season-ending news within his first 2 missed team games warns above a 0.5 share, later 0.3."""
+    def s4(share, out):
+        now = copy.deepcopy(data)
+        p = next(x for x in now["players"] if x["pos"] != "G")
+        p["cr_why"] = {**(p.get("cr_why") or {}), "season_news": ["season-ending"], "season_pts": 1.0, "season_out_games": out}
+        p["cr_season"] = share
+        return any(w.startswith("S4") and p["name"] in w for w in check_data.warnings(now, None))
+    assert not s4(0.39, 1) and s4(0.6, 1) and s4(0.35, 5) and not s4(0.25, 5)

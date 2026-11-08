@@ -3634,11 +3634,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             new_team_season = 0 < here < len(gl) and here <= NEW_TEAM_SEASON_GAMES
             # Season rating: rest-of-season share of games he dresses (findings section 56), before ESPN's injury cap and news
             # season_share: a fixed share for a player yet to play, which the details name (findings 232)
-            season_share, news_why, boost_q = None, [], None
+            season_share, news_why, boost_q, news_out = None, [], None, None
             if df_ and model.season_lr:
                 sx = season_dress_features(gl, team, tg, f, df_w, prev.get(pid), fpg_s, model.season_lr["markov"],
                                            played=len(team_games.get(team, [])))
                 news_z, news_why = news_season_logit(dfo_news, pid, gl[-1]["date"] if gl else None, sx["os_k"], sx["gp_now"], now_utc)
+                news_out = sx["os_k"]  # his team's games since his last one (check_data S4, handoff 842)
                 # missed his team's last game with an ESPN status: ESPN's stated timeline or out-for-the-season note (658-659)
                 tl = injury_note(notes[p["id"]], today) if sat_last and p.get("injury") and p["id"] in notes else None
                 if tl and tl["season"]:
@@ -4004,6 +4005,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     why["espn_proj"] = p["proj_ppg_pre"]  # the first-seen projection the blend used (handoff 445)
             if news_why:
                 why["season_news"] = news_why  # Daily Faceoff news in the Season share (findings 360 (1))
+                if news_out is not None:
+                    why["season_out_games"] = news_out
             if season_share is not None:
                 why["season_share"] = round(season_share, 2)
             if abs(age_adj) >= 0.03:

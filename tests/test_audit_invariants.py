@@ -420,8 +420,8 @@ def test_every_rating_why_key_is_read_by_the_page():
     h = (ROOT / "index.html").read_text()
     keys = set(re.findall(r'why\[["\'](\w+)["\']\]', r)) | set(re.findall(r'cr_why["\']\]\[["\'](\w+)["\']\]', r))
     used = set(re.findall(r'(?:cr_why\??\.|\bw\.|why\??\.)(\w+)', h))
-    # shown through boost_week_move / used by check_data / the logit move, shown as missing_regs_pp (handoff 604)
-    internal = {"boost_week", "season_pts", "missing_regs"}
+    # shown through boost_week_move / used by check_data / the logit move, shown as missing_regs_pp (handoff 604) / check_data S4 (842)
+    internal = {"boost_week", "season_pts", "missing_regs", "season_out_games"}
     assert not keys - used - internal, sorted(keys - used - internal)
 
 

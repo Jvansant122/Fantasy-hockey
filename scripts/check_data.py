@@ -354,11 +354,15 @@ def warnings(data, prev):
     high = sorted((t, "D" if d else "F", round(v, 1)) for (t, d), v in sums.items() if v > (7 if d else 13))
     if high:
         out.append(f"S3 team Season shares above the lineup: {high[:5]}")
-    # S4 Daily Faceoff says season-ending, yet the share stays above 0.3
+    # S4 Daily Faceoff says season-ending, yet the share stays above 0.3; 0.5 for news within his first 2 missed team games,
+    # which still dressed 0.17-0.30 of the rest (a quarter above 0.3; findings 4457, handoff 842)
+    def s4_line(w):
+        k = w.get("season_out_games")
+        return 0.5 if k is not None and k <= 2 else 0.3
     big = [p["name"] for p in players if "season-ending" in ((p.get("cr_why") or {}).get("season_news") or ())
-           and (p.get("cr_why") or {}).get("season_pts") and p.get("cr_season", 0) / p["cr_why"]["season_pts"] > 0.3]
+           and (p.get("cr_why") or {}).get("season_pts") and p.get("cr_season", 0) / p["cr_why"]["season_pts"] > s4_line(p["cr_why"])]
     if big:
-        out.append(f"S4 {len(big)} skaters with season-ending news keep a Season share above 30%: {big[:5]}")
+        out.append(f"S4 {len(big)} skaters with season-ending news keep a Season share above 30% (50% in his first 2 missed games): {big[:5]}")
     if not (prev and prev.get("rated")):
         return out
     old = {p["id"]: p for p in prev["players"]}
