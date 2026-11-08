@@ -2022,6 +2022,7 @@ def test_daily_faceoff_news_reaches_the_season_rating(monkeypatch, tmp_path):
     base, hit = ratings(None), ratings({**item, "fetched": fresh})
     assert hit["Morgan Rielly"]["cr_season"] < base["Morgan Rielly"]["cr_season"]
     assert hit["Morgan Rielly"]["cr_why"]["season_news"] == ["season-ending"]
+    assert isinstance(hit["Morgan Rielly"]["cr_why"]["season_out_games"], int)  # check_data S4's line (handoff 842)
     assert hit["Auston Matthews"]["cr_season"] == base["Auston Matthews"]["cr_season"]
     stale = ratings({**item, "fetched": "2020-01-01T00:00Z"})
     assert stale["Morgan Rielly"]["cr_season"] == base["Morgan Rielly"]["cr_season"]
