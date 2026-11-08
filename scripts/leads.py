@@ -154,6 +154,12 @@ NEWS_SEASON = re.compile(r"(out|miss|sidelined|shut down|done|sit out)[^.]{0,40}
                          r"|until (at least )?the playoffs|(?<!healthy )(?<!ready )(?<!back )(?<!available )(?<!return )(?<!in time )(?<!time )(before|for) the (start of the )?playoffs\b(?![^.]{0,30}(healthy|ready))|(not|won.t|will not|isn.t expected to) (return|play|be back)\b[^.]{0,30}(this season|this year|regular season|before the playoffs)"
                          r"|season[- ]ending|season is over|end of the (regular )?season", re.I)
 NEWS_OTHER = re.compile(r"\b[A-Z][a-z]+(?:[-' ][A-Z][a-z]+)* [A-Z][a-zA-Z'-]+(?:'s|\u2019s)\b")
+# a "First Last" name that isn't a team or place, for the Week 'ret' and 'out' words (handoff 840, findings 4455): "Cole Sillinger
+# will return to the lineup in his place" in another player's item is about Sillinger
+NEWS_PAIR = re.compile(r"\b(?!(?:Maple|Golden|Blue|Red|San|Los|New|St|Tampa|Las|Salt|Hockey|Team|Injured|Long|Head|The|In|He|His|After|With|Game"
+                       r"|Saturday|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday)\b)[A-Z][a-z]+ [A-Z][a-z][a-zA-Z'-]+\b(?! (?:Wings|Leafs|Knights"
+                       r"|Jackets|Hawks|Devils|Rangers|Islanders|Kings|Sharks|Stars|Lightning|Flyers|Bruins|Sabres|Senators|Canadiens|Panthers"
+                       r"|Hurricanes|Capitals|Penguins|Predators|Blues|Wild|Jets|Flames|Oilers|Canucks|Ducks|Avalanche|Coyotes|Kraken|Mammoth|Club))")
 NEWS_INDEFINITE = re.compile(r"indefinit|long[- ]term|extended period|foreseeable|significant (amount of )?time|considerable time|several months|multiple months", re.I)
 NEWS_LTIR = re.compile(r"long[- ]term injured reserve|LTIR", re.I)
 # a negation just before an indefinite phrase ("not expected to be a long-term issue") or a past season around either
@@ -162,7 +168,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 11  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 12  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -282,14 +288,16 @@ def news_flags(item):
     details = re.sub(r"\s+", " ", item.get("details") or "")
     cat = item.get("newsCategoryName")
     me = (item.get("playerName") or "").split()[-1:]
-    sents = [x for x in re.split(r"(?<=[.!?])\s+", text) if not (me and me[0] not in x and NEWS_OTHER.search(x))]
+    split = re.split(r"(?<=[.!?])\s+", text)
+    sents = [x for x in split if not (me and me[0] not in x and NEWS_OTHER.search(x))]
+    mine = " ".join(x for x in split if not (me and me[0] not in x and NEWS_PAIR.search(x)))  # handoff 840
     return {"season": any(NEWS_SEASON_907.search(x) or news_wording(x, NEWS_SEASON, neg=False) for x in sents),
             "surgery": news_surgery(text), "indefinite": news_wording(text, NEWS_INDEFINITE),
             "down": cat == "Send Down" or bool(NEWS_DOWN.search(text)), "up": cat == "Call Up" or bool(NEWS_UP.search(text)),
             "cond": bool(re.search(r"conditioning", text, re.I)),  # a conditioning loan isn't a real send-down (handoff 688)
             # the return-ladder flags were fit on the news line only, not the background paragraph (handoff 424)
-            **{k: bool(r.search(details if k in NEWS_DETAILS_ONLY else text)) for k, r in NEWS_WEEK.items()},
-            "ret": news_return(text), "tl": news_timeline(text),
+            **{k: bool(r.search(details if k in NEWS_DETAILS_ONLY else mine if k == "out" else text)) for k, r in NEWS_WEEK.items()},
+            "ret": news_return(mine), "tl": news_timeline(text),
             "nf": sorted(k for k, r in NEWS_MODEL.items() if r.search(text))}
 
 
