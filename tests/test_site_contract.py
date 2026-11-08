@@ -317,6 +317,8 @@ def test_next_game_dress_jump_after_a_lock_is_no_warning(data):
     for p in (owned, fa):
         old[p["id"]]["cr_dress_next"], p["cr_dress_next"] = 0.05, 0.6
     owned["today_start"], fa["today_start"] = "2026-11-08T00:00:00Z", "2026-11-08T00:00:00Z"
+    for p in (owned, fa):
+        old[p["id"]]["today_start"] = None
 
     def x4():
         return " ".join(w for w in check_data.warnings(now, prev) if w.startswith("X4"))
@@ -324,4 +326,9 @@ def test_next_game_dress_jump_after_a_lock_is_no_warning(data):
     owned["today_start"] = "2026-11-07T22:00:00Z"  # his own puck between the runs
     assert owned["name"] not in x4()
     owned["today_start"] = "2026-11-07T15:00:00Z"  # before the earlier run: still a warning
+    assert owned["name"] in x4()
+    # the game the earlier run described had started by this run (Wennberg's Nov 7 rollover, handoff 839)
+    old[owned["id"]]["today_start"] = "2026-11-07T17:30:00Z"
+    assert owned["name"] not in x4()
+    old[owned["id"]]["today_start"] = "2026-11-08T00:30:00Z"  # still ahead: the jump is a warning
     assert owned["name"] in x4()
