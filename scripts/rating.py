@@ -750,6 +750,9 @@ SOFT_RETURN, SOFT_PRAC_RETURN, SOFT_AFTER = 0.65, 0.80, (0.8, None)
 NON_CONTACT_CAPS = (0.05, 0.25)
 MISSED_PRAC_CAP, MISSED_SKATE_CAP = 0.35, 0.12
 NEAR_OUT, EVAL_CAPS = 0.05, (0.05, 0.2)
+# looser return wording within 16 h ("expected to make his return", "cleared to play", "expected to play" with no day):
+# 77-86% dressed (findings 4726, handoff 873)
+RET_LOOSE_FLOOR = 0.8
 # playing through it: a skater who dresses within 30 h of an injury item with no firm return wording scores 0.888 of his
 # rate that night (606 games), 0.80 with illness wording (123); his next games 1.00 (findings 4718, handoff 866)
 RUST_HOURS, RUST_FPG, RUST_ILL_FPG = 30, 0.90, 0.80
@@ -811,6 +814,8 @@ def _injury_call(ii, lead, wd, second_day):
             c = floor(EXP_RETURN_TONIGHT, LC_AFTER["firm"])
         elif (ii.get("firm") or ii.get("exp_ret")) and ahead and here:
             c = floor(AHEAD_RETURN, LC_AFTER["firm"])
+        elif ii.get("ret_m") and near and ok_day:  # looser return wording within 16 h: about 80% (873)
+            c = floor(RET_LOOSE_FLOOR, SOFT_AFTER, "likely")
         elif ii.get("out_w") and ok_day and (ahead or near):  # 858 (b) a day ahead, 864 within 48 hours
             c = cap(AHEAD_OUT if ahead else NEAR_OUT)
         elif ii.get("eval") and ok_day and (ahead or near):
@@ -1011,6 +1016,37 @@ def weekly(first, last):
     while d <= last:
         yield d.isoformat(), min(d + timedelta(days=6), last).isoformat()
         d += timedelta(days=7)
+
+
+def key_news_by_name(dfo_news, index, rosters):
+    """Daily Faceoff items keyed "n:<first last>:<team>" (no player id on the item, handoff 870) moved to the NHL id their
+    name matches: on that team's roster, else the only player with that name. A copy; items that match no one are left."""
+    if not dfo_news:
+        return dfo_news
+    by_team = {(norm(name), team): pid for team, r in rosters.items() for pid, name, _ in r}
+    out = dict(dfo_news)
+    for part in ("injuries", "roster-moves", "line-matches", "general", "recent"):
+        items = dfo_news.get(part)
+        if not isinstance(items, dict) or not any(k.startswith("n:") for k in items):
+            continue
+        moved = {k: v for k, v in items.items() if not k.startswith("n:")}
+        for k, v in items.items():
+            if not k.startswith("n:"):
+                continue
+            _, name, team = (k.split(":", 2) + ["", ""])[:3]
+            pid = by_team.get((name, team))
+            if pid is None and len(index.get(name) or {}) == 1:
+                pid = next(iter(index[name]))
+            if pid is None:
+                moved[k] = v
+                continue
+            have = moved.get(str(pid))
+            if part == "recent":
+                moved[str(pid)] = sorted((have or []) + [r for r in v if r not in (have or [])], key=lambda r: (r["ts"], r["cat"]))
+            elif not have or v.get("ts", "") > have.get("ts", ""):
+                moved[str(pid)] = v
+        out[part] = moved
+    return out
 
 
 def norm(name):
@@ -3513,6 +3549,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             known = index.get(norm(name), {})
             if pid not in known or known[pid][0] is None:
                 index.setdefault(norm(name), {})[pid] = (team, pos)
+    dfo_news = key_news_by_name(dfo_news, index, rosters)  # items with no player id (handoff 870)
     on_roster = {pid for r in rosters.values() for pid, _, _ in r}
     # missed all or most of last season (Barkov): the season before instead of a newcomer's prior, for players on a current
     # NHL roster or with games this season, so retired players don't come back (findings 216)

@@ -4052,3 +4052,32 @@ def test_injured_goalie_with_positive_news_gets_starts(monkeypatch, tmp_path):
     assert up["Joseph Woll"]["cr_games"] > 0.2 and up["Joseph Woll"]["cr_why"]["g_news_lift"]
     assert up["Anthony Stolarz"]["cr_games"] < base["Anthony Stolarz"]["cr_games"]
     assert toronto({"ts": f"{TODAY}T01:00:00", "gp": True}, injury="SUSPENSION")["Joseph Woll"]["cr_games"] == 0
+
+
+def test_news_with_no_id_moves_to_the_named_player():
+    """Handoff 870: "n:<name>:<team>" items go to the roster player with that name on that team, else the only one so
+    named; the newer item wins, recent lists merge, unmatched keys stay."""
+    rosters = {"WSH": [(8476999, "Logan Thompson", "G")], "TOR": [(8479361, "Joseph Woll", "G")]}
+    index = {"logan thompson": {8476999: ("WSH", "G")}, "joseph woll": {8479361: ("TOR", "G")}}
+    news = {"injuries": {"n:logan thompson:WSH": {"ts": "2026-11-20T10:00:00", "out_w": True},
+                         "n:joseph woll:BOS": {"ts": "2026-11-20T09:00:00"}, "n:nobody here:BOS": {"ts": "2026-11-20T09:00:00"},
+                         "8476999": {"ts": "2026-11-19T10:00:00"}},
+            "recent": {"n:logan thompson:WSH": [{"ts": "2026-11-20T10:00:00", "cat": "inj", "f": []}],
+                       "8476999": [{"ts": "2026-11-19T10:00:00", "cat": "inj", "f": []}]}, "fetched": "x"}
+    out = rating.key_news_by_name(news, index, rosters)
+    assert out["injuries"]["8476999"]["out_w"] and "8479361" in out["injuries"] and "n:nobody here:BOS" in out["injuries"]
+    assert [r["ts"][:10] for r in out["recent"]["8476999"]] == ["2026-11-19", "2026-11-20"]
+    assert "n:logan thompson:WSH" in news["injuries"]  # the input is left as it was
+
+
+def test_round3_wording_reaches_the_next_game_call():
+    """Handoffs 871 and 873 through next_game_call: a negated return caps, looser return wording floors at 0.8."""
+    from datetime import datetime, timezone
+    import leads
+    now, start = datetime(2026, 11, 10, 15, tzinfo=timezone.utc), "2026-11-11T00:00:00Z"
+    item = lambda t: {"injuries": {"7": {"ts": "2026-11-10T14:00:00Z", **leads.injury_calls(t)}}}
+    neg = rating.next_game_call(item("Smith is not expected to return Tuesday."), 7, start, "2026-11-10", now)
+    assert neg["cap"] and neg["q"] <= 0.05
+    loose = rating.next_game_call(item("Smith has been cleared to play."), 7, start, "2026-11-10", now)
+    assert not loose["cap"] and loose["q"] == rating.RET_LOOSE_FLOOR
+    assert rating.call_games([0.4, 0.4, 0.4], loose) == [0.8, 0.8, 0.4]

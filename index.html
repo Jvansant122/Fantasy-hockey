@@ -669,6 +669,7 @@ function why(p) {
   if (lchg && !started(p)) wk.push(lchg === "in" ? `Daily Faceoff: drawing in ${when} (93-97% for that game, and his next games lean the same way)`
     : lchg === "return" ? `Daily Faceoff: he returns ${when} (93-97% for that game, about 90% his next games)`
     : lchg === "left" ? "Daily Faceoff: he left his last game and did not return (at most 30% his next game, 35% the one after)"
+    : lchg === "likely" ? `Daily Faceoff: he is likely back ${when} (cleared, available or expected to play: at least 80% for that game)`
     : lchg === "soft" ? "Daily Faceoff: he could return in his next game, named by day (65-80% for that game)"
     : lchg === "practice" ? "Daily Faceoff: he missed practice or the morning skate (at most 12-35% his next game)"
     : lchg === "later" ? "Daily Faceoff: he is expected back in the game after next, so at most 5% his next game and at least 60% the named one"
