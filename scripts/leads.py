@@ -168,7 +168,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 14  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 15  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -371,6 +371,26 @@ NOT_TRAVEL = re.compile(r"(did not|didn't|will not|won't|is not|isn't|not) (trav
 WEEKDAY = re.compile(r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b")
 
 
+# General and Suspension items (handoff 868, list 868-a): out and return wording of their own
+GS_OUT = re.compile(r"\bsuspended\b|away from the team|leave of absence")
+GS_RETURN = re.compile(r"served (his|the|a|an) ([\w-]+ )?(game )?suspension")
+
+
+# an injured goalie's positive news (handoff 869, list 869-a), unless it has out or long wording
+G_POS = re.compile(r"will (dress|serve|be the backup|back ?up)|as the backup|backing up|will be available|is available|in uniform"
+                   r"|will start|gets the start|will be in (net|goal)|will return|will play|expected to (start|return|play)"
+                   r"|returns? to the (lineup|crease|net)|activated|off (of )?(ir|injured reserve|ltir)")
+G_PRAC, G_PRAC_NEG = re.compile(r"full participant|practic|skat|on the ice|took part"), re.compile(r"\bnot\b|n't|missed|absent")
+G_LONG = re.compile(r"week[- ]to[- ]week|weeks|month|indefinit|surgery|season|placed on|ltir|long-term")
+G_OUT = re.compile(r"will not|won't|is out|will be out|remain|unavailable|not (dress|play|start)|ruled out|miss")
+
+
+def goalie_positive(t):
+    """List 869-a on lower-cased details: positive goalie news with no out or long wording."""
+    pos = bool(G_POS.search(t)) or (bool(G_PRAC.search(t)) and not G_PRAC_NEG.search(t))
+    return pos and not G_LONG.search(t) and not G_OUT.search(t)
+
+
 def injury_calls(details):
     """The next-game wording of an injury item (handoffs 856, 858, 859): {firm, exp_ret, out_w, left, day} keys that hold."""
     t = re.sub(r"\s+", " ", (details or "").lower())
@@ -378,15 +398,17 @@ def injury_calls(details):
     left = bool(LEFT_GAME.search(t)) and not LEFT_BACK.search(t)
     exp_ret = bool(EXP_RETURN.search(t)) and not EXP_HEDGE.search(t) and not LC_OUT.search(t)
     days = list(dict.fromkeys(WEEKDAY.findall(t)))
-    firm = firm_return(details)
-    out_w = (out_w or bool(MORE_OUT.search(t))) and not left  # 864
+    served = bool(GS_RETURN.search(t)) and not FIRM_HEDGE.search(t) and not LC_OUT.search(t)  # 868
+    firm = firm_return(details) or served
+    out_w = (out_w or bool(MORE_OUT.search(t)) or (bool(GS_OUT.search(t)) and not served)) and not left  # 864, 868
     ev = bool(EVAL.search(t)) and not out_w and not left and not firm  # 864: being evaluated
     nc = bool(NON_CONTACT.search(t)) and not firm  # 862
     mp = bool(MISSED_PRAC.search(t)) and not ILL.search(t) and not MAINT.search(t) and not firm and not out_w  # 863
     soft_ok = not firm and not exp_ret and not out_w and not LC_OUT.search(t) and not SOFT_NEG.search(t)
     soft, prac = soft_ok and bool(SOFT_RET.search(t)), soft_ok and bool(PRAC.search(t))  # 860
     res = {"firm": firm, "exp_ret": exp_ret, "out_w": out_w, "left": left, "eval": ev, "nc": nc, "mp": mp,
-           "soft": soft or prac, "prac": prac, "nt": bool(NOT_TRAVEL.search(t)) and not firm}
+           "soft": soft or prac, "prac": prac, "nt": bool(NOT_TRAVEL.search(t)) and not firm,
+           "ill": bool(ILL.search(t))}  # 866: illness wording
     return {**{k: True for k, v in res.items() if v}, **({"day": days[0]} if days else {}), **({"days": days} if len(days) > 1 else {})}
 
 
@@ -418,6 +440,28 @@ def fetch_line_changes(s, now_utc, have):
             if pid and ts and ts > (have.get(str(int(pid))) or {}).get("ts", ""):
                 day = WEEKDAY.search((it.get("details") or "").lower())  # the day it names (handoff 858)
                 have[str(int(pid))] = {"ts": ts, "lc": line_change(it.get("details")), **({"day": day.group(1)} if day else {})}
+        if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
+            break
+        time.sleep(0.2)
+    return {k: v for k, v in sorted(have.items()) if v["ts"] >= floor}
+
+
+GS_DAYS, GS_CATS = 3, ("General", "Suspension")
+
+
+def fetch_general(s, now_utc, have):
+    """Each skater's latest General or Suspension item {nhl id: {ts, cat, injury_calls keys}} from Daily Faceoff's all-news
+    feed, newest page back to the stored ones, kept GS_DAYS (handoff 868)."""
+    have = dict(have or {})
+    floor = (now_utc - timedelta(days=GS_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    stop = max(floor, max((v["ts"] for v in have.values()), default="")[:16])
+    for page in range(1, NEWS_MAX_PAGES + 1):
+        data = page_data(s, f"{DF}/hockey-player-news/{page}")["data"]
+        items = data.get("data") or []
+        for it in items:
+            pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
+            if it.get("newsCategoryName") in GS_CATS and pid and ts and ts > (have.get(str(int(pid))) or {}).get("ts", ""):
+                have[str(int(pid))] = {"ts": ts, "cat": it["newsCategoryName"], **injury_calls(it.get("details"))}
         if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
             break
         time.sleep(0.2)
@@ -464,6 +508,8 @@ def fetch_news(s, now_utc, stored=None):
                 if slug == "injuries" and ts > old.get("ts", ""):  # the Week dress model's inputs (handoff 413)
                     new["nf"] = f["nf"]
                     new.update(injury_calls(it.get("details")))  # next-game wording (handoffs 856, 858, 859)
+                    if it.get("playerPosition") == "G" and goalie_positive(re.sub(r"\s+", " ", (it.get("details") or "").lower())):
+                        new["gp"] = True  # an injured goalie's positive news (handoff 869)
                     if f["tl"] is not None:
                         new["tl"] = round(f["tl"], 1)
                 if slug == "injuries":
@@ -482,6 +528,11 @@ def fetch_news(s, now_utc, stored=None):
     except Exception as e:  # noqa: BLE001
         out["line-matches"] = dict(stored.get("line-matches") or {})
         out["line_error"] = repr(e)
+    try:  # General and Suspension items (handoff 868), the same way
+        out["general"] = fetch_general(s, now_utc, stored.get("general"))
+    except Exception as e:  # noqa: BLE001
+        out["general"] = dict(stored.get("general") or {})
+        out["general_error"] = repr(e)
     keep = (now_utc - timedelta(days=NEWS_RECENT_DAYS)).strftime("%Y-%m-%dT%H:%M")
     out["recent"] = {pid: sorted((r for r in v if r["ts"] >= keep), key=lambda r: (r["ts"], r["cat"]))
                      for pid, v in sorted(recent.items()) if any(r["ts"] >= keep for r in v)}

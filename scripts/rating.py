@@ -49,6 +49,9 @@ D_X = ["std_toi", "std_pptoi", "l5_toi", "l5_pptoi", "std_blockedShots", "std_hi
 SQUARED = ["std_toi", "l5_toi", "std_pptoi"]
 # ESPN status caps the chance to dress (research findings section 15); recheck day-to-day after ~3 weeks of logs
 INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}  # goalies (inside goalie_starts)
+# an ESPN OUT / IR goalie whose latest Daily Faceoff item, at most 4 days old, has list 869-a positive wording started the
+# next game 25%, the second 43% (163 items, 2021-26): his factor next game / later in place of 0.0 (findings 4721, handoff 869)
+GOALIE_NEWS_LIFT, GOALIE_NEWS_DAYS = (0.4, 0.65), 4
 # skaters (findings section 58): injured players still dress for some of the week, unless the note says it's a long absence
 SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
@@ -745,6 +748,9 @@ SOFT_RETURN, SOFT_PRAC_RETURN, SOFT_AFTER = 0.65, 0.80, (0.8, None)
 NON_CONTACT_CAPS = (0.05, 0.25)
 MISSED_PRAC_CAP, MISSED_SKATE_CAP = 0.35, 0.12
 NEAR_OUT, EVAL_CAPS = 0.05, (0.05, 0.2)
+# playing through it: a skater who dresses within 30 h of an injury item with no firm return wording scores 0.888 of his
+# rate that night (606 games), 0.80 with illness wording (123); his next games 1.00 (findings 4718, handoff 866)
+RUST_HOURS, RUST_FPG, RUST_ILL_FPG = 30, 0.90, 0.80
 # return news naming the day of the game after next (within 6 days): 0 of 23 dressed in the game between, 15 of 23 in
 # the named game (findings 4713, handoff 861)
 SKIP_ONE_CAP, SKIP_ONE_FLOOR = 0.05, 0.6
@@ -778,7 +784,15 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, sec
         elif h <= AHEAD_HOURS and day == wd:
             calls.append((ts, {"k": "in" if inn else "out", "cap": not inn, "q": AHEAD_LINE["in" if inn else "out"],
                                "after": LC_AFTER["in" if inn else "out"], "ahead": True}))
-    ii = (news.get("injuries") or {}).get(str(pid))
+    for ii in ((news.get("injuries") or {}).get(str(pid)), (news.get("general") or {}).get(str(pid))):  # 868: General too
+        c = _injury_call(ii, lead, wd, second_day)
+        if c:
+            calls.append(c)
+    return max(calls, key=lambda x: x[0])[1] if calls else None
+
+
+def _injury_call(ii, lead, wd, second_day):
+    """(ts, call) from one Daily Faceoff injury, General or Suspension item, or None (next_game_call)."""
     if ii and lead(ii):
         h, ts = lead(ii)
         named = ii.get("days") or ([ii["day"]] if ii.get("day") else [])
@@ -810,8 +824,20 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, sec
                 and (date.fromisoformat(second_day) - ts.date()).days <= 6:  # names the game after next (861)
             c = {"k": "later", "cap": True, "q": SKIP_ONE_CAP, "after": None, "lift": (SKIP_ONE_FLOOR,), "ahead": not near}
         if c:
-            calls.append((ts, c))
-    return max(calls, key=lambda x: x[0])[1] if calls else None
+            return ts, c
+    return None
+
+
+def rust_factor(dfo_news, pid, start, now_utc, last_start=None):
+    """His points-a-game factor for his next game (starting at `start`) when his latest Daily Faceoff injury item, newer
+    than his last game, is at most RUST_HOURS older than the puck and has no firm return wording (handoff 866); else None."""
+    item = ((dfo_news or {}).get("injuries") or {}).get(str(pid)) if pid else None
+    t0, ts = parse_utc(start), parse_utc(item.get("ts")) if item else None
+    lt = parse_utc(last_start) if last_start else None
+    if ts is None or t0 is None or t0 <= now_utc or ts > t0 or t0 - ts > timedelta(hours=RUST_HOURS) \
+            or (lt and ts <= lt) or item.get("firm"):
+        return None
+    return RUST_ILL_FPG if item.get("ill") else RUST_FPG
 
 
 def call_games(per_game, call, game_caps=None):
@@ -2850,7 +2876,7 @@ def back_from_spell(seq, gid):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=()):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -2861,6 +2887,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     injury: {goalie id: ESPN injury factor}; scales his chance before each game is split among the team's goalies,
     so an injured starter's games go to his partner (findings section 48).
     dfo_inj: {goalie id: (next game, later games)} caps on that factor from Daily Faceoff injury news (handoff 679).
+    inj_lift: {goalie id: (next game, later games)} factors in place of an injured 0.0 after positive news (handoff 869).
     last_start: (goalie id, (shift next game, shift game after next, ...)) for whoever started the team's last game:
     his start logit drops after a bad start or a loss and rises after a win (findings 131-133); after he left without
     a decision it stays down for every game in the window, until a Daily Faceoff confirmation names him (findings 164).
@@ -3084,7 +3111,10 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                 raw[gid] = 1 / (1 + math.exp(-(math.log(raw[gid] / (1 - raw[gid])) + z)))
             # Daily Faceoff injury news: the factor is min(ESPN's, 0.2 next game, 0.35 later) (handoff 679)
             cut = (dfo_inj or {}).get(gid)
-            raw[gid] *= min(injury.get(gid, 1.0), cut[min(ahead, 1)]) if cut else injury.get(gid, 1.0)
+            f = injury.get(gid, 1.0)
+            if f == 0 and gid in (inj_lift or {}):  # injured with positive news (handoff 869)
+                f = inj_lift[gid][min(ahead, 1)]
+            raw[gid] *= min(f, cut[min(ahead, 1)]) if cut else f
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         early = B2B_NIGHT2_NO1_EARLY if night2_no1 and len(seq) <= EARLY_GAMES else 0.0
@@ -3602,7 +3632,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     carried = carry_injury_notes(notes, stored_notes, {p["id"]: p.get("injury") for p in players}, played_since, today)
     if carried:
         print(f"Kept the last real injury note for {len(carried)} players whose note is now a bare status word")
-    goalie_inj, goalie_gone = {}, set()
+    goalie_inj, goalie_gone, goalie_lift = {}, set(), {}
     for p in players:
         if p["pos"] == "G" and p.get("injury") in INJURY_DRESS:
             pid = match(p)
@@ -3610,6 +3640,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 goalie_inj[pid] = INJURY_DRESS[p["injury"]]
                 if p["id"] in notes and injury_note(notes[p["id"]], today)["season"]:
                     goalie_gone.add(pid)
+                item = ((dfo_news or {}).get("injuries") or {}).get(str(pid)) or {}
+                ts = parse_utc(item.get("ts"))
+                if goalie_inj[pid] == 0 and p["injury"] in ("OUT", "INJURY_RESERVE") and pid not in goalie_gone \
+                        and item.get("gp") and ts and timedelta(0) <= now_utc - ts <= timedelta(days=GOALIE_NEWS_DAYS):
+                    goalie_lift[pid] = GOALIE_NEWS_LIFT
     goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
@@ -3624,7 +3659,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             {d for d, _, home in week_games.get(team, []) if not home},
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
                             likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo,
-                            {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team})  # handoff 731
+                            {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team}, inj_lift=goalie_lift)  # handoffs 731, 869
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
@@ -3658,7 +3693,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             unmatched += 1
         inj = INJURY_DRESS.get(p.get("injury") or "", 1.0)
         why = {}
-        sat_last = False
+        sat_last, rust = False, None
         if p["pos"] == "G":
             team = ESPN_TO_NHL.get(p["team"], p["team"])
             starts = goalie_exp.get(pid, 0.0) if pid else 0.0
@@ -3712,6 +3747,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                         g != pid and g not in goalie_dfo and goalie_inj.get(g, 1.0) > 0
                         for g, _, pos in rosters.get(roster_team.get(pid, team), []) if pos == "G"):
                     why["dfo_inj"] = goalie_dfo_day[pid]
+                if pid in goalie_lift:
+                    why["g_news_lift"] = True  # injured, with positive Daily Faceoff news: some starts back (handoff 869)
                 why["season_pps"] = round(fpg_s, 2)  # the Season's pts/start (handoff 641)
             season = GOALIE_SEASON_SCALE[0] + GOALIE_SEASON_SCALE[1] * raw_season if raw_season > 0 else 0.0
             # Proj GP: NHL starts so far + his share of his team's starts still to play (the Season rating's share)
@@ -4174,6 +4211,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 per_game = [q if c is None else min(q, c) for q, c in zip(per_game, trip)]
                 dress_next = per_game[0]
                 why["no_travel"] = sum(c is not None for c in trip)
+            if per_game and not skip and p.get("pos") != "G" and wk_dates:  # playing through it (handoff 866)
+                rust = rust_factor(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
+                                   or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), now_utc,
+                                   week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
             # sat the last game, no status, likely back next game: the later games follow (handoff 857)
             later_floor = not lc and not trip and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
                 and per_game[0] >= RETURN_NEXT_MIN
@@ -4336,6 +4377,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["back"] = usually_back(p["injury"], sat_last, note)
             if word_floor is not None:  # the illness or return-word cap that lifted his (handoffs 676-677, 685)
                 why["note_lift"] = "illness" if word_floor == ILLNESS_CAP and not return_words else "return"
+        if rust and exp_games > 0 and dress_next:  # his next game at the factor, folded into the week's points a game (866)
+            why["rust"] = {"m": rust, "fpg": round(fpg, 2)}
+            why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
+            fpg *= 1 - (1 - rust) * min(dress_next, exp_games) / exp_games
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
         p["cr_season"] = round(season, 2)
