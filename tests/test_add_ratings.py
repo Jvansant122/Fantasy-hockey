@@ -1544,6 +1544,20 @@ def test_espn_free_agent_on_an_nhl_roster_gets_his_games(monkeypatch, tmp_path):
     assert calls == []
 
 
+def test_espn_free_agent_goalie_on_an_nhl_roster_gets_his_games(monkeypatch, tmp_path):
+    """Soderblom (Nov 9): ESPN lists a goalie as 'FA' while an NHL roster has him. He gets that team's games, so his starts
+    never outnumber his games (P3, G1, G6 and G2 blocked the 6 AM publish); with nothing to reschedule him, no starts."""
+    calls = []
+
+    def reschedule(p, team):
+        calls.append((p["name"], team))
+        p.update(team="TOR", games=4, games_left=2, nights=[7, 9, 11, 13])
+    p = rate(monkeypatch, tmp_path, [espn(999, "Joseph Woll", "FA", "G", games_left=0)], reschedule=reschedule)["Joseph Woll"]
+    assert calls == [("Joseph Woll", "TOR")] and p["team"] == "TOR" and 0 < p["cr_games"] <= 2
+    alone = rate(monkeypatch, tmp_path, [espn(999, "Joseph Woll", "FA", "G", games_left=0)])["Joseph Woll"]
+    assert alone["cr_games"] == 0 and alone["cr_why"]["exp_starts"] == 0 and alone["cr"] == 0
+
+
 def test_offseason_mover_rated_a_little_lower(monkeypatch, tmp_path):
     """On a new team since last season and with one team this season: Week points a game x 0.98 (handoff 667), Season x 0.965
     (findings 230)."""
