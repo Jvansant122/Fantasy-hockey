@@ -1,22 +1,25 @@
 {
-"fetched": "2026-11-09T22:21Z",
+"fetched": "2026-11-09T22:39Z",
 "general": {
 "8476981": {
 "cat": "General",
 "day": "saturday",
 "out_w": true,
+"pr": true,
 "ts": "2026-11-07T17:18:46"
 },
 "8479351": {
 "cat": "General",
 "day": "saturday",
 "firm": true,
+"pr": true,
 "ts": "2026-11-07T16:39:21"
 },
 "8483510": {
 "cat": "General",
 "day": "saturday",
 "mp": true,
+"pr": true,
 "ts": "2026-11-07T16:27:53"
 }
 },
@@ -257,12 +260,14 @@
 "out"
 ],
 "out_w": true,
+"pr": true,
 "season": false,
 "surgery": false,
 "ts": "2026-11-08T21:45:40"
 },
 "8475692": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir"
 ],
@@ -565,6 +570,7 @@
 },
 "8476891": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir"
 ],
@@ -678,6 +684,7 @@
 "nf": [
 "ret"
 ],
+"pr": true,
 "season": false,
 "surgery": false,
 "ts": "2026-10-17T16:40:28"
@@ -695,6 +702,7 @@
 "nf": [
 "dtd"
 ],
+"q_only": true,
 "season": false,
 "surgery": false,
 "ts": "2026-09-24T17:49:57"
@@ -775,6 +783,7 @@
 },
 "8477499": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir"
 ],
@@ -867,6 +876,7 @@
 },
 "8477845": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir",
 "out",
@@ -1117,6 +1127,7 @@
 },
 "8478421": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir",
 "out"
@@ -1172,6 +1183,7 @@
 },
 "8478450": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir"
 ],
@@ -1238,6 +1250,7 @@
 "out"
 ],
 "out_w": true,
+"pr": true,
 "season": false,
 "surgery": false,
 "ts": "2026-10-22T23:31:19"
@@ -1299,6 +1312,7 @@
 "8478542": {
 "day": "monday",
 "ill": true,
+"ill_mp": true,
 "indefinite": false,
 "nf": [
 "illness"
@@ -1309,6 +1323,7 @@
 },
 "8478851": {
 "day": "tuesday",
+"gtd": true,
 "indefinite": false,
 "nf": [
 "gtd",
@@ -1438,6 +1453,7 @@
 },
 "8479398": {
 "day": "thursday",
+"gtd": true,
 "indefinite": false,
 "nf": [
 "gtd",
@@ -1468,6 +1484,7 @@
 ],
 "season": false,
 "surgery": false,
+"trav": true,
 "ts": "2026-11-06T16:43:56"
 },
 "8479410": {
@@ -1646,6 +1663,7 @@
 },
 "8480078": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir"
 ],
@@ -1685,6 +1703,7 @@
 "ts": "2026-11-09T17:29:57"
 },
 "8480748": {
+"gtd": true,
 "indefinite": false,
 "nf": [
 "gtd",
@@ -1817,6 +1836,7 @@
 },
 "8480893": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir",
 "wtw"
@@ -1907,6 +1927,7 @@
 "8481523": {
 "day": "monday",
 "ill": true,
+"ill_mp": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -1930,6 +1951,7 @@
 },
 "8481527": {
 "day": "tuesday",
+"gtd": true,
 "indefinite": false,
 "nf": [
 "gtd"
@@ -1966,6 +1988,7 @@
 "out"
 ],
 "out_w": true,
+"pr": true,
 "season": false,
 "surgery": false,
 "ts": "2026-10-20T22:35:41"
@@ -2057,6 +2080,7 @@
 },
 "8482073": {
 "day": "sunday",
+"gtd": true,
 "indefinite": false,
 "nf": [
 "gtd"
@@ -2398,6 +2422,8 @@
 ],
 "indefinite": false,
 "nf": [],
+"pr": true,
+"q_only": true,
 "season": false,
 "surgery": false,
 "ts": "2026-11-09T20:02:01"
@@ -2531,6 +2557,7 @@
 },
 "8482806": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir",
 "wtw"
@@ -2718,6 +2745,7 @@
 "nf": [
 "ret"
 ],
+"pr": true,
 "ret_m": true,
 "season": false,
 "surgery": false,
@@ -2725,6 +2753,7 @@
 },
 "8483525": {
 "day": "tuesday",
+"gtd": true,
 "indefinite": false,
 "nf": [
 "gtd",
@@ -2745,6 +2774,7 @@
 },
 "8483565": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir",
 "wtw"
@@ -2774,6 +2804,7 @@
 },
 "8483733": {
 "indefinite": false,
+"ir_new": true,
 "nf": [
 "ir",
 "ret"
@@ -3003,6 +3034,7 @@
 "thursday"
 ],
 "ill": true,
+"ill_mp": true,
 "indefinite": false,
 "nf": [
 "illness"
@@ -5164,9 +5196,7 @@
 "8477446": [
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-11-07T15:24:15"
 },
 {
@@ -5484,9 +5514,7 @@
 "8477505": [
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-10-20T03:32:16"
 },
 {
@@ -6271,9 +6299,7 @@
 },
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-10-24T18:21:52"
 },
 {
@@ -6685,7 +6711,6 @@
 {
 "cat": "inj",
 "f": [
-"gtd",
 "ret"
 ],
 "ts": "2026-10-16T14:55:09"
@@ -6943,9 +6968,7 @@
 "8479400": [
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-10-10T14:57:53"
 },
 {
@@ -7894,9 +7917,7 @@
 "8480893": [
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-09-29T12:13:49"
 },
 {
@@ -8378,9 +8399,7 @@
 "8481568": [
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-10-29T16:22:42"
 },
 {
@@ -8704,9 +8723,7 @@
 },
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-10-16T16:57:45"
 },
 {
@@ -8835,7 +8852,6 @@
 {
 "cat": "inj",
 "f": [
-"gtd",
 "ret"
 ],
 "ts": "2026-10-02T16:07:32"
@@ -9489,9 +9505,7 @@
 "8482699": [
 {
 "cat": "inj",
-"f": [
-"gtd"
-],
+"f": [],
 "ts": "2026-11-09T20:02:01"
 }
 ],
@@ -12922,5 +12936,5 @@
 "up": true
 }
 },
-"version": 16
+"version": 18
 }
