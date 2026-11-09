@@ -3534,7 +3534,7 @@ def test_daily_faceoff_line_change_sets_tonight_and_the_next_games(monkeypatch, 
     assert out["cr_dress_next"] == 0.03 and exp["cr_dress_next"] == 0.05 and out["cr_why"]["line_change"] == "out"
     later = base["cr_games"] - base["cr_dress_next"]
     assert out["cr_games"] - out["cr_dress_next"] < later  # his next games drop to the after-scratch rates
-    assert out["cr_games"] - out["cr_dress_next"] <= sum(rating.LC_AFTER["out"][:base["games_left"] - 1]) + 0.02
+    assert out["cr_games"] - out["cr_dress_next"] <= sum(rating.lc_after("out", 1.0)[:base["games_left"] - 1]) + 0.02  # a regular (890)
     assert inn["cr_dress_next"] == 0.97 and inn["cr_why"]["line_change"] == "in"
     # an item from before the 16 hours, or a game already under way: nothing changes
     assert matthews("out", ts="2026-10-08T23:00:00")["cr_games"] == base["cr_games"]
@@ -4104,3 +4104,38 @@ def test_round3_news_rules():
     mp = "Smith missed practice."
     early = "2026-11-09T20:00:00Z"  # 28 h ahead
     assert [call(mp, ts=early, fpg=f)["q"] for f in (0.9, 1.3, 2.0)] == [0.15, 0.30, 0.45]
+
+
+def test_round3_absence_rules():
+    """Handoffs 876, 882, 887, 888, 890: fresh IR caps, one-game absences with no news since, and the games after a Line
+    Change item by how regular he was."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 12, 15, tzinfo=timezone.utc)
+    ir = {"injuries": {"7": {"ts": "2026-11-10T14:00:00", "ir_new": True}}}
+    assert rating.ir_new_caps(ir, 7, ["2026-11-12", "2026-11-14", "2026-11-16"], now) == [0.05, 0.05, None]
+    assert rating.ir_new_caps(ir, 7, ["2026-11-16"], now) is None
+    assert rating.ir_new_caps(ir, 7, ["2026-11-12"], datetime(2026, 11, 15, 15, tzinfo=timezone.utc)) is None
+    item = lambda **k: {"injuries": {"7": {"ts": "2026-11-10T15:00:00", **k}}}  # Tuesday 10 AM ET
+    played, starts = ["2026-11-08", "2026-11-10"], {"2026-11-10": "2026-11-11T00:00:00Z"}
+    assert rating.one_out_kind(item(out_w=True), 7, played, starts) == "hurt"
+    assert rating.one_out_kind(item(out_w=True, ill=True), 7, played, starts) == "ill"
+    assert rating.one_out_kind(item(pr=True), 7, played, starts) == "personal"
+    assert rating.one_out_kind(item(out_w=True), 7, ["2026-11-08"], starts) is None  # no game since the item
+    assert rating.one_out_kind(item(firm=True), 7, played, starts) is None
+    assert rating.lc_after("out", 0.9)[0] == 0.585 and rating.lc_after("out", 0.1)[0] == 0.36
+    assert rating.lc_after("in", 0.1) == (0.646, 0.578, 0.51) and rating.lc_after("in", None) == rating.LC_AFTER["in"]
+
+
+def test_news_floor_keeps_the_lines_floor(monkeypatch, tmp_path):
+    """Nov 9 regression (P9 blocked the 5 PM run): a day-ahead return floor of 0.85 for a player in Daily Faceoff's lines
+    who played his last game must not replace the lines' own higher floor."""
+    from datetime import datetime, timezone
+    import leads
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    def matthews(news_item):
+        news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {"1": news_item} if news_item else {}}
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), dfo_out=False, today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], dfo_news=news)["Auston Matthews"]
+    base = matthews(None)
+    loose = matthews({"ts": "2026-10-09T15:00:00", **leads.injury_calls("Matthews has been cleared to play.")})
+    assert loose["cr_why"]["line_change"] == "likely" and loose["cr_dress_next"] >= rating.DFO_IN_LINES_NEXT - 0.001

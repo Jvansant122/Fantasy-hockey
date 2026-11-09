@@ -763,6 +763,15 @@ GTD_BACK_FLOORS = ((6, 0.8), (3, 0.7))
 TRAVEL_FLOORS = (0.35, 0.45, 0.6)
 FAR_HOURS, FAR_RETURN, FAR_OUT = 120, 0.85, 0.03
 MISSED_PRAC_BANDS = ((1.1, 0.15), (1.6, 0.30), (float("inf"), 0.45))
+# out for one game (he played the one before) and his latest Daily Faceoff item is still that out item, next game:
+# personal or rest floor 0.65 (70% / 63%, 882); illness cap 0.5, 0.3 on the next night (47% / 29%, 887); hurt cap 0.2
+# (18.6% of 861, 888). A fresh IR placement (not retroactive) caps his games in the next 4 days at 0.05 (0.5-3.3%, 876)
+ONE_OUT_PERSONAL, ONE_OUT_ILL, ONE_OUT_HURT = 0.65, (0.5, 0.3), 0.2
+IR_NEW_DAYS, IR_NEW_CAP = 4, 0.05
+# after a Line Change scratch / draw-in, his next games by the share of the team's last 20 games he dressed (under 0.3,
+# 0.3-0.6, 0.6-0.85, 0.85+): (next game, the third game) dressed (findings 4743, handoff 890)
+LC_AFTER_BANDS = ((0.3, {"out": (0.36, 0.35), "in": (0.646, 0.51)}), (0.6, {"out": (0.345, 0.41), "in": (0.666, 0.57)}),
+                  (0.85, {"out": (0.425, 0.54), "in": (0.746, 0.67)}), (float("inf"), {"out": (0.585, 0.72), "in": (0.794, 0.76)}))
 # playing through it: a skater who dresses within 30 h of an injury item with no firm return wording scores 0.888 of his
 # rate that night (606 games), 0.80 with illness wording (123); his next games 1.00 (findings 4718, handoff 866)
 RUST_HOURS, RUST_FPG, RUST_ILL_FPG = 30, 0.90, 0.80
@@ -775,7 +784,39 @@ TRIP_CAPS, TRIP_HOURS = (0.05, 0.05, 0.2), 72
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
-def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, second_day=None, missed=0, fpg=None):
+def lc_after(kind, reg_share):
+    """The games after a Line Change item: LC_AFTER, or by how regular he was when the share is known (handoff 890)."""
+    if reg_share is None:
+        return LC_AFTER[kind]
+    a, b = next(v for lim, v in LC_AFTER_BANDS if reg_share < lim)[kind]
+    return a, round((a + b) / 2, 3), b
+
+
+def one_out_kind(dfo_news, pid, played_dates, starts):
+    """"personal" / "ill" / "hurt" when his latest Daily Faceoff injury item is out wording (or a personal / rest absence)
+    and his team has played a game since it (handoffs 882, 887, 888); else None."""
+    item = ((dfo_news or {}).get("injuries") or {}).get(str(pid)) if pid else None
+    ts = parse_utc(item.get("ts")) if item else None
+    if ts is None or not (item.get("out_w") or item.get("pr")) or item.get("firm") or item.get("left"):
+        return None
+    day = ts.astimezone(ET).date().isoformat()
+    if not any(game_after(ts, day, d[:10], (starts or {}).get(d[:10])) for d in played_dates):
+        return None
+    return "personal" if item.get("pr") else "ill" if item.get("ill") else "hurt"
+
+
+def ir_new_caps(dfo_news, pid, dates, now_utc):
+    """Caps for his games on `dates` within IR_NEW_DAYS of a fresh injured-reserve item (handoff 876), or None."""
+    item = ((dfo_news or {}).get("injuries") or {}).get(str(pid)) if pid else None
+    ts = parse_utc(item.get("ts")) if item and item.get("ir_new") else None
+    if ts is None or now_utc - ts > timedelta(days=IR_NEW_DAYS):
+        return None
+    end = (ts.astimezone(ET).date() + timedelta(days=IR_NEW_DAYS)).isoformat()
+    caps = [IR_NEW_CAP if d <= end else None for d in dates]
+    return caps if any(c is not None for c in caps) else None
+
+
+def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, second_day=None, missed=0, fpg=None, reg_share=None):
     """Daily Faceoff's call on his next game (starting at `start`, UTC ISO, on ET date `game_day`) from his latest Line
     Change item (handoffs 850, 854, 858) and his latest injury item (856-859), whichever is newer when both call it:
     {k: in / out / return / left, cap: True for a cap, q: that game's value, after: the next games' values (None: keep),
@@ -795,10 +836,10 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, sec
         day, inn = li.get("day"), li["lc"] == "in"
         if h <= LC_HOURS and day in (None, wd):
             calls.append((ts, {"k": "in" if inn else "out", "cap": not inn, "q": LC_TONIGHT[li["lc"]],
-                               "after": LC_AFTER["in" if inn else "out"], "ahead": False}))
+                               "after": lc_after("in" if inn else "out", reg_share), "ahead": False}))
         elif h <= AHEAD_HOURS and day == wd:
             calls.append((ts, {"k": "in" if inn else "out", "cap": not inn, "q": AHEAD_LINE["in" if inn else "out"],
-                               "after": LC_AFTER["in" if inn else "out"], "ahead": True}))
+                               "after": lc_after("in" if inn else "out", reg_share), "ahead": True}))
     for ii in ((news.get("injuries") or {}).get(str(pid)), (news.get("general") or {}).get(str(pid))):  # 868: General too
         c = _injury_call(ii, lead, wd, second_day, missed, fpg)
         if c:
@@ -4260,7 +4301,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 lc = next_game_call(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                     or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), wk_dates[0], now_utc,
                                     week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None,
-                                    wk_dates[1] if len(wk_dates) > 1 else None, missed, fpg)
+                                    wk_dates[1] if len(wk_dates) > 1 else None, missed, fpg,
+                                    sum(g in {x["game"] for x in gl} for g in tg[-20:]) / len(tg[-20:]) if tg and gl else None)
             if lc:
                 per_game = call_games(per_game, lc, game_caps)
                 dress_next = per_game[0]
@@ -4279,8 +4321,32 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 rust = rust_factor(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                    or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), now_utc,
                                    week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
+            # a fresh injured-reserve placement: his games in the next 4 days (handoff 876)
+            ir_new = ir_new_caps(dfo_news, pid, wk_dates, now_utc) if per_game and p.get("pos") != "G" else None
+            if ir_new:
+                per_game = [q if c is None else min(q, c) for q, c in zip(per_game, ir_new)]
+                dress_next = per_game[0]
+                why["ir_new"] = True
+            # out one game, his latest item still that out item: personal / rest back, ill a coin flip, hurt still out
+            # (handoffs 882, 887, 888)
+            one_out = one_out_kind(dfo_news, pid, team_dates.get(team, ()), {d: st for (tm, d), st in week_starts.items()
+                                                                             if tm == team}) \
+                if per_game and not lc and not trip and not skip and sat_last and missed == 1 and p.get("pos") != "G" else None
+            if one_out:
+                q0 = per_game[0]
+                if one_out == "personal":
+                    q0 = max(q0, ONE_OUT_PERSONAL)
+                elif one_out == "ill":
+                    b2b = team_dates.get(team) and wk_dates and \
+                        (date.fromisoformat(wk_dates[0]) - date.fromisoformat(max(team_dates[team])[:10])).days == 1
+                    q0 = min(q0, ONE_OUT_ILL[1] if b2b else ONE_OUT_ILL[0])
+                else:
+                    q0 = min(q0, ONE_OUT_HURT)
+                per_game = [round(q0, 4)] + per_game[1:]
+                dress_next = per_game[0]
+                why["one_out"] = one_out
             # sat the last game, no status, likely back next game: the later games follow (handoff 857)
-            later_floor = not lc and not trip and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
+            later_floor = not lc and not trip and not one_out and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
                 and per_game[0] >= RETURN_NEXT_MIN
             if later_floor:
                 per_game = [per_game[0]] + [max(q, min(RETURN_LATER_FLOOR, game_caps[i] if game_caps else 1.0))
@@ -4321,6 +4387,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if out_idx and dfo_absent and all_dates[out_idx[0]] == today.isoformat() and tonight_ahead:
                     lead_caps[0] = min(lead_caps[0], DFO_ABSENT_TODAY_CAP)
                 trips = after_trip(venue.get(espn_team, {}), all_dates)
+                line_floor = DFO_LINEUP_NEXT if in_lines else dfo_in_lines_floor(boost_q) if dfo_in else None  # 844, 850
                 week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                   "dates": wk_dates, "per_game": list(per_game), "before": list(per_game), "caps": caps,
                                   "missed": missed, "after_trip": trips[skip:skip + own_n], "j0": skip,
@@ -4347,9 +4414,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   # Daily Faceoff's next-game floors, kept through the lineup step (handoffs 720-721)
                                   # the later games' floors that hold through the lineup step (handoffs 854, 856, 857)
                                   "later": [None] + [lc["after"][min(i, len(lc["after"])) - 1] for i in range(1, len(per_game))]
-                                  if lc and not lc["cap"] else [None] + [RETURN_LATER_FLOOR] * (len(per_game) - 1) if later_floor else None,
-                                  "floor0": lc["q"] if lc and not lc["cap"] else None if lc else
-                                  DFO_LINEUP_NEXT if in_lines else dfo_in_lines_floor(boost_q) if dfo_in else None,  # 844, 850
+                                  if lc and not lc["cap"] and lc.get("after") else [None] + [RETURN_LATER_FLOOR] * (len(per_game) - 1)
+                                  if later_floor else None,
+                                  # a news floor never takes the lines' own floor away (a 0.85 day-ahead return under the 0.95
+                                  # in-lines floor tripped P9, Nov 9)
+                                  "floor0": max(lc["q"], line_floor or 0.0) if lc and not lc["cap"] else None if lc else line_floor,
                                   })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),

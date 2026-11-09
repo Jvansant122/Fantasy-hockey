@@ -678,6 +678,11 @@ function why(p) {
     : `Daily Faceoff: out ${when} (3-10% for that game, and about half his next games)`);
   const rust = p.cr_why?.rust;  // playing through it (handoff 866)
   if (rust && !started(p)) wk.push(`he has fresh Daily Faceoff injury news${rust.m < 0.85 ? " about an illness" : ""} with no firm return, so his next game counts ${Math.round(rust.m * 100)}% of his ${(+rust.fpg).toFixed(2)} pts/game (such players scored about ${rust.m < 0.85 ? "20" : "11"}% less that night)`);
+  const oneOut = p.cr_why?.one_out;  // handoffs 882, 887, 888
+  if (oneOut && !started(p)) wk.push(oneOut === "personal" ? "Daily Faceoff: he missed one game for personal reasons or rest, and such players were back 63-70% of the time, so at least 65% his next game"
+    : oneOut === "ill" ? "Daily Faceoff: he missed a game ill with no news since, which was a coin flip next game (at most 50%, 30% the next night)"
+    : "Daily Faceoff: he missed a game hurt with no news since, and such players sat again about 4 times in 5 (at most 20% his next game)");
+  if (p.cr_why?.ir_new && !started(p)) wk.push("Daily Faceoff: freshly placed on injured reserve, so at most 5% for his games in the next 4 days");
   if (p.cr_why?.no_travel && !started(p)) wk.push(`Daily Faceoff: he did not travel with the team, so at most 5-20% in each of the ${p.cr_why.no_travel} road game${p.cr_why.no_travel > 1 ? "s" : ""} before his team is home again`);
   if (p.cr_why?.later_floor) wk.push("he sat his team's last game but is likely back for the next one, so his later games this week count at least 85%");
   if (p.cr_why?.displaced) wk.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);

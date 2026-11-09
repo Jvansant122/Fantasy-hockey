@@ -180,7 +180,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 17  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 18  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -410,6 +410,11 @@ RET_SKIP = re.compile(r"\bnot\b|n't|game-time|questionable|doubtful")
 # 875 "questionable" with no game-time-decision wording (19% dressed within 16 h), 879 game-time decision, 880 illness and a
 # missed skate or practice, 885 an injured skater travelling with the team (findings 4728, 4732, 4733, 4738)
 GTD = re.compile(r"game[- ]time decision")
+# 876 a fresh injured-reserve placement (not retroactive, LTIR or long-term); 882 a personal or rest absence
+IR_NEW = re.compile(r"placed (\w+ )?on (the )?(injured reserve|ir)\b")
+IR_NEW_SKIP = re.compile(r"retroactive|ltir|long-term|season|surgery|weeks|month")
+PERSONAL = re.compile(r"personal|family|birth of|\b(rested|resting)\b|\bwill rest\b|rest day|maintenance|load management"
+                      r"|day off")
 QUESTIONABLE = re.compile(r"\bquestionable\b")
 TRAVEL = re.compile(r"(is|are|will be|was) travel(l)?ing with|will travel with|travel(l)?ed with|will (join|accompany) the team"
                     r"|(join|accompan)\w* the team on|on the (road )?trip|making the trip|will make the trip|is with the team")
@@ -457,7 +462,9 @@ def injury_calls(details):
            "q_only": bool(QUESTIONABLE.search(t)) and not GTD.search(t) and not ILL.search(t) and not firm,  # 875
            "gtd": bool(GTD.search(t)) and not out_w and not firm,  # 879
            "ill_mp": bool(ILL.search(t)) and bool(MISSED_PRAC.search(t)) and not firm,  # 880
-           "trav": bool(TRAVEL.search(t)) and not NOT_TRAVEL.search(t) and not firm and not out_w}  # 885
+           "trav": bool(TRAVEL.search(t)) and not NOT_TRAVEL.search(t) and not firm and not out_w,  # 885
+           "ir_new": bool(IR_NEW.search(t)) and not IR_NEW_SKIP.search(t),  # 876
+           "pr": bool(PERSONAL.search(t)) and not ILL.search(t)}  # 882
     return {**{k: True for k, v in res.items() if v}, **({"day": days[0]} if days else {}), **({"days": days} if len(days) > 1 else {})}
 
 
