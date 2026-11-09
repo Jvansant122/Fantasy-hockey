@@ -75,6 +75,13 @@ def win_prob(home, away):
     return 1 / (1 + math.exp(-z))
 
 
+def blend_line(p_model, p_line):
+    """The model's and the de-vigged betting line's home win chance averaged in log-odds: 3,859 lined games 2022-26,
+    log loss -26e-4 and right 58.9% -> 59.5% against the model alone (findings 4703, handoff 853)."""
+    lo = lambda q: math.log(min(max(q, 1e-6), 1 - 1e-6) / (1 - min(max(q, 1e-6), 1 - 1e-6)))
+    return 1 / (1 + math.exp(-(lo(p_model) + lo(p_line)) / 2))
+
+
 def depth_dress(gl, team_games):
     """DEPTH_DRESS for a skater the site doesn't rate, from whether he played his team's latest games."""
     if not gl or not team_games:
@@ -119,6 +126,8 @@ def nhl_games(week_games, starts, results, names, strength, play_dates, lineups,
             # tonight's line belongs to tonight's game only, not the team's later games (handoff 614)
             if home in lines and not g["started"] and (line_date is None or day == line_date):
                 g["p_line"] = round(lines[home], 3)
+                if p is not None:  # the pick averages the model and the line in log-odds (findings 4703, handoff 853)
+                    g["p_model"], g["p_home"] = g["p_home"], round(blend_line(p, lines[home]), 3)
             if res.get("state") in FINAL_STATES and res.get("home_score") is not None:
                 g.update(home_score=res["home_score"], away_score=res["away_score"], last=res.get("last"),
                          home_won=res["home_score"] > res["away_score"])
@@ -140,8 +149,10 @@ def freeze(games, previous, week_start=None):
         o = old.get((g["home"], g["date"]))
         if o and o.get("p_home") is not None and (not o.get("started") or o.get("frozen")):
             g["p_home"], g["inputs"] = o["p_home"], o.get("inputs", g["inputs"])
-            if o.get("p_line") is not None:
-                g["p_line"] = o["p_line"]
+            g.pop("p_model", None)
+            for k in ("p_line", "p_model"):
+                if o.get(k) is not None:
+                    g[k] = o[k]
         else:
             g["p_home"] = None
         g["frozen"] = g["p_home"] is not None
