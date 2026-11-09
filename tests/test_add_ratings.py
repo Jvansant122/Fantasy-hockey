@@ -3532,74 +3532,59 @@ def test_daily_faceoff_line_change_sets_tonight_and_the_next_games(monkeypatch, 
     assert matthews("out", start="2026-10-09T15:30:00Z")["cr_games"] == started["cr_games"]
 
 
-def test_line_change_games_and_line_item():
-    """The per-game rule (handoffs 850, 854) and the item's timing checks."""
+def test_next_game_call_rules():
+    """Handoffs 850, 854, 856, 858, 859: which Daily Faceoff item calls his next game, and what it does to his games."""
     from datetime import datetime, timezone
-    assert rating.line_change_games([0.9, 0.9, 0.9, 0.9, 0.9], "out") == [0.03, 0.44, 0.52, 0.55, 0.55]
-    assert rating.line_change_games([0.2, 0.3, 0.9], "in") == [0.97, 0.71, 0.9]
-    assert rating.line_change_games([0.2, 0.3, 0.3], "in", [1.0, 0.5, 1.0]) == [0.97, 0.5, 0.61]
-    assert rating.line_change_games([0.01, 0.2], "out_exp") == [0.01, 0.2]
-    now = datetime(2026, 10, 9, 16, tzinfo=timezone.utc)
-    news = {"line-matches": {"7": {"ts": "2026-10-09T08:00:00", "lc": "out"}, "8": {"ts": "2026-10-09T08:00:00", "lc": None}}}
-    assert rating.line_item(news, 7, "2026-10-09T23:00:00Z", now) == "out"
-    assert rating.line_item(news, 7, "2026-10-10T01:00:00Z", now) is None  # 17 hours before the puck
-    assert rating.line_item(news, 7, "2026-10-09T15:00:00Z", now) is None  # started
-    assert rating.line_item(news, 7, "2026-10-09T23:00:00Z", now, "2026-10-09T09:00:00Z") is None  # older than his last game
-    assert rating.line_item(news, 8, "2026-10-09T23:00:00Z", now) is None and rating.line_item(None, 7, "x", now) is None
+    out = {"k": "out", "cap": True, "q": 0.03, "after": rating.LC_AFTER["out"], "ahead": False}
+    assert rating.call_games([0.9, 0.9, 0.9, 0.9, 0.9], out) == [0.03, 0.44, 0.52, 0.55, 0.55]
+    inn = {"k": "in", "cap": False, "q": 0.97, "after": rating.LC_AFTER["in"], "ahead": False}
+    assert rating.call_games([0.2, 0.3, 0.9], inn) == [0.97, 0.71, 0.9]
+    assert rating.call_games([0.2, 0.3, 0.3], inn, [1.0, 0.5, 1.0]) == [0.97, 0.5, 0.61]
+    left = {"k": "left", "cap": True, "q": 0.30, "after": (0.35, None), "ahead": False}
+    assert rating.call_games([0.9, 0.9, 0.9, 0.2], left) == [0.3, 0.35, 0.9, 0.2]
+    now = datetime(2026, 10, 9, 16, tzinfo=timezone.utc)  # Friday Oct 9, noon ET; the game at 7 PM ET
+    call = lambda news, start="2026-10-09T23:00:00Z", day="2026-10-09", last=None: rating.next_game_call(news, 7, start, day, now, last)
+    line = lambda ts, lc, d=None: {"line-matches": {"7": {"ts": ts, "lc": lc, **({"day": d} if d else {})}}}
+    inj = lambda ts, **f: {"injuries": {"7": {"ts": ts, **f}}}
+    assert call(line("2026-10-09T08:00:00", "out"))["q"] == 0.03 and call(line("2026-10-09T08:00:00", "out_exp"))["q"] == 0.05
+    assert call(line("2026-10-09T08:00:00", "out"), start="2026-10-10T01:00:00Z") is None  # 17 hours: a day-ahead item names no day
+    assert call(line("2026-10-09T08:00:00", "out", "saturday")) is None  # within 16 hours but about another day (858)
+    assert call(line("2026-10-08T08:00:00", "in", "friday")) == {**inn, "q": 0.93, "ahead": True}  # a day ahead, day named
+    assert call(line("2026-10-08T08:00:00", "out", "friday"))["q"] == 0.10
+    assert call(line("2026-10-09T08:00:00", "out"), start="2026-10-09T15:00:00Z") is None  # started
+    assert call(line("2026-10-09T08:00:00", "out"), last="2026-10-09T09:00:00Z") is None  # older than his last game
+    assert call(line("2026-10-09T08:00:00", None)) is None and call(None) is None
+    assert call(inj("2026-10-09T08:00:00", firm=True))["q"] == 0.97
+    assert call(inj("2026-10-09T08:00:00", exp_ret=True, day="friday"))["q"] == 0.95
+    assert call(inj("2026-10-09T08:00:00", exp_ret=True)) is None  # "expected" needs the day
+    assert call(inj("2026-10-08T08:00:00", firm=True, day="friday"))["q"] == 0.93
+    assert call(inj("2026-10-08T08:00:00", firm=True, day="thursday")) is None
+    assert call(inj("2026-10-08T08:00:00", out_w=True))["q"] == 0.03 and call(inj("2026-10-09T08:00:00", out_w=True)) is None
+    assert call(inj("2026-10-05T03:00:00", left=True, day="sunday")) == left | {"after": (0.35, None), "ahead": True}
+    # both: the newer item calls it
+    both = {**line("2026-10-09T10:00:00", "in"), **inj("2026-10-09T08:00:00", left=True)}
+    assert call(both)["k"] == "in"
 
 
-def test_day_to_day_whose_last_shift_ended_early_is_capped(monkeypatch, tmp_path):
-    """Handoff 851: day-to-day after regular minutes, but his last shift ended 10+ game minutes before the game's last:
-    0.30 a game. A gap under 10, 10+ PIM, no chart, or no status: unchanged. The chart is read once per game."""
-    last = game_id("TOR", len(PAST) - 1)
-
-    def matthews(gap=None, injury="DAY_TO_DAY", pim=0):
-        fake = FakeSession(shifts={last: {1: 3600 - int(gap * 60), 2: 3600}} if gap is not None else {})
-        if pim:
-            get = fake.get
-            def with_pim(url, params=None, headers=None, timeout=None):
-                r = get(url, params, headers, timeout)
-                if "skater/" in url and "gameDate" in (params or {}).get("cayenneExp", ""):
-                    for row in r.json()["data"]:
-                        row["penaltyMinutes"] = pim
-                return r
-            fake.get = with_pim
-        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury=injury),
-                                            espn(102, "Morgan Rielly", "TOR", "D", injury="DAY_TO_DAY")], fake=fake), fake
-    (base, _), (cut, fake) = matthews(), matthews(gap=14)
-    assert base["Auston Matthews"]["cr_dress_next"] > rating.SHIFT_EARLY_CAP + 0.1
-    assert cut["Auston Matthews"]["cr_dress_next"] == pytest.approx(rating.SHIFT_EARLY_CAP, abs=0.01)
-    assert cut["Auston Matthews"]["cr_why"]["short_shift"] == 14.0 and "short_shift" not in cut["Morgan Rielly"]["cr_why"]
-    assert sum(u.endswith("/shiftcharts") for u in fake.calls) == 1  # one chart for both day-to-day Leafs
-    for kw in ({"gap": 8}, {"gap": 14, "pim": 12}):
-        assert matthews(**kw)[0]["Auston Matthews"]["cr_dress_next"] == base["Auston Matthews"]["cr_dress_next"], kw
-    assert "short_shift" not in matthews(gap=14, injury=None)[0]["Auston Matthews"]["cr_why"]
-    assert rating.SHIFT_EARLY_GAP == 10 and rating.SHIFT_EARLY_CAP == 0.30 and rating.SHIFT_EARLY_PIM == 10
-
-
-def test_firm_return_news_and_later_games_after_a_likely_return(monkeypatch, tmp_path):
-    """Handoff 856: firm return wording in his latest Daily Faceoff injury item, within 16 hours of tonight's game: 0.97
-    tonight and the archive's 0.93 / 0.91 / 0.88 after (857), even under ESPN's OUT. Handoff 857: a skater who sat the
-    last game with no status but is 0.85+ for the next one (in Daily Faceoff's lines) keeps 0.85+ in his later games."""
+def test_day_ahead_and_left_game_news_reach_the_rating(monkeypatch, tmp_path):
+    """Handoffs 858-859 end to end: a day-ahead return naming the game's day lifts his next game to 0.93 (or none when it
+    names another day); "left the game and did not return" caps it at 0.30 and the one after at 0.35."""
     from datetime import datetime, timezone
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
-    last = len(PAST) - 1
+    starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}  # Friday and Sunday, 7 PM ET
 
-    def matthews(firm=None, injury="OUT", dfo_out=None, missed=None):
-        news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
-                "injuries": {"1": {"ts": "2026-10-09T15:00:00", "season": False, "surgery": False, "firm": True}} if firm else {}}
-        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z", injury=injury, dfo_out=dfo_out)
-        fake = FakeSession(missed={1: missed}) if missed is not None else None
-        return rate(monkeypatch, tmp_path, [p], fake=fake, dfo_news=news)["Auston Matthews"]
-    out, back = matthews(), matthews(firm=True)
-    assert out["cr_dress_next"] < 0.5 and back["cr_dress_next"] == 0.97 and back["cr_why"]["line_change"] == "return"
-    assert back["cr_games"] - back["cr_dress_next"] >= sum(rating.LC_AFTER["firm"][:back["games_left"] - 1]) - 0.02
-    # sat the last game (a healthy scratch), no status, in Daily Faceoff's lines: 0.9 next game, the later ones 0.85+
-    sat = matthews(injury=None, dfo_out=False, missed={last})
-    assert sat["sat_last"] and sat["cr_dress_next"] >= 0.9 and sat["cr_why"].get("later_floor")
-    assert sat["cr_games"] - sat["cr_dress_next"] >= rating.RETURN_LATER_FLOOR * (sat["games_left"] - 1) - 0.02
-    # not in the lines: no floor on tonight, none on the later games
-    assert not matthews(injury=None, missed={last})["cr_why"].get("later_floor")
+    def matthews(injury="DAY_TO_DAY", **item):
+        news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {"1": item} if item else {}}
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), injury=injury)
+        return rate(monkeypatch, tmp_path, [p], fake=FakeSession(starts=starts), dfo_news=news)["Auston Matthews"]
+    base, back = matthews(), matthews(ts="2026-10-08T08:00:00", firm=True, day="friday")
+    assert base["cr_dress_next"] < 0.9 and back["cr_dress_next"] == 0.93 and back["cr_why"]["call_ahead"]
+    other = matthews(ts="2026-10-08T08:00:00", firm=True, day="sunday")  # about Sunday's game: Friday's is not called
+    assert other["cr_dress_next"] < 0.9 and "line_change" not in other["cr_why"]
+    healthy = matthews(injury=None)
+    left = matthews(injury=None, ts="2026-10-08T03:00:00", left=True)
+    assert healthy["cr_dress_next"] > 0.35 and left["cr_dress_next"] == 0.3 and left["cr_why"]["line_change"] == "left"
+    assert left["cr_games"] <= healthy["cr_games"] - (healthy["cr_dress_next"] - 0.3) - 0.3  # the game after capped too
 
 
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come

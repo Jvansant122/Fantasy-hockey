@@ -168,7 +168,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 12  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 13  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -335,6 +335,27 @@ def firm_return(details):
     return bool(FIRM_IN.search(t)) and not FIRM_HEDGE.search(t) and not LC_OUT.search(t)
 
 
+# "expected to return / play" with no other hedge (handoff 858), "left the game and did not return" (859-a, unless he came
+# back in the same game, 859-b), and the weekday an item names (858); wording lists in research hunt15/RESULTS.md
+EXP_RETURN = re.compile(r"expected to (return|play)")
+EXP_HEDGE = re.compile(FIRM_HEDGE.pattern.replace("expected|", ""))
+LEFT_GAME = re.compile(r"(left|exited|leaves|departed|was forced from|was helped off).{0,60}(game|contest|win|loss|vs\.|against)"
+                       r"|did not return|will not return|won't return|did not come out|not return for the")
+LEFT_BACK = re.compile(r"returned to (the )?(game|bench|ice)|but returned|and returned|was able to return|later returned|has returned")
+WEEKDAY = re.compile(r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b")
+
+
+def injury_calls(details):
+    """The next-game wording of an injury item (handoffs 856, 858, 859): {firm, exp_ret, out_w, left, day} keys that hold."""
+    t = re.sub(r"\s+", " ", (details or "").lower())
+    out_w = bool(LC_OUT.search(t)) and not LC_SKIP.search(t)
+    left = bool(LEFT_GAME.search(t)) and not LEFT_BACK.search(t)
+    exp_ret = bool(EXP_RETURN.search(t)) and not EXP_HEDGE.search(t) and not LC_OUT.search(t)
+    day = WEEKDAY.search(t)
+    res = {"firm": firm_return(details), "exp_ret": exp_ret, "out_w": out_w and not left, "left": left}
+    return {**{k: True for k, v in res.items() if v}, **({"day": day.group(1)} if day else {})}
+
+
 LC_DAYS = 3  # only the latest item matters, and only within 16 hours of his team's next game
 
 
@@ -361,7 +382,8 @@ def fetch_line_changes(s, now_utc, have):
         for it in items:
             pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
             if pid and ts and ts > (have.get(str(int(pid))) or {}).get("ts", ""):
-                have[str(int(pid))] = {"ts": ts, "lc": line_change(it.get("details"))}
+                day = WEEKDAY.search((it.get("details") or "").lower())  # the day it names (handoff 858)
+                have[str(int(pid))] = {"ts": ts, "lc": line_change(it.get("details")), **({"day": day.group(1)} if day else {})}
         if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
             break
         time.sleep(0.2)
@@ -407,8 +429,7 @@ def fetch_news(s, now_utc, stored=None):
                 new = {"ts": ts, **{k: f[k] for k in keys}} if ts > old.get("ts", "") else dict(old)
                 if slug == "injuries" and ts > old.get("ts", ""):  # the Week dress model's inputs (handoff 413)
                     new["nf"] = f["nf"]
-                    if firm_return(it.get("details")):
-                        new["firm"] = True  # firm return wording: tonight at least 0.97 (handoff 856)
+                    new.update(injury_calls(it.get("details")))  # next-game wording (handoffs 856, 858, 859)
                     if f["tl"] is not None:
                         new["tl"] = round(f["tl"], 1)
                 if slug == "injuries":
