@@ -85,6 +85,18 @@ def plain(name):
     return re.sub(r"[^a-z]", "", unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode().lower())
 
 
+def item_key(it):
+    """A Daily Faceoff news item's player key: his NHL id, or "n:<first last>:<NHL team>" when the item has none (59% of goalie
+    injury items do not; the rating matches the name to its rosters, handoff 870). None without a name either."""
+    pid = it.get("playerFiveVFiveId")
+    if pid:
+        return str(int(pid))
+    raw = unicodedata.normalize("NFKD", it.get("playerName") or "").encode("ascii", "ignore").decode().lower()
+    name = " ".join(w for w in re.sub(r"[^a-z ]", "", raw.replace("-", " ")).split() if len(w) > 1)  # as rating.norm
+    team = (it.get("teamAbbreviation") or "").upper()
+    return f"n:{name}:{DF_TO_NHL.get(team, team)}" if name else None
+
+
 def name_words(name):
     """ASCII lowercase words of two or more letters ("Elias N. Pettersson" -> ["elias", "pettersson"])."""
     return [w for w in re.sub(r"[^a-z ]", "", unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode()
@@ -168,7 +180,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 15  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 16  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -376,6 +388,27 @@ GS_OUT = re.compile(r"\bsuspended\b|away from the team|leave of absence")
 GS_RETURN = re.compile(r"served (his|the|a|an) ([\w-]+ )?(game )?suspension")
 
 
+# hunt 15 round 3 (research hunt15/RESULTS.md): negated return wording is out wording (871-a: 16 items read as a return,
+# 0 dressed), more out wording within 16 h (872-a: 648 items, 2.3% dressed) and more return wording (873-a: strong 97-100%,
+# looser about 80%); none with long-term, game-time or questionable words
+NEG_RETURN = re.compile(r"(\bnot|n't|no longer|never)\b[^.]{0,40}(expected to (return|play)|make his (\w+'? )?(return|debut)"
+                        r"|return to the lineup|in the lineup|draw (back )?in|will (play|return|dress))"
+                        r"|will (still )?not (play|return|dress|make|be in|draw)|won't (play|return|dress|make|be in)|not ready"
+                        r"|setback|was expected to")
+OUT_MORE = re.compile(r"will miss|to miss|miss (his|at least|the next|a |tonight|today|\w+day)"
+                      r"|\bis out (\w+day|tonight|today|against|at |with|due|after|again)|\bout (\w+day|tonight|today)\b"
+                      r"|will be out|be out for|not on the ice for warm|not (taking|in) warm|absent from warm"
+                      r"|expected to be out|sidelined|unavailable|not available|will be held out|held out of (the )?(game|lineup)"
+                      r"|won't be available|not be available|away from the team|leave of absence|personal leave|family matter"
+                      r"|birth of|personal reasons|(returning|returned|flew|flying|sent|heading|headed) (back )?(home|to \w+( \w+)?)"
+                      r" (to be|for)")
+OUT_MORE_SKIP = re.compile(r"week[- ]to[- ]week|weeks|month|indefinit|surgery|season|ltir|long-term|game-time|questionable")
+RET_STRONG = re.compile(r"expected to be (back )?in|expected to draw|(is|was) on the ice for warmups|taking warmups|is warming up")
+RET_LOOSE = re.compile(r"expected to make his|cleared to play|will be available|good to go|is available|been cleared"
+                       r"|listed as active")
+RET_SKIP = re.compile(r"\bnot\b|n't|game-time|questionable|doubtful")
+
+
 # an injured goalie's positive news (handoff 869, list 869-a), unless it has out or long wording
 G_POS = re.compile(r"will (dress|serve|be the backup|back ?up)|as the backup|backing up|will be available|is available|in uniform"
                    r"|will start|gets the start|will be in (net|goal)|will return|will play|expected to (start|return|play)"
@@ -399,8 +432,13 @@ def injury_calls(details):
     exp_ret = bool(EXP_RETURN.search(t)) and not EXP_HEDGE.search(t) and not LC_OUT.search(t)
     days = list(dict.fromkeys(WEEKDAY.findall(t)))
     served = bool(GS_RETURN.search(t)) and not FIRM_HEDGE.search(t) and not LC_OUT.search(t)  # 868
-    firm = firm_return(details) or served
-    out_w = (out_w or bool(MORE_OUT.search(t)) or (bool(GS_OUT.search(t)) and not served)) and not left  # 864, 868
+    neg = bool(NEG_RETURN.search(t)) and not left  # 871: a negated return is out wording
+    ret_ok = not RET_SKIP.search(t) and not neg
+    strong = ret_ok and bool(RET_STRONG.search(t))  # 873: read as firm
+    firm = (firm_return(details) or served or strong) and not neg
+    exp_ret = exp_ret and not neg
+    more = bool(OUT_MORE.search(t)) and not OUT_MORE_SKIP.search(t) and not firm and not exp_ret  # 872
+    out_w = (out_w or bool(MORE_OUT.search(t)) or (bool(GS_OUT.search(t)) and not served) or neg or more) and not left  # 864, 868
     ev = bool(EVAL.search(t)) and not out_w and not left and not firm  # 864: being evaluated
     nc = bool(NON_CONTACT.search(t)) and not firm  # 862
     mp = bool(MISSED_PRAC.search(t)) and not ILL.search(t) and not MAINT.search(t) and not firm and not out_w  # 863
@@ -408,7 +446,8 @@ def injury_calls(details):
     soft, prac = soft_ok and bool(SOFT_RET.search(t)), soft_ok and bool(PRAC.search(t))  # 860
     res = {"firm": firm, "exp_ret": exp_ret, "out_w": out_w, "left": left, "eval": ev, "nc": nc, "mp": mp,
            "soft": soft or prac, "prac": prac, "nt": bool(NOT_TRAVEL.search(t)) and not firm,
-           "ill": bool(ILL.search(t))}  # 866: illness wording
+           "ill": bool(ILL.search(t)),  # 866: illness wording
+           "ret_m": ret_ok and not firm and not out_w and (bool(RET_LOOSE.search(t)) or (exp_ret and not days))}  # 873 looser
     return {**{k: True for k, v in res.items() if v}, **({"day": days[0]} if days else {}), **({"days": days} if len(days) > 1 else {})}
 
 
@@ -436,10 +475,10 @@ def fetch_line_changes(s, now_utc, have):
         data = page_data(s, f"{DF}/hockey-player-news/line-matches/{page}")["data"]
         items = data.get("data") or []
         for it in items:
-            pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
-            if pid and ts and ts > (have.get(str(int(pid))) or {}).get("ts", ""):
+            pid, ts = item_key(it), (it.get("createdAt") or "")[:19]
+            if pid and ts and ts > (have.get(pid) or {}).get("ts", ""):
                 day = WEEKDAY.search((it.get("details") or "").lower())  # the day it names (handoff 858)
-                have[str(int(pid))] = {"ts": ts, "lc": line_change(it.get("details")), **({"day": day.group(1)} if day else {})}
+                have[pid] = {"ts": ts, "lc": line_change(it.get("details")), **({"day": day.group(1)} if day else {})}
         if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
             break
         time.sleep(0.2)
@@ -459,9 +498,9 @@ def fetch_general(s, now_utc, have):
         data = page_data(s, f"{DF}/hockey-player-news/{page}")["data"]
         items = data.get("data") or []
         for it in items:
-            pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
-            if it.get("newsCategoryName") in GS_CATS and pid and ts and ts > (have.get(str(int(pid))) or {}).get("ts", ""):
-                have[str(int(pid))] = {"ts": ts, "cat": it["newsCategoryName"], **injury_calls(it.get("details"))}
+            pid, ts = item_key(it), (it.get("createdAt") or "")[:19]
+            if it.get("newsCategoryName") in GS_CATS and pid and ts and ts > (have.get(pid) or {}).get("ts", ""):
+                have[pid] = {"ts": ts, "cat": it["newsCategoryName"], **injury_calls(it.get("details"))}
         if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
             break
         time.sleep(0.2)
@@ -497,11 +536,11 @@ def fetch_news(s, now_utc, stored=None):
             data = page_data(s, f"{DF}/hockey-player-news/{slug}/{page}")["data"]
             items = data.get("data") or []
             for it in items:
-                pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
+                pid, ts = item_key(it), (it.get("createdAt") or "")[:19]
                 if not pid or not ts:
                     continue
-                f, old = news_flags(it), have.get(str(int(pid))) or {}
-                mine = recent.setdefault(str(int(pid)), [])
+                f, old = news_flags(it), have.get(pid) or {}
+                mine = recent.setdefault(pid, [])
                 if not any(r["ts"] == ts and r["cat"] == ("inj" if slug == "injuries" else "move") for r in mine):
                     mine.append(recent_item(slug, ts, f))
                 new = {"ts": ts, **{k: f[k] for k in keys}} if ts > old.get("ts", "") else dict(old)
@@ -517,7 +556,7 @@ def fetch_news(s, now_utc, stored=None):
                         t = max(old.get(f"{k}_ts", ""), ts if f[k] else "")
                         if t:
                             new[f"{k}_ts"] = t
-                have[str(int(pid))] = new
+                have[pid] = new
             if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
                 break
             time.sleep(0.2)

@@ -460,3 +460,38 @@ def test_general_and_suspension_news(monkeypatch):
     del pages["hockey-player-news/1"]
     kept = leads.fetch_news(FakeSession(pages), now, {**stored, "general": out["general"]})
     assert kept["general"] == out["general"] and "general_error" in kept and "line-matches" in kept
+
+
+def test_round3_wording():
+    """Handoffs 871-873: negated return wording is out wording; more out and return wording; long-term items skipped."""
+    c = leads.injury_calls
+    for t in ("Sergachev is not expected to return Tuesday.", "Theodore will not make his return Saturday.",
+              "Forbort is not ready to return to the lineup.", "McTavish will not be in the lineup.",
+              "Joseph was expected to return Saturday but had a setback."):
+        got = c(t)
+        assert got.get("out_w") and not got.get("firm") and not got.get("exp_ret"), t
+    for t in ("Smith will miss Tuesday's game.", "Smith is out tonight against Boston.", "Smith was not on the ice for warmups.",
+              "Smith is expected to be out.", "Smith is away from the team for a family matter."):
+        assert c(t).get("out_w"), t
+    assert not c("Smith will miss 4-6 weeks.").get("out_w")
+    for t in ("Smith is expected to be back in the lineup.", "Smith is expected to draw in.", "Smith is on the ice for warmups."):
+        assert c(t).get("firm"), t
+    assert c("Smith has been cleared to play.") == {"ret_m": True}
+    assert c("Smith is expected to play.").get("ret_m") and not c("Smith is expected to play Tuesday.").get("ret_m")
+    assert not c("Smith is a game-time decision but has been cleared to play.").get("ret_m")
+
+
+def test_items_with_no_player_id_are_kept_by_name(monkeypatch):
+    """Handoff 870: an item with no player id is keyed by name and NHL team rather than dropped."""
+    from datetime import datetime, timezone
+    assert leads.item_key({"playerFiveVFiveId": 8478048}) == "8478048"
+    assert leads.item_key({"playerName": "Logan Thompson", "teamAbbreviation": "WAS"}) == "n:logan thompson:WSH"
+    assert leads.item_key({"playerName": "Jean-Gabriel Pageau", "teamAbbreviation": "NYI"}) == "n:jean gabriel pageau:NYI"
+    assert leads.item_key({}) is None
+    item = {"createdAt": "2026-11-20T10:00:00.000Z", "details": "Thompson (upper body) will miss Tuesday's game.",
+            "playerName": "Logan Thompson", "teamAbbreviation": "WAS", "playerPosition": "G", "newsCategoryName": "Injury"}
+    pages = {"news/injuries/1": {"data": {"lastPage": 1, "data": [item]}}, "news/roster-moves/1": {"data": {"lastPage": 1, "data": []}},
+             "news/line-matches/1": {"data": {"lastPage": 1, "data": []}}}
+    monkeypatch.setattr(leads.time, "sleep", lambda x: None)
+    out = leads.fetch_news(FakeSession(pages), datetime(2026, 11, 20, 12, tzinfo=timezone.utc), {"version": leads.NEWS_VERSION})
+    assert out["injuries"]["n:logan thompson:WSH"]["out_w"] and out["recent"]["n:logan thompson:WSH"]
