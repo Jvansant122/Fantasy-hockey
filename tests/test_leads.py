@@ -298,6 +298,16 @@ def test_injury_calls_wording():
     assert c("Hyman is expected to return Tuesday.") == {"exp_ret": True, "day": "tuesday"}
     assert c("Smith will not play Wednesday.") == {"out_w": True, "day": "wednesday"}
     assert c("Suzuki will return to the lineup Tuesday.") == {"firm": True, "day": "tuesday"}
+    # hunt 15 round 2 (handoffs 860, 862-865)
+    assert c("Smith practiced in a non-contact jersey Tuesday.") == {"nc": True, "day": "tuesday"}
+    assert c("Smith missed practice Tuesday.") == {"mp": True, "day": "tuesday"} and "mp" not in c("Smith missed practice with an illness.")
+    assert c("Smith is doubtful for Saturday.") == {"out_w": True, "day": "saturday"}
+    assert c("Smith is being evaluated after the game.") == {"eval": True}
+    assert c("Smith returned to practice Tuesday and has a chance to play Wednesday.") == \
+        {"soft": True, "prac": True, "day": "tuesday", "days": ["tuesday", "wednesday"]}
+    assert c("Smith has a chance to play Saturday, but is week-to-week.") == {"day": "saturday"}
+    assert c("Smith did not travel with the team for the road trip.") == {"out_w": True, "nt": True}
+    assert not leads.NEWS_WEEK["ret"].search("practiced in a non-contact jersey")  # 862
 
 
 def test_fetch_news_keeps_each_skaters_latest_line_change(monkeypatch):

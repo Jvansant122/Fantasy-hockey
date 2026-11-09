@@ -304,9 +304,10 @@ INJURED_TAKER_WEIGHT = 0.5  # an injured partner's weight when a goalie's lost S
 # start-logit shifts for the next game and later games, plus more for one with 0-3 of the last 20 starts (findings 170)
 RELIEF_LOGITS, RELIEF_RARE_LOGIT, RELIEF_RARE_STARTS = (1.2, 0.9), 0.5, 3
 # Daily Faceoff's "Likely" starter starts that game at least this often: the earliest Likely tag per team-game was right
-# 61 of 61 live, Oct 8-24 (Wilson 95% lower bound 0.941), while the site gave 0.64-0.75 (findings 463 (6), 4083;
-# handoffs 617, 807; live-only, no archive of the tags)
-LIKELY_START_FLOOR = 0.95
+# 61 of 61 live, Oct 8-24 (findings 463 (6), 4083; handoffs 617, 807). Daily Faceoff's all-news feed keeps the tags back to
+# 2021: earliest Likely tag per team-game started 2,954 of 2,989 = 98.8%, 97.6-99.7% every season; Brier 0.01304 at 0.95,
+# 0.01158 at 0.985 (findings 4719, handoff 867)
+LIKELY_START_FLOOR = 0.985
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -735,6 +736,15 @@ RETURN_NEXT_MIN, RETURN_LATER_FLOOR = 0.85, 0.85
 AHEAD_HOURS = 48
 AHEAD_RETURN, EXP_RETURN_TONIGHT, AHEAD_OUT, AHEAD_LINE = 0.93, 0.95, 0.03, {"in": 0.93, "out": 0.10}
 LEFT_GAME_CAPS = (0.30, 0.35)
+# hunt 15 round 2 (findings 4712-4716): soft return or practice news 16-48 h ahead naming the game's day 0.65 / 0.80 with
+# practice wording (197 items dressed 72.6%, 83.5% with practice), the game after 0.8 (860); non-contact jersey within 48 h
+# 0.05, the game after 0.25 (2 of 47, 862); missed practice 16-48 h ahead 0.35, the morning skate within 16 h 0.12 (30.2%
+# of 159, 10.6% of 104; illness and maintenance excluded, 863); more out wording within 48 h 0.05, "being evaluated" 0.05
+# on game day and 0.2 a day ahead (864)
+SOFT_RETURN, SOFT_PRAC_RETURN, SOFT_AFTER = 0.65, 0.80, (0.8, None)
+NON_CONTACT_CAPS = (0.05, 0.25)
+MISSED_PRAC_CAP, MISSED_SKATE_CAP = 0.35, 0.12
+NEAR_OUT, EVAL_CAPS = 0.05, (0.05, 0.2)
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
@@ -765,18 +775,30 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None):
     ii = (news.get("injuries") or {}).get(str(pid))
     if ii and lead(ii):
         h, ts = lead(ii)
-        day, near = ii.get("day"), lead(ii)[0] <= LC_HOURS
+        named = ii.get("days") or ([ii["day"]] if ii.get("day") else [])
+        near, ahead, here = h <= LC_HOURS, LC_HOURS < h <= AHEAD_HOURS, wd in named
+        ok_day = here or not named  # an item about another day says nothing for this game (858)
+        cap = lambda q, after=None, k="out": {"k": k, "cap": True, "q": q, "after": after, "ahead": not near}
+        floor = lambda q, after, k="return": {"k": k, "cap": False, "q": q, "after": after, "ahead": not near}
         c = None
         if ii.get("left"):
-            c = {"k": "left", "cap": True, "q": LEFT_GAME_CAPS[0], "after": LEFT_GAME_CAPS[1:] + (None,), "ahead": not near}
-        elif ii.get("firm") and near and day in (None, wd):
-            c = {"k": "return", "cap": False, "q": LC_TONIGHT["firm"], "after": LC_AFTER["firm"], "ahead": False}
-        elif ii.get("exp_ret") and near and day == wd:
-            c = {"k": "return", "cap": False, "q": EXP_RETURN_TONIGHT, "after": LC_AFTER["firm"], "ahead": False}
-        elif (ii.get("firm") or ii.get("exp_ret")) and not near and h <= AHEAD_HOURS and day == wd:
-            c = {"k": "return", "cap": False, "q": AHEAD_RETURN, "after": LC_AFTER["firm"], "ahead": True}
-        elif ii.get("out_w") and not near and h <= AHEAD_HOURS and day in (None, wd):
-            c = {"k": "out", "cap": True, "q": AHEAD_OUT, "after": None, "ahead": True}
+            c = cap(LEFT_GAME_CAPS[0], LEFT_GAME_CAPS[1:] + (None,), "left")
+        elif ii.get("firm") and near and ok_day:
+            c = floor(LC_TONIGHT["firm"], LC_AFTER["firm"])
+        elif ii.get("exp_ret") and near and here:
+            c = floor(EXP_RETURN_TONIGHT, LC_AFTER["firm"])
+        elif (ii.get("firm") or ii.get("exp_ret")) and ahead and here:
+            c = floor(AHEAD_RETURN, LC_AFTER["firm"])
+        elif ii.get("out_w") and ok_day and (ahead or near):  # 858 (b) a day ahead, 864 within 48 hours
+            c = cap(AHEAD_OUT if ahead else NEAR_OUT)
+        elif ii.get("eval") and ok_day and (ahead or near):
+            c = cap(EVAL_CAPS[0] if near else EVAL_CAPS[1])
+        elif ii.get("nc") and ok_day and (ahead or near):
+            c = cap(NON_CONTACT_CAPS[0], NON_CONTACT_CAPS[1:] + (None,))
+        elif ii.get("mp") and ok_day and (ahead or near):
+            c = cap(MISSED_PRAC_CAP if ahead else MISSED_SKATE_CAP, None, "practice")
+        elif ii.get("soft") and ahead and here:
+            c = floor(SOFT_PRAC_RETURN if ii.get("prac") else SOFT_RETURN, SOFT_AFTER, "soft")
         if c:
             calls.append((ts, c))
     return max(calls, key=lambda x: x[0])[1] if calls else None
