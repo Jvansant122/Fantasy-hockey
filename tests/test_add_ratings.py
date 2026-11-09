@@ -4238,3 +4238,41 @@ def test_first_game_back_scores_less(monkeypatch, tmp_path):
     assert sat["cr"] == pytest.approx(sat["cr_fpg"] * sat["cr_games"], abs=0.02)
     played = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")])["Auston Matthews"]
     assert "rust" not in played["cr_why"]
+
+
+def test_day_to_day_by_news_age_and_flag_age(monkeypatch, tmp_path):
+    """Handoff 881 (joint with 846, findings 4488): bare day-to-day news under 16 / 48 / 72 h before his next puck caps that
+    game at 0.05 / 0.15 / 0.3 and skips the 846 lift; ESPN's day-to-day flag 2+ days old after a missed game floors it 0.65."""
+    import json
+    from datetime import date, datetime, timezone
+    assert rating.DTD_AGE_CAPS == ((16, 0.05), (48, 0.15), (72, 0.3)) and rating.DTD_OLD_FLAG_FLOOR == 0.65
+    news = {"injuries": {"7": {"ts": "2026-11-09T20:00:00"}}}
+    assert rating.dtd_item_hours(news, 7, "2026-11-10T00:00:00Z", "2026-11-08T00:00:00Z") == 4
+    assert rating.dtd_item_hours(news, 7, "2026-11-10T00:00:00Z", "2026-11-09T23:00:00Z") is None  # older than his last game
+    assert rating.dtd_item_hours(news, 7, "2026-11-09T19:00:00Z", None) is None  # after the puck
+    log = tmp_path / "injury_log.jsonl"
+    rows = [(d, s) for d, s in (("2026-11-06", "OUT"), ("2026-11-07", "DAY_TO_DAY"), ("2026-11-08", "DAY_TO_DAY"),
+                                ("2026-11-09", "DAY_TO_DAY"))]
+    log.write_text("".join(json.dumps({"date": d, "espn_id": 5, "status": s}) + "\n" for d, s in rows)
+                   + json.dumps({"date": "2026-11-08", "espn_id": 6, "status": "DAY_TO_DAY"}) + "\n")
+    monkeypatch.setattr(rating, "INJURY_LOG", log)
+    assert rating.dtd_flag_days(date(2026, 11, 10)) == {5: 3, 6: 0}
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
+            "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["dtd"]}]},
+            "injuries": {"1": {"ts": "2026-10-09T15:00:00", "season": False, "surgery": False, "nf": []}}}
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    p = lambda: [espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY")]
+    for h, cap in ((10, 0.05), (30, 0.15), (60, 0.3)):
+        monkeypatch.setattr(rating, "dtd_item_hours", lambda *a, h=h: h)
+        r = rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=news)["Auston Matthews"]
+        assert r["cr_dress_next"] <= cap and r["cr_why"]["dtd_age"] == {"h": h, "cap": cap} and "dtd_news_z" not in r["cr_why"]
+    monkeypatch.setattr(rating, "dtd_item_hours", lambda *a: 80)
+    old = rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=news)["Auston Matthews"]
+    assert old["cr_why"]["dtd_news_z"] == 0.85 and "dtd_age" not in old["cr_why"]
+    monkeypatch.setattr(rating, "dtd_item_hours", lambda *a: None)
+    monkeypatch.setattr(rating, "dtd_flag_days", lambda today: {101: 2})
+    sat = rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]
+    assert sat["sat_last"] and sat["cr_dress_next"] >= 0.65 and sat["cr_why"]["dtd_age"] == {"days": 2, "floor": 0.65}
+    monkeypatch.setattr(rating, "dtd_flag_days", lambda today: {101: 1})
+    assert "dtd_age" not in rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]["cr_why"]
