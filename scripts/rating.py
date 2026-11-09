@@ -52,6 +52,17 @@ INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DA
 # an ESPN OUT / IR goalie whose latest Daily Faceoff item, at most 4 days old, has list 869-a positive wording started the
 # next game 25%, the second 43% (163 items, 2021-26): his factor next game / later in place of 0.0 (findings 4721, handoff 869)
 GOALIE_NEWS_LIFT, GOALIE_NEWS_DAYS = (0.4, 0.65), 4
+# hunt 15 round 3 goalie news (findings 4727, 4731, 4736, 4737, 4747): a day-to-day goalie started the next game 4%, then
+# 14%, 25% (883: his factor 0.1 / 0.25 / 0.45, then day-to-day's 0.5); a goalie call-up within 72 h of the next game: the
+# no. 1 started 47% vs 59% (878: x0.8 for 3 games) and the recalled goalie 9 / 13 / 10% (his cap); after a goalie
+# send-down a rostered goalie with no start in 10+ days started 27 / 21 / 18% (894: floor 0.27 / 0.2 / 0.2); a goalie
+# ESPN cleared in the last 7 days with no start since started 41 / 51 / 37% (884: floor 0.35 / 0.45); Goalie Start news
+# naming a later game: started it 199 of 200 (874: that game reads as Daily Faceoff's Likely tag)
+GOALIE_DTD_FACTORS = (0.1, 0.25, 0.45, 0.5)
+CALLUP_HOURS, CALLUP_NO1_MULT, CALLUP_CAPS = 72, 0.8, (0.09, 0.13, 0.10)
+SENDDOWN_DAYS, SENDDOWN_IDLE_DAYS, SENDDOWN_FLOORS = 4, 10, (0.27, 0.2, 0.2)
+CLEARED_G_DAYS, CLEARED_G_FLOORS = 7, (0.35, 0.45)
+NAMED_START_DAYS = 7
 # skaters (findings section 58): injured players still dress for some of the week, unless the note says it's a long absence
 SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DAY_TO_DAY": 0.5}
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
@@ -1091,7 +1102,7 @@ def key_news_by_name(dfo_news, index, rosters):
         return dfo_news
     by_team = {(norm(name), team): pid for team, r in rosters.items() for pid, name, _ in r}
     out = dict(dfo_news)
-    for part in ("injuries", "roster-moves", "line-matches", "general", "recent"):
+    for part in ("injuries", "roster-moves", "line-matches", "general", "goalie-start", "recent"):
         items = dfo_news.get(part)
         if not isinstance(items, dict) or not any(k.startswith("n:") for k in items):
             continue
@@ -2980,7 +2991,7 @@ def back_from_spell(seq, gid):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None, g_news=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -2991,7 +3002,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     injury: {goalie id: ESPN injury factor}; scales his chance before each game is split among the team's goalies,
     so an injured starter's games go to his partner (findings section 48).
     dfo_inj: {goalie id: (next game, later games)} caps on that factor from Daily Faceoff injury news (handoff 679).
-    inj_lift: {goalie id: (next game, later games)} factors in place of an injured 0.0 after positive news (handoff 869).
+    inj_lift: {goalie id: (next game, second, ...)} factors in place of ESPN's, the last one repeating (handoffs 869, 883).
+    g_news: {"callup": recalled goalie id, "down": a goalie sent down, "floors": {goalie id: floors}} (handoffs 878, 884, 894).
     last_start: (goalie id, (shift next game, shift game after next, ...)) for whoever started the team's last game:
     his start logit drops after a bad start or a loss and rises after a win (findings 131-133); after he left without
     a decision it stays down for every game in the window, until a Daily Faceoff confirmation names him (findings 164).
@@ -3114,6 +3126,21 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     dates_sorted = sorted(game_dates)
     after_rest = False
     relieved = {gid: RELIEF_RARE_LOGIT if seq[-20:].count(gid) <= RELIEF_RARE_STARTS else 0.0 for gid in relief if gid in cands}
+    g_news = g_news or {}
+    callup = g_news.get("callup") if g_news.get("callup") in cands else None
+    g_floors = dict(g_news.get("floors") or {})
+    if g_news.get("down"):  # a goalie sent down: the one back from a long gap (handoff 894)
+        first = next((date.fromisoformat(d) for d in sorted(game_dates) if not last_date or d > last_date), None)
+        for gid in cands:
+            seen = max((date.fromisoformat(gd) for gd, x in hist if x == gid), default=None)
+            if first and injury.get(gid, 1.0) > 0 and gid != callup and (seen is None or (first - seen).days >= SENDDOWN_IDLE_DAYS) \
+                    and gid in seq:
+                g_floors.setdefault(gid, SENDDOWN_FLOORS)
+
+    def pin(q, gid, v):
+        """q with gid at v and the others scaled to fill the rest."""
+        rest = sum(x for g, x in q.items() if g != gid)
+        return {g: v if g == gid else (x / rest * (1 - v) if rest else (1 - v) / max(len(q) - 1, 1)) for g, x in q.items()}
     for d in sorted(game_dates):
         if last_date is not None and d <= last_date:  # already played: its real starter is in the history
             continue
@@ -3216,9 +3243,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             # Daily Faceoff injury news: the factor is min(ESPN's, 0.2 next game, 0.35 later) (handoff 679)
             cut = (dfo_inj or {}).get(gid)
             f = injury.get(gid, 1.0)
-            if f == 0 and gid in (inj_lift or {}):  # injured with positive news (handoff 869)
-                f = inj_lift[gid][min(ahead, 1)]
+            if gid in (inj_lift or {}):  # injured with positive news (869), day-to-day by game (883)
+                f = inj_lift[gid][min(ahead, len(inj_lift[gid]) - 1)]
             raw[gid] *= min(f, cut[min(ahead, 1)]) if cut else f
+            if callup is not None and gid == no1 and gid != callup and ahead < len(CALLUP_CAPS):  # handoff 878
+                raw[gid] *= CALLUP_NO1_MULT
         tot = sum(raw.values()) or 1
         p = {gid: v / tot for gid, v in raw.items()}
         early = B2B_NIGHT2_NO1_EARLY if night2_no1 and len(seq) <= EARLY_GAMES else 0.0
@@ -3257,6 +3286,12 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             q = {gid: NIGHT2_CAP if gid == fav else (v / rest * (1 - NIGHT2_CAP) if rest else (1 - NIGHT2_CAP) / (len(q) - 1))
                  for gid, v in q.items()}
         lk = (likely_dfo or {}).get(d)
+        k = ahead - 1  # this game's index among the team's games still to play
+        if callup in q and k < len(CALLUP_CAPS) and q[callup] > CALLUP_CAPS[k] and lk != callup and len(q) > 1:
+            q = pin(q, callup, CALLUP_CAPS[k])  # the recalled goalie (handoff 878)
+        for gid, fl in sorted(g_floors.items()):  # 884, 894: unless Daily Faceoff tags someone
+            if gid in q and k < len(fl) and q[gid] < fl[k] and lk is None and len(q) > 1:
+                q = pin(q, gid, fl[k])
         if lk in q and q[lk] < LIKELY_START_FLOOR:
             # Daily Faceoff's "Likely" starter: at least LIKELY_START_FLOOR for that game, the rest split by the model's
             # odds; later games and the chain unchanged (handoff 617)
@@ -3458,6 +3493,29 @@ def name_index(by_player, prev, goalie_games):
     for g in goalie_games:
         add(g["id"], g["name"], g["team"], "G")
     return index
+
+
+def goalie_news_moves(dfo_news, rosters, sched, starts_by_team, today, now_utc, week_starts):
+    """{team: {"callup": goalie id, "down": True}} from Daily Faceoff roster moves of goalies: a call-up within CALLUP_HOURS
+    before the team's next game (handoff 878), a send-down (not conditioning) within SENDDOWN_DAYS of it (894)."""
+    out = {}
+    for key, mv in ((dfo_news or {}).get("roster-moves") or {}).items():
+        team, ts = mv.get("team"), parse_utc(mv.get("ts"))
+        if not mv.get("g") or not team or ts is None:
+            continue
+        nxt = next((d for d in sched.get(team, []) if d >= today.isoformat()), None)
+        if not nxt:
+            continue
+        t0 = parse_utc(week_starts.get((team, nxt))) or datetime.fromisoformat(f"{nxt}T23:00:00+00:00")
+        last = (starts_by_team.get(team) or [(None, None)])[-1][0]
+        if last and ts.astimezone(ET).date().isoformat() < last:  # a game has been played since the move
+            continue
+        if mv.get("up") and timedelta(0) <= t0 - ts <= timedelta(hours=CALLUP_HOURS) and key.isdigit() \
+                and any(q == int(key) for q, _, _ in rosters.get(team, ())):
+            out.setdefault(team, {})["callup"] = int(key)
+        elif mv.get("down") and not mv.get("cond") and timedelta(0) <= t0 - ts <= timedelta(days=SENDDOWN_DAYS):
+            out.setdefault(team, {})["down"] = True
+    return out
 
 
 def dfo_starters(starters, index, rosters, today):
@@ -3750,6 +3808,27 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if goalie_inj[pid] == 0 and p["injury"] in ("OUT", "INJURY_RESERVE") and pid not in goalie_gone \
                         and item.get("gp") and ts and timedelta(0) <= now_utc - ts <= timedelta(days=GOALIE_NEWS_DAYS):
                     goalie_lift[pid] = GOALIE_NEWS_LIFT
+                elif p["injury"] == "DAY_TO_DAY":
+                    goalie_lift[pid] = GOALIE_DTD_FACTORS  # handoff 883
+    g_news = goalie_news_moves(dfo_news, rosters, sched, starts_by_team, today, now_utc, week_starts)
+    for p in players:  # ESPN cleared him in the last 7 days and he has not started since (handoff 884)
+        pid = match(p) if p["pos"] == "G" and not p.get("injury") and p["id"] in flagged else None
+        if pid and (today - date.fromisoformat(flagged[p["id"]])).days <= CLEARED_G_DAYS \
+                and max((d for d, _ in goalie_dates.get(pid, [])), default="") < flagged[p["id"]]:
+            team = next((t for t, r in rosters.items() if any(q == pid for q, _, _ in r)), None)
+            if team:
+                g_news.setdefault(team, {}).setdefault("floors", {})[pid] = CLEARED_G_FLOORS
+    for gid, item in sorted(((dfo_news or {}).get("goalie-start") or {}).items()):  # a later game named (handoff 874)
+        team = next((t for t, r in rosters.items() if any(str(q) == gid for q, _, _ in r)), None)
+        ts = parse_utc(item.get("ts"))
+        if not team or ts is None or now_utc - ts > timedelta(days=NAMED_START_DAYS):
+            continue
+        day0 = ts.astimezone(ET).date()
+        d = next((d for d in sched.get(team, []) if d >= today.isoformat() and date.fromisoformat(d) >= day0
+                  and (date.fromisoformat(d) - day0).days <= 6
+                  and WEEKDAYS[date.fromisoformat(d).weekday()] == item.get("day")), None)
+        if d and d not in (confirmed.get(team) or {}) and d not in (likely.get(team) or {}):
+            likely.setdefault(team, {})[d] = int(gid)
     goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
@@ -3764,7 +3843,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             {d for d, _, home in week_games.get(team, []) if not home},
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
                             likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo,
-                            {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team}, inj_lift=goalie_lift)  # handoffs 731, 869
+                            {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team}, inj_lift=goalie_lift,
+                            g_news=g_news.get(team))  # handoffs 731, 869, 878, 883, 884, 894
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)

@@ -4153,3 +4153,56 @@ def test_new_why_keys_reach_the_page(monkeypatch, tmp_path):
         return rate(monkeypatch, tmp_path, [p], dfo_news=news)["Auston Matthews"]
     ir = matthews({"ts": "2026-10-09T12:00:00", "ir_new": True})
     assert ir["cr_why"].get("ir_new") and ir["cr_dress_next"] <= rating.IR_NEW_CAP
+
+
+def test_round3_goalie_news(monkeypatch, tmp_path):
+    """Handoffs 874, 878, 883, 884, 894 on a two-goalie team."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(TODAY.year, TODAY.month, TODAY.day, 15, tzinfo=timezone.utc))
+    ts = f"{TODAY}T12:00:00"
+
+    def toronto(news=None, woll=None, flagged=None):
+        if flagged is not None:
+            monkeypatch.setattr(rating, "recently_flagged", lambda today: flagged)
+        players = [dict(espn(111, "Joseph Woll", "TOR", "G"), injury=woll), espn(112, "Anthony Stolarz", "TOR", "G")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news={"fetched": "2099-01-01T00:00Z", **(news or {})})
+        return {p["name"]: p for p in players}
+    base = toronto()
+    nights = sorted(base["Joseph Woll"]["cr_g_nights"])
+    assert len(nights) >= 2
+    # 883: day-to-day starts fewer than the flat 0.5 factor gave
+    dtd = toronto(woll="DAY_TO_DAY")
+    monkeypatch.setattr(rating, "GOALIE_DTD_FACTORS", (0.5,))
+    flat = toronto(woll="DAY_TO_DAY")
+    monkeypatch.undo()
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(TODAY.year, TODAY.month, TODAY.day, 15, tzinfo=timezone.utc))
+    assert dtd["Joseph Woll"]["cr_games"] < flat["Joseph Woll"]["cr_games"]
+    # 874: Goalie Start news naming the second game's day makes him that game's likely starter
+    later = date.fromisoformat(nights[1])
+    named = toronto({"goalie-start": {"12": {"ts": ts, "day": rating.WEEKDAYS[later.weekday()]}}})
+    assert named["Anthony Stolarz"]["cr_g_nights"][nights[1]] >= 0.97 > base["Anthony Stolarz"]["cr_g_nights"][nights[1]]
+    # 878: Stolarz recalled: capped at 0.09 next game, the no. 1 (Woll in the fake) takes most of the rest
+    up = toronto({"roster-moves": {"12": {"ts": ts, "up": True, "g": True, "team": "TOR"}}})
+    assert up["Anthony Stolarz"]["cr_g_nights"][nights[0]] <= rating.CALLUP_CAPS[0] + 0.001
+    # 884: Stolarz cleared by ESPN in the last 7 days, no start since: at least 0.35 next game
+    cleared = toronto(flagged={112: str(TODAY - timedelta(days=1))})
+    assert cleared["Anthony Stolarz"]["cr_g_nights"][nights[0]] >= rating.CLEARED_G_FLOORS[0] - 0.001
+
+
+def test_goalie_news_moves():
+    """Handoffs 878, 894: which goalie moves count."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 10, 15, tzinfo=timezone.utc)
+    sched, starts = {"TOR": ["2026-11-11", "2026-11-13"]}, {"TOR": [("2026-11-08", 11)]}
+    rosters = {"TOR": [(11, "Joseph Woll", "G"), (12, "Anthony Stolarz", "G")]}
+    news = lambda **mv: {"roster-moves": {"12": {"ts": "2026-11-10T12:00:00", "g": True, "team": "TOR", **mv}}}
+    go = lambda n: rating.goalie_news_moves(n, rosters, sched, starts, date(2026, 11, 10), now, {})
+    assert go(news(up=True)) == {"TOR": {"callup": 12}}
+    assert go(news(down=True)) == {"TOR": {"down": True}}
+    assert go(news(down=True, cond=True)) == {}
+    assert go({"roster-moves": {"12": {"ts": "2026-11-05T12:00:00", "g": True, "team": "TOR", "up": True}}}) == {}  # a game since
+    assert go({"roster-moves": {"12": {"ts": "2026-11-10T12:00:00", "team": "TOR", "up": True}}}) == {}  # a skater
