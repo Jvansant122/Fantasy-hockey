@@ -686,6 +686,10 @@ CLEARED_NEW_DRESS, CLEARED_NEW_NEXT, CLEARED_NEW_SEASON = 0.8, 0.75, 0.72  # no 
 CLEARED_LOGIT, CLEARED_SEASON_LOGIT = 0.9, 0.4  # games this season, missed the last one (findings 173)
 # DAY_TO_DAY and dressed for the team's last game: cap by that game's TOI over his season average (findings 176)
 DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.85))  # full minutes 0.85, not 0.75 (handoff 630)
+# ... and when his minutes were regular but his last shift ended 10+ game minutes before the game's last one (NHL shift
+# chart), under 10 PIM: 0.30. Dress replay 2024-26: 83 player-games, site 0.49 / 0.65, dressed 0.28 / 0.25 (findings 4701,
+# handoff 851)
+SHIFT_EARLY_GAP, SHIFT_EARLY_CAP, SHIFT_EARLY_PIM = 10.0, 0.30, 10
 OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 # dressed the last game, no ESPN status, in his team's fresh Daily Faceoff lines: next-game floor. Live Oct 9-18, 1,172 of
@@ -775,6 +779,36 @@ def nhl_get(s, url, **params):
                 raise
             print(f"Retrying {url}: {e}", file=sys.stderr)
             time.sleep(2 ** attempt)  # back off: ~100 calls a run, and an immediate retry hits the same blip (findings 230)
+
+
+
+def _mmss(t):
+    try:
+        m, sec = str(t).split(":")
+        return int(m) * 60 + int(sec)
+    except (TypeError, ValueError):
+        return None
+
+
+def last_shift_gap(s, game_id, pid, cache):
+    """Game minutes between the end of his last shift and the game's last shift end, from the NHL shift chart (rows with
+    typeCode 517), or None when the chart is empty, unreadable or lacks him (handoff 851). cache: game id -> {pid: end}."""
+    if game_id not in cache:
+        last = {}
+        try:
+            rows = nhl_get(s, f"{NHL_STATS}/shiftcharts", cayenneExp=f"gameId={game_id}").json().get("data") or []
+        except Exception as e:  # noqa: BLE001 - no chart: nothing changes
+            print(f"Shift chart {game_id} failed: {e!r}", file=sys.stderr)
+            rows = []
+        for x in rows:
+            end, per = _mmss(x.get("endTime")), x.get("period")
+            if x.get("typeCode") != 517 or not x.get("duration") or end is None or not per or x.get("playerId") is None:
+                continue
+            t = (int(per) - 1) * 1200 + end
+            last[x["playerId"]] = max(last.get(x["playerId"], 0), t)
+        cache[game_id] = last
+    last = cache[game_id]
+    return (max(last.values()) - last[pid]) / 60 if last and pid in last else None
 
 
 # finished weeks of per-game reports never change once the NHL's stat corrections are in, so the update workflow keeps them
@@ -3475,6 +3509,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     drift_rows = []  # every skater's Season FP/G, for the league-wide scoring drift (handoff 405)
     season_open = min((g["date"] for g in games), default=None)
     injury_log = []
+    shift_cache = {}  # NHL shift charts read this run, by game (handoff 851)
     for p in players:
         pid = match(p)
         if pid is None:
@@ -3802,10 +3837,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     game_caps = None
                 if game_caps is not None:
                     inj = 1.0
+            short_shift = None  # minutes his last shift ended before the game's last one, when it capped him (handoff 851)
             if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
                 share = gl[-1]["toi"] / f["std_toi"]
                 if p["injury"] == "DAY_TO_DAY":
                     inj = next(c for top, c in DTD_PLAYED_CAPS if share < top)
+                    # regular minutes, but his last shift ended early (handoff 851)
+                    if share >= DTD_PLAYED_CAPS[0][0] and gl[-1].get("pim", 0) < SHIFT_EARLY_PIM and gl[-1].get("game"):
+                        shift_gap = last_shift_gap(s, gl[-1]["game"], pid, shift_cache)
+                        if shift_gap is not None and shift_gap >= SHIFT_EARLY_GAP:
+                            inj, short_shift = min(inj, SHIFT_EARLY_CAP), round(shift_gap, 1)
                 elif share < DTD_PLAYED_CAPS[0][0]:
                     inj = min(inj, OUT_LEFT_EARLY_CAP)
             # a fresh illness note (handoff 676) or return words (677) lift the cap; IR's game today keeps its cap
@@ -4044,6 +4085,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["st_role"] = st_role  # a depth forward who killed penalties, or had no special teams, last game (handoff 358)
             if fought:
                 why["fought"] = True  # a depth player who fought last game (handoff 356)
+            if short_shift is not None:
+                why["short_shift"] = short_shift  # day-to-day, his last shift ended early: 0.30 a game (handoff 851)
             if lc:
                 why["line_change"] = "in" if lc == "in" else "out"  # Daily Faceoff's Line Change item for tonight (handoff 850)
             if wk_why and news_move is not None:  # handoffs 406-408; its effect on his chance, shown from 2 points (435)
