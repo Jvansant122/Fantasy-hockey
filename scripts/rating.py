@@ -4316,7 +4316,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if trip:
                 per_game = [q if c is None else min(q, c) for q, c in zip(per_game, trip)]
                 dress_next = per_game[0]
-                why["no_travel"] = sum(c is not None for c in trip)
             if per_game and not skip and p.get("pos") != "G" and wk_dates:  # playing through it (handoff 866)
                 rust = rust_factor(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                    or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), now_utc,
@@ -4326,7 +4325,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if ir_new:
                 per_game = [q if c is None else min(q, c) for q, c in zip(per_game, ir_new)]
                 dress_next = per_game[0]
-                why["ir_new"] = True
             # out one game, his latest item still that out item: personal / rest back, ill a coin flip, hurt still out
             # (handoffs 882, 887, 888)
             one_out = one_out_kind(dfo_news, pid, team_dates.get(team, ()), {d: st for (tm, d), st in week_starts.items()
@@ -4344,7 +4342,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     q0 = min(q0, ONE_OUT_HURT)
                 per_game = [round(q0, 4)] + per_game[1:]
                 dress_next = per_game[0]
-                why["one_out"] = one_out
             # sat the last game, no status, likely back next game: the later games follow (handoff 857)
             later_floor = not lc and not trip and not one_out and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
                 and per_game[0] >= RETURN_NEXT_MIN
@@ -4457,7 +4454,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 if lc["ahead"]:
                     why["call_ahead"] = True  # posted a day or more before the game (handoff 858)
             elif later_floor:
-                why["later_floor"] = True  # likely back next game: the later games follow (handoff 857)
+                why["later_floor"] = True
+            if trip:
+                why["no_travel"] = sum(c is not None for c in trip)  # did not travel: the trip's road games (handoff 865)
+            if ir_new:
+                why["ir_new"] = True  # a fresh injured-reserve placement (handoff 876)
+            if one_out:
+                why["one_out"] = one_out  # out one game, no news since (handoffs 882, 887, 888)  # likely back next game: the later games follow (handoff 857)
             if wk_why and news_move is not None:  # handoffs 406-408; its effect on his chance, shown from 2 points (435)
                 why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "move": round(news_move, 3), "why": wk_why}
             if boost_wk is not None:

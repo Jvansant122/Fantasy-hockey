@@ -4139,3 +4139,17 @@ def test_news_floor_keeps_the_lines_floor(monkeypatch, tmp_path):
     base = matthews(None)
     loose = matthews({"ts": "2026-10-09T15:00:00", **leads.injury_calls("Matthews has been cleared to play.")})
     assert loose["cr_why"]["line_change"] == "likely" and loose["cr_dress_next"] >= rating.DFO_IN_LINES_NEXT - 0.001
+
+
+def test_new_why_keys_reach_the_page(monkeypatch, tmp_path):
+    """Nov 9 regression: why keys set before the details dict was built (no_travel, ir_new, one_out) were lost, so the page
+    and check_data's P9 / X4 exemptions never saw them."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+
+    def matthews(item):
+        news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {"1": item}}
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), injury="INJURY_RESERVE", today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], dfo_news=news)["Auston Matthews"]
+    ir = matthews({"ts": "2026-10-09T12:00:00", "ir_new": True})
+    assert ir["cr_why"].get("ir_new") and ir["cr_dress_next"] <= rating.IR_NEW_CAP
