@@ -4221,6 +4221,10 @@ def test_team_moves_after_injury_news():
     assert rating.team_move_after(news({"9": {**up["9"], "g": True}}), 7, "TOR", start, now) is None  # a goalie
     assert rating.team_move_after(news(up, season=True), 7, "TOR", start, now) is None  # long-term news
     assert rating.team_move_after(news({"9": {**down["9"], "ts": "2026-11-09T10:00:00"}}), 7, "TOR", start, now) is None  # before the item
+    assert rating.team_move_after(news(down, surgery=True), 7, "TOR", start, now) is None  # surgery
+    assert rating.team_move_after(news(down, tl=90.0), 7, "TOR", start, now) is None  # a timeline
+    old = {"injuries": {"7": {"ts": "2026-11-03T15:00:00"}}, "roster-moves": down}
+    assert rating.team_move_after(old, 7, "TOR", start, now) is None  # item over 7 days before the puck (Duchene, Nov 9)
 
 
 def test_first_game_back_scores_less(monkeypatch, tmp_path):

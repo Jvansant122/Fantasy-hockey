@@ -786,6 +786,7 @@ IR_NEW_DAYS, IR_NEW_CAP = 4, 0.05
 # handoffs 892-893)
 TRADE_DAYS, TRADE_CAPS = 4, ((16, 0.15), (36, 0.65))
 BACK_FPG, BACK_ILL_FPG, BACK_MAX_MISSED = 0.93, 0.87, 6
+TEAM_MOVE_ITEM_DAYS = 7  # a call-up / send-down reads only into injury items this fresh (892, 893)
 CALLUP_MULT, CALLUP_NEAR_MULT, SENDDOWN_FLOOR, SENDDOWN_MAYBE_FLOOR = 0.65, 0.6, 0.6, 0.9
 # after a Line Change scratch / draw-in, his next games by the share of the team's last 20 games he dressed (under 0.3,
 # 0.3-0.6, 0.6-0.85, 0.85+): (next game, the third game) dressed (findings 4743, handoff 890)
@@ -830,8 +831,9 @@ def team_move_after(dfo_news, pid, team, start, now_utc):
     news = dfo_news or {}
     item = (news.get("injuries") or {}).get(str(pid)) if pid else None
     ts, t0 = (parse_utc(item.get("ts")) if item else None), parse_utc(start)
-    if ts is None or t0 is None or t0 <= now_utc or item.get("season") or item.get("indefinite") or item.get("firm"):
-        return None
+    if ts is None or t0 is None or t0 <= now_utc or item.get("season") or item.get("indefinite") or item.get("firm") \
+            or item.get("surgery") or item.get("tl") or t0 - ts > timedelta(days=TEAM_MOVE_ITEM_DAYS):
+        return None  # the research's items were at most 7 days old with no long-term words (surgery, a timeline)
     moves = sorted((parse_utc(m.get("ts")), "down" if m.get("down") else "up") for k, m in (news.get("roster-moves") or {}).items()
                    if k != str(pid) and m.get("team") == team and not m.get("g") and not m.get("cond") and (m.get("down") or m.get("up"))
                    and parse_utc(m.get("ts")) and ts < parse_utc(m.get("ts")) < t0)
