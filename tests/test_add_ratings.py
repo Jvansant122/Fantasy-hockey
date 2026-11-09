@@ -61,8 +61,9 @@ def goalie_row(pid, name, team, i):
 
 class FakeSession:
     def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=(),
-                 bye=False, roster_down=(), last_team=None, starts=None, no_team_xg=False):
+                 bye=False, roster_down=(), last_team=None, starts=None, no_team_xg=False, shifts=None):
         self.calls = []
+        self.shifts = shifts or {}  # game id: {player id: his last shift's end in game seconds} (NHL shift chart, handoff 851)
         self.no_team_xg = no_team_xg  # MoneyPuck's team file missing: the picks fall back to goal differential
         self.starts = starts or {}  # game date: its start time (UTC) in the NHL week schedule (findings 241)
         self.bye = bye  # BOS has no game this week (TOR plays MTL instead), like 14 teams the week of Feb 1 (findings 230)
@@ -126,6 +127,10 @@ class FakeSession:
             return Resp({"forwards": [person(p, n, pos) for p, n, t, pos, _ in SKATERS if t == team and pos != "D"],
                          "defensemen": [person(p, n, pos) for p, n, t, pos, _ in SKATERS if t == team and pos == "D"],
                          "goalies": [person(p, n, "G") for p, n, t in GOALIES if t == team]})
+        if url.endswith("/shiftcharts"):
+            gid = int(params["cayenneExp"].split("=")[1])
+            return Resp({"data": [{"playerId": pid, "typeCode": 517, "duration": "00:40", "period": end // 1200 + 1,
+                                   "endTime": f"{end % 1200 // 60:02d}:{end % 60:02d}"} for pid, end in self.shifts.get(gid, {}).items()]})
         m = re.search(r"/stats/rest/en/(\w+/\w+)$", url)
         assert m, f"unexpected URL {url}"
         report, exp = m.group(1), params["cayenneExp"]
@@ -3541,6 +3546,35 @@ def test_line_change_games_and_line_item():
     assert rating.line_item(news, 7, "2026-10-09T15:00:00Z", now) is None  # started
     assert rating.line_item(news, 7, "2026-10-09T23:00:00Z", now, "2026-10-09T09:00:00Z") is None  # older than his last game
     assert rating.line_item(news, 8, "2026-10-09T23:00:00Z", now) is None and rating.line_item(None, 7, "x", now) is None
+
+
+def test_day_to_day_whose_last_shift_ended_early_is_capped(monkeypatch, tmp_path):
+    """Handoff 851: day-to-day after regular minutes, but his last shift ended 10+ game minutes before the game's last:
+    0.30 a game. A gap under 10, 10+ PIM, no chart, or no status: unchanged. The chart is read once per game."""
+    last = game_id("TOR", len(PAST) - 1)
+
+    def matthews(gap=None, injury="DAY_TO_DAY", pim=0):
+        fake = FakeSession(shifts={last: {1: 3600 - int(gap * 60), 2: 3600}} if gap is not None else {})
+        if pim:
+            get = fake.get
+            def with_pim(url, params=None, headers=None, timeout=None):
+                r = get(url, params, headers, timeout)
+                if "skater/" in url and "gameDate" in (params or {}).get("cayenneExp", ""):
+                    for row in r.json()["data"]:
+                        row["penaltyMinutes"] = pim
+                return r
+            fake.get = with_pim
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury=injury),
+                                            espn(102, "Morgan Rielly", "TOR", "D", injury="DAY_TO_DAY")], fake=fake), fake
+    (base, _), (cut, fake) = matthews(), matthews(gap=14)
+    assert base["Auston Matthews"]["cr_dress_next"] > rating.SHIFT_EARLY_CAP + 0.1
+    assert cut["Auston Matthews"]["cr_dress_next"] == pytest.approx(rating.SHIFT_EARLY_CAP, abs=0.01)
+    assert cut["Auston Matthews"]["cr_why"]["short_shift"] == 14.0 and "short_shift" not in cut["Morgan Rielly"]["cr_why"]
+    assert sum(u.endswith("/shiftcharts") for u in fake.calls) == 1  # one chart for both day-to-day Leafs
+    for kw in ({"gap": 8}, {"gap": 14, "pim": 12}):
+        assert matthews(**kw)[0]["Auston Matthews"]["cr_dress_next"] == base["Auston Matthews"]["cr_dress_next"], kw
+    assert "short_shift" not in matthews(gap=14, injury=None)[0]["Auston Matthews"]["cr_why"]
+    assert rating.SHIFT_EARLY_GAP == 10 and rating.SHIFT_EARLY_CAP == 0.30 and rating.SHIFT_EARLY_PIM == 10
 
 
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
