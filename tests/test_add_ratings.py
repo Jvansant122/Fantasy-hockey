@@ -776,6 +776,7 @@ def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkey
 def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     """Dressed for the last game but played under 40% of his average ice time: big dress cut for the next games, until
     ESPN flags him; 40-55% a small one for two games (findings 165)."""
+    monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", 0.0)  # handoff 846's no-news shift aside: the caps on their own
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     def matthews(toi=None, injury=None):
         fake = FakeSession(short_last={1: toi} if toi is not None else None)
@@ -2096,6 +2097,7 @@ def test_boosted_model_walks_its_trees_like_sklearn():
 
 def test_weekly_boosted_dress_model_moves_the_week_toward_its_share(monkeypatch, tmp_path):
     """Handoff 411: each remaining game's dress logit moves 0.8 x (logit(b) - logit(his mean)); injury caps still hold."""
+    monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", 0.0)  # handoff 846's no-news shift aside: the caps on their own
     import season_boost
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     real = season_boost.load
@@ -3599,6 +3601,7 @@ def test_left_last_game_at_an_injury_stoppage_is_capped(monkeypatch, tmp_path):
     """Handoff 855: no status, regular minutes, last shift ended at a player-injury stoppage 10+ game minutes before the
     end: 0.45 a game. Not at a stoppage, a stoppage 2 minutes after his shift, or a gap under 10: unchanged; day-to-day
     with 851's 0.30 keeps the lower cap."""
+    monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", 0.0)  # handoff 846's no-news shift aside: the caps on their own
     last = game_id("TOR", len(PAST) - 1)
 
     def matthews(gap=None, stop=None, injury=None):
@@ -3613,6 +3616,32 @@ def test_left_last_game_at_an_injury_stoppage_is_capped(monkeypatch, tmp_path):
         assert matthews(**kw)[0]["cr_dress_next"] == base["cr_dress_next"], kw
     dtd = matthews(gap=14, stop=3600 - 14 * 60, injury="DAY_TO_DAY")[0]
     assert dtd["cr_dress_next"] == pytest.approx(rating.SHIFT_EARLY_CAP, abs=0.01) and "hurt_exit" not in dtd["cr_why"]
+
+
+def test_day_to_day_next_game_follows_daily_faceoff_news(monkeypatch, tmp_path):
+    """Handoff 846: a day-to-day skater with no Daily Faceoff news after dressing his last game: -0.4 on the next game's
+    logit; with practising news after a missed game: +0.85, past the day-to-day cap."""
+    import math
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", 0.0)
+    off = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY")])["Auston Matthews"]
+    monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", -0.4)
+    quiet = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY")])["Auston Matthews"]
+    lo = lambda q: math.log(q / (1 - q))
+    assert quiet["cr_why"]["dtd_news_z"] == -0.4 and lo(quiet["cr_dress_next"]) < lo(off["cr_dress_next"]) - 0.3
+    news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
+            "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]},
+            "injuries": {"1": {"ts": "2026-10-09T15:00:00", "season": False, "surgery": False, "nf": []}}}
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    p = lambda: [espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY")]
+    monkeypatch.setattr(rating, "DTD_NEWS_UP_LOGIT", 0.0)
+    flat = rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=news)["Auston Matthews"]
+    monkeypatch.setattr(rating, "DTD_NEWS_UP_LOGIT", 0.85)
+    up = rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=news)["Auston Matthews"]
+    assert flat["sat_last"] and flat["cr_why"]["week_news"]["shift"] > 0, flat["cr_why"]
+    assert up["cr_why"]["dtd_news_z"] == 0.85 and up["cr_dress_next"] > flat["cr_dress_next"]
+    assert rating.DTD_NEWS_UP_LOGIT == 0.85 and rating.DTD_QUIET_LOGIT == -0.4
 
 
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
