@@ -310,6 +310,50 @@ def recent_item(slug, ts, f):
     return item
 
 
+# Daily Faceoff's "Line Change" items (hockey-player-news/line-matches): who is scratched and who draws in tonight. Wording
+# as measured on 2021-26 items: IN 4,929 dressed 99.2%, OUT 3,977 dressed 1.4% (findings 4700, handoff 850). An item
+# matching both, or any hedge, says nothing
+LC_SKIP = re.compile(r"game-time decision|questionable|could (play|return|draw|make)|may (play|return|draw)|might|uncertain|doubtful")
+LC_OUT = re.compile(r"scratch|scatch|not expected to play|won't play|will not play|will sit|sit out|out of the lineup|odd man out"
+                    r"|will not dress|won't dress|not dress|will be out|is out (for|on|vs|in)|remain out|will not travel"
+                    r"|won't travel|not in the lineup|exit the lineup|come out of the lineup")
+LC_IN = re.compile(r"draws? (back )?in|enter the lineup|re-enter|back in the|return to the lineup|returns to the lineup|debut"
+                   r"|will play|expected to play|in the lineup|will dress|will return|expected to return|slot in|rejoin"
+                   r"|will replace|make his return|is on the ice for warmups")
+LC_HEDGE = re.compile(r"expected|likely|slated|set to")
+LC_DAYS = 3  # only the latest item matters, and only within 16 hours of his team's next game
+
+
+def line_change(details):
+    """A Line Change item's call on the lower-cased details: "in", "out", "out_exp" (out, with expected / likely / slated /
+    set to) or None (a hedge, both, or neither)."""
+    t = re.sub(r"\s+", " ", (details or "").lower())
+    if LC_SKIP.search(t):
+        return None
+    out, came = bool(LC_OUT.search(t)), bool(LC_IN.search(t))
+    if out == came:
+        return None
+    return "in" if came else "out_exp" if LC_HEDGE.search(t) else "out"
+
+
+def fetch_line_changes(s, now_utc, have):
+    """Each skater's latest Line Change item {nhl id: {ts, lc}} from the newest page back to the stored ones, kept LC_DAYS."""
+    have = dict(have or {})
+    floor = (now_utc - timedelta(days=LC_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    stop = max(floor, max((v["ts"] for v in have.values()), default="")[:16])
+    for page in range(1, NEWS_MAX_PAGES + 1):
+        data = page_data(s, f"{DF}/hockey-player-news/line-matches/{page}")["data"]
+        items = data.get("data") or []
+        for it in items:
+            pid, ts = it.get("playerFiveVFiveId"), (it.get("createdAt") or "")[:19]
+            if pid and ts and ts > (have.get(str(int(pid))) or {}).get("ts", ""):
+                have[str(int(pid))] = {"ts": ts, "lc": line_change(it.get("details"))}
+        if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
+            break
+        time.sleep(0.2)
+    return {k: v for k, v in sorted(have.items()) if v["ts"] >= floor}
+
+
 def load_news():
     try:
         data = json.loads(NEWS_FILE.read_text())
@@ -362,6 +406,11 @@ def fetch_news(s, now_utc, stored=None):
             time.sleep(0.2)
         keep = (now_utc - timedelta(days=NEWS_KEEP_DAYS)).strftime("%Y-%m-%dT%H:%M")
         out[slug] = {k: v for k, v in sorted(have.items()) if v["ts"] >= keep}
+    try:  # Line Change items (handoff 850); a failed page keeps the stored ones and the rest of the news
+        out["line-matches"] = fetch_line_changes(s, now_utc, stored.get("line-matches"))
+    except Exception as e:  # noqa: BLE001
+        out["line-matches"] = dict(stored.get("line-matches") or {})
+        out["line_error"] = repr(e)
     keep = (now_utc - timedelta(days=NEWS_RECENT_DAYS)).strftime("%Y-%m-%dT%H:%M")
     out["recent"] = {pid: sorted((r for r in v if r["ts"] >= keep), key=lambda r: (r["ts"], r["cat"]))
                      for pid, v in sorted(recent.items()) if any(r["ts"] >= keep for r in v)}

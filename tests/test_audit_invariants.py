@@ -605,12 +605,17 @@ def test_publish_check_keeps_daily_faceoffs_floors(data):
     started = lambda p: p.get("today_start") and d.get("updated_utc") and p["today_start"] <= d["updated_utc"]
     p = next((p for p in d["players"] if p["pos"] != "G" and p.get("dfo_out") is False and not p.get("injury")
               and p.get("owner") != "waivers" and p.get("games_left") and (p.get("cr_dress_next") or 0) > 0.001
-              and not started(p) and (p.get("sat_last") or (p.get("cr_why") or {}).get("gp"))), None)
+              and not started(p) and (p.get("sat_last") or (p.get("cr_why") or {}).get("gp"))
+              and (p.get("cr_why") or {}).get("line_change") != "out"), None)
     if p is None:
         pytest.skip("no skater in Daily Faceoff's lines with a game ahead")
     p["cr_dress_next"] = 0.6  # under every floor, the banded ones too (handoff 844)
     assert [e for e in check_data.rules(d, soft=True) if e.startswith("P9")]
     assert [e for e in check_data.rules(d) if e.startswith("P9")]  # blocks publishing
+    # a newer Daily Faceoff Line Change item scratching him tonight wins over the lines (handoff 850)
+    p["cr_why"] = {**(p.get("cr_why") or {}), "line_change": "out"}
+    assert not [e for e in check_data.rules(d) if e.startswith("P9") and p["name"] in e]
+    p["cr_why"].pop("line_change")
     if not p.get("sat_last"):  # played his last game: a doubted player's floor is 0.65 (handoff 844)
         p["cr_why"] = {**(p.get("cr_why") or {}), "boost_dress": 0.37}
         p["cr_dress_next"] = 0.66
