@@ -780,13 +780,13 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None):
 
 def call_games(per_game, call, game_caps=None):
     """His next game and the ones after it under a next_game_call: a cap lowers them to its values, a floor lifts them
-    (later games stay under their game caps); an `after` of None keeps that game."""
+    past ESPN's per-game caps too (returning players were held at IR's 15-25% and dressed 98%, findings 4709); an `after`
+    of None keeps that game. game_caps is unused, kept for the call sites."""
     cap, after = call["cap"], call.get("after")
     res = [min(per_game[0], call["q"]) if cap else max(per_game[0], call["q"])]
     for i, q in enumerate(per_game[1:], 1):
         r = after[min(i, len(after)) - 1] if after else None
-        v = q if r is None else min(q, r) if cap else max(q, r)
-        res.append(min(v, game_caps[i]) if game_caps and not cap and r is not None else v)
+        res.append(q if r is None else min(q, r) if cap else max(q, r))
     return res
 
 

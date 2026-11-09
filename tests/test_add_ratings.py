@@ -3547,7 +3547,7 @@ def test_next_game_call_rules():
     assert rating.call_games([0.9, 0.9, 0.9, 0.9, 0.9], out) == [0.03, 0.44, 0.52, 0.55, 0.55]
     inn = {"k": "in", "cap": False, "q": 0.97, "after": rating.LC_AFTER["in"], "ahead": False}
     assert rating.call_games([0.2, 0.3, 0.9], inn) == [0.97, 0.71, 0.9]
-    assert rating.call_games([0.2, 0.3, 0.3], inn, [1.0, 0.5, 1.0]) == [0.97, 0.5, 0.61]
+    assert rating.call_games([0.2, 0.3, 0.3], inn, [1.0, 0.25, 1.0]) == [0.97, 0.71, 0.61]  # past an IR-style game cap
     left = {"k": "left", "cap": True, "q": 0.30, "after": (0.35, None), "ahead": False}
     assert rating.call_games([0.9, 0.9, 0.9, 0.2], left) == [0.3, 0.35, 0.9, 0.2]
     now = datetime(2026, 10, 9, 16, tzinfo=timezone.utc)  # Friday Oct 9, noon ET; the game at 7 PM ET
