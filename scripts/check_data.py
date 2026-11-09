@@ -400,10 +400,13 @@ def warnings(data, prev):
     def locked_since(p):
         locks = [p.get("today_start")] + ([data.get("first_start")] if p.get("owner") in ("freeagent", "waivers") else [])
         return bool(was and now) and any(t and was < t <= now for t in locks)
+    def news_changed(p, o):  # new Daily Faceoff news or lines since the earlier run explain the move (handoff 845)
+        w, v = p.get("cr_why") or {}, o.get("cr_why") or {}
+        return any(w.get(k) != v.get(k) for k in ("week_news", "dfo_inj", "back", "displaced"))
     jumps = [p["name"] for p, o in same if p.get("cr_dress_next") is not None and o.get("cr_dress_next") is not None
              and p["cr_dress_next"] - o["cr_dress_next"] > 0.15 and p.get("injury") == o.get("injury")
              and p.get("dfo_out") == o.get("dfo_out") and _gp(p) == _gp(o) and not locked_since(p)
-             and not (now and o.get("today_start") and o["today_start"] <= now)]
+             and not (now and o.get("today_start") and o["today_start"] <= now) and not news_changed(p, o)]
     if jumps:
         out.append(f"X4 {len(jumps)} skaters' next-game dress rose by over 0.15 with no game or status change: {jumps[:5]}")
     return out
