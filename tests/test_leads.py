@@ -290,6 +290,16 @@ def test_firm_return_wording():
     assert not f("Jones will not play and will sit out.") and not f("Roe will return during the road trip.") and not f(None)
 
 
+def test_injury_calls_wording():
+    """Handoffs 858-859: expected-return, out and left-the-game wording, and the day an item names."""
+    c = leads.injury_calls
+    assert c("Tavares left Saturday's game against Boston and did not return.") == {"left": True, "day": "saturday"}
+    assert c("Tavares left the game but returned in the third.") == {}
+    assert c("Hyman is expected to return Tuesday.") == {"exp_ret": True, "day": "tuesday"}
+    assert c("Smith will not play Wednesday.") == {"out_w": True, "day": "wednesday"}
+    assert c("Suzuki will return to the lineup Tuesday.") == {"firm": True, "day": "tuesday"}
+
+
 def test_fetch_news_keeps_each_skaters_latest_line_change(monkeypatch):
     """Handoff 850: the line-matches pages keep each skater's latest item for LC_DAYS; a failed page keeps the stored
     items and the rest of the news."""
@@ -305,6 +315,8 @@ def test_fetch_news_keeps_each_skaters_latest_line_change(monkeypatch):
     stored = {"version": leads.NEWS_VERSION, "line-matches": {"9": {"ts": "2026-11-01T10:00:00", "lc": "in"}}}
     out = leads.fetch_news(FakeSession(pages), now, stored)
     assert out["line-matches"] == {"5": {"ts": "2026-11-20T10:00:00", "lc": "in"}, "6": {"ts": "2026-11-19T21:00:00", "lc": "out_exp"}}
+    pages["news/line-matches/1"]["data"]["data"].insert(0, item(7, "2026-11-20T11:00:00.000Z", "Poe will draw in on Friday."))
+    assert leads.fetch_news(FakeSession(pages), now, stored)["line-matches"]["7"] == {"ts": "2026-11-20T11:00:00", "lc": "in", "day": "friday"}
     del pages["news/line-matches/1"]
     kept = leads.fetch_news(FakeSession(pages), now, {**stored, "line-matches": out["line-matches"]})
     assert kept["line-matches"] == out["line-matches"] and "line_error" in kept and "injuries" in kept
