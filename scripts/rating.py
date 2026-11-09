@@ -745,10 +745,16 @@ SOFT_RETURN, SOFT_PRAC_RETURN, SOFT_AFTER = 0.65, 0.80, (0.8, None)
 NON_CONTACT_CAPS = (0.05, 0.25)
 MISSED_PRAC_CAP, MISSED_SKATE_CAP = 0.35, 0.12
 NEAR_OUT, EVAL_CAPS = 0.05, (0.05, 0.2)
+# return news naming the day of the game after next (within 6 days): 0 of 23 dressed in the game between, 15 of 23 in
+# the named game (findings 4713, handoff 861)
+SKIP_ONE_CAP, SKIP_ONE_FLOOR = 0.05, 0.6
+# "did not travel" with the team, within 72 h of a road game: the trip's road games 1 / 2 / 3 dressed 1 of 130, 3 of 93,
+# 17% of 58; caps 0.05 / 0.05 / 0.2 until the first home game (findings 4717, handoff 865)
+TRIP_CAPS, TRIP_HOURS = (0.05, 0.05, 0.2), 72
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
-def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None):
+def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, second_day=None):
     """Daily Faceoff's call on his next game (starting at `start`, UTC ISO, on ET date `game_day`) from his latest Line
     Change item (handoffs 850, 854, 858) and his latest injury item (856-859), whichever is newer when both call it:
     {k: in / out / return / left, cap: True for a cap, q: that game's value, after: the next games' values (None: keep),
@@ -799,6 +805,10 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None):
             c = cap(MISSED_PRAC_CAP if ahead else MISSED_SKATE_CAP, None, "practice")
         elif ii.get("soft") and ahead and here:
             c = floor(SOFT_PRAC_RETURN if ii.get("prac") else SOFT_RETURN, SOFT_AFTER, "soft")
+        elif (ii.get("firm") or ii.get("exp_ret") or ii.get("soft")) and second_day and not here \
+                and WEEKDAYS[date.fromisoformat(second_day).weekday()] in named \
+                and (date.fromisoformat(second_day) - ts.date()).days <= 6:  # names the game after next (861)
+            c = {"k": "later", "cap": True, "q": SKIP_ONE_CAP, "after": None, "lift": (SKIP_ONE_FLOOR,), "ahead": not near}
         if c:
             calls.append((ts, c))
     return max(calls, key=lambda x: x[0])[1] if calls else None
@@ -808,12 +818,32 @@ def call_games(per_game, call, game_caps=None):
     """His next game and the ones after it under a next_game_call: a cap lowers them to its values, a floor lifts them
     past ESPN's per-game caps too (returning players were held at IR's 15-25% and dressed 98%, findings 4709); an `after`
     of None keeps that game. game_caps is unused, kept for the call sites."""
-    cap, after = call["cap"], call.get("after")
+    cap, after, lift = call["cap"], call.get("after"), call.get("lift") or ()
     res = [min(per_game[0], call["q"]) if cap else max(per_game[0], call["q"])]
     for i, q in enumerate(per_game[1:], 1):
         r = after[min(i, len(after)) - 1] if after else None
-        res.append(q if r is None else min(q, r) if cap else max(q, r))
+        v = q if r is None else min(q, r) if cap else max(q, r)
+        res.append(max(v, lift[i - 1]) if i <= len(lift) else v)  # the named later game's floor (861)
     return res
+
+
+def trip_caps(dfo_news, pid, dates, venue, starts, now_utc, last_start=None):
+    """Per-game caps (None: none) for his games on `dates` when his latest Daily Faceoff injury item says he did not
+    travel, posted within TRIP_HOURS of his next game, a road game: the trip's road games until the first home game
+    (handoff 865)."""
+    item = ((dfo_news or {}).get("injuries") or {}).get(str(pid)) if pid else None
+    if not item or not item.get("nt") or not dates or venue.get(dates[0]) is not False:
+        return None
+    ts, t0, lt = parse_utc(item.get("ts")), parse_utc(starts.get(dates[0])), parse_utc(last_start) if last_start else None
+    if ts is None or t0 is None or t0 <= now_utc or ts > t0 or t0 - ts > timedelta(hours=TRIP_HOURS) or (lt and ts <= lt):
+        return None
+    out, k = [], 0
+    for d in dates:
+        if venue.get(d) is not False or k >= len(TRIP_CAPS):
+            break
+        out.append(TRIP_CAPS[k])
+        k += 1
+    return out + [None] * (len(dates) - len(out))
 
 
 def dfo_in_lines_floor(boost):
@@ -4128,12 +4158,24 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if per_game and not skip and p.get("pos") != "G" and wk_dates:
                 lc = next_game_call(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                     or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), wk_dates[0], now_utc,
-                                    week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
+                                    week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None,
+                                    wk_dates[1] if len(wk_dates) > 1 else None)
             if lc:
                 per_game = call_games(per_game, lc, game_caps)
                 dress_next = per_game[0]
+            # did not travel: the trip's road games until the first home game (handoff 865)
+            trip = None
+            if per_game and not skip and p.get("pos") != "G" and wk_dates:
+                trip = trip_caps(dfo_news, pid, wk_dates, venue.get(espn_team, {}),
+                                 {d: week_starts.get((espn_team, d)) or (p.get("today_start") if d == today.isoformat() else None)
+                                  for d in wk_dates[:1]}, now_utc,
+                                 week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
+            if trip:
+                per_game = [q if c is None else min(q, c) for q, c in zip(per_game, trip)]
+                dress_next = per_game[0]
+                why["no_travel"] = sum(c is not None for c in trip)
             # sat the last game, no status, likely back next game: the later games follow (handoff 857)
-            later_floor = not lc and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
+            later_floor = not lc and not trip and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
                 and per_game[0] >= RETURN_NEXT_MIN
             if later_floor:
                 per_game = [per_game[0]] + [max(q, min(RETURN_LATER_FLOOR, game_caps[i] if game_caps else 1.0))

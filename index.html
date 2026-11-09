@@ -670,7 +670,9 @@ function why(p) {
     : lchg === "left" ? "Daily Faceoff: he left his last game and did not return (at most 30% his next game, 35% the one after)"
     : lchg === "soft" ? "Daily Faceoff: he could return in his next game, named by day (65-80% for that game)"
     : lchg === "practice" ? "Daily Faceoff: he missed practice or the morning skate (at most 12-35% his next game)"
+    : lchg === "later" ? "Daily Faceoff: he is expected back in the game after next, so at most 5% his next game and at least 60% the named one"
     : `Daily Faceoff: out ${when} (3-10% for that game, and about half his next games)`);
+  if (p.cr_why?.no_travel && !started(p)) wk.push(`Daily Faceoff: he did not travel with the team, so at most 5-20% in each of the ${p.cr_why.no_travel} road game${p.cr_why.no_travel > 1 ? "s" : ""} before his team is home again`);
   if (p.cr_why?.later_floor) wk.push("he sat his team's last game but is likely back for the next one, so his later games this week count at least 85%");
   if (p.cr_why?.displaced) wk.push(`${p.cr_why.displaced} is back from injury, so he may sit (he had the least ice time at his position last game)`);
   if (!p.cr_matched) parts.push(p.cr_why?.no_record ? "not found in NHL stats and no games this season or last, so rated 0 (likely retired or in the minors)"
