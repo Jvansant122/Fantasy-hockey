@@ -282,6 +282,14 @@ def test_line_change_wording():
     assert lc("Brown skated on the fourth line at practice.") is None and lc(None) is None
 
 
+def test_firm_return_wording():
+    """Handoff 856: firm return wording, no hedge, no out wording."""
+    f = leads.firm_return
+    assert f("Suzuki will return to the lineup Tuesday.") and f("Perry will play Monday.") and f("Doe will make his NHL debut.")
+    assert not f("Suzuki is expected to return Tuesday.") and not f("Smith could return Thursday.")
+    assert not f("Jones will not play and will sit out.") and not f("Roe will return during the road trip.") and not f(None)
+
+
 def test_fetch_news_keeps_each_skaters_latest_line_change(monkeypatch):
     """Handoff 850: the line-matches pages keep each skater's latest item for LC_DAYS; a failed page keeps the stored
     items and the rest of the news."""
