@@ -95,6 +95,30 @@ def test_nhl_games_marks_started_finished_and_lines():
     assert all("p_line" not in g for g in later if g["date"] != "2026-10-14")
 
 
+def test_pick_blends_the_model_with_tonights_line():
+    """A game with tonight's line publishes the log-odds average of the model and the line, keeping the model's own number
+    as p_model; games without a line keep the model; a started game keeps the blended pick it had (handoff 853)."""
+    import math
+    lo = lambda q: math.log(q / (1 - q))
+    assert abs(winners.blend_line(0.6, 0.6) - 0.6) < 1e-9 and abs(winners.blend_line(0.7, 0.3) - 0.5) < 1e-9
+    assert abs(lo(winners.blend_line(0.65, 0.45)) - (lo(0.65) + lo(0.45)) / 2) < 1e-9
+    now = datetime(2026, 10, 14, 20, 0, tzinfo=timezone.utc)
+    week = {"TOR": [("2026-10-14", "BOS", True)], "BOS": [("2026-10-14", "TOR", False)], "MTL": [("2026-10-14", "OTT", True)],
+            "OTT": [("2026-10-14", "MTL", False)]}
+    starts = {("TOR", "2026-10-14"): "2026-10-14T23:00:00Z", ("MTL", "2026-10-14"): "2026-10-14T23:30:00Z"}
+    lineups = {"TOR": 12.0, "BOS": 9.0, "MTL": 10.0, "OTT": 10.0}
+    out = {g["home"]: g for g in winners.nhl_games(week, starts, {}, {}, {}, {}, lineups, {"_league": 0.9}, {"TOR": 0.4}, now)}
+    tor, mtl = out["TOR"], out["MTL"]
+    assert tor["p_model"] > 0.5 and tor["p_line"] == 0.4
+    assert abs(tor["p_home"] - round(winners.blend_line(tor["p_model"], 0.4), 3)) < 1e-9 and 0.4 < tor["p_home"] < tor["p_model"]
+    assert "p_model" not in mtl and "p_line" not in mtl
+    # at puck drop the published blend is what's frozen, with its parts
+    after = datetime(2026, 10, 14, 23, 10, tzinfo=timezone.utc)
+    live = winners.nhl_games(week, starts, {}, {}, {}, {}, lineups, {"_league": 0.9}, {"TOR": 0.4}, after)
+    frozen = {g["home"]: g for g in winners.freeze(live, list(out.values()))}["TOR"]
+    assert frozen["p_home"] == tor["p_home"] and frozen["p_model"] == tor["p_model"] and frozen["p_line"] == 0.4
+
+
 def fa(pid, pos, cr, nights, team_id=1, **kw):
     return {"id": pid, "pos": pos, "cr": cr, "cr_fpg": cr / len(nights) if nights else 0, "cr_dress": 1.0, "nights": nights,
             "team_id": team_id, **kw}

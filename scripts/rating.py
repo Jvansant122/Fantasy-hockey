@@ -133,7 +133,7 @@ IDLE_DRESS = ((21, 0.5), (35, 0.2))  # 15-21 days 0.5, 22-35 days 0.2, longer 0.
 def idle_cap(days):
     return next((cap for top, cap in IDLE_DRESS if days <= top), NOT_PLAYING_DRESS)
 ET = ZoneInfo("America/New_York")
-LINE_PPS_SLOPE = 4.1  # points per start per unit of win probability implied by the moneyline (findings section 30)
+LINE_PPS_SLOPE = 3.0  # points per start per unit of win probability implied by the moneyline (findings section 30; 4.1 -> 3.0 on 7,650 lined starts 2022-26, findings 4702, handoff 852)
 # this week's starts (not Season): his own points per start already carry his team's strength, so with the line or the
 # schedule on top strong teams' starters read ~0.5 high. Week pricing keeps 0.4 of his gap to the league's rate this season
 # (shrunk over 300 starts to 2.89), and the schedule slope drops to 3.0. 13,120 starts 2021-26: per-start error -1.5% and
@@ -3510,7 +3510,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                 if (not p.get("pending_drop") or d <= today.isoformat()) and (playable is None or d in playable)} if pid else {}
             # this week's starts: 0.4 of his gap to the league rate, then the line or the schedule (findings 231 (8))
             fpg = league_pps + WEEK_PPS_KEEP * (fpg - league_pps)
-            # tonight's game priced by the betting line: that + 4.1 x (win probability - 0.5) per start
+            # tonight's game priced by the betting line: that + 3.0 x (win probability - 0.5) per start
             p_today = min(goalie_today.get(pid, 0.0), starts) if pid and not started else 0.0
             if team in lines and p_today > 0 and starts > 0:
                 line_pps = fpg + LINE_PPS_SLOPE * (lines[team] - 0.5)
