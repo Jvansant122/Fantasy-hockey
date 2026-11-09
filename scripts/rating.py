@@ -3341,8 +3341,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if not reschedule:
             break
         pid = match(p)
-        if p["pos"] != "G" and p.get("team") == "FA":
-            if pid in by_player and roster_team.get(pid):
+        if p.get("team") == "FA":
+            # a goalie needs no game yet: an NHL roster's goalies share its starts (Soderblom, Nov 9: 0.77 starts, 0 games)
+            if roster_team.get(pid) and (pid in by_player or p["pos"] == "G"):
                 reschedule(p, roster_team[pid])
         elif pid in played_for and p.get("team") != "FA" and p.get("owner") != "waivers":
             # the NHL moved him before ESPN did: his latest game is for a new team, after games for the one ESPN lists.
@@ -3456,6 +3457,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # on waivers he misses his team's games before he clears (findings 122): keep that share of the starts
             left_dates = [d for d in sched.get(team, []) if d > today.isoformat() or (d == today.isoformat() and not started)]
             team_left = len(left_dates)
+            if not left_dates:  # no team games ahead (a free-agent row nothing could reschedule): no starts ahead
+                starts = 0.0
+                why["exp_starts"] = 0.0
             # on waivers, only the nights after he clears are his (handoff 492)
             playable = (set(left_dates[max(team_left - p["games_left"], 0):]) if p["games_left"] else set()) \
                 if p.get("owner") == "waivers" else None

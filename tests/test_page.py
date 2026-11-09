@@ -238,6 +238,8 @@ def test_upgrades_roster_fixes(browser, server, data):
     hurt.update(injury="OUT", games_left=max(hurt["games_left"], 1))
     d["ir_slots"] = 1  # the IR slot is taken, so no "move him to IR" hint
     d["move_limit"], team["moves_used"] = 7, 6
+    # one move left in the next matchup too: last week's data on Monday morning counts the new week's moves (Nov 9)
+    d["move_limit_next"], team["moves_used_next"] = 7, 6
     ctx, page, errors = open_page(browser, server, data=d)
     page.select_option("#team", str(team["id"]))
     text = page.locator("#upgrades").inner_text()
