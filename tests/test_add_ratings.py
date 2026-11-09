@@ -4206,3 +4206,31 @@ def test_goalie_news_moves():
     assert go(news(down=True, cond=True)) == {}
     assert go({"roster-moves": {"12": {"ts": "2026-11-05T12:00:00", "g": True, "team": "TOR", "up": True}}}) == {}  # a game since
     assert go({"roster-moves": {"12": {"ts": "2026-11-10T12:00:00", "team": "TOR", "up": True}}}) == {}  # a skater
+
+
+def test_team_moves_after_injury_news():
+    """Handoffs 892, 893: a skater call-up / send-down by his team after his latest injury item and before the puck."""
+    from datetime import datetime, timezone
+    now, start = datetime(2026, 11, 10, 15, tzinfo=timezone.utc), "2026-11-11T00:00:00Z"
+    news = lambda mv, **it: {"injuries": {"7": {"ts": "2026-11-09T15:00:00", **it}}, "roster-moves": mv}
+    up = {"9": {"ts": "2026-11-10T12:00:00", "team": "TOR", "up": True}}
+    down = {"9": {"ts": "2026-11-09T20:00:00", "team": "TOR", "down": True}}
+    assert rating.team_move_after(news(up), 7, "TOR", start, now) == ("up", False, True)
+    assert rating.team_move_after(news(down, gtd=True), 7, "TOR", start, now) == ("down", True, False)
+    assert rating.team_move_after(news(up), 7, "BOS", start, now) is None  # another team
+    assert rating.team_move_after(news({"9": {**up["9"], "g": True}}), 7, "TOR", start, now) is None  # a goalie
+    assert rating.team_move_after(news(up, season=True), 7, "TOR", start, now) is None  # long-term news
+    assert rating.team_move_after(news({"9": {**down["9"], "ts": "2026-11-09T10:00:00"}}), 7, "TOR", start, now) is None  # before the item
+
+
+def test_first_game_back_scores_less(monkeypatch, tmp_path):
+    """Handoff 889: back from a missed game, his next game at 0.93 of his points (0.87 after illness), folded into the
+    Week's points a game; P4 holds."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    sat = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], fake=fake())["Auston Matthews"]
+    assert sat["sat_last"] and sat["cr_why"]["rust"] == {"m": rating.BACK_FPG, "fpg": sat["cr_why"]["rust"]["fpg"], "back": True}
+    assert sat["cr"] == pytest.approx(sat["cr_fpg"] * sat["cr_games"], abs=0.02)
+    played = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")])["Auston Matthews"]
+    assert "rust" not in played["cr_why"]

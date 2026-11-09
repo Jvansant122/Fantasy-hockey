@@ -677,11 +677,14 @@ function why(p) {
     : lchg === "later" ? "Daily Faceoff: he is expected back in the game after next, so at most 5% his next game and at least 60% the named one"
     : `Daily Faceoff: out ${when} (3-10% for that game, and about half his next games)`);
   const rust = p.cr_why?.rust;  // playing through it (handoff 866)
-  if (rust && !started(p)) wk.push(`he has fresh Daily Faceoff injury news${rust.m < 0.85 ? " about an illness" : ""} with no firm return, so his next game counts ${Math.round(rust.m * 100)}% of his ${(+rust.fpg).toFixed(2)} pts/game (such players scored about ${rust.m < 0.85 ? "20" : "11"}% less that night)`);
+  if (rust?.back && !started(p)) wk.push(`his next game is his first back after missing games, so it counts ${Math.round(rust.m * 100)}% of his ${(+rust.fpg).toFixed(2)} pts/game (first games back scored about ${rust.m < 0.9 ? "13" : "7"}% less)`);
+  else if (rust && !started(p)) wk.push(`he has fresh Daily Faceoff injury news${rust.m < 0.85 ? " about an illness" : ""} with no firm return, so his next game counts ${Math.round(rust.m * 100)}% of his ${(+rust.fpg).toFixed(2)} pts/game (such players scored about ${rust.m < 0.85 ? "20" : "11"}% less that night)`);
   const oneOut = p.cr_why?.one_out;  // handoffs 882, 887, 888
   if (oneOut && !started(p)) wk.push(oneOut === "personal" ? "Daily Faceoff: he missed one game for personal reasons or rest, and such players were back 63-70% of the time, so at least 65% his next game"
     : oneOut === "ill" ? "Daily Faceoff: he missed a game ill with no news since, which was a coin flip next game (at most 50%, 30% the next night)"
     : "Daily Faceoff: he missed a game hurt with no news since, and such players sat again about 4 times in 5 (at most 20% his next game)");
+  if (p.cr_why?.trade != null && !started(p)) wk.push(`Daily Faceoff: just traded, so his first game for the new team is at most ${Math.round(p.cr_why.trade * 100)}% (traded players often miss it)`);
+  if (p.cr_why?.team_move && !started(p)) wk.push(p.cr_why.team_move === "up" ? "his team called up a skater after his injury news, so he is less likely to play next game" : "his team sent a skater down after his injury news, so he is likely back next game (at least 60%)");
   if (p.cr_why?.ir_new && !started(p)) wk.push("Daily Faceoff: freshly placed on injured reserve, so at most 5% for his games in the next 4 days");
   if (p.cr_why?.no_travel && !started(p)) wk.push(`Daily Faceoff: he did not travel with the team, so at most 5-20% in each of the ${p.cr_why.no_travel} road game${p.cr_why.no_travel > 1 ? "s" : ""} before his team is home again`);
   if (p.cr_why?.later_floor) wk.push("he sat his team's last game but is likely back for the next one, so his later games this week count at least 85%");

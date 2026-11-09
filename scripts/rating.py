@@ -779,6 +779,14 @@ MISSED_PRAC_BANDS = ((1.1, 0.15), (1.6, 0.30), (float("inf"), 0.45))
 # (18.6% of 861, 888). A fresh IR placement (not retroactive) caps his games in the next 4 days at 0.05 (0.5-3.3%, 876)
 ONE_OUT_PERSONAL, ONE_OUT_ILL, ONE_OUT_HURT = 0.65, (0.5, 0.3), 0.2
 IR_NEW_DAYS, IR_NEW_CAP = 4, 0.05
+# a traded skater, his first game for the new team by hours from the Trade item to its puck: under 16 h 14.7%, 16-36 h
+# 66.2% (regulars; findings 4730, handoff 877). The first game back after missing 1-6 team games scores 0.926 of his rate,
+# 0.866 after illness (findings 4742, handoff 889). A skater call-up by his team after a hurt skater's latest item: his
+# chance x0.65 (x0.6 within 16 h); a send-down after it: floor 0.6, 0.9 when the item is a maybe (findings 4745-4746,
+# handoffs 892-893)
+TRADE_DAYS, TRADE_CAPS = 4, ((16, 0.15), (36, 0.65))
+BACK_FPG, BACK_ILL_FPG, BACK_MAX_MISSED = 0.93, 0.87, 6
+CALLUP_MULT, CALLUP_NEAR_MULT, SENDDOWN_FLOOR, SENDDOWN_MAYBE_FLOOR = 0.65, 0.6, 0.6, 0.9
 # after a Line Change scratch / draw-in, his next games by the share of the team's last 20 games he dressed (under 0.3,
 # 0.3-0.6, 0.6-0.85, 0.85+): (next game, the third game) dressed (findings 4743, handoff 890)
 LC_AFTER_BANDS = ((0.3, {"out": (0.36, 0.35), "in": (0.646, 0.51)}), (0.6, {"out": (0.345, 0.41), "in": (0.666, 0.57)}),
@@ -814,6 +822,23 @@ def one_out_kind(dfo_news, pid, played_dates, starts):
     if not any(game_after(ts, day, d[:10], (starts or {}).get(d[:10])) for d in played_dates):
         return None
     return "personal" if item.get("pr") else "ill" if item.get("ill") else "hurt"
+
+
+def team_move_after(dfo_news, pid, team, start, now_utc):
+    """("up" / "down", the item is a maybe, within 16 h) when his team called up or sent down a skater (not a conditioning
+    loan) after his latest Daily Faceoff injury item (no long-term words) and before his next game (handoffs 892, 893)."""
+    news = dfo_news or {}
+    item = (news.get("injuries") or {}).get(str(pid)) if pid else None
+    ts, t0 = (parse_utc(item.get("ts")) if item else None), parse_utc(start)
+    if ts is None or t0 is None or t0 <= now_utc or item.get("season") or item.get("indefinite") or item.get("firm"):
+        return None
+    moves = sorted((parse_utc(m.get("ts")), "down" if m.get("down") else "up") for k, m in (news.get("roster-moves") or {}).items()
+                   if k != str(pid) and m.get("team") == team and not m.get("g") and not m.get("cond") and (m.get("down") or m.get("up"))
+                   and parse_utc(m.get("ts")) and ts < parse_utc(m.get("ts")) < t0)
+    if not moves:
+        return None
+    kind = moves[-1][1]
+    return kind, bool(item.get("soft") or item.get("gtd") or item.get("exp_ret")), (t0 - moves[-1][0]) <= timedelta(hours=16)
 
 
 def ir_new_caps(dfo_news, pid, dates, now_utc):
@@ -1102,7 +1127,7 @@ def key_news_by_name(dfo_news, index, rosters):
         return dfo_news
     by_team = {(norm(name), team): pid for team, r in rosters.items() for pid, name, _ in r}
     out = dict(dfo_news)
-    for part in ("injuries", "roster-moves", "line-matches", "general", "goalie-start", "recent"):
+    for part in ("injuries", "roster-moves", "line-matches", "general", "goalie-start", "trades", "recent"):
         items = dfo_news.get(part)
         if not isinstance(items, dict) or not any(k.startswith("n:") for k in items):
             continue
@@ -3766,6 +3791,24 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             last = max(played_for[pid])[1]
             if last != espn and any(t == espn for _, t in played_for[pid]) and roster_team.get(pid, last) == last:
                 reschedule(p, last)
+    # Daily Faceoff Trade news before ESPN or the NHL roster move him: the new team's games at once, his first one capped
+    # by the hours from the news to its puck (handoff 877)
+    trade_cap = {}
+    for p in players:
+        pid = match(p) if p["pos"] != "G" and p.get("owner") != "waivers" else None
+        tr = ((dfo_news or {}).get("trades") or {}).get(str(pid)) if pid else None
+        ts = parse_utc(tr.get("ts")) if tr else None
+        if not tr or ts is None or now_utc - ts > timedelta(days=TRADE_DAYS) or tr["team"] not in sched:
+            continue
+        if not any(t == tr["team"] for d, t in played_for.get(pid, []) if d >= ts.astimezone(ET).date().isoformat()):
+            if ESPN_TO_NHL.get(p["team"], p["team"]) != tr["team"] and reschedule:
+                reschedule(p, tr["team"])
+            nxt = next((d for d in sched.get(tr["team"], []) if (parse_utc(week_starts.get((tr["team"], d))) or now_utc) > now_utc), None)
+            t0 = parse_utc(week_starts.get((tr["team"], nxt))) if nxt else None
+            if t0 is not None:
+                cap = next((c for h, c in TRADE_CAPS if (t0 - ts).total_seconds() / 3600 < h), None)
+                if cap is not None:
+                    trade_cap[p["id"]] = cap
     # a goalie ESPN lists on another team than the NHL roster's (no game for the new one yet): his starts come from the
     # team whose games he is given, so his starts never outnumber his games (handoff 501: P3, G1 and G6 blocked publishing)
     for p in players:
@@ -4422,6 +4465,18 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     q0 = min(q0, ONE_OUT_HURT)
                 per_game = [round(q0, 4)] + per_game[1:]
                 dress_next = per_game[0]
+            if per_game and p["id"] in trade_cap and not skip:  # traded, first game for the new team (handoff 877)
+                per_game = [min(per_game[0], trade_cap[p["id"]])] + per_game[1:]
+                dress_next = per_game[0]
+            # a skater call-up or send-down by his team after his latest injury item (handoffs 892, 893)
+            team_move = team_move_after(dfo_news, pid, team, week_starts.get((espn_team, wk_dates[0])) if wk_dates else None,
+                                        now_utc) if per_game and not skip and p.get("pos") != "G" and (missed >= 1 or p.get("injury")) else None
+            if team_move:
+                kind, maybe, near_m = team_move
+                q0 = per_game[0]
+                q0 = q0 * (CALLUP_NEAR_MULT if near_m else CALLUP_MULT) if kind == "up" else max(q0, SENDDOWN_MAYBE_FLOOR if maybe else SENDDOWN_FLOOR)
+                per_game = [round(q0, 4)] + per_game[1:]
+                dress_next = per_game[0]
             # sat the last game, no status, likely back next game: the later games follow (handoff 857)
             later_floor = not lc and not trip and not one_out and not skip and sat_last and not p.get("injury") and len(per_game) > 1 \
                 and per_game[0] >= RETURN_NEXT_MIN
@@ -4540,7 +4595,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if ir_new:
                 why["ir_new"] = True  # a fresh injured-reserve placement (handoff 876)
             if one_out:
-                why["one_out"] = one_out  # out one game, no news since (handoffs 882, 887, 888)  # likely back next game: the later games follow (handoff 857)
+                why["one_out"] = one_out  # out one game, no news since (handoffs 882, 887, 888)
+            if p["id"] in trade_cap:
+                why["trade"] = trade_cap[p["id"]]  # traded: his first game for the new team (handoff 877)
+            if team_move:
+                why["team_move"] = team_move[0]  # his team called up / sent down a skater since his injury news (892, 893)  # likely back next game: the later games follow (handoff 857)
             if wk_why and news_move is not None:  # handoffs 406-408; its effect on his chance, shown from 2 points (435)
                 why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "move": round(news_move, 3), "why": wk_why}
             if boost_wk is not None:
@@ -4593,8 +4652,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["back"] = usually_back(p["injury"], sat_last, note)
             if word_floor is not None:  # the illness or return-word cap that lifted his (handoffs 676-677, 685)
                 why["note_lift"] = "illness" if word_floor == ILLNESS_CAP and not return_words else "return"
+        if pid and p["pos"] != "G" and sat_last and 1 <= missed <= BACK_MAX_MISSED and not skip:  # first game back (889)
+            back_m = BACK_ILL_FPG if (((dfo_news or {}).get("injuries") or {}).get(str(pid)) or {}).get("ill") else BACK_FPG
+            first_back = not rust or back_m < rust
+            rust = min(rust, back_m) if rust else back_m
+        else:
+            first_back = False
         if rust and exp_games > 0 and dress_next:  # his next game at the factor, folded into the week's points a game (866)
-            why["rust"] = {"m": rust, "fpg": round(fpg, 2)}
+            why["rust"] = {"m": rust, "fpg": round(fpg, 2), **({"back": True} if first_back else {})}
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
             fpg *= 1 - (1 - rust) * min(dress_next, exp_games) / exp_games
         p["cr"] = round(fpg * exp_games, 2)

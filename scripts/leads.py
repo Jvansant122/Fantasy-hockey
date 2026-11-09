@@ -180,7 +180,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 19  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 20  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -503,15 +503,29 @@ def fetch_line_changes(s, now_utc, have):
 
 
 GS_DAYS, GS_CATS = 3, ("General", "Suspension")
+TRADE = re.compile(r"(?:the )?([a-z][a-z .'-]*?) (?:have|has) acquired")
 
 
-def fetch_general(s, now_utc, have, starts=None):
+def trade_team(details):
+    """The NHL team that acquired the player in a Daily Faceoff Trade item ("Nashville has acquired ..."), matched to a
+    team name, city or nickname in NHL_TEAM; None if unclear (handoff 877)."""
+    m = TRADE.search(re.sub(r"\s+", " ", (details or "").lower()))
+    if not m or not NHL_TEAM:
+        return None
+    who = m.group(1).strip()
+    hits = {ab for name, ab in NHL_TEAM.items() for n in [name.lower()]
+            if who == n or who == n.rsplit(" ", 1)[-1] or who == n.rsplit(" ", 1)[0]}
+    return hits.pop() if len(hits) == 1 else None
+
+
+def fetch_general(s, now_utc, have, starts=None, trades=None):
     """Each skater's latest General or Suspension item {nhl id: {ts, cat, injury_calls keys}} from Daily Faceoff's all-news
     feed, newest page back to the stored ones, kept GS_DAYS (handoff 868). `starts`, when given, is filled in place with
-    each goalie's latest Goalie Start item that names a weekday {key: {ts, day}} (handoff 874)."""
+    each goalie's latest Goalie Start item that names a weekday {key: {ts, day}} (handoff 874); `trades` with each player's
+    latest Trade item and the team that acquired him {key: {ts, team}} (handoff 877)."""
     have = dict(have or {})
     floor = (now_utc - timedelta(days=GS_DAYS)).strftime("%Y-%m-%dT%H:%M")
-    newest = max([v["ts"] for v in have.values()] + [v["ts"] for v in (starts or {}).values()], default="")
+    newest = max([v["ts"] for d in (have, starts or {}, trades or {}) for v in d.values()], default="")
     stop = max(floor, newest[:16])
     for page in range(1, NEWS_MAX_PAGES + 1):
         data = page_data(s, f"{DF}/hockey-player-news/{page}")["data"]
@@ -522,6 +536,10 @@ def fetch_general(s, now_utc, have, starts=None):
                 continue
             if it.get("newsCategoryName") in GS_CATS and ts > (have.get(pid) or {}).get("ts", ""):
                 have[pid] = {"ts": ts, "cat": it["newsCategoryName"], **injury_calls(it.get("details"))}
+            elif it.get("newsCategoryName") == "Trade" and trades is not None and ts > (trades.get(pid) or {}).get("ts", ""):
+                team = trade_team(it.get("details"))
+                if team:
+                    trades[pid] = {"ts": ts, "team": team}
             elif it.get("newsCategoryName") == "Goalie Start" and starts is not None and ts > (starts.get(pid) or {}).get("ts", ""):
                 day = WEEKDAY.search((it.get("details") or "").lower())
                 if day and not re.search(r"\b(not|won't|will not)\b", (it.get("details") or "").lower()):
@@ -529,9 +547,9 @@ def fetch_general(s, now_utc, have, starts=None):
         if not items or page >= (data.get("lastPage") or page) or (items[-1].get("createdAt") or "") < stop:
             break
         time.sleep(0.2)
-    if starts is not None:
-        for k in [k for k, v in starts.items() if v["ts"] < floor]:
-            del starts[k]
+    for kept in (starts, trades):
+        for k in [k for k, v in (kept or {}).items() if v["ts"] < floor]:
+            del kept[k]
     return {k: v for k, v in sorted(have.items()) if v["ts"] >= floor}
 
 
@@ -600,12 +618,13 @@ def fetch_news(s, now_utc, stored=None):
         out["line-matches"] = dict(stored.get("line-matches") or {})
         out["line_error"] = repr(e)
     try:  # General and Suspension items (handoff 868), the same way
-        gs = dict(stored.get("goalie-start") or {})
-        out["general"] = fetch_general(s, now_utc, stored.get("general"), gs)
-        out["goalie-start"] = dict(sorted(gs.items()))
+        gs, tr = dict(stored.get("goalie-start") or {}), dict(stored.get("trades") or {})
+        out["general"] = fetch_general(s, now_utc, stored.get("general"), gs, tr)
+        out["goalie-start"], out["trades"] = dict(sorted(gs.items())), dict(sorted(tr.items()))
     except Exception as e:  # noqa: BLE001
         out["general"] = dict(stored.get("general") or {})
         out["goalie-start"] = dict(stored.get("goalie-start") or {})
+        out["trades"] = dict(stored.get("trades") or {})
         out["general_error"] = repr(e)
     keep = (now_utc - timedelta(days=NEWS_RECENT_DAYS)).strftime("%Y-%m-%dT%H:%M")
     out["recent"] = {pid: sorted((r for r in v if r["ts"] >= keep), key=lambda r: (r["ts"], r["cat"]))
