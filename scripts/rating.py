@@ -690,6 +690,10 @@ DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.85))  # full minut
 # chart), under 10 PIM: 0.30. Dress replay 2024-26: 83 player-games, site 0.49 / 0.65, dressed 0.28 / 0.25 (findings 4701,
 # handoff 851)
 SHIFT_EARLY_GAP, SHIFT_EARLY_CAP, SHIFT_EARLY_PIM = 10.0, 0.30, 10
+# ESPN DAY_TO_DAY, next game: Daily Faceoff news with a positive shift after 1-4 missed games +0.85 on the logit (shown 0.36,
+# dressed 0.57, 72 rows); no news after 0-1 missed -0.4 (0.44 vs 0.34, 126 rows). 28 morning runs Oct 9-Nov 8, both halves;
+# full size beat half on the replay, by rows and by player (findings 4485, handoff 846)
+DTD_NEWS_UP_LOGIT, DTD_QUIET_LOGIT = 0.85, -0.4
 # no ESPN status or day-to-day, dressed the team's last game and left it at an injury stoppage (his last shift ended 75 s
 # before to 10 s after a player-injury stoppage in the play-by-play), under 10 PIM: regular minutes and 10+ game minutes
 # before the end -> 0.45, minutes under 0.55 of his average and 6+ minutes before the end -> 0.20. 2023-26: next game
@@ -4086,6 +4090,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if game_caps and per_game:
                 per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
                 dress_next = per_game[0]
+            # day-to-day: Daily Faceoff's positive news after 1-4 missed games lifts the next game, no news after 0-1 lowers it
+            # (handoff 846); past the day-to-day cap for the lift, which is what was measured
+            dtd_z = 0.0
+            if p.get("injury") == "DAY_TO_DAY" and per_game and not skip and per_game[0] > 0.001:
+                shift = (sum(wk_news) / len(wk_news) if wk_news else 0.0) + wk_down
+                dtd_z = DTD_NEWS_UP_LOGIT if wk_why and shift > 0 and 1 <= missed <= 4 else DTD_QUIET_LOGIT if not wk_why and missed <= 1 else 0.0
+                if dtd_z:
+                    q0 = min(max(per_game[0], 1e-3), 1 - 1e-3)
+                    per_game = [round(1 / (1 + math.exp(-(math.log(q0 / (1 - q0)) + dtd_z))), 4)] + per_game[1:]
+                    dress_next = per_game[0]
             # Daily Faceoff's call on his next game: Line Change and injury news (handoffs 850, 854, 856, 858, 859); his own
             # first game must be the team's next
             lc = None
@@ -4126,6 +4140,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     caps[0] = min(caps[0], DFO_ABSENT_TODAY_CAP)
                 if game_caps:
                     caps = [min(a, c) for a, c in zip(caps, game_caps)]
+                if dtd_z > 0:  # handoff 846's lift is measured past the day-to-day cap
+                    caps[0] = max(caps[0], per_game[0])
                 if lc:  # Daily Faceoff's call holds through the lineup step: a cap under its values, a floor up to them
                     caps = [min(c, q) for c, q in zip(caps, per_game)] if lc["cap"] else [max(c, q) for c, q in zip(caps, per_game)]
                 elif later_floor:
@@ -4191,6 +4207,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["st_role"] = st_role  # a depth forward who killed penalties, or had no special teams, last game (handoff 358)
             if fought:
                 why["fought"] = True  # a depth player who fought last game (handoff 356)
+            if dtd_z:
+                why["dtd_news_z"] = dtd_z  # day-to-day next-game shift from Daily Faceoff news or its absence (handoff 846)
             if hurt_exit is not None and short_shift is None:
                 why["hurt_exit"] = hurt_exit  # left his last game at an injury stoppage (handoff 855)
             if short_shift is not None:
