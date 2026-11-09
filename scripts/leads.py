@@ -168,7 +168,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 13  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 14  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -189,7 +189,7 @@ NEWS_WEEK = {k: re.compile(v, re.I) for k, v in {
     "gtd": r"game[- ]time decision|questionable|probable|could return|may return|might return|possible return|hopeful",
     "ret": r"will (return|play|be in the lineup|suit up|make his return|rejoin|draw back)|is expected to (return|play|rejoin)|activated"
            r"|returns? to (the )?lineup|has been cleared|cleared to (play|return)|back in the lineup"
-           r"|full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice|no[- ]contact jersey|non-contact",
+           r"|full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice",  # not non-contact (862)
     "dtd": r"day[- ]to[- ]day", "wtw": r"week[- ]to[- ]week", "mtm": r"month[- ]to[- ]month", "ltir": r"\bLTIR\b|long[- ]term injured reserve",
     "out": r"will not|(will|'ll|to|expected to) miss|won.t play|will be out|is out|ruled out|sidelined|remains out|will sit|not expected to play",
 }.items()}
@@ -342,6 +342,32 @@ EXP_HEDGE = re.compile(FIRM_HEDGE.pattern.replace("expected|", ""))
 LEFT_GAME = re.compile(r"(left|exited|leaves|departed|was forced from|was helped off).{0,60}(game|contest|win|loss|vs\.|against)"
                        r"|did not return|will not return|won't return|did not come out|not return for the")
 LEFT_BACK = re.compile(r"returned to (the )?(game|bench|ice)|but returned|and returned|was able to return|later returned|has returned")
+# hunt 15 round 2 wording (research hunt15/RESULTS.md): soft return and practice news (860-a/b, cancelled by 860-c),
+# non-contact jersey (862-a), missed practice (863-a; illness and maintenance kept apart), more out wording (864-a; being
+# evaluated kept apart) and not travelling (865-a)
+SOFT_RET = re.compile(r"nearing|close to|could return|possib|hopeful|eyeing|target|chance|option|may return|might|probable"
+                      r"|likely to (play|return)|on track|trending")
+PRAC = re.compile(r"returned to (\w+'?s? )?practice|back at practice|practic(ed|ing|es)|took part in|participat|full participant"
+                  r"|full practice|practic\w+ in full|full-contact|full contact|regular jersey|shed the non-contact")
+SOFT_NEG = re.compile(r"week-to-week|weeks|month|indefinite|long-term|ltir|surgery|season|placed on|moved to (ir|ltir|injured)"
+                      r"|doubtful|unlikely|not expected|won't|will not|is out|remain out|ruled out|not travel|did not travel"
+                      r"|remain(ed)? (home|behind)|not on the trip|not make the trip|stay(ed)? (home|behind)"
+                      r"|missed (\w+'?s? )?(practice|morning skate)|absent from|did not (practice|skate)|didn't (practice|skate)"
+                      r"|not (at|on the ice|practicing)|will miss (\w+'?s? )?practice|non-contact|no-contact|red jersey|yellow jersey")
+NON_CONTACT = re.compile(r"non-contact|no-contact|red jersey|yellow jersey")
+MISSED_PRAC = re.compile(r"missed (\w+'?s? )?(practice|morning skate)|absent from (\w+'?s? )?(practice|morning skate)"
+                         r"|did not (practice|skate|participate)|didn't (practice|skate)|will miss (\w+'?s? )?practice|was not at"
+                         r"|held out of (\w+'?s? )?(practice|morning skate)|sat out (\w+'?s? )?(practice|morning skate)"
+                         r"|left (\w+'?s? )?practice")
+ILL = re.compile(r"\b(ill|illness|sick|flu|virus|under the weather)\b")
+MAINT = re.compile(r"maintenance|rest day|day off")
+MORE_OUT = re.compile(r"doubtful|unlikely|not likely|not expected to (?:play|return|dress|be)"
+                      r"|(?:did not|didn't|not|won't|isn't|is not) (?:travel|make the trip)|remain(?:ed|s)? (?:home|behind)"
+                      r"|stay(?:ed|s)? (?:home|behind)")
+EVAL = re.compile(r"being (?:re-?)?evaluated|will be (?:re-?)?evaluated|further evaluat|imaging|\bmri\b")
+NOT_TRAVEL = re.compile(r"(did not|didn't|will not|won't|is not|isn't|not) (travel|make the trip|accompany|be (on|making) the trip"
+                        r"|join the team on)|not on (the|their|its) (road )?trip|remain(ed|s)? (home|behind|in \w+)"
+                        r"|stay(ed|s|ing)? (home|behind)|not expected to travel|not travell?ing")
 WEEKDAY = re.compile(r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b")
 
 
@@ -351,9 +377,17 @@ def injury_calls(details):
     out_w = bool(LC_OUT.search(t)) and not LC_SKIP.search(t)
     left = bool(LEFT_GAME.search(t)) and not LEFT_BACK.search(t)
     exp_ret = bool(EXP_RETURN.search(t)) and not EXP_HEDGE.search(t) and not LC_OUT.search(t)
-    day = WEEKDAY.search(t)
-    res = {"firm": firm_return(details), "exp_ret": exp_ret, "out_w": out_w and not left, "left": left}
-    return {**{k: True for k, v in res.items() if v}, **({"day": day.group(1)} if day else {})}
+    days = list(dict.fromkeys(WEEKDAY.findall(t)))
+    firm = firm_return(details)
+    out_w = (out_w or bool(MORE_OUT.search(t))) and not left  # 864
+    ev = bool(EVAL.search(t)) and not out_w and not left and not firm  # 864: being evaluated
+    nc = bool(NON_CONTACT.search(t)) and not firm  # 862
+    mp = bool(MISSED_PRAC.search(t)) and not ILL.search(t) and not MAINT.search(t) and not firm and not out_w  # 863
+    soft_ok = not firm and not exp_ret and not out_w and not LC_OUT.search(t) and not SOFT_NEG.search(t)
+    soft, prac = soft_ok and bool(SOFT_RET.search(t)), soft_ok and bool(PRAC.search(t))  # 860
+    res = {"firm": firm, "exp_ret": exp_ret, "out_w": out_w, "left": left, "eval": ev, "nc": nc, "mp": mp,
+           "soft": soft or prac, "prac": prac, "nt": bool(NOT_TRAVEL.search(t)) and not firm}
+    return {**{k: True for k, v in res.items() if v}, **({"day": days[0]} if days else {}), **({"days": days} if len(days) > 1 else {})}
 
 
 LC_DAYS = 3  # only the latest item matters, and only within 16 hours of his team's next game

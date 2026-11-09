@@ -360,7 +360,7 @@ def test_skater_with_no_nhl_record_shows_no_week_formula(browser, server, data):
 
 def test_likely_starter_details_say_how_it_is_counted(browser, server, data):  # noqa: F811
     """Handoff 634: a rostered goalie Daily Faceoff lists as Likely to start on the next night still to play reads
-    'likely, counted as at least 95% to start' (and a Likely non-starter 'cut to 5% or less'), not 'not yet counted'.
+    'likely, counted as at least 98% to start' (and a Likely non-starter 'cut to 2% or less'), not 'not yet counted'.
     Kills: I50."""
     from datetime import datetime
     clock = datetime.fromisoformat(data["updated_utc"].replace("Z", "+00:00"))
@@ -371,10 +371,10 @@ def test_likely_starter_details_say_how_it_is_counted(browser, server, data):  #
     if gid is None or page.evaluate("stale(state.data)"):
         pytest.skip("no goalie with a game still to start on the next night")
     text = page.evaluate(f"why(state.data.players.find(p => p.id === {gid}))")
-    assert "likely, counted as at least 95% to start" in text, text
+    assert "likely, counted as at least 98% to start" in text, text
     page.evaluate(f"state.data.players.find(p => p.id === {gid}).cr_why.tonight.starting = false")
     text = page.evaluate(f"why(state.data.players.find(p => p.id === {gid}))")
-    assert "likely, so his chance is cut to 5% or less" in text, text
+    assert "likely, so his chance is cut to 2% or less" in text, text
     assert errors == []
     ctx.close()
 

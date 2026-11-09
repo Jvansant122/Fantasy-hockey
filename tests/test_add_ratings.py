@@ -3569,8 +3569,16 @@ def test_next_game_call_rules():
     assert call(inj("2026-10-09T08:00:00", exp_ret=True)) is None  # "expected" needs the day
     assert call(inj("2026-10-08T08:00:00", firm=True, day="friday"))["q"] == 0.93
     assert call(inj("2026-10-08T08:00:00", firm=True, day="thursday")) is None
-    assert call(inj("2026-10-08T08:00:00", out_w=True))["q"] == 0.03 and call(inj("2026-10-09T08:00:00", out_w=True)) is None
+    assert call(inj("2026-10-08T08:00:00", out_w=True))["q"] == 0.03 and call(inj("2026-10-09T08:00:00", out_w=True))["q"] == 0.05  # within 16 hours: 864
     assert call(inj("2026-10-05T03:00:00", left=True, day="sunday")) == left | {"after": (0.35, None), "ahead": True}
+    # hunt 15 round 2 (handoffs 860, 862-864)
+    assert call(inj("2026-10-08T08:00:00", soft=True, day="friday"))["q"] == 0.65
+    assert call(inj("2026-10-08T08:00:00", soft=True, prac=True, days=["wednesday", "friday"], day="wednesday"))["q"] == 0.80
+    assert call(inj("2026-10-08T08:00:00", soft=True)) is None and call(inj("2026-10-09T08:00:00", soft=True, day="friday")) is None
+    assert call(inj("2026-10-08T08:00:00", nc=True)) == {"k": "out", "cap": True, "q": 0.05, "after": (0.25, None), "ahead": True}
+    assert call(inj("2026-10-08T08:00:00", mp=True))["q"] == 0.35 and call(inj("2026-10-09T08:00:00", mp=True))["q"] == 0.12
+    assert call(inj("2026-10-09T08:00:00", eval=True))["q"] == 0.05 and call(inj("2026-10-08T08:00:00", eval=True))["q"] == 0.2
+    assert call(inj("2026-10-07T08:00:00", nc=True)) is None  # over 48 hours
     # both: the newer item calls it
     both = {**line("2026-10-09T10:00:00", "in"), **inj("2026-10-09T08:00:00", left=True)}
     assert call(both)["k"] == "in"
