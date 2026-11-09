@@ -354,7 +354,7 @@ def test_next_game_dress_jump_with_new_daily_faceoff_news_is_no_warning(data):
     o = old[p["id"]]
     for q in (p, o):
         q["today_start"] = None
-        q["cr_why"] = {k: v for k, v in (q.get("cr_why") or {}).items() if k not in ("week_news", "dfo_inj", "back", "displaced")}
+        q["cr_why"] = {k: v for k, v in (q.get("cr_why") or {}).items() if k not in ("week_news", "dfo_inj", "back", "displaced", "line_change")}
     o["cr_dress_next"], p["cr_dress_next"] = 0.28, 0.5
 
     def x4():
@@ -364,4 +364,7 @@ def test_next_game_dress_jump_with_new_daily_faceoff_news_is_no_warning(data):
     assert p["name"] not in x4()
     p["cr_why"].pop("week_news")
     p["cr_why"]["back"] = {"games": "1"}
+    assert p["name"] not in x4()
+    p["cr_why"].pop("back")
+    p["cr_why"]["line_change"] = "return"  # firm return news (Wennberg 0.05 -> 0.97, Nov 9; handoff 856)
     assert p["name"] not in x4()

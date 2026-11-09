@@ -690,6 +690,12 @@ DTD_PLAYED_CAPS = ((0.55, 0.15), (0.8, 0.5), (float("inf"), 0.85))  # full minut
 # chart), under 10 PIM: 0.30. Dress replay 2024-26: 83 player-games, site 0.49 / 0.65, dressed 0.28 / 0.25 (findings 4701,
 # handoff 851)
 SHIFT_EARLY_GAP, SHIFT_EARLY_CAP, SHIFT_EARLY_PIM = 10.0, 0.30, 10
+# no ESPN status or day-to-day, dressed the team's last game and left it at an injury stoppage (his last shift ended 75 s
+# before to 10 s after a player-injury stoppage in the play-by-play), under 10 PIM: regular minutes and 10+ game minutes
+# before the end -> 0.45, minutes under 0.55 of his average and 6+ minutes before the end -> 0.20. 2023-26: next game
+# dressed 0.49 (100) and 0.15 (102) against 0.78 / 0.42 without a stoppage (findings 4706, handoff 855)
+STOP_EXIT_CAPS = ((0.55, 6.0, 0.20), (float("inf"), 10.0, 0.45))  # (minutes share under, gap at least, cap)
+STOP_WINDOW = (75, 10)  # seconds before / after the stoppage
 OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 # dressed the last game, no ESPN status, in his team's fresh Daily Faceoff lines: next-game floor. Live Oct 9-18, 1,172 of
@@ -774,13 +780,13 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None):
 
 def call_games(per_game, call, game_caps=None):
     """His next game and the ones after it under a next_game_call: a cap lowers them to its values, a floor lifts them
-    (later games stay under their game caps); an `after` of None keeps that game."""
+    past ESPN's per-game caps too (returning players were held at IR's 15-25% and dressed 98%, findings 4709); an `after`
+    of None keeps that game. game_caps is unused, kept for the call sites."""
     cap, after = call["cap"], call.get("after")
     res = [min(per_game[0], call["q"]) if cap else max(per_game[0], call["q"])]
     for i, q in enumerate(per_game[1:], 1):
         r = after[min(i, len(after)) - 1] if after else None
-        v = q if r is None else min(q, r) if cap else max(q, r)
-        res.append(min(v, game_caps[i]) if game_caps and not cap and r is not None else v)
+        res.append(q if r is None else min(q, r) if cap else max(q, r))
     return res
 
 
@@ -857,6 +863,33 @@ def last_shift_gap(s, game_id, pid, cache):
         cache[game_id] = last
     last = cache[game_id]
     return (max(last.values()) - last[pid]) / 60 if last and pid in last else None
+
+
+def injury_stoppages(s, game_id, cache):
+    """Game seconds of the player-injury stoppages in a game's play-by-play, [] when it can't be read (handoff 855)."""
+    if game_id not in cache:
+        try:
+            plays = nhl_get(s, f"https://api-web.nhle.com/v1/gamecenter/{game_id}/play-by-play").json().get("plays") or []
+        except Exception as e:  # noqa: BLE001 - no play-by-play: nothing changes
+            print(f"Play-by-play {game_id} failed: {e!r}", file=sys.stderr)
+            plays = []
+        cache[game_id] = [((x.get("periodDescriptor") or {}).get("number", 1) - 1) * 1200 + _mmss(x.get("timeInPeriod"))
+                          for x in plays if x.get("typeDescKey") == "stoppage" and _mmss(x.get("timeInPeriod")) is not None
+                          and "player-injury" in ((x.get("details") or {}).get("reason"), (x.get("details") or {}).get("secondaryReason"))]
+    return cache[game_id]
+
+
+def stoppage_exit_cap(s, game_id, pid, share, shift_cache, pbp_cache):
+    """The cap for a skater who left his last game at an injury stoppage (STOP_EXIT_CAPS), with the gap in game minutes,
+    or (None, None) (handoff 855)."""
+    rule = next(r for r in STOP_EXIT_CAPS if share < r[0])
+    gap = last_shift_gap(s, game_id, pid, shift_cache)
+    if gap is None or gap < rule[1]:
+        return None, None
+    end = shift_cache[game_id][pid]
+    if any(stop - STOP_WINDOW[0] <= end <= stop + STOP_WINDOW[1] for stop in injury_stoppages(s, game_id, pbp_cache)):
+        return rule[2], gap
+    return None, None
 
 
 # finished weeks of per-game reports never change once the NHL's stat corrections are in, so the update workflow keeps them
@@ -3562,7 +3595,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     drift_rows = []  # every skater's Season FP/G, for the league-wide scoring drift (handoff 405)
     season_open = min((g["date"] for g in games), default=None)
     injury_log = []
-    shift_cache = {}  # NHL shift charts read this run, by game (handoff 851)
+    shift_cache, pbp_cache = {}, {}  # NHL shift charts and injury stoppages read this run, by game (handoffs 851, 855)
     for p in players:
         pid = match(p)
         if pid is None:
@@ -3890,7 +3923,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     game_caps = None
                 if game_caps is not None:
                     inj = 1.0
-            short_shift = None  # minutes his last shift ended before the game's last one, when it capped him (handoff 851)
+            short_shift = hurt_exit = None  # minutes his last shift ended before the game's last one, when it capped him (851, 855)
             if p.get("injury") in ("DAY_TO_DAY", "OUT") and gl and not sat_last and not (note and note["long"]) and f.get("std_toi"):
                 share = gl[-1]["toi"] / f["std_toi"]
                 if p["injury"] == "DAY_TO_DAY":
@@ -3902,6 +3935,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             inj, short_shift = min(inj, SHIFT_EARLY_CAP), round(shift_gap, 1)
                 elif share < DTD_PLAYED_CAPS[0][0]:
                     inj = min(inj, OUT_LEFT_EARLY_CAP)
+            # left his last game at an injury stoppage, no status or day-to-day (handoff 855); the lower of it and 851's cap wins
+            if p.get("injury") in (None, "", "DAY_TO_DAY") and gl and not sat_last and f.get("std_toi") \
+                    and gl[-1].get("pim", 0) < SHIFT_EARLY_PIM and gl[-1].get("game"):
+                stop_cap, stop_gap = stoppage_exit_cap(s, gl[-1]["game"], pid, gl[-1]["toi"] / f["std_toi"], shift_cache, pbp_cache)
+                if stop_cap is not None and stop_cap < inj:
+                    inj, hurt_exit = stop_cap, round(stop_gap, 1)
             # a fresh illness note (handoff 676) or return words (677) lift the cap; IR's game today keeps its cap
             word_floor, return_words = None, False
             # behind a bare status word ('out'), his last real note while he hasn't played since, as the research read it
@@ -4152,6 +4191,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["st_role"] = st_role  # a depth forward who killed penalties, or had no special teams, last game (handoff 358)
             if fought:
                 why["fought"] = True  # a depth player who fought last game (handoff 356)
+            if hurt_exit is not None and short_shift is None:
+                why["hurt_exit"] = hurt_exit  # left his last game at an injury stoppage (handoff 855)
             if short_shift is not None:
                 why["short_shift"] = short_shift  # day-to-day, his last shift ended early: 0.30 a game (handoff 851)
             if lc:
