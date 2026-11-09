@@ -711,6 +711,13 @@ SHIFT_EARLY_GAP, SHIFT_EARLY_CAP, SHIFT_EARLY_PIM = 10.0, 0.30, 10
 # news whose sole why word is day-to-day (16: 0.28 vs 0.56); return / practising items were calibrated (31: 0.44 vs 0.45,
 # findings 4486)
 DTD_NEWS_UP_LOGIT, DTD_QUIET_LOGIT = 0.85, -0.4
+# the same day-to-day-only news by hours from the item to his next puck (handoff 881, joint with 846 in findings 4488):
+# archive dressed 2.5% under 16 h, 15-17% at 16-48 h, 32% at 48-72 h, 51% at 72 h+; live the lift fits only items 48 h+ old
+# (17 rows, shown 0.28, dressed 0.53). So the fresh items cap the next game and the 846 lift needs 72 h
+DTD_AGE_CAPS = ((16, 0.05), (48, 0.15), (72, 0.3))
+# ESPN's day-to-day flag on 2+ days in a row before today and he sat the last game: dressed 73.7% (19) / 0.69 (16 live
+# rows) vs shown 0.37; flag 0-1 day old 0.35 vs 0.39 (handoff 881, findings 4734, 4488)
+DTD_OLD_FLAG_DAYS, DTD_OLD_FLAG_FLOOR = 2, 0.65
 # no ESPN status or day-to-day, dressed the team's last game and left it at an injury stoppage (his last shift ended 75 s
 # before to 10 s after a player-injury stoppage in the play-by-play), under 10 PIM: regular minutes and 10+ game minutes
 # before the end -> 0.45, minutes under 0.55 of his average and 6+ minutes before the end -> 0.20. 2023-26: next game
@@ -3372,6 +3379,36 @@ def recently_flagged(today):
     return out
 
 
+def dtd_flag_days(today):
+    """{ESPN id: days in a row before today the injury log has him DAY_TO_DAY} (handoff 881)."""
+    days = {}
+    if INJURY_LOG.exists():
+        for line in INJURY_LOG.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("status") == "DAY_TO_DAY" and row.get("espn_id") is not None and row.get("date", "")[:10] < today.isoformat():
+                days.setdefault(row["espn_id"], set()).add(row["date"][:10])
+    out = {}
+    for aid, ds in days.items():
+        n, d = 0, today - timedelta(days=1)
+        while d.isoformat() in ds:
+            n, d = n + 1, d - timedelta(days=1)
+        out[aid] = n
+    return out
+
+
+def dtd_item_hours(dfo_news, pid, start, last_start):
+    """Hours from his latest Daily Faceoff injury item to his next puck (`start`), when the item is newer than his last
+    game (`last_start`), else None (handoff 881)."""
+    item = ((dfo_news or {}).get("injuries") or {}).get(str(pid)) if pid else None
+    ts, t0, lt = parse_utc(item.get("ts")) if item else None, parse_utc(start), parse_utc(last_start) if last_start else None
+    if ts is None or t0 is None or ts > t0 or (lt is not None and ts <= lt):
+        return None
+    return (t0 - ts).total_seconds() / 3600
+
+
 def utcnow():
     return datetime.now(timezone.utc)
 
@@ -3626,6 +3663,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     if dfo_news and (dfo_news.get("fetched") or "") < (now_utc - timedelta(days=NEWS_STALE_DAYS)).strftime("%Y-%m-%dT%H:%MZ"):
         dfo_news = None
     flagged = recently_flagged(today)  # read before this run rewrites the log
+    dtd_days = dtd_flag_days(today)
     stored_notes = load_injury_notes()
     s = requests.Session()
     if hasattr(s, "mount"):  # enough pooled connections for the loads below running side by side
@@ -4411,10 +4449,24 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 dress_next = per_game[0]
             # day-to-day: Daily Faceoff's positive news after 1-4 missed games lifts the next game, no news after 0-1 lowers it
             # (handoff 846); past the day-to-day cap for the lift, which is what was measured
-            dtd_z = 0.0
+            dtd_z, dtd_age = 0.0, None
             if p.get("injury") == "DAY_TO_DAY" and per_game and not skip and per_game[0] > 0.001:
                 shift = (sum(wk_news) / len(wk_news) if wk_news else 0.0) + wk_down
-                dtd_z = DTD_NEWS_UP_LOGIT if set(wk_why) == {"day-to-day"} and shift > 0 and 1 <= missed <= 4 else DTD_QUIET_LOGIT if not wk_why and missed <= 1 else 0.0
+                bare = set(wk_why) == {"day-to-day"}
+                age_h = dtd_item_hours(dfo_news, pid, week_starts.get((espn_team, wk_dates[0])) if wk_dates else None,
+                                       week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None) if bare else None
+                age_cap = next((c for h, c in DTD_AGE_CAPS if age_h is not None and age_h < h), None)
+                dtd_z = DTD_NEWS_UP_LOGIT if bare and age_cap is None and shift > 0 and 1 <= missed <= 4 \
+                    else DTD_QUIET_LOGIT if not wk_why and missed <= 1 else 0.0
+                if age_cap is not None:  # fresh day-to-day-only news: not yet (handoff 881)
+                    per_game = [round(min(per_game[0], age_cap), 4)] + per_game[1:]
+                    dress_next = per_game[0]
+                    dtd_age = {"h": round(age_h), "cap": age_cap}
+                elif sat_last and dtd_days.get(p["id"], 0) >= DTD_OLD_FLAG_DAYS and wk_why in ([], ["day-to-day"]) \
+                        and per_game[0] < DTD_OLD_FLAG_FLOOR:  # day-to-day for days, sat the last game: likely back (881)
+                    per_game = [DTD_OLD_FLAG_FLOOR] + per_game[1:]
+                    dress_next, dtd_z = per_game[0], 0.0
+                    dtd_age = {"days": dtd_days[p["id"]], "floor": DTD_OLD_FLAG_FLOOR}
                 if dtd_z:
                     q0 = min(max(per_game[0], 1e-3), 1 - 1e-3)
                     per_game = [round(1 / (1 + math.exp(-(math.log(q0 / (1 - q0)) + dtd_z))), 4)] + per_game[1:]
@@ -4581,6 +4633,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["fought"] = True  # a depth player who fought last game (handoff 356)
             if dtd_z:
                 why["dtd_news_z"] = dtd_z  # day-to-day next-game shift from Daily Faceoff news or its absence (handoff 846)
+            if dtd_age:
+                why["dtd_age"] = dtd_age  # day-to-day by the news's age or the flag's (handoff 881)
             if hurt_exit is not None and short_shift is None:
                 why["hurt_exit"] = hurt_exit  # left his last game at an injury stoppage (handoff 855)
             if short_shift is not None:

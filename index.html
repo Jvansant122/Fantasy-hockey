@@ -660,6 +660,9 @@ function why(p) {
   const dz = p.cr_why?.dtd_news_z;
   if (dz) wk.push(dz > 0 ? "day-to-day with encouraging Daily Faceoff news after missing games: day-to-day players like him played more often than their status suggests"
     : "day-to-day with no Daily Faceoff news since: such players sat more often than their recent games suggest");
+  const dta = p.cr_why?.dtd_age;  // handoff 881
+  if (dta?.cap != null) wk.push(`day-to-day news posted ${dta.h} hours before his next game: players with news that fresh rarely played that game, so at most ${Math.round(dta.cap * 100)}%`);
+  else if (dta?.days != null) wk.push(`day-to-day for ${dta.days} days and he sat his last game: players like him usually returned, so at least ${Math.round(dta.floor * 100)}% next game`);
   if (p.cr_why?.hurt_exit != null) wk.push(`he left his last game at an injury stoppage, ${Math.round(p.cr_why.hurt_exit)} game minutes before the end, so at most 45% a game (20% if his minutes were short)`);
   if (p.cr_why?.short_shift != null) wk.push(`day-to-day, and his last shift ended ${Math.round(p.cr_why.short_shift)} game minutes before his team's last one, so at most 30% a game (such players dressed about a quarter of the time)`);
   // Daily Faceoff's Line Change item for tonight's game (handoffs 850, 854)
