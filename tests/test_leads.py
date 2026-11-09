@@ -495,3 +495,11 @@ def test_items_with_no_player_id_are_kept_by_name(monkeypatch):
     monkeypatch.setattr(leads.time, "sleep", lambda x: None)
     out = leads.fetch_news(FakeSession(pages), datetime(2026, 11, 20, 12, tzinfo=timezone.utc), {"version": leads.NEWS_VERSION})
     assert out["injuries"]["n:logan thompson:WSH"]["out_w"] and out["recent"]["n:logan thompson:WSH"]
+
+
+def test_trade_team(monkeypatch):
+    """Handoff 877: the acquiring team from a Trade item's wording, by full name, city or nickname."""
+    monkeypatch.setattr(leads, "NHL_TEAM", {"Nashville Predators": "NSH", "Washington Capitals": "WSH", "Seattle Kraken": "SEA"})
+    assert leads.trade_team("Nashville has acquired Matthew Wood from Seattle for Shane Wright") == "NSH"
+    assert leads.trade_team("The Capitals have acquired Rémi Poirier from the Devils for a 2027 7th-round pick.") == "WSH"
+    assert leads.trade_team("Wood was placed on waivers.") is None
