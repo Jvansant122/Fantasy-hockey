@@ -187,7 +187,8 @@ def rules(data, soft=False):
         q = p.get("cr_dress_next")
         if p["pos"] != "G" and p.get("dfo_out") is False and not p.get("injury") and p.get("owner") != "waivers" \
                 and q is not None and q > 0.001 and q not in IDLE_CAPS and p["games_left"] and p["games_left"] == want \
-                and not (ts and data.get("updated_utc") and ts <= data["updated_utc"]):
+                and not (ts and data.get("updated_utc") and ts <= data["updated_utc"]) \
+                and (p.get("cr_why") or {}).get("line_change") != "out":  # a newer Line Change scratch item wins (handoff 850)
             f = DFO_FLOORS[0] if p.get("sat_last") else DFO_FLOORS[1] if _gp(p) else None
             bq = (p.get("cr_why") or {}).get("boost_dress")
             if f == DFO_FLOORS[1] and not p.get("sat_last") and bq is not None:

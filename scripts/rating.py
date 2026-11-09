@@ -696,6 +696,41 @@ DFO_IN_LINES_NEXT = 0.95
 # 0.67 / 0.91, Brier 0.0684 -> 0.0658 (findings 4477, handoff 844). check_data P9 keeps the same bands
 DFO_IN_LINES_BANDS = ((0.5, 0.65), (0.7, 0.89))
 
+# Daily Faceoff's Line Change item for tonight's game, posted within 16 hours of the puck (leads.line_change): OUT caps
+# tonight at 0.03 (0.05 when expected / likely), IN floors it at 0.97. 2021-26: OUT 3,977 dressed 1.4%, IN 4,929 dressed
+# 99.2%; live the site showed 0.23 / 0.75 for them (findings 4700, handoff 850)
+LC_HOURS = 16
+LC_TONIGHT = {"out": 0.03, "out_exp": 0.05, "in": 0.97}
+# ... and his next three games after tonight, as the archive dressed after such an item (later games keep the third):
+# after a scratch 0.44 / 0.52 / 0.55 (the site had 0.75), after a draw-in 0.71 / 0.61 / 0.59 (0.40) (findings 4705, handoff 854)
+LC_AFTER = {"out": (0.44, 0.52, 0.55), "in": (0.71, 0.61, 0.59)}
+
+
+def line_item(dfo_news, pid, start, now_utc, last_start=None):
+    """His Daily Faceoff Line Change call ("in", "out", "out_exp") for tonight's game starting at `start` (UTC ISO), when
+    the item is newer than his last game and within LC_HOURS before the puck, the puck still ahead; else None."""
+    item = ((dfo_news or {}).get("line-matches") or {}).get(str(pid)) if pid else None
+    if not item or not item.get("lc") or not start:
+        return None
+    ts, t0 = parse_utc(item["ts"] + "Z"), parse_utc(start)
+    if ts is None or t0 is None or t0 <= now_utc or t0 - ts > timedelta(hours=LC_HOURS) or ts > t0:
+        return None
+    lt = parse_utc(last_start) if last_start else None
+    return item["lc"] if lt is None or ts > lt else None
+
+
+def line_change_games(per_game, lc, game_caps=None):
+    """Tonight's game and the next three after it under a Line Change call (handoffs 850, 854): an OUT call lowers them
+    to its rates, an IN call lifts them (later games stay under their game caps)."""
+    out = lc != "in"
+    after = LC_AFTER["out" if out else "in"]
+    res = [min(per_game[0], LC_TONIGHT[lc]) if out else max(per_game[0], LC_TONIGHT[lc])]
+    for i, q in enumerate(per_game[1:], 1):
+        r = after[min(i, len(after)) - 1]
+        v = min(q, r) if out else max(q, r)
+        res.append(min(v, game_caps[i]) if game_caps and not out else v)
+    return res
+
 
 def dfo_in_lines_floor(boost):
     """The in-lines next-game floor for a boosted dress share (None: no boost, the full floor)."""
@@ -3918,6 +3953,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if game_caps and per_game:
                 per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
                 dress_next = per_game[0]
+            # Daily Faceoff's Line Change item for tonight (handoffs 850, 854); his own first game must be tonight's
+            lc = line_item(dfo_news, pid, p.get("today_start"), now_utc,
+                           week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None) \
+                if per_game and not skip and p.get("pos") != "G" and p.get("today_start") and not game_started(p) else None
+            if lc:
+                per_game = line_change_games(per_game, lc, game_caps)
+                dress_next = per_game[0]
             out_idx = list(range(skip)) + list(range(skip + own_n, gn))  # his team's games that aren't his
             all_dates = wk_dates
             lead_q = [per_game[i] for i in out_idx] if per_game else []
@@ -3942,6 +3984,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     caps[0] = min(caps[0], DFO_ABSENT_TODAY_CAP)
                 if game_caps:
                     caps = [min(a, c) for a, c in zip(caps, game_caps)]
+                if lc:  # the Line Change call holds through the lineup step: an OUT under its rates, an IN up to them
+                    caps = [min(c, q) for c, q in zip(caps, per_game)] if lc != "in" else [max(c, q) for c, q in zip(caps, per_game)]
                 lead_caps = [min(cap, inj, c) for c in (lead_game_caps or [1.0] * len(out_idx))]
                 if out_idx and p.get("injury") == "OUT" and not one_game_over and all_dates[out_idx[0]] == today.isoformat() and tonight_ahead:
                     lead_caps[0] = min(lead_caps[0], OUT_TODAY_CAP)
@@ -3972,7 +4016,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
                                   "low_scorer": toi_rank == "lowest" and scored,  # handoff 362
                                   # Daily Faceoff's next-game floors, kept through the lineup step (handoffs 720-721)
-                                  "floor0": DFO_LINEUP_NEXT if in_lines else dfo_in_lines_floor(boost_q) if dfo_in else None,  # 844
+                                  "floor0": LC_TONIGHT["in"] if lc == "in" else None if lc else
+                                  DFO_LINEUP_NEXT if in_lines else dfo_in_lines_floor(boost_q) if dfo_in else None,  # 844, 850
                                   })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
@@ -3999,6 +4044,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["st_role"] = st_role  # a depth forward who killed penalties, or had no special teams, last game (handoff 358)
             if fought:
                 why["fought"] = True  # a depth player who fought last game (handoff 356)
+            if lc:
+                why["line_change"] = "in" if lc == "in" else "out"  # Daily Faceoff's Line Change item for tonight (handoff 850)
             if wk_why and news_move is not None:  # handoffs 406-408; its effect on his chance, shown from 2 points (435)
                 why["week_news"] = {"shift": round(sum(wk_news) / len(wk_news) + wk_down, 2), "move": round(news_move, 3), "why": wk_why}
             if boost_wk is not None:

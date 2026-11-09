@@ -270,6 +270,38 @@ def test_fetch_news_keeps_each_players_latest_item(monkeypatch, tmp_path):
     assert leads.load_news() == out
 
 
+def test_line_change_wording():
+    """Handoff 850: Daily Faceoff's Line Change items, with the wording the research measured."""
+    lc = leads.line_change
+    assert lc("Rempe is expected to be a healthy scratch in Edmonton on Monday.") == "out_exp"
+    assert lc("Colangelo will be a healthy scratch on Sunday.") == "out"
+    assert lc("Lomberg will draw back into the lineup vs. Florida.") == "in"
+    assert lc("Kuzmenko will enter the lineup on Sunday.") == "in"
+    assert lc("Smith is a game-time decision and could draw in.") is None  # a hedge
+    assert lc("Jones will draw in for Smith, who will be scratched.") is None  # both
+    assert lc("Brown skated on the fourth line at practice.") is None and lc(None) is None
+
+
+def test_fetch_news_keeps_each_skaters_latest_line_change(monkeypatch):
+    """Handoff 850: the line-matches pages keep each skater's latest item for LC_DAYS; a failed page keeps the stored
+    items and the rest of the news."""
+    from datetime import datetime, timezone
+    item = lambda pid, ts, d: {"playerFiveVFiveId": pid, "createdAt": ts, "details": d, "newsCategoryName": "Line Change"}
+    pages = {"news/injuries/1": {"data": {"lastPage": 1, "data": []}}, "news/roster-moves/1": {"data": {"lastPage": 1, "data": []}},
+             "news/line-matches/1": {"data": {"lastPage": 1, "data": [
+                 item(5, "2026-11-20T10:00:00.000Z", "Doe will draw back into the lineup."),
+                 item(5, "2026-11-19T22:00:00.000Z", "Doe will be a healthy scratch."),
+                 item(6, "2026-11-19T21:00:00.000Z", "Roe is expected to be a healthy scratch.")]}}}
+    monkeypatch.setattr(leads.time, "sleep", lambda x: None)
+    now = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
+    stored = {"version": leads.NEWS_VERSION, "line-matches": {"9": {"ts": "2026-11-01T10:00:00", "lc": "in"}}}
+    out = leads.fetch_news(FakeSession(pages), now, stored)
+    assert out["line-matches"] == {"5": {"ts": "2026-11-20T10:00:00", "lc": "in"}, "6": {"ts": "2026-11-19T21:00:00", "lc": "out_exp"}}
+    del pages["news/line-matches/1"]
+    kept = leads.fetch_news(FakeSession(pages), now, {**stored, "line-matches": out["line-matches"]})
+    assert kept["line-matches"] == out["line-matches"] and "line_error" in kept and "injuries" in kept
+
+
 def test_news_flags_for_the_week_dress():
     """Handoffs 406-408: practice, skating, could-return, return and out wording, and the stated timeline in days."""
     f = lambda t: leads.news_flags({"details": t})

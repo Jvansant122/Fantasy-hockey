@@ -3502,6 +3502,47 @@ def test_regular_left_out_of_tonights_dfo_lines_is_capped_tonight(monkeypatch, t
     assert matthews("2026-10-09T15:00:00Z", True)["cr_games"] == matthews("2026-10-09T15:00:00Z", None)["cr_games"]
 
 
+def test_daily_faceoff_line_change_sets_tonight_and_the_next_games(monkeypatch, tmp_path):
+    """Handoffs 850, 854: a Line Change item within 16 hours of tonight's puck. OUT caps tonight at 0.03 (0.05 when
+    expected) and his later games at the archive's after-scratch rates; IN lifts tonight to 0.97 and later games to the
+    after-draw-in rates. Nothing for an item older than 16 hours before the puck, or once his game has started."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+
+    def matthews(lc, ts="2026-10-09T15:00:00", start="2026-10-09T23:00:00Z", injury=None):
+        news = {"fetched": "2026-10-09T15:30Z", "injuries": {}, "roster-moves": {},
+                "line-matches": {"1": {"ts": ts, "lc": lc}} if lc else {}}
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start=start, injury=injury)
+        return rate(monkeypatch, tmp_path, [p], dfo_news=news)["Auston Matthews"]
+    base, out, exp, inn = matthews(None), matthews("out"), matthews("out_exp"), matthews("in", injury="DAY_TO_DAY")
+    assert base["games_left"] >= 2 and base["cr_dress_next"] > 0.5
+    assert out["cr_dress_next"] == 0.03 and exp["cr_dress_next"] == 0.05 and out["cr_why"]["line_change"] == "out"
+    later = base["cr_games"] - base["cr_dress_next"]
+    assert out["cr_games"] - out["cr_dress_next"] < later  # his next games drop to the after-scratch rates
+    assert out["cr_games"] - out["cr_dress_next"] <= sum(rating.LC_AFTER["out"][:base["games_left"] - 1]) + 0.02
+    assert inn["cr_dress_next"] == 0.97 and inn["cr_why"]["line_change"] == "in"
+    # an item from before the 16 hours, or a game already under way: nothing changes
+    assert matthews("out", ts="2026-10-08T23:00:00")["cr_games"] == base["cr_games"]
+    started = matthews(None, start="2026-10-09T15:30:00Z")
+    assert matthews("out", start="2026-10-09T15:30:00Z")["cr_games"] == started["cr_games"]
+
+
+def test_line_change_games_and_line_item():
+    """The per-game rule (handoffs 850, 854) and the item's timing checks."""
+    from datetime import datetime, timezone
+    assert rating.line_change_games([0.9, 0.9, 0.9, 0.9, 0.9], "out") == [0.03, 0.44, 0.52, 0.55, 0.55]
+    assert rating.line_change_games([0.2, 0.3, 0.9], "in") == [0.97, 0.71, 0.9]
+    assert rating.line_change_games([0.2, 0.3, 0.3], "in", [1.0, 0.5, 1.0]) == [0.97, 0.5, 0.61]
+    assert rating.line_change_games([0.01, 0.2], "out_exp") == [0.01, 0.2]
+    now = datetime(2026, 10, 9, 16, tzinfo=timezone.utc)
+    news = {"line-matches": {"7": {"ts": "2026-10-09T08:00:00", "lc": "out"}, "8": {"ts": "2026-10-09T08:00:00", "lc": None}}}
+    assert rating.line_item(news, 7, "2026-10-09T23:00:00Z", now) == "out"
+    assert rating.line_item(news, 7, "2026-10-10T01:00:00Z", now) is None  # 17 hours before the puck
+    assert rating.line_item(news, 7, "2026-10-09T15:00:00Z", now) is None  # started
+    assert rating.line_item(news, 7, "2026-10-09T23:00:00Z", now, "2026-10-09T09:00:00Z") is None  # older than his last game
+    assert rating.line_item(news, 8, "2026-10-09T23:00:00Z", now) is None and rating.line_item(None, 7, "x", now) is None
+
+
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
     def get(self, url, params=None, headers=None, timeout=None):
         exp = (params or {}).get("cayenneExp", "")
