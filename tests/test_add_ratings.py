@@ -3989,3 +3989,63 @@ def test_skip_one_and_trip_caps():
     assert rating.trip_caps(nt, 7, dates, {**venue, "2026-11-10": True}, {"2026-11-10": "2026-11-11T00:00:00Z"}, now) is None
     assert rating.trip_caps(nt, 7, dates, venue, {"2026-11-10": "2026-11-14T00:00:00Z"}, now) is None
     assert rating.trip_caps(nt, 7, dates, venue, {"2026-11-10": "2026-11-11T00:00:00Z"}, now, "2026-11-10T14:30:00Z") is None
+
+
+def test_rust_and_general_news():
+    """Handoffs 866 and 868: fresh injury news with no firm return takes 10% (20% with illness) off his next game's points;
+    a General or Suspension item calls his next game like an injury item."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 10, 15, tzinfo=timezone.utc)
+    start = "2026-11-11T00:00:00Z"
+    news = lambda **it: {"injuries": {"7": {"ts": "2026-11-10T12:00:00Z", **it}}}
+    assert rating.rust_factor(news(), 7, start, now) == rating.RUST_FPG
+    assert rating.rust_factor(news(ill=True), 7, start, now) == rating.RUST_ILL_FPG
+    assert rating.rust_factor(news(firm=True), 7, start, now) is None
+    assert rating.rust_factor(news(), 7, "2026-11-12T00:00:00Z", now) is None  # 36 hours before the puck
+    assert rating.rust_factor(news(), 7, start, now, "2026-11-10T13:00:00Z") is None  # played since
+    gen = {"general": {"7": {"ts": "2026-11-10T14:00:00Z", "cat": "Suspension", "out_w": True}}}
+    c = rating.next_game_call(gen, 7, start, "2026-11-10", now)
+    assert c["k"] == "out" and c["q"] == rating.NEAR_OUT
+    # the newer of the injury and General items decides
+    both = {**gen, "injuries": {"7": {"ts": "2026-11-10T14:30:00Z", "firm": True}}}
+    assert rating.next_game_call(both, 7, start, "2026-11-10", now)["k"] == "return"
+
+
+def test_rust_reaches_the_rating(monkeypatch, tmp_path):
+    """Handoff 866 end to end: the next game's points at 0.9, folded into the Week's points a game (P4 holds)."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}
+
+    def matthews(**item):
+        news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {"1": item} if item else {}}
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), injury="DAY_TO_DAY")
+        return rate(monkeypatch, tmp_path, [p], fake=FakeSession(starts=starts), dfo_news=news)["Auston Matthews"]
+    base, hurt = matthews(ts="2026-10-07T08:00:00"), matthews(ts="2026-10-09T08:00:00")
+    assert "rust" not in base["cr_why"] and hurt["cr_why"]["rust"]["m"] == rating.RUST_FPG
+    assert hurt["cr_fpg"] < hurt["cr_why"]["rust"]["fpg"]
+    assert hurt["cr"] == pytest.approx(hurt["cr_fpg"] * hurt["cr_games"], abs=0.02)
+    want = hurt["cr_why"]["rust"]["fpg"] * (hurt["cr_games"] - 0.1 * hurt["cr_dress_next"])
+    assert hurt["cr"] == pytest.approx(want, abs=0.03)
+
+
+def test_injured_goalie_with_positive_news_gets_starts(monkeypatch, tmp_path):
+    """Handoff 869: an ESPN IR / OUT goalie whose latest Daily Faceoff item (at most 4 days old) is positive gets 0.4 of his
+    chance next game and 0.65 later, in place of 0; without such news, or with older news, he stays at 0."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(TODAY.year, TODAY.month, TODAY.day, 15, tzinfo=timezone.utc))
+
+    def toronto(item=None, injury="INJURY_RESERVE"):
+        news = {"fetched": "2099-01-01T00:00Z", "injuries": {"11": item} if item else {}}
+        players = [dict(espn(111, "Joseph Woll", "TOR", "G"), injury=injury), espn(112, "Anthony Stolarz", "TOR", "G")]
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [], dfo_news=news)
+        return {p["name"]: p for p in players}
+    base, up = toronto(), toronto({"ts": f"{TODAY}T01:00:00", "gp": True})
+    old = toronto({"ts": str(TODAY - timedelta(days=6)) + "T01:00:00", "gp": True})
+    plain = toronto({"ts": f"{TODAY}T01:00:00"})
+    assert base["Joseph Woll"]["cr_games"] == 0 and old["Joseph Woll"]["cr_games"] == 0 and plain["Joseph Woll"]["cr_games"] == 0
+    assert up["Joseph Woll"]["cr_games"] > 0.2 and up["Joseph Woll"]["cr_why"]["g_news_lift"]
+    assert up["Anthony Stolarz"]["cr_games"] < base["Anthony Stolarz"]["cr_games"]
+    assert toronto({"ts": f"{TODAY}T01:00:00", "gp": True}, injury="SUSPENSION")["Joseph Woll"]["cr_games"] == 0

@@ -430,3 +430,33 @@ def test_week_return_and_out_words_skip_other_players_sentences():
     assert f("Kent Johnson", "Johnson will return to the lineup Saturday against the Maple Leafs.")["ret"]
     assert f("Kent Johnson", "Johnson will sit Saturday against Boston.")["out"]
     assert f("", "Cole Sillinger will return to the lineup in his place.")["ret"]  # no name: no skip
+
+
+def test_general_and_suspension_news(monkeypatch):
+    """Handoff 868: General and Suspension items from the all-news feed, each skater's latest, with list 868-a wording;
+    other categories are skipped and a failed page keeps the stored items."""
+    from datetime import datetime, timezone
+    c = leads.injury_calls
+    assert c("Nazar has served his suspension and will return to the lineup Tuesday.").get("firm")
+    assert c("Nazar has served his two-game suspension.") == {"firm": True}
+    assert c("Wilson has been suspended two games.") == {"out_w": True}
+    assert c("Anderson is away from the team for personal reasons.") == {"out_w": True}
+    assert c("Smith will take a leave of absence.") == {"out_w": True}
+    assert c("Jones is sick and will be a game-time decision.").get("ill")
+    item = lambda pid, ts, cat, d: {"playerFiveVFiveId": pid, "createdAt": ts, "details": d, "newsCategoryName": cat}
+    pages = {"news/injuries/1": {"data": {"lastPage": 1, "data": []}}, "news/roster-moves/1": {"data": {"lastPage": 1, "data": []}},
+             "news/line-matches/1": {"data": {"lastPage": 1, "data": []}},
+             "hockey-player-news/1": {"data": {"lastPage": 1, "data": [
+                 item(5, "2026-11-20T10:00:00.000Z", "General", "Doe is away from the team."),
+                 item(6, "2026-11-20T09:00:00.000Z", "Goalie Start", "Roe will start."),
+                 item(7, "2026-11-19T21:00:00.000Z", "Suspension", "Poe has served his suspension."),
+                 item(5, "2026-11-19T20:00:00.000Z", "Suspension", "Doe has served his suspension.")]}}}
+    monkeypatch.setattr(leads.time, "sleep", lambda x: None)
+    now = datetime(2026, 11, 20, 12, tzinfo=timezone.utc)
+    stored = {"version": leads.NEWS_VERSION, "general": {"9": {"ts": "2026-11-01T10:00:00", "cat": "General"}}}
+    out = leads.fetch_news(FakeSession(pages), now, stored)
+    assert out["general"] == {"5": {"ts": "2026-11-20T10:00:00", "cat": "General", "out_w": True},
+                              "7": {"ts": "2026-11-19T21:00:00", "cat": "Suspension", "firm": True}}
+    del pages["hockey-player-news/1"]
+    kept = leads.fetch_news(FakeSession(pages), now, {**stored, "general": out["general"]})
+    assert kept["general"] == out["general"] and "general_error" in kept and "line-matches" in kept
