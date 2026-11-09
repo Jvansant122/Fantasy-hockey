@@ -4081,3 +4081,26 @@ def test_round3_wording_reaches_the_next_game_call():
     loose = rating.next_game_call(item("Smith has been cleared to play."), 7, start, "2026-11-10", now)
     assert not loose["cap"] and loose["q"] == rating.RET_LOOSE_FLOOR
     assert rating.call_games([0.4, 0.4, 0.4], loose) == [0.8, 0.8, 0.4]
+
+
+def test_round3_news_rules():
+    """Handoffs 875, 879, 880, 885, 886, 891 through next_game_call."""
+    from datetime import datetime, timezone
+    import leads
+    now, start = datetime(2026, 11, 10, 15, tzinfo=timezone.utc), "2026-11-11T00:00:00Z"  # Tuesday 7 PM ET
+    call = lambda t, ts="2026-11-10T14:00:00Z", **kw: rating.next_game_call(
+        {"injuries": {"7": {"ts": ts, **leads.injury_calls(t)}}}, 7, start, "2026-11-10", now, None, None, **kw)
+    q = call("Smith is questionable for Tuesday.")
+    assert q["cap"] and q["q"] == rating.QUESTIONABLE_CAP and q["k"] == "questionable"
+    assert call("Smith (illness) missed the morning skate.")["q"] == rating.ILL_SKATE_CAP
+    assert call("Smith is a game-time decision.", missed=7)["q"] == 0.8 and not call("Smith is a game-time decision.", missed=7)["cap"]
+    assert call("Smith is a game-time decision.", missed=4)["q"] == 0.7 and call("Smith is a game-time decision.") is None
+    trav = call("Smith (lower body) is travelling with the team.", missed=2)
+    assert trav["k"] == "travel" and rating.call_games([0.1] * 5, trav) == [0.35, 0.45, 0.6, 0.1, 0.1]
+    assert call("Smith (lower body) is travelling with the team.") is None  # has not missed a game
+    far = call("Smith will return Tuesday.", ts="2026-11-07T23:00:00Z")  # 72 h ahead, names the day
+    assert far and far["q"] == rating.FAR_RETURN and not far["cap"]
+    assert call("Smith will miss Tuesday's game.", ts="2026-11-07T23:00:00Z")["q"] == rating.FAR_OUT
+    mp = "Smith missed practice."
+    early = "2026-11-09T20:00:00Z"  # 28 h ahead
+    assert [call(mp, ts=early, fpg=f)["q"] for f in (0.9, 1.3, 2.0)] == [0.15, 0.30, 0.45]

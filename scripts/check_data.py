@@ -188,7 +188,7 @@ def rules(data, soft=False):
         if p["pos"] != "G" and p.get("dfo_out") is False and not p.get("injury") and p.get("owner") != "waivers" \
                 and q is not None and q > 0.001 and q not in IDLE_CAPS and p["games_left"] and p["games_left"] == want \
                 and not (ts and data.get("updated_utc") and ts <= data["updated_utc"]) \
-                and (p.get("cr_why") or {}).get("line_change") not in ("out", "left", "practice", "later") \
+                and (p.get("cr_why") or {}).get("line_change") not in ("out", "left", "practice", "later", "questionable") \
                 and not (p.get("cr_why") or {}).get("no_travel"):  # newer out news wins (850, 858-859, 861, 863-865)
             f = DFO_FLOORS[0] if p.get("sat_last") else DFO_FLOORS[1] if _gp(p) else None
             bq = (p.get("cr_why") or {}).get("boost_dress")
