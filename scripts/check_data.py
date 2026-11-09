@@ -30,6 +30,7 @@ SP1 = date(2026, 9, 29)
 # rating.py's DFO_LINEUP_NEXT / DFO_IN_LINES_NEXT and the idle caps (IDLE_DRESS, NOT_PLAYING_DRESS) that may sit under
 # them; a test keeps them in step
 DFO_FLOORS = (0.9, 0.95)
+DFO_IN_LINES_BANDS = ((0.5, 0.65), (0.7, 0.89))  # boosted dress share under x: the played floor is f (handoff 844)
 IDLE_CAPS = (0.5, 0.2, 0.1)
 # rules that only warn until a run at every time of day has kept them (P9 blocks since Oct 19, every run clean, handoff 743)
 SOFT_RULES = set()
@@ -188,6 +189,9 @@ def rules(data, soft=False):
                 and q is not None and q > 0.001 and q not in IDLE_CAPS and p["games_left"] and p["games_left"] == want \
                 and not (ts and data.get("updated_utc") and ts <= data["updated_utc"]):
             f = DFO_FLOORS[0] if p.get("sat_last") else DFO_FLOORS[1] if _gp(p) else None
+            bq = (p.get("cr_why") or {}).get("boost_dress")
+            if f == DFO_FLOORS[1] and not p.get("sat_last") and bq is not None:
+                f = next((fl for lim, fl in DFO_IN_LINES_BANDS if bq < lim), f)
             if f is not None and q < f - 0.001:
                 bad["P9"].append(f"{nm} cr_dress_next {q} under Daily Faceoff's {f} ({'sat' if p.get('sat_last') else 'played'} last game, in the lines)")
         # P4 Week = points a game x expected games

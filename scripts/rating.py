@@ -691,6 +691,16 @@ DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's l
 # dressed the last game, no ESPN status, in his team's fresh Daily Faceoff lines: next-game floor. Live Oct 9-18, 1,172 of
 # 1,185 dressed (site 0.96); held out Oct 16-18 Brier 0.0154 -> 0.0133 on those rows (findings 521, handoff 721)
 DFO_IN_LINES_NEXT = 0.95
+# ... lower for a player the Season model doubts: boosted dress share (cr_why.boost_dress, rounded) under 0.5 -> 0.65, under
+# 0.7 -> 0.89. Live 6 AM runs Oct 9-Nov 8 at the 0.95 floor dressed 0.652 (46 rows) and 0.888 (267); held out Oct 24-Nov 8
+# 0.67 / 0.91, Brier 0.0684 -> 0.0658 (findings 4477, handoff 844). check_data P9 keeps the same bands
+DFO_IN_LINES_BANDS = ((0.5, 0.65), (0.7, 0.89))
+
+
+def dfo_in_lines_floor(boost):
+    """The in-lines next-game floor for a boosted dress share (None: no boost, the full floor)."""
+    b = None if boost is None else round(boost, 2)
+    return next((f for lim, f in DFO_IN_LINES_BANDS if b is not None and b < lim), DFO_IN_LINES_NEXT)
 PPS_PRIOR = 15  # starts of league-average points blended into each goalie's own points per start
 # the Season rating's pts/start only: the shrink K by NHL starts over the last three seasons, under 50 / 50-100 / over 100
 # (hunt14/gseason, findings 485, handoff 641); the Week keeps PPS_PRIOR
@@ -3962,7 +3972,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   "return_words": return_words,  # ESPN return words, no illness word (handoff 677)
                                   "low_scorer": toi_rank == "lowest" and scored,  # handoff 362
                                   # Daily Faceoff's next-game floors, kept through the lineup step (handoffs 720-721)
-                                  "floor0": DFO_LINEUP_NEXT if in_lines else DFO_IN_LINES_NEXT if dfo_in else None,
+                                  "floor0": DFO_LINEUP_NEXT if in_lines else dfo_in_lines_floor(boost_q) if dfo_in else None,  # 844
                                   })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),

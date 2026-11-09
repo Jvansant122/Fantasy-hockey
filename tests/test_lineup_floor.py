@@ -46,3 +46,12 @@ def test_regular_in_fresh_lines_gets_the_next_game_floor():
     assert out[14] < rating.DFO_IN_LINES_NEXT
     assert out[0] < 0.97
     assert rating.DFO_LINEUP_NEXT < rating.DFO_IN_LINES_NEXT < 1
+
+
+def test_in_lines_floor_by_boosted_dress_share():
+    """Handoff 844 (findings 4477): players the Season model doubts dressed 0.65 / 0.89 of their next games at the 0.95
+    floor, so the floor follows the boosted dress share; no boost keeps the full floor."""
+    f = rating.dfo_in_lines_floor
+    assert f(0.37) == 0.65 and f(0.49) == 0.65 and f(0.496) == 0.89 and f(0.5) == 0.89 and f(0.69) == 0.89
+    assert f(0.7) == f(0.95) == f(None) == rating.DFO_IN_LINES_NEXT
+

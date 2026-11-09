@@ -596,6 +596,7 @@ def test_publish_check_keeps_daily_faceoffs_floors(data):
     every run of Oct 19 kept it, handoff 743)."""
     import rating
     assert check_data.DFO_FLOORS == (rating.DFO_LINEUP_NEXT, rating.DFO_IN_LINES_NEXT)
+    assert check_data.DFO_IN_LINES_BANDS == rating.DFO_IN_LINES_BANDS
     assert set(check_data.IDLE_CAPS) == {c for _, c in rating.IDLE_DRESS} | {rating.NOT_PLAYING_DRESS}
     if not data.get("rated"):
         pytest.skip("no ratings in this data")
@@ -607,9 +608,15 @@ def test_publish_check_keeps_daily_faceoffs_floors(data):
               and not started(p) and (p.get("sat_last") or (p.get("cr_why") or {}).get("gp"))), None)
     if p is None:
         pytest.skip("no skater in Daily Faceoff's lines with a game ahead")
-    p["cr_dress_next"] = 0.83
+    p["cr_dress_next"] = 0.6  # under every floor, the banded ones too (handoff 844)
     assert [e for e in check_data.rules(d, soft=True) if e.startswith("P9")]
     assert [e for e in check_data.rules(d) if e.startswith("P9")]  # blocks publishing
+    if not p.get("sat_last"):  # played his last game: a doubted player's floor is 0.65 (handoff 844)
+        p["cr_why"] = {**(p.get("cr_why") or {}), "boost_dress": 0.37}
+        p["cr_dress_next"] = 0.66
+        assert not [e for e in check_data.rules(d) if e.startswith("P9") and p["name"] in e]
+        p["cr_dress_next"] = 0.62
+        assert [e for e in check_data.rules(d) if e.startswith("P9") and p["name"] in e]
 
 
 def _rewound(data):
