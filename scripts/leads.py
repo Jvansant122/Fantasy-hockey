@@ -321,6 +321,20 @@ LC_IN = re.compile(r"draws? (back )?in|enter the lineup|re-enter|back in the|ret
                    r"|will play|expected to play|in the lineup|will dress|will return|expected to return|slot in|rejoin"
                    r"|will replace|make his return|is on the ice for warmups")
 LC_HEDGE = re.compile(r"expected|likely|slated|set to")
+# firm return wording in an injury item's details, no hedge and no out wording: 2,045 items 2021-26 dressed 98.9%
+# (findings 4707, handoff 856)
+FIRM_IN = re.compile(r"draws? (back )?in|enter the lineup|re-enter|back in the|return to the lineup|returns to the lineup|debut"
+                     r"|will play|in the lineup|will dress|will return|slot in|rejoin|make his return")
+FIRM_HEDGE = re.compile(r"expected|likely|probabl|appears|slated|projected|set to|hopeful|during|trip|chance|could|if |eyeing"
+                        r"|target|aim|plans|hopes|option|possib|game-time decision|questionable|may |might|uncertain|doubtful")
+
+
+def firm_return(details):
+    """Firm return wording ("will return", "will play", "will make his debut") with no hedge or out wording (handoff 856)."""
+    t = re.sub(r"\s+", " ", (details or "").lower())
+    return bool(FIRM_IN.search(t)) and not FIRM_HEDGE.search(t) and not LC_OUT.search(t)
+
+
 LC_DAYS = 3  # only the latest item matters, and only within 16 hours of his team's next game
 
 
@@ -393,6 +407,8 @@ def fetch_news(s, now_utc, stored=None):
                 new = {"ts": ts, **{k: f[k] for k in keys}} if ts > old.get("ts", "") else dict(old)
                 if slug == "injuries" and ts > old.get("ts", ""):  # the Week dress model's inputs (handoff 413)
                     new["nf"] = f["nf"]
+                    if firm_return(it.get("details")):
+                        new["firm"] = True  # firm return wording: tonight at least 0.97 (handoff 856)
                     if f["tl"] is not None:
                         new["tl"] = round(f["tl"], 1)
                 if slug == "injuries":

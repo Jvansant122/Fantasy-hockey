@@ -3577,6 +3577,31 @@ def test_day_to_day_whose_last_shift_ended_early_is_capped(monkeypatch, tmp_path
     assert rating.SHIFT_EARLY_GAP == 10 and rating.SHIFT_EARLY_CAP == 0.30 and rating.SHIFT_EARLY_PIM == 10
 
 
+def test_firm_return_news_and_later_games_after_a_likely_return(monkeypatch, tmp_path):
+    """Handoff 856: firm return wording in his latest Daily Faceoff injury item, within 16 hours of tonight's game: 0.97
+    tonight and the archive's 0.93 / 0.91 / 0.88 after (857), even under ESPN's OUT. Handoff 857: a skater who sat the
+    last game with no status but is 0.85+ for the next one (in Daily Faceoff's lines) keeps 0.85+ in his later games."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    last = len(PAST) - 1
+
+    def matthews(firm=None, injury="OUT", dfo_out=None, missed=None):
+        news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
+                "injuries": {"1": {"ts": "2026-10-09T15:00:00", "season": False, "surgery": False, "firm": True}} if firm else {}}
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z", injury=injury, dfo_out=dfo_out)
+        fake = FakeSession(missed={1: missed}) if missed is not None else None
+        return rate(monkeypatch, tmp_path, [p], fake=fake, dfo_news=news)["Auston Matthews"]
+    out, back = matthews(), matthews(firm=True)
+    assert out["cr_dress_next"] < 0.5 and back["cr_dress_next"] == 0.97 and back["cr_why"]["line_change"] == "return"
+    assert back["cr_games"] - back["cr_dress_next"] >= sum(rating.LC_AFTER["firm"][:back["games_left"] - 1]) - 0.02
+    # sat the last game (a healthy scratch), no status, in Daily Faceoff's lines: 0.9 next game, the later ones 0.85+
+    sat = matthews(injury=None, dfo_out=False, missed={last})
+    assert sat["sat_last"] and sat["cr_dress_next"] >= 0.9 and sat["cr_why"].get("later_floor")
+    assert sat["cr_games"] - sat["cr_dress_next"] >= rating.RETURN_LATER_FLOOR * (sat["games_left"] - 1) - 0.02
+    # not in the lines: no floor on tonight, none on the later games
+    assert not matthews(injury=None, missed={last})["cr_why"].get("later_floor")
+
+
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
     def get(self, url, params=None, headers=None, timeout=None):
         exp = (params or {}).get("cayenneExp", "")
