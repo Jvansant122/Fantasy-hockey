@@ -3597,8 +3597,10 @@ def test_day_ahead_and_left_game_news_reach_the_rating(monkeypatch, tmp_path):
         return rate(monkeypatch, tmp_path, [p], fake=FakeSession(starts=starts), dfo_news=news)["Auston Matthews"]
     base, back = matthews(), matthews(ts="2026-10-08T08:00:00", firm=True, day="friday")
     assert base["cr_dress_next"] < 0.9 and back["cr_dress_next"] == 0.93 and back["cr_why"]["call_ahead"]
-    other = matthews(ts="2026-10-08T08:00:00", firm=True, day="sunday")  # about Sunday's game: Friday's is not called
-    assert other["cr_dress_next"] < 0.9 and "line_change" not in other["cr_why"]
+    # about Sunday's game, his second: Friday's is capped (handoff 861)
+    other = matthews(ts="2026-10-08T08:00:00", firm=True, day="sunday")
+    assert other["cr_dress_next"] == 0.05 and other["cr_why"]["line_change"] == "later"
+    assert other["cr_games"] >= 0.05 + 0.6 - 1e-9
     healthy = matthews(injury=None)
     left = matthews(injury=None, ts="2026-10-08T03:00:00", left=True)
     assert healthy["cr_dress_next"] > 0.35 and left["cr_dress_next"] == 0.3 and left["cr_why"]["line_change"] == "left"
@@ -3961,3 +3963,29 @@ def test_confirmed_starter_espn_lists_as_free_agent_takes_the_night(monkeypatch,
     ps = rate(monkeypatch, tmp_path, goalies(), starters=starters, info=info)
     assert ps["Laurent Brossoit"]["team"] == "FA" and night(ps["Joseph Woll"]) + night(ps["Anthony Stolarz"]) < 0.05
     assert info["g_unlisted"]["TOR"].get("2026-10-09", 0) > 0.95, info
+
+
+def test_skip_one_and_trip_caps():
+    """Handoffs 861 and 865: return news naming the game after next caps the one between and floors the named one; a
+    did-not-travel item caps the trip's road games until the first home game."""
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 10, 15, tzinfo=timezone.utc)  # Tuesday
+    news = {"injuries": {"7": {"ts": "2026-11-10T14:00:00Z", "exp_ret": True, "days": ["thursday"]}}}
+    c = rating.next_game_call(news, 7, "2026-11-11T00:00:00Z", "2026-11-10", now, None, "2026-11-12")
+    assert c["k"] == "later" and c["cap"] and c["q"] == rating.SKIP_ONE_CAP
+    assert rating.call_games([0.4, 0.3, 0.9], c) == [0.05, 0.6, 0.9]
+    # the named day is not his second game: nothing
+    assert rating.next_game_call(news, 7, "2026-11-11T00:00:00Z", "2026-11-10", now, None, "2026-11-13") is None
+    # dressed since the item: nothing
+    assert rating.next_game_call(news, 7, "2026-11-11T00:00:00Z", "2026-11-10", now, "2026-11-10T14:30:00Z",
+                                 "2026-11-12") is None
+    nt = {"injuries": {"7": {"ts": "2026-11-10T14:00:00Z", "nt": True}}}
+    dates = ["2026-11-10", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"]
+    venue = {"2026-11-10": False, "2026-11-12": False, "2026-11-13": True, "2026-11-14": False}
+    assert rating.trip_caps(nt, 7, dates, venue, {"2026-11-10": "2026-11-11T00:00:00Z"}, now) == [0.05, 0.05, None, None, None]
+    road = dict.fromkeys(dates, False)
+    assert rating.trip_caps(nt, 7, dates, road, {"2026-11-10": "2026-11-11T00:00:00Z"}, now) == [0.05, 0.05, 0.2, None, None]
+    # next game at home, an old item, or dressed since: nothing
+    assert rating.trip_caps(nt, 7, dates, {**venue, "2026-11-10": True}, {"2026-11-10": "2026-11-11T00:00:00Z"}, now) is None
+    assert rating.trip_caps(nt, 7, dates, venue, {"2026-11-10": "2026-11-14T00:00:00Z"}, now) is None
+    assert rating.trip_caps(nt, 7, dates, venue, {"2026-11-10": "2026-11-11T00:00:00Z"}, now, "2026-11-10T14:30:00Z") is None

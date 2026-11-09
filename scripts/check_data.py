@@ -188,7 +188,8 @@ def rules(data, soft=False):
         if p["pos"] != "G" and p.get("dfo_out") is False and not p.get("injury") and p.get("owner") != "waivers" \
                 and q is not None and q > 0.001 and q not in IDLE_CAPS and p["games_left"] and p["games_left"] == want \
                 and not (ts and data.get("updated_utc") and ts <= data["updated_utc"]) \
-                and (p.get("cr_why") or {}).get("line_change") not in ("out", "left", "practice"):  # newer out news wins (850, 858-859, 863-864)
+                and (p.get("cr_why") or {}).get("line_change") not in ("out", "left", "practice", "later") \
+                and not (p.get("cr_why") or {}).get("no_travel"):  # newer out news wins (850, 858-859, 861, 863-865)
             f = DFO_FLOORS[0] if p.get("sat_last") else DFO_FLOORS[1] if _gp(p) else None
             bq = (p.get("cr_why") or {}).get("boost_dress")
             if f == DFO_FLOORS[1] and not p.get("sat_last") and bq is not None:
@@ -403,7 +404,7 @@ def warnings(data, prev):
         return bool(was and now) and any(t and was < t <= now for t in locks)
     def news_changed(p, o):  # new Daily Faceoff news or lines since the earlier run explain the move (handoff 845)
         w, v = p.get("cr_why") or {}, o.get("cr_why") or {}
-        return any(w.get(k) != v.get(k) for k in ("week_news", "dfo_inj", "back", "displaced", "line_change"))  # 850-859
+        return any(w.get(k) != v.get(k) for k in ("week_news", "dfo_inj", "back", "displaced", "line_change", "no_travel"))  # 850-865
     jumps = [p["name"] for p, o in same if p.get("cr_dress_next") is not None and o.get("cr_dress_next") is not None
              and p["cr_dress_next"] - o["cr_dress_next"] > 0.15 and p.get("injury") == o.get("injury")
              and p.get("dfo_out") == o.get("dfo_out") and _gp(p) == _gp(o) and not locked_since(p)
