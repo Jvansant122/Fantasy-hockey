@@ -753,6 +753,16 @@ NEAR_OUT, EVAL_CAPS = 0.05, (0.05, 0.2)
 # looser return wording within 16 h ("expected to make his return", "cleared to play", "expected to play" with no day):
 # 77-86% dressed (findings 4726, handoff 873)
 RET_LOOSE_FLOOR = 0.8
+# hunt 15 round 3, within 16 h unless said: questionable with no game-time decision, not illness: cap 0.2 (19.2% of 151,
+# 875); illness with a missed skate or practice: cap 0.25 (21.9%, 880); game-time decision after 3-5 / 6+ missed games:
+# floor 0.7 / 0.8 (75% / 84-94%, 879); an injured skater travelling with the team after missing games: floors 0.35 / 0.45
+# / 0.6 for his next three games (885); return or out news naming the next game's day 48-120 h ahead: floor 0.85, cap 0.03
+# (87% / 0 of 11, 886); missed practice 16-48 h ahead by FP/G under 1.1 / 1.1-1.6 / over: 0.15 / 0.30 / 0.45 (891)
+QUESTIONABLE_CAP, ILL_SKATE_CAP = 0.2, 0.25
+GTD_BACK_FLOORS = ((6, 0.8), (3, 0.7))
+TRAVEL_FLOORS = (0.35, 0.45, 0.6)
+FAR_HOURS, FAR_RETURN, FAR_OUT = 120, 0.85, 0.03
+MISSED_PRAC_BANDS = ((1.1, 0.15), (1.6, 0.30), (float("inf"), 0.45))
 # playing through it: a skater who dresses within 30 h of an injury item with no firm return wording scores 0.888 of his
 # rate that night (606 games), 0.80 with illness wording (123); his next games 1.00 (findings 4718, handoff 866)
 RUST_HOURS, RUST_FPG, RUST_ILL_FPG = 30, 0.90, 0.80
@@ -765,7 +775,7 @@ TRIP_CAPS, TRIP_HOURS = (0.05, 0.05, 0.2), 72
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
-def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, second_day=None):
+def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, second_day=None, missed=0, fpg=None):
     """Daily Faceoff's call on his next game (starting at `start`, UTC ISO, on ET date `game_day`) from his latest Line
     Change item (handoffs 850, 854, 858) and his latest injury item (856-859), whichever is newer when both call it:
     {k: in / out / return / left, cap: True for a cap, q: that game's value, after: the next games' values (None: keep),
@@ -790,24 +800,38 @@ def next_game_call(dfo_news, pid, start, game_day, now_utc, last_start=None, sec
             calls.append((ts, {"k": "in" if inn else "out", "cap": not inn, "q": AHEAD_LINE["in" if inn else "out"],
                                "after": LC_AFTER["in" if inn else "out"], "ahead": True}))
     for ii in ((news.get("injuries") or {}).get(str(pid)), (news.get("general") or {}).get(str(pid))):  # 868: General too
-        c = _injury_call(ii, lead, wd, second_day)
+        c = _injury_call(ii, lead, wd, second_day, missed, fpg)
         if c:
             calls.append(c)
     return max(calls, key=lambda x: x[0])[1] if calls else None
 
 
-def _injury_call(ii, lead, wd, second_day):
+def _injury_call(ii, lead, wd, second_day, missed=0, fpg=None):
     """(ts, call) from one Daily Faceoff injury, General or Suspension item, or None (next_game_call)."""
     if ii and lead(ii):
         h, ts = lead(ii)
         named = ii.get("days") or ([ii["day"]] if ii.get("day") else [])
         near, ahead, here = h <= LC_HOURS, LC_HOURS < h <= AHEAD_HOURS, wd in named
+        far = AHEAD_HOURS < h <= FAR_HOURS and here  # names the next game's day 2-5 days ahead (886)
+        back = next((f for k, f in GTD_BACK_FLOORS if missed >= k), None)
         ok_day = here or not named  # an item about another day says nothing for this game (858)
         cap = lambda q, after=None, k="out": {"k": k, "cap": True, "q": q, "after": after, "ahead": not near}
         floor = lambda q, after, k="return": {"k": k, "cap": False, "q": q, "after": after, "ahead": not near}
         c = None
         if ii.get("left"):
             c = cap(LEFT_GAME_CAPS[0], LEFT_GAME_CAPS[1:] + (None,), "left")
+        elif ii.get("ill_mp") and near and ok_day:  # 880
+            c = cap(ILL_SKATE_CAP, None, "practice")
+        elif ii.get("q_only") and near and ok_day:  # 875
+            c = cap(QUESTIONABLE_CAP, None, "questionable")
+        elif ii.get("gtd") and near and ok_day and back:  # 879
+            c = floor(back, None)
+        elif (ii.get("firm") or ii.get("exp_ret")) and far:  # 886
+            c = floor(FAR_RETURN, LC_AFTER["firm"])
+        elif ii.get("out_w") and far:  # 886
+            c = cap(FAR_OUT)
+        elif ii.get("trav") and missed >= 1 and h <= FAR_HOURS:  # 885
+            c = floor(TRAVEL_FLOORS[0], TRAVEL_FLOORS[1:] + (None,), "travel")
         elif ii.get("firm") and near and ok_day:
             c = floor(LC_TONIGHT["firm"], LC_AFTER["firm"])
         elif ii.get("exp_ret") and near and here:
@@ -823,7 +847,8 @@ def _injury_call(ii, lead, wd, second_day):
         elif ii.get("nc") and ok_day and (ahead or near):
             c = cap(NON_CONTACT_CAPS[0], NON_CONTACT_CAPS[1:] + (None,))
         elif ii.get("mp") and ok_day and (ahead or near):
-            c = cap(MISSED_PRAC_CAP if ahead else MISSED_SKATE_CAP, None, "practice")
+            q = next(v for lim, v in MISSED_PRAC_BANDS if fpg < lim) if ahead and fpg is not None else MISSED_PRAC_CAP  # 891
+            c = cap(q if ahead else MISSED_SKATE_CAP, None, "practice")
         elif ii.get("soft") and ahead and here:
             c = floor(SOFT_PRAC_RETURN if ii.get("prac") else SOFT_RETURN, SOFT_AFTER, "soft")
         elif (ii.get("firm") or ii.get("exp_ret") or ii.get("soft")) and second_day and not here \
@@ -4235,7 +4260,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 lc = next_game_call(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                     or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), wk_dates[0], now_utc,
                                     week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None,
-                                    wk_dates[1] if len(wk_dates) > 1 else None)
+                                    wk_dates[1] if len(wk_dates) > 1 else None, missed, fpg)
             if lc:
                 per_game = call_games(per_game, lc, game_caps)
                 dress_next = per_game[0]

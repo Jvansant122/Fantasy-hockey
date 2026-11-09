@@ -180,7 +180,7 @@ NEWS_NEG = re.compile(r"\bnot\b|n't|\bno longer\b|\bunlikely\b|\bnot expected\b|
 NEWS_PAST = re.compile(r"last (season|year|campaign)|previous (season|year)|in \d{4}|a year ago", re.I)
 # a season phrase just after "healthy", "ready", "back" ... is a return, not an absence (handoff 410)
 NEWS_RETURN = re.compile(r"(healthy|ready|back|available|return|in time|cleared|good to go)[^.]{0,25}$", re.I)
-NEWS_VERSION = 16  # bumped when the wording rules change: stored items are read again from scratch with the new ones
+NEWS_VERSION = 17  # bumped when the wording rules change: stored items are read again from scratch with the new ones
 NEWS_SURGERY = re.compile(r"surgery|surgical|operation", re.I)
 NEWS_SURGERY_PAST = re.compile(r"offseason|off-season|this summer|last summer|\d{4}-\d{2} season", re.I)
 # "no surgery required", "won't need surgery", "avoided surgery" (handoff 404)
@@ -198,7 +198,7 @@ NEWS_WEEK = {k: re.compile(v, re.I) for k, v in {
     "skate": r"skat(ed|ing|es) on (his|their) own|individual(ly)? skat|skated (before|after|prior)|on[- ]ice workout|back on the ice|returned to the ice",
     "limited": r"no[- ]contact|non[- ]contact|limited (participant|practice|role)|red jersey|yellow jersey|regular jersey",
     "full": r"full participant|practiced (in full|fully)|full[- ]contact|full practice|took part in (a )?(full )?practice|returned to practice|practiced (with|on) (the|his)",
-    "gtd": r"game[- ]time decision|questionable|probable|could return|may return|might return|possible return|hopeful",
+    "gtd": r"game[- ]time decision|probable|could return|may return|might return|possible return|hopeful",  # 875: not questionable
     "ret": r"will (return|play|be in the lineup|suit up|make his return|rejoin|draw back)|is expected to (return|play|rejoin)|activated"
            r"|returns? to (the )?lineup|has been cleared|cleared to (play|return)|back in the lineup"
            r"|full participant|practiced (in full|fully)|full[- ]contact|took part in practice|returned to practice",  # not non-contact (862)
@@ -407,6 +407,12 @@ RET_STRONG = re.compile(r"expected to be (back )?in|expected to draw|(is|was) on
 RET_LOOSE = re.compile(r"expected to make his|cleared to play|will be available|good to go|is available|been cleared"
                        r"|listed as active")
 RET_SKIP = re.compile(r"\bnot\b|n't|game-time|questionable|doubtful")
+# 875 "questionable" with no game-time-decision wording (19% dressed within 16 h), 879 game-time decision, 880 illness and a
+# missed skate or practice, 885 an injured skater travelling with the team (findings 4728, 4732, 4733, 4738)
+GTD = re.compile(r"game[- ]time decision")
+QUESTIONABLE = re.compile(r"\bquestionable\b")
+TRAVEL = re.compile(r"(is|are|will be|was) travel(l)?ing with|will travel with|travel(l)?ed with|will (join|accompany) the team"
+                    r"|(join|accompan)\w* the team on|on the (road )?trip|making the trip|will make the trip|is with the team")
 
 
 # an injured goalie's positive news (handoff 869, list 869-a), unless it has out or long wording
@@ -447,7 +453,11 @@ def injury_calls(details):
     res = {"firm": firm, "exp_ret": exp_ret, "out_w": out_w, "left": left, "eval": ev, "nc": nc, "mp": mp,
            "soft": soft or prac, "prac": prac, "nt": bool(NOT_TRAVEL.search(t)) and not firm,
            "ill": bool(ILL.search(t)),  # 866: illness wording
-           "ret_m": ret_ok and not firm and not out_w and (bool(RET_LOOSE.search(t)) or (exp_ret and not days))}  # 873 looser
+           "ret_m": ret_ok and not firm and not out_w and (bool(RET_LOOSE.search(t)) or (exp_ret and not days)),  # 873 looser
+           "q_only": bool(QUESTIONABLE.search(t)) and not GTD.search(t) and not ILL.search(t) and not firm,  # 875
+           "gtd": bool(GTD.search(t)) and not out_w and not firm,  # 879
+           "ill_mp": bool(ILL.search(t)) and bool(MISSED_PRAC.search(t)) and not firm,  # 880
+           "trav": bool(TRAVEL.search(t)) and not NOT_TRAVEL.search(t) and not firm and not out_w}  # 885
     return {**{k: True for k, v in res.items() if v}, **({"day": days[0]} if days else {}), **({"days": days} if len(days) > 1 else {})}
 
 
