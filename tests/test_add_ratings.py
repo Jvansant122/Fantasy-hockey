@@ -61,8 +61,9 @@ def goalie_row(pid, name, team, i):
 
 class FakeSession:
     def __init__(self, scratched=(4,), rail_ok=True, moved=None, short_last=None, missed=None, short_date=PAST[-1], away_last=(),
-                 bye=False, roster_down=(), last_team=None, starts=None, no_team_xg=False, shifts=None):
+                 bye=False, roster_down=(), last_team=None, starts=None, no_team_xg=False, shifts=None, stops=None):
         self.calls = []
+        self.stops = stops or {}  # game id: game seconds of its player-injury stoppages (play-by-play, handoff 855)
         self.shifts = shifts or {}  # game id: {player id: his last shift's end in game seconds} (NHL shift chart, handoff 851)
         self.no_team_xg = no_team_xg  # MoneyPuck's team file missing: the picks fall back to goal differential
         self.starts = starts or {}  # game date: its start time (UTC) in the NHL week schedule (findings 241)
@@ -98,6 +99,13 @@ class FakeSession:
             return Resp({"gameWeek": [{"date": d, "games": [{"gameType": 2, "awayTeam": {"abbrev": away}, "homeTeam": {"abbrev": "TOR"},
                                                              **({"startTimeUTC": self.starts[d]} if d in self.starts else {})}]}
                                       for d in WEEK]})
+        m = re.search(r"/gamecenter/(\d+)/play-by-play$", url)
+        if m:
+            return Resp({"plays": [{"typeDescKey": "stoppage", "periodDescriptor": {"number": t // 1200 + 1},
+                                    "timeInPeriod": f"{t % 1200 // 60:02d}:{t % 60:02d}", "details": {"reason": "player-injury"}}
+                                   for t in self.stops.get(int(m.group(1)), [])]
+                         + [{"typeDescKey": "stoppage", "periodDescriptor": {"number": 1}, "timeInPeriod": "05:00",
+                             "details": {"reason": "offside"}}]})
         m = re.search(r"/gamecenter/(\d+)/right-rail$", url)
         if m:
             if not self.rail_ok:
@@ -3585,6 +3593,26 @@ def test_day_ahead_and_left_game_news_reach_the_rating(monkeypatch, tmp_path):
     left = matthews(injury=None, ts="2026-10-08T03:00:00", left=True)
     assert healthy["cr_dress_next"] > 0.35 and left["cr_dress_next"] == 0.3 and left["cr_why"]["line_change"] == "left"
     assert left["cr_games"] <= healthy["cr_games"] - (healthy["cr_dress_next"] - 0.3) - 0.3  # the game after capped too
+
+
+def test_left_last_game_at_an_injury_stoppage_is_capped(monkeypatch, tmp_path):
+    """Handoff 855: no status, regular minutes, last shift ended at a player-injury stoppage 10+ game minutes before the
+    end: 0.45 a game. Not at a stoppage, a stoppage 2 minutes after his shift, or a gap under 10: unchanged; day-to-day
+    with 851's 0.30 keeps the lower cap."""
+    last = game_id("TOR", len(PAST) - 1)
+
+    def matthews(gap=None, stop=None, injury=None):
+        shifts = {last: {1: 3600 - int(gap * 60), 2: 3600}} if gap is not None else {}
+        fake = FakeSession(shifts=shifts, stops={last: [stop]} if stop is not None else {})
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury=injury)], fake=fake)["Auston Matthews"], fake
+    (base, _), (hurt, fake) = matthews(), matthews(gap=14, stop=3600 - 14 * 60 + 20)
+    assert base["cr_dress_next"] > 0.6
+    assert hurt["cr_dress_next"] == pytest.approx(0.45, abs=0.01) and hurt["cr_why"]["hurt_exit"] == 14.0
+    assert any(u.endswith("/play-by-play") for u in fake.calls)
+    for kw in ({"gap": 14}, {"gap": 14, "stop": 3600 - 12 * 60}, {"gap": 8, "stop": 3600 - 8 * 60}):
+        assert matthews(**kw)[0]["cr_dress_next"] == base["cr_dress_next"], kw
+    dtd = matthews(gap=14, stop=3600 - 14 * 60, injury="DAY_TO_DAY")[0]
+    assert dtd["cr_dress_next"] == pytest.approx(rating.SHIFT_EARLY_CAP, abs=0.01) and "hurt_exit" not in dtd["cr_why"]
 
 
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
