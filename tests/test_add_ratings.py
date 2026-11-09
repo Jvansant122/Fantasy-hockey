@@ -4274,5 +4274,7 @@ def test_day_to_day_by_news_age_and_flag_age(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "dtd_flag_days", lambda today: {101: 2})
     sat = rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]
     assert sat["sat_last"] and sat["cr_dress_next"] >= 0.65 and sat["cr_why"]["dtd_age"] == {"days": 2, "floor": 0.65}
+    monkeypatch.setattr(rating, "DTD_NEXT_LOGIT", -3.0)  # the lineup step's pull keeps the floor (McCarron 0.5, Nov 9)
+    assert rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]["cr_dress_next"] >= 0.65
     monkeypatch.setattr(rating, "dtd_flag_days", lambda today: {101: 1})
     assert "dtd_age" not in rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]["cr_why"]

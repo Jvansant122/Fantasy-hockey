@@ -4450,6 +4450,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # day-to-day: Daily Faceoff's positive news after 1-4 missed games lifts the next game, no news after 0-1 lowers it
             # (handoff 846); past the day-to-day cap for the lift, which is what was measured
             dtd_z, dtd_age = 0.0, None
+            news_floor = None  # a news floor on his next game that holds through the lineup step (handoffs 881, 893)
             if p.get("injury") == "DAY_TO_DAY" and per_game and not skip and per_game[0] > 0.001:
                 shift = (sum(wk_news) / len(wk_news) if wk_news else 0.0) + wk_down
                 bare = set(wk_why) == {"day-to-day"}
@@ -4466,6 +4467,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                         and per_game[0] < DTD_OLD_FLAG_FLOOR:  # day-to-day for days, sat the last game: likely back (881)
                     per_game = [DTD_OLD_FLAG_FLOOR] + per_game[1:]
                     dress_next, dtd_z = per_game[0], 0.0
+                    news_floor = DTD_OLD_FLAG_FLOOR
                     dtd_age = {"days": dtd_days[p["id"]], "floor": DTD_OLD_FLAG_FLOOR}
                 if dtd_z:
                     q0 = min(max(per_game[0], 1e-3), 1 - 1e-3)
@@ -4529,6 +4531,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 kind, maybe, near_m = team_move
                 q0 = per_game[0]
                 q0 = q0 * (CALLUP_NEAR_MULT if near_m else CALLUP_MULT) if kind == "up" else max(q0, SENDDOWN_MAYBE_FLOOR if maybe else SENDDOWN_FLOOR)
+                if kind == "down":
+                    news_floor = max(news_floor or 0.0, SENDDOWN_MAYBE_FLOOR if maybe else SENDDOWN_FLOOR)
                 per_game = [round(q0, 4)] + per_game[1:]
                 dress_next = per_game[0]
             # sat the last game, no status, likely back next game: the later games follow (handoff 857)
@@ -4563,6 +4567,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     caps = [min(a, c) for a, c in zip(caps, game_caps)]
                 if dtd_z > 0:  # handoff 846's lift is measured past the day-to-day cap
                     caps[0] = max(caps[0], per_game[0])
+                if news_floor is not None:  # an old day-to-day flag or a send-down: past the status cap (881, 893)
+                    caps[0] = max(caps[0], news_floor)
+                if dtd_age and dtd_age.get("cap") is not None:  # fresh day-to-day news holds through the lineup step (881)
+                    caps[0] = min(caps[0], dtd_age["cap"])
                 if lc:  # Daily Faceoff's call holds through the lineup step: a cap under its values, a floor up to them
                     caps = [min(c, q) for c, q in zip(caps, per_game)] if lc["cap"] else [max(c, q) for c, q in zip(caps, per_game)]
                 elif later_floor:
@@ -4604,7 +4612,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                   if later_floor else None,
                                   # a news floor never takes the lines' own floor away (a 0.85 day-ahead return under the 0.95
                                   # in-lines floor tripped P9, Nov 9)
-                                  "floor0": max(lc["q"], line_floor or 0.0) if lc and not lc["cap"] else None if lc else line_floor,
+                                  "floor0": max(lc["q"], line_floor or 0.0) if lc and not lc["cap"] else None if lc else
+                                  max([f for f in (line_floor, news_floor) if f is not None], default=None),
                                   })
             why = {"toi5": f.get("l5_toi"), "toi": f.get("std_toi") if gl else None, "pp5": f.get("l5_pptoi"),
                    "sog": f.get("std_shots"), "blk": f.get("std_blockedShots"), "gp": len(gl),
