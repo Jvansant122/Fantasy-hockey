@@ -1,5 +1,24 @@
 {
-"fetched": "2026-11-09T21:33Z",
+"fetched": "2026-11-09T21:43Z",
+"general": {
+"8476981": {
+"cat": "General",
+"day": "saturday",
+"out_w": true,
+"ts": "2026-11-07T17:18:46"
+},
+"8479351": {
+"cat": "General",
+"day": "saturday",
+"ts": "2026-11-07T16:39:21"
+},
+"8483510": {
+"cat": "General",
+"day": "saturday",
+"mp": true,
+"ts": "2026-11-07T16:27:53"
+}
+},
 "injuries": {
 "8470621": {
 "day": "thursday",
@@ -382,6 +401,14 @@
 "surgery": false,
 "ts": "2026-10-21T20:33:04"
 },
+"8476456": {
+"indefinite": false,
+"nf": [],
+"out_w": true,
+"season": false,
+"surgery": false,
+"ts": "2026-09-04T22:49:30"
+},
 "8476461": {
 "exp_ret": true,
 "indefinite": false,
@@ -417,6 +444,7 @@
 "8476624": {
 "day": "tuesday",
 "exp_ret": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -505,6 +533,7 @@
 "8476885": {
 "day": "saturday",
 "exp_ret": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -593,6 +622,7 @@
 "ts": "2026-10-22T15:12:17"
 },
 "8476999": {
+"gp": true,
 "indefinite": false,
 "nf": [
 "ir",
@@ -702,16 +732,6 @@
 "surgery": false,
 "ts": "2026-10-22T18:43:43"
 },
-"8477492": {
-"firm": true,
-"indefinite": false,
-"nf": [
-"ret"
-],
-"season": false,
-"surgery": false,
-"ts": "2026-05-26T18:12:35"
-},
 "8477493": {
 "indefinite": false,
 "nf": [
@@ -763,16 +783,6 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-10T15:27:21"
-},
-"8477501": {
-"indefinite": false,
-"nf": [
-"out"
-],
-"out_w": true,
-"season": false,
-"surgery": false,
-"ts": "2026-05-27T00:39:39"
 },
 "8477503": {
 "indefinite": false,
@@ -871,6 +881,7 @@
 },
 "8477939": {
 "exp_ret": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness"
@@ -1049,16 +1060,6 @@
 "surgery": false,
 "ts": "2026-10-22T17:56:42"
 },
-"8478396": {
-"exp_ret": true,
-"indefinite": false,
-"nf": [
-"ret"
-],
-"season": false,
-"surgery": false,
-"ts": "2026-06-09T15:39:17"
-},
 "8478399": {
 "day": "saturday",
 "firm": true,
@@ -1188,17 +1189,6 @@
 "surgery": false,
 "ts": "2026-10-28T17:25:55"
 },
-"8478468": {
-"firm": true,
-"indefinite": false,
-"nf": [
-"out",
-"ret"
-],
-"season": false,
-"surgery": false,
-"ts": "2026-06-02T16:37:55"
-},
 "8478469": {
 "day": "thursday",
 "firm": true,
@@ -1253,6 +1243,7 @@
 "8478498": {
 "day": "thursday",
 "exp_ret": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -1294,6 +1285,7 @@
 },
 "8478542": {
 "day": "monday",
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness"
@@ -1446,6 +1438,7 @@
 "8479400": {
 "day": "saturday",
 "firm": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -1841,6 +1834,7 @@
 },
 "8481020": {
 "day": "thursday",
+"gp": true,
 "indefinite": false,
 "nf": [
 "ir",
@@ -1899,6 +1893,7 @@
 },
 "8481523": {
 "day": "monday",
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -1988,6 +1983,7 @@
 "8481568": {
 "day": "thursday",
 "exp_ret": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -2068,6 +2064,7 @@
 },
 "8482079": {
 "day": "wednesday",
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -2091,6 +2088,7 @@
 },
 "8482088": {
 "day": "saturday",
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -2123,6 +2121,7 @@
 },
 "8482095": {
 "day": "friday",
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -2213,6 +2212,7 @@
 "8482146": {
 "day": "tuesday",
 "firm": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "gtd",
@@ -2266,6 +2266,7 @@
 },
 "8482221": {
 "day": "saturday",
+"gp": true,
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -2284,6 +2285,7 @@
 "ts": "2026-10-15T14:29:25"
 },
 "8482445": {
+"gp": true,
 "indefinite": false,
 "nf": [
 "ir",
@@ -2430,6 +2432,7 @@
 "8482740": {
 "day": "saturday",
 "firm": true,
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -2657,6 +2660,7 @@
 },
 "8483510": {
 "day": "thursday",
+"ill": true,
 "indefinite": false,
 "nf": [
 "illness",
@@ -4180,6 +4184,11 @@
 "out"
 ],
 "ts": "2026-10-07T15:58:48"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-07T23:02:12"
 },
 {
 "cat": "inj",
@@ -12327,5 +12336,5 @@
 "up": true
 }
 },
-"version": 14
+"version": 15
 }

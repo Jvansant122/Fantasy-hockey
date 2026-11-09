@@ -1,5 +1,5 @@
 {
- "updated": "Mon Nov 9, 4:33 PM ET",
+ "updated": "Mon Nov 9, 4:43 PM ET",
  "updated_date": "2026-11-09",
  "first_start": "2026-11-10T01:00:00Z",
  "stats_missing": 0,
@@ -10,7 +10,7 @@
    "48": 0.19
   }
  },
- "updated_utc": "2026-11-09T21:33:13Z",
+ "updated_utc": "2026-11-09T21:43:16Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -37011,80 +37011,6 @@
    "cr_season_pct": 35
   },
   {
-   "id": 4874748,
-   "name": "Logan Mailloux",
-   "team": "STL",
-   "games": 3,
-   "games_left": 3,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    43,
-    45,
-    47
-   ],
-   "games_next2": 7,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.3,
-   "adp": 230.0,
-   "gp": 0,
-   "ppg": 0.97,
-   "cur_ppg": null,
-   "last_ppg": 0.97,
-   "last_gp": 67,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 3.14,
-   "cr_fpg": 1.21,
-   "cr_season": 0.49,
-   "proj_gp": 27,
-   "cr_games": 2.6,
-   "cr_dress": 0.87,
-   "cr_dress_next": 0.9,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8482733,
-   "cr_why": {
-    "toi5": 16.77,
-    "toi": null,
-    "pp5": 0.64,
-    "sog": 1.21,
-    "blk": 0.84,
-    "gp": 0,
-    "last_fpg": 0.96,
-    "xfp": null,
-    "season_fpg": 1.22,
-    "opp_last": {
-     "ga": 0.006,
-     "move": 0.001
-    },
-    "called_up": true,
-    "later_floor": true,
-    "season_pts": 1.22,
-    "season_share": 0.4,
-    "season_range": [
-     0.1,
-     0.91
-    ],
-    "exp": "year 2",
-    "drift": -0.004,
-    "adp_pull": 1.003,
-    "adp": 230.0
-   },
-   "cr_pct": 41,
-   "cr_season_pct": 15
-  },
-  {
    "id": 4697396,
    "name": "Seth Jarvis",
    "team": "CAR",
@@ -38197,7 +38123,7 @@
     "adp_pull": 1.021,
     "adp": 229.4
    },
-   "cr_pct": 40,
+   "cr_pct": 41,
    "cr_season_pct": 19
   },
   {
@@ -38542,6 +38468,84 @@
    },
    "cr_pct": 39,
    "cr_season_pct": 34
+  },
+  {
+   "id": 4874748,
+   "name": "Logan Mailloux",
+   "team": "STL",
+   "games": 3,
+   "games_left": 3,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    43,
+    45,
+    47
+   ],
+   "games_next2": 7,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.3,
+   "adp": 230.0,
+   "gp": 0,
+   "ppg": 0.97,
+   "cur_ppg": null,
+   "last_ppg": 0.97,
+   "last_gp": 67,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 3.03,
+   "cr_fpg": 1.16,
+   "cr_season": 0.49,
+   "proj_gp": 27,
+   "cr_games": 2.6,
+   "cr_dress": 0.87,
+   "cr_dress_next": 0.9,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8482733,
+   "cr_why": {
+    "toi5": 16.77,
+    "toi": null,
+    "pp5": 0.64,
+    "sog": 1.21,
+    "blk": 0.84,
+    "gp": 0,
+    "last_fpg": 0.96,
+    "xfp": null,
+    "season_fpg": 1.22,
+    "opp_last": {
+     "ga": 0.006,
+     "move": 0.001
+    },
+    "called_up": true,
+    "later_floor": true,
+    "season_pts": 1.22,
+    "season_share": 0.4,
+    "season_range": [
+     0.1,
+     0.91
+    ],
+    "exp": "year 2",
+    "rust": {
+     "m": 0.9,
+     "fpg": 1.21
+    },
+    "drift": -0.004,
+    "adp_pull": 1.003,
+    "adp": 230.0
+   },
+   "cr_pct": 39,
+   "cr_season_pct": 15
   },
   {
    "id": 2273,
@@ -51853,8 +51857,8 @@
    "proj_ppg": null,
    "clears": null,
    "dfo_out": true,
-   "cr": 1.07,
-   "cr_fpg": 1.34,
+   "cr": 1.06,
+   "cr_fpg": 1.33,
    "cr_season": 0.89,
    "proj_gp": 58,
    "cr_games": 0.8,
@@ -51902,6 +51906,10 @@
     ],
     "back": {
      "games": "10"
+    },
+    "rust": {
+     "m": 0.9,
+     "fpg": 1.34
     },
     "drift": -0.004,
     "missing_regs_pp": -0.009,
