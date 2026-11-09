@@ -3630,7 +3630,8 @@ def test_left_last_game_at_an_injury_stoppage_is_capped(monkeypatch, tmp_path):
 
 def test_day_to_day_next_game_follows_daily_faceoff_news(monkeypatch, tmp_path):
     """Handoff 846: a day-to-day skater with no Daily Faceoff news after dressing his last game: -0.4 on the next game's
-    logit; with practising news after a missed game: +0.85, past the day-to-day cap."""
+    logit; with bare day-to-day news after a missed game: +0.85, past the day-to-day cap; practising news, already
+    calibrated, gets no lift (findings 4486)."""
     import math
     from datetime import datetime, timezone
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
@@ -3641,7 +3642,7 @@ def test_day_to_day_next_game_follows_daily_faceoff_news(monkeypatch, tmp_path):
     lo = lambda q: math.log(q / (1 - q))
     assert quiet["cr_why"]["dtd_news_z"] == -0.4 and lo(quiet["cr_dress_next"]) < lo(off["cr_dress_next"]) - 0.3
     news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
-            "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]},
+            "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["dtd"]}]},
             "injuries": {"1": {"ts": "2026-10-09T15:00:00", "season": False, "surgery": False, "nf": []}}}
     fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
     p = lambda: [espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY")]
@@ -3651,6 +3652,8 @@ def test_day_to_day_next_game_follows_daily_faceoff_news(monkeypatch, tmp_path):
     up = rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=news)["Auston Matthews"]
     assert flat["sat_last"] and flat["cr_why"]["week_news"]["shift"] > 0, flat["cr_why"]
     assert up["cr_why"]["dtd_news_z"] == 0.85 and up["cr_dress_next"] > flat["cr_dress_next"]
+    prac = {**news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full", "dtd"]}]}}
+    assert "dtd_news_z" not in rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=prac)["Auston Matthews"]["cr_why"]
     assert rating.DTD_NEWS_UP_LOGIT == 0.85 and rating.DTD_QUIET_LOGIT == -0.4
 
 
