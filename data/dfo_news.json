@@ -1,5 +1,5 @@
 {
-"fetched": "2026-11-09T21:07Z",
+"fetched": "2026-11-09T21:29Z",
 "injuries": {
 "8470621": {
 "day": "thursday",
@@ -19,7 +19,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-09-24T15:04:55"
 },
@@ -60,7 +62,9 @@
 "day": "saturday",
 "indefinite": false,
 "nf": [],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-07T16:41:21"
 },
@@ -70,6 +74,7 @@
 "nf": [
 "out"
 ],
+"nt": true,
 "out_w": true,
 "season": false,
 "surgery": false,
@@ -162,6 +167,16 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-11T00:19:53"
+},
+"8475188": {
+"exp_ret": true,
+"indefinite": false,
+"nf": [
+"ret"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-06-09T15:43:15"
 },
 "8475208": {
 "indefinite": false,
@@ -295,6 +310,7 @@
 "ts": "2026-10-19T17:31:40"
 },
 "8475810": {
+"eval": true,
 "indefinite": false,
 "nf": [
 "ir",
@@ -346,6 +362,17 @@
 "surgery": false,
 "ts": "2026-09-30T18:16:47"
 },
+"8476448": {
+"day": "sunday",
+"indefinite": false,
+"nf": [
+"out"
+],
+"out_w": true,
+"season": false,
+"surgery": false,
+"ts": "2026-06-13T18:26:58"
+},
 "8476454": {
 "day": "thursday",
 "firm": true,
@@ -354,13 +381,6 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-21T20:33:04"
-},
-"8476456": {
-"indefinite": false,
-"nf": [],
-"season": false,
-"surgery": false,
-"ts": "2026-09-04T22:49:30"
 },
 "8476461": {
 "exp_ret": true,
@@ -388,7 +408,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-09T16:22:40"
 },
@@ -622,11 +644,12 @@
 "ts": "2026-10-17T16:40:28"
 },
 "8477406": {
-"indefinite": false,
+"indefinite": true,
+"indefinite_ts": "2026-09-29T18:04:38",
 "nf": [],
 "season": false,
 "surgery": false,
-"ts": "2026-09-16T19:29:25"
+"ts": "2026-09-29T18:04:38"
 },
 "8477426": {
 "indefinite": false,
@@ -678,6 +701,16 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-22T18:43:43"
+},
+"8477492": {
+"firm": true,
+"indefinite": false,
+"nf": [
+"ret"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-05-26T18:12:35"
 },
 "8477493": {
 "indefinite": false,
@@ -731,6 +764,16 @@
 "surgery": false,
 "ts": "2026-10-10T15:27:21"
 },
+"8477501": {
+"indefinite": false,
+"nf": [
+"out"
+],
+"out_w": true,
+"season": false,
+"surgery": false,
+"ts": "2026-05-27T00:39:39"
+},
 "8477503": {
 "indefinite": false,
 "indefinite_ts": "2026-09-16T17:50:48",
@@ -748,7 +791,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-09T17:10:06"
 },
@@ -841,6 +886,8 @@
 "practice"
 ],
 "season": false,
+"season_ts": "2026-06-22T13:59:42",
+"soft": true,
 "surgery": false,
 "ts": "2026-11-09T20:48:40"
 },
@@ -985,7 +1032,9 @@
 },
 "8478133": {
 "day": "monday",
+"eval": true,
 "indefinite": false,
+"mp": true,
 "nf": [],
 "season": false,
 "surgery": false,
@@ -999,6 +1048,16 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-22T17:56:42"
+},
+"8478396": {
+"exp_ret": true,
+"indefinite": false,
+"nf": [
+"ret"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-06-09T15:39:17"
 },
 "8478399": {
 "day": "saturday",
@@ -1057,12 +1116,10 @@
 "8478435": {
 "day": "wednesday",
 "indefinite": false,
-"nf": [
-"dtd"
-],
+"nf": [],
 "season": false,
 "surgery": false,
-"ts": "2026-09-23T17:40:55"
+"ts": "2026-09-29T16:39:46"
 },
 "8478439": {
 "day": "sunday",
@@ -1085,6 +1142,10 @@
 },
 "8478449": {
 "day": "monday",
+"days": [
+"monday",
+"tuesday"
+],
 "exp_ret": true,
 "indefinite": false,
 "nf": [
@@ -1126,6 +1187,17 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-28T17:25:55"
+},
+"8478468": {
+"firm": true,
+"indefinite": false,
+"nf": [
+"out",
+"ret"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-06-02T16:37:55"
 },
 "8478469": {
 "day": "thursday",
@@ -1269,7 +1341,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-10-31T17:53:40"
 },
@@ -1316,6 +1390,7 @@
 "8479324": {
 "day": "wednesday",
 "indefinite": false,
+"nc": true,
 "nf": [
 "practice"
 ],
@@ -1325,6 +1400,7 @@
 "ts": "2026-11-04T18:06:56"
 },
 "8479346": {
+"eval": true,
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -1545,6 +1621,7 @@
 },
 "8480069": {
 "indefinite": false,
+"mp": true,
 "nf": [],
 "season": false,
 "surgery": false,
@@ -1593,6 +1670,7 @@
 "8480434": {
 "day": "monday",
 "indefinite": false,
+"nc": true,
 "nf": [
 "practice"
 ],
@@ -1609,6 +1687,16 @@
 "season": false,
 "surgery": false,
 "ts": "2026-10-10T19:40:02"
+},
+"8480762": {
+"indefinite": false,
+"nf": [
+"surgery"
+],
+"season": false,
+"surgery": true,
+"tl": 60,
+"ts": "2026-06-27T03:42:26"
 },
 "8480801": {
 "indefinite": false,
@@ -1732,6 +1820,7 @@
 "ts": "2026-10-29T17:34:06"
 },
 "8481006": {
+"eval": true,
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -1767,7 +1856,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-02T18:21:59"
 },
@@ -1795,6 +1886,7 @@
 },
 "8481481": {
 "day": "thursday",
+"eval": true,
 "indefinite": false,
 "nf": [
 "ir",
@@ -1852,7 +1944,9 @@
 "day": "monday",
 "indefinite": false,
 "nf": [],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-02T17:03:38"
 },
@@ -1980,7 +2074,9 @@
 "out",
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-10-21T18:35:03"
 },
@@ -2032,7 +2128,9 @@
 "illness",
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-06T15:46:48"
 },
@@ -2087,7 +2185,9 @@
 "out",
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-05T16:59:46"
 },
@@ -2158,7 +2258,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-10-31T17:54:17"
 },
@@ -2191,6 +2293,15 @@
 "surgery": false,
 "ts": "2026-11-05T18:25:11"
 },
+"8482451": {
+"day": "tuesday",
+"indefinite": false,
+"left": true,
+"nf": [],
+"season": false,
+"surgery": false,
+"ts": "2026-09-23T02:43:45"
+},
 "8482475": {
 "day": "thursday",
 "firm": true,
@@ -2206,6 +2317,7 @@
 "day": "friday",
 "indefinite": false,
 "left": true,
+"mp": true,
 "nf": [],
 "season": false,
 "surgery": false,
@@ -2217,7 +2329,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-10-16T16:56:13"
 },
@@ -2238,7 +2352,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-11-03T18:42:18"
 },
@@ -2257,6 +2373,10 @@
 },
 "8482699": {
 "day": "monday",
+"days": [
+"monday",
+"wednesday"
+],
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -2504,7 +2624,9 @@
 "ts": "2026-09-28T21:00:30"
 },
 "8483485": {
+"eval": true,
 "indefinite": false,
+"mp": true,
 "nf": [],
 "season": false,
 "surgery": false,
@@ -2566,6 +2688,10 @@
 },
 "8483515": {
 "day": "friday",
+"days": [
+"friday",
+"saturday"
+],
 "indefinite": false,
 "nf": [
 "ret"
@@ -2687,6 +2813,10 @@
 },
 "8484145": {
 "day": "tuesday",
+"days": [
+"tuesday",
+"wednesday"
+],
 "exp_ret": true,
 "indefinite": false,
 "nf": [
@@ -2825,7 +2955,9 @@
 "nf": [
 "practice"
 ],
+"prac": true,
 "season": false,
+"soft": true,
 "surgery": false,
 "ts": "2026-09-23T16:39:49"
 }
@@ -3383,8 +3515,7 @@
 "f": [
 "dtd",
 "limited",
-"out",
-"ret"
+"out"
 ],
 "tl": 14,
 "ts": "2026-11-03T15:38:48"
@@ -4052,11 +4183,6 @@
 },
 {
 "cat": "inj",
-"f": [],
-"ts": "2026-10-07T23:02:12"
-},
-{
-"cat": "inj",
 "f": [
 "out"
 ],
@@ -4101,6 +4227,15 @@
 "ret"
 ],
 "ts": "2026-10-29T19:01:27"
+}
+],
+"8476278": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-01T15:01:39"
 }
 ],
 "8476312": [
@@ -4678,6 +4813,14 @@
 },
 {
 "cat": "inj",
+"f": [
+"out"
+],
+"tl": 6.6,
+"ts": "2026-10-05T16:42:26"
+},
+{
+"cat": "inj",
 "f": [],
 "ts": "2026-10-12T14:21:31"
 },
@@ -4759,6 +4902,15 @@
 "ret"
 ],
 "ts": "2026-10-17T16:40:28"
+}
+],
+"8477406": [
+{
+"cat": "inj",
+"f": [
+"indefinite"
+],
+"ts": "2026-09-29T18:04:38"
 }
 ],
 "8477425": [
@@ -4993,6 +5145,13 @@
 {
 "cat": "inj",
 "f": [
+"gtd"
+],
+"ts": "2026-10-05T16:00:34"
+},
+{
+"cat": "inj",
+"f": [
 "out"
 ],
 "ts": "2026-10-05T22:35:09"
@@ -5181,8 +5340,7 @@
 "cat": "inj",
 "f": [
 "limited",
-"out",
-"ret"
+"out"
 ],
 "tl": 21.0,
 "ts": "2026-11-04T17:24:33"
@@ -5756,6 +5914,13 @@
 "ts": "2026-10-07T18:15:22"
 }
 ],
+"8478435": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-09-29T16:39:46"
+}
+],
 "8478439": [
 {
 "cat": "inj",
@@ -5794,6 +5959,13 @@
 "ret"
 ],
 "ts": "2026-09-28T14:10:12"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"ts": "2026-09-29T16:44:42"
 },
 {
 "cat": "inj",
@@ -6107,6 +6279,13 @@
 "f": [
 "up"
 ],
+"ts": "2026-10-01T14:12:40"
+},
+{
+"cat": "move",
+"f": [
+"up"
+],
 "ts": "2026-10-13T14:56:04"
 },
 {
@@ -6296,6 +6475,13 @@
 {
 "cat": "inj",
 "f": [
+"dtd"
+],
+"ts": "2026-10-05T16:19:35"
+},
+{
+"cat": "inj",
+"f": [
 "dtd",
 "out"
 ],
@@ -6372,8 +6558,7 @@
 {
 "cat": "inj",
 "f": [
-"limited",
-"ret"
+"limited"
 ],
 "tl": 42,
 "ts": "2026-11-04T18:06:56"
@@ -6454,6 +6639,15 @@
 "up"
 ],
 "ts": "2026-11-09T17:01:32"
+}
+],
+"8479370": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-09-29T20:31:19"
 }
 ],
 "8479371": [
@@ -6607,8 +6801,7 @@
 {
 "cat": "inj",
 "f": [
-"limited",
-"ret"
+"limited"
 ],
 "ts": "2026-10-19T14:26:29"
 },
@@ -7059,6 +7252,15 @@
 "ts": "2026-11-07T17:23:38"
 }
 ],
+"8480051": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-10-01T18:03:48"
+}
+],
 "8480064": [
 {
 "cat": "inj",
@@ -7275,8 +7477,7 @@
 {
 "cat": "inj",
 "f": [
-"limited",
-"ret"
+"limited"
 ],
 "ts": "2026-11-09T17:29:57"
 }
@@ -7331,6 +7532,13 @@
 "out"
 ],
 "ts": "2026-10-04T23:12:39"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"ts": "2026-10-05T17:22:58"
 },
 {
 "cat": "inj",
@@ -7582,6 +7790,14 @@
 {
 "cat": "inj",
 "f": [
+"full",
+"ret"
+],
+"ts": "2026-10-05T15:34:36"
+},
+{
+"cat": "inj",
+"f": [
 "ret"
 ],
 "ts": "2026-10-06T15:01:28"
@@ -7683,6 +7899,15 @@
 "ret"
 ],
 "ts": "2026-09-28T11:56:29"
+},
+{
+"cat": "inj",
+"f": [
+"dtd",
+"out",
+"ret"
+],
+"ts": "2026-09-29T18:46:34"
 },
 {
 "cat": "inj",
@@ -7805,8 +8030,7 @@
 {
 "cat": "inj",
 "f": [
-"limited",
-"ret"
+"limited"
 ],
 "ts": "2026-10-24T19:31:35"
 },
@@ -8112,8 +8336,7 @@
 "cat": "inj",
 "f": [
 "limited",
-"out",
-"ret"
+"out"
 ],
 "tl": 21.0,
 "ts": "2026-11-04T17:25:42"
@@ -8356,9 +8579,7 @@
 "8482093": [
 {
 "cat": "inj",
-"f": [
-"ret"
-],
+"f": [],
 "tl": 180.0,
 "ts": "2026-09-28T11:47:49"
 },
@@ -8831,6 +9052,15 @@
 "ts": "2026-10-31T17:54:17"
 }
 ],
+"8482193": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-01T17:16:53"
+}
+],
 "8482221": [
 {
 "cat": "inj",
@@ -9110,8 +9340,7 @@
 {
 "cat": "inj",
 "f": [
-"limited",
-"ret"
+"limited"
 ],
 "ts": "2026-10-01T20:12:12"
 },
@@ -9459,6 +9688,15 @@
 "wtw"
 ],
 "ts": "2026-10-09T16:13:37"
+}
+],
+"8482861": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-09-30T18:31:52"
 }
 ],
 "8482874": [
@@ -10064,6 +10302,14 @@
 {
 "cat": "inj",
 "f": [
+"out"
+],
+"tl": 56,
+"ts": "2026-09-29T18:05:52"
+},
+{
+"cat": "inj",
+"f": [
 "ltir"
 ],
 "tl": 56,
@@ -10119,6 +10365,11 @@
 }
 ],
 "8483525": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-05T16:35:57"
+},
 {
 "cat": "inj",
 "f": [
@@ -10336,6 +10587,13 @@
 }
 ],
 "8484144": [
+{
+"cat": "inj",
+"f": [
+"limited"
+],
+"ts": "2026-10-05T16:10:13"
+},
 {
 "cat": "inj",
 "f": [
@@ -10566,6 +10824,15 @@
 ],
 "tl": 21,
 "ts": "2026-10-26T17:28:22"
+}
+],
+"8484231": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-09-29T19:56:12"
 }
 ],
 "8484234": [
@@ -10821,6 +11088,15 @@
 "up"
 ],
 "ts": "2026-10-30T21:36:07"
+}
+],
+"8484938": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-01T15:01:13"
 }
 ],
 "8484984": [
@@ -11112,6 +11388,13 @@
 {
 "cat": "move",
 "f": [
+"down"
+],
+"ts": "2026-09-28T21:10:32"
+},
+{
+"cat": "move",
+"f": [
 "up"
 ],
 "ts": "2026-10-04T15:07:52"
@@ -11143,12 +11426,6 @@
 "ts": "2026-10-23T21:11:22",
 "up": true
 },
-"8475717": {
-"cond": false,
-"down": true,
-"ts": "2026-04-17T20:35:30",
-"up": true
-},
 "8475718": {
 "cond": false,
 "down": false,
@@ -11171,6 +11448,12 @@
 "cond": false,
 "down": true,
 "ts": "2026-11-02T19:33:35",
+"up": true
+},
+"8476278": {
+"cond": false,
+"down": false,
+"ts": "2026-10-01T15:01:39",
 "up": true
 },
 "8476316": {
@@ -11311,6 +11594,12 @@
 "ts": "2026-11-09T17:01:32",
 "up": true
 },
+"8479370": {
+"cond": false,
+"down": true,
+"ts": "2026-09-29T20:31:19",
+"up": false
+},
 "8479387": {
 "cond": false,
 "down": false,
@@ -11345,12 +11634,6 @@
 "cond": false,
 "down": true,
 "ts": "2026-10-15T18:36:55",
-"up": false
-},
-"8479942": {
-"cond": false,
-"down": true,
-"ts": "2026-04-16T18:20:36",
 "up": false
 },
 "8479968": {
@@ -11389,16 +11672,16 @@
 "ts": "2026-10-08T19:16:18",
 "up": false
 },
+"8480051": {
+"cond": false,
+"down": true,
+"ts": "2026-10-01T18:03:48",
+"up": false
+},
 "8480157": {
 "cond": false,
 "down": false,
 "ts": "2026-11-09T19:29:30",
-"up": true
-},
-"8480191": {
-"cond": false,
-"down": false,
-"ts": "2026-04-17T20:36:08",
 "up": true
 },
 "8480259": {
@@ -11551,10 +11834,10 @@
 "ts": "2026-11-08T18:36:36",
 "up": false
 },
-"8482447": {
+"8482193": {
 "cond": false,
 "down": false,
-"ts": "2026-04-18T13:44:41",
+"ts": "2026-10-01T17:16:53",
 "up": true
 },
 "8482451": {
@@ -11605,22 +11888,16 @@
 "ts": "2026-10-30T15:33:18",
 "up": false
 },
-"8482783": {
-"cond": false,
-"down": false,
-"ts": "2026-04-17T14:57:14",
-"up": true
-},
 "8482784": {
 "cond": false,
 "down": true,
 "ts": "2026-10-23T18:13:01",
 "up": false
 },
-"8482802": {
+"8482861": {
 "cond": false,
 "down": true,
-"ts": "2026-04-16T18:19:31",
+"ts": "2026-09-30T18:31:52",
 "up": false
 },
 "8482877": {
@@ -11713,12 +11990,6 @@
 "ts": "2026-10-20T19:49:09",
 "up": false
 },
-"8483455": {
-"cond": false,
-"down": true,
-"ts": "2026-04-16T18:21:33",
-"up": false
-},
 "8483471": {
 "cond": false,
 "down": true,
@@ -11730,12 +12001,6 @@
 "down": false,
 "ts": "2026-10-09T15:50:02",
 "up": true
-},
-"8483482": {
-"cond": false,
-"down": true,
-"ts": "2026-04-18T13:31:47",
-"up": false
 },
 "8483487": {
 "cond": false,
@@ -11893,10 +12158,10 @@
 "ts": "2026-10-21T14:32:09",
 "up": false
 },
-"8484223": {
+"8484231": {
 "cond": false,
 "down": true,
-"ts": "2026-04-16T18:20:12",
+"ts": "2026-09-29T19:56:12",
 "up": false
 },
 "8484234": {
@@ -11921,12 +12186,6 @@
 "cond": false,
 "down": false,
 "ts": "2026-11-08T16:10:32",
-"up": true
-},
-"8484388": {
-"cond": false,
-"down": false,
-"ts": "2026-04-17T20:35:54",
 "up": true
 },
 "8484392": {
@@ -11981,6 +12240,12 @@
 "cond": false,
 "down": false,
 "ts": "2026-10-30T21:36:07",
+"up": true
+},
+"8484938": {
+"cond": false,
+"down": false,
+"ts": "2026-10-01T15:01:13",
 "up": true
 },
 "8485010": {
@@ -12062,5 +12327,5 @@
 "up": true
 }
 },
-"version": 13
+"version": 14
 }
