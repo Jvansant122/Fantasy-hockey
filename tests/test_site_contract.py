@@ -343,3 +343,25 @@ def test_s4_season_ending_line_is_higher_in_the_first_two_missed_games(data):
         p["cr_season"] = share
         return any(w.startswith("S4") and p["name"] in w for w in check_data.warnings(now, None))
     assert not s4(0.39, 1) and s4(0.6, 1) and s4(0.35, 5) and not s4(0.25, 5)
+
+
+def test_next_game_dress_jump_with_new_daily_faceoff_news_is_no_warning(data):
+    """X4 skips a jump explained by new Daily Faceoff news since the earlier run (Marchessault 0.28 -> 0.50 on 'practising',
+    Nov 9; handoff 845); the same jump with unchanged news still warns."""
+    prev, now = copy.deepcopy(data), copy.deepcopy(data)
+    old = {p["id"]: p for p in prev["players"]}
+    p = next(p for p in now["players"] if p["pos"] != "G" and p.get("cr_dress_next") is not None and p["id"] in old)
+    o = old[p["id"]]
+    for q in (p, o):
+        q["today_start"] = None
+        q["cr_why"] = {k: v for k, v in (q.get("cr_why") or {}).items() if k not in ("week_news", "dfo_inj", "back", "displaced")}
+    o["cr_dress_next"], p["cr_dress_next"] = 0.28, 0.5
+
+    def x4():
+        return " ".join(w for w in check_data.warnings(now, prev) if w.startswith("X4"))
+    assert p["name"] in x4()
+    p["cr_why"]["week_news"] = {"shift": 0.5, "move": 0.2, "why": ["practising"]}
+    assert p["name"] not in x4()
+    p["cr_why"].pop("week_news")
+    p["cr_why"]["back"] = {"games": "1"}
+    assert p["name"] not in x4()
