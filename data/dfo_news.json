@@ -1,5 +1,5 @@
 {
-"fetched": "2026-11-09T21:56Z",
+"fetched": "2026-11-09T22:21Z",
 "general": {
 "8476981": {
 "cat": "General",
@@ -10,6 +10,7 @@
 "8479351": {
 "cat": "General",
 "day": "saturday",
+"firm": true,
 "ts": "2026-11-07T16:39:21"
 },
 "8483510": {
@@ -102,6 +103,7 @@
 "8474150": {
 "day": "monday",
 "exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [
 "ret"
@@ -193,6 +195,7 @@
 "nf": [
 "ret"
 ],
+"ret_m": true,
 "season": false,
 "surgery": false,
 "ts": "2026-06-09T15:43:15"
@@ -313,6 +316,7 @@
 "nf": [
 "ret"
 ],
+"ret_m": true,
 "season": false,
 "surgery": false,
 "ts": "2026-09-16T20:09:56"
@@ -411,6 +415,7 @@
 },
 "8476461": {
 "exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [
 "ret"
@@ -461,6 +466,7 @@
 "ir",
 "ret"
 ],
+"ret_m": true,
 "season": false,
 "surgery": false,
 "ts": "2026-11-08T20:22:38"
@@ -533,6 +539,7 @@
 "8476885": {
 "day": "saturday",
 "exp_ret": true,
+"firm": true,
 "ill": true,
 "indefinite": false,
 "nf": [
@@ -580,6 +587,7 @@
 },
 "8476902": {
 "day": "saturday",
+"firm": true,
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -606,6 +614,7 @@
 "ret",
 "surgery"
 ],
+"ret_m": true,
 "season": false,
 "surgery": true,
 "ts": "2026-10-09T16:03:41"
@@ -881,6 +890,7 @@
 },
 "8477939": {
 "exp_ret": true,
+"firm": true,
 "ill": true,
 "indefinite": false,
 "nf": [
@@ -916,6 +926,7 @@
 "8477949": {
 "day": "tuesday",
 "exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -957,6 +968,7 @@
 },
 "8477986": {
 "exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [
 "ret"
@@ -1205,6 +1217,7 @@
 "nf": [
 "out"
 ],
+"out_w": true,
 "season": false,
 "surgery": false,
 "tl": 14,
@@ -1899,6 +1912,7 @@
 "illness",
 "out"
 ],
+"out_w": true,
 "season": false,
 "surgery": false,
 "ts": "2026-11-02T15:24:40"
@@ -1983,6 +1997,7 @@
 "8481568": {
 "day": "thursday",
 "exp_ret": true,
+"firm": true,
 "ill": true,
 "indefinite": false,
 "nf": [
@@ -2192,6 +2207,7 @@
 },
 "8482124": {
 "exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [],
 "season": false,
@@ -2226,6 +2242,7 @@
 "8482159": {
 "day": "wednesday",
 "exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [
 "ret"
@@ -2447,6 +2464,7 @@
 "nf": [
 "out"
 ],
+"out_w": true,
 "season": false,
 "surgery": false,
 "tl": 4.4,
@@ -2700,6 +2718,7 @@
 "nf": [
 "ret"
 ],
+"ret_m": true,
 "season": false,
 "surgery": false,
 "ts": "2026-10-16T16:24:57"
@@ -2811,6 +2830,7 @@
 "day": "tuesday",
 "indefinite": false,
 "nf": [],
+"ret_m": true,
 "season": false,
 "surgery": false,
 "ts": "2026-10-13T15:43:40"
@@ -2964,6 +2984,167 @@
 "soft": true,
 "surgery": false,
 "ts": "2026-09-23T16:39:49"
+},
+"n:alberts smits:NYR": {
+"indefinite": true,
+"indefinite_ts": "2026-11-09T17:02:58",
+"nf": [
+"out",
+"wtw"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-11-09T17:02:58"
+},
+"n:alex nedeljkovic:SJS": {
+"day": "wednesday",
+"days": [
+"wednesday",
+"thursday"
+],
+"ill": true,
+"indefinite": false,
+"nf": [
+"illness"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-09-30T19:50:44"
+},
+"n:cameron lund:SJS": {
+"indefinite": false,
+"nf": [],
+"season": false,
+"surgery": false,
+"tl": 30,
+"ts": "2026-09-17T22:07:18"
+},
+"n:carter hart:VGK": {
+"day": "friday",
+"indefinite": false,
+"nf": [],
+"season": false,
+"soft": true,
+"surgery": false,
+"ts": "2026-10-29T21:40:13"
+},
+"n:cole beaudoin:NYR": {
+"indefinite": false,
+"nf": [
+"dtd"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-09-16T18:38:09"
+},
+"n:daniil tarasov:DET": {
+"day": "thursday",
+"gp": true,
+"indefinite": false,
+"nf": [
+"out"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-10-29T15:21:05"
+},
+"n:elvis merzlikins:TOR": {
+"indefinite": false,
+"indefinite_ts": "2026-09-16T17:46:49",
+"nf": [
+"surgery"
+],
+"season": false,
+"surgery": false,
+"tl": 150.0,
+"ts": "2026-09-29T14:47:03"
+},
+"n:frederik andersen:EDM": {
+"indefinite": false,
+"nf": [],
+"out_w": true,
+"season": false,
+"surgery": false,
+"ts": "2026-09-29T18:03:55"
+},
+"n:jacob markstrom:FLA": {
+"indefinite": false,
+"nf": [
+"ir"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-10-21T01:15:49"
+},
+"n:james reimer:NYR": {
+"day": "tuesday",
+"indefinite": false,
+"mp": true,
+"nf": [
+"dtd",
+"season"
+],
+"season": true,
+"season_ts": "2026-10-27T16:06:00",
+"surgery": false,
+"ts": "2026-10-27T16:06:00"
+},
+"n:john gibson:DET": {
+"day": "friday",
+"gp": true,
+"indefinite": false,
+"nf": [
+"practice"
+],
+"prac": true,
+"season": false,
+"soft": true,
+"surgery": false,
+"ts": "2026-11-06T16:19:33"
+},
+"n:logan thompson:WSH": {
+"day": "tuesday",
+"gp": true,
+"indefinite": false,
+"nf": [],
+"season": false,
+"surgery": false,
+"ts": "2026-10-27T16:30:27"
+},
+"n:thatcher demko:VAN": {
+"indefinite": false,
+"nf": [
+"surgery"
+],
+"season": false,
+"soft": true,
+"surgery": false,
+"ts": "2026-09-28T17:54:38"
+},
+"n:tristan jarry:EDM": {
+"day": "saturday",
+"gp": true,
+"ill": true,
+"indefinite": false,
+"nf": [
+"illness"
+],
+"season": false,
+"surgery": false,
+"ts": "2026-11-07T18:25:23"
+},
+"n:ukko pekka luukkonen:BUF": {
+"day": "tuesday",
+"gp": true,
+"indefinite": false,
+"nf": [
+"practice"
+],
+"prac": true,
+"season": false,
+"soft": true,
+"surgery": false,
+"ts": "2026-09-29T15:22:59"
 }
 },
 "line-matches": {
@@ -7326,11 +7507,6 @@
 "8480078": [
 {
 "cat": "inj",
-"f": [],
-"ts": "2026-09-25T21:57:42"
-},
-{
-"cat": "inj",
 "f": [
 "out"
 ],
@@ -11408,6 +11584,344 @@
 ],
 "ts": "2026-10-04T15:07:52"
 }
+],
+"n:adam jiricek:STL": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-11-09T19:30:34"
+}
+],
+"n:alberts smits:NYR": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-11-07T22:09:40"
+},
+{
+"cat": "inj",
+"f": [
+"indefinite",
+"out",
+"wtw"
+],
+"ts": "2026-11-09T17:02:58"
+}
+],
+"n:alex nedeljkovic:SJS": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-09-30T19:50:44"
+}
+],
+"n:arvid soderblom:CHI": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-11-09T19:06:18"
+}
+],
+"n:caleb macdonald:CBJ": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-10-28T18:19:14"
+}
+],
+"n:cameron lund:SJS": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-10-15T18:37:30"
+}
+],
+"n:carter hart:VGK": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-27T18:47:21"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-29T21:40:13"
+}
+],
+"n:cole beaudoin:NYR": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-06T18:20:29"
+},
+{
+"cat": "move",
+"f": [
+"down",
+"up"
+],
+"ts": "2026-10-14T14:01:52"
+}
+],
+"n:daniil tarasov:DET": [
+{
+"cat": "inj",
+"f": [
+"dtd"
+],
+"ts": "2026-10-22T18:42:40"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"ts": "2026-10-29T15:21:05"
+}
+],
+"n:elvis merzlikins:TOR": [
+{
+"cat": "inj",
+"f": [],
+"tl": 150.0,
+"ts": "2026-09-29T14:47:03"
+}
+],
+"n:frederik andersen:EDM": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-09-29T18:03:55"
+}
+],
+"n:jacob markstrom:FLA": [
+{
+"cat": "inj",
+"f": [
+"dtd",
+"out"
+],
+"ts": "2026-10-13T19:56:54"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-15T14:59:05"
+},
+{
+"cat": "inj",
+"f": [],
+"tl": 14,
+"ts": "2026-10-20T16:05:39"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-21T01:15:49"
+}
+],
+"n:james reimer:NYR": [
+{
+"cat": "inj",
+"f": [
+"dtd",
+"season"
+],
+"ts": "2026-10-27T16:06:00"
+},
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-11-06T19:18:18"
+}
+],
+"n:john gibson:DET": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-23T04:50:34"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"ts": "2026-11-04T01:15:29"
+},
+{
+"cat": "inj",
+"f": [
+"dtd",
+"out"
+],
+"ts": "2026-11-05T16:19:47"
+},
+{
+"cat": "inj",
+"f": [
+"full",
+"ret"
+],
+"ts": "2026-11-06T16:19:33"
+}
+],
+"n:josh samanski:EDM": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-09-28T17:04:31"
+},
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-10-17T21:02:18"
+}
+],
+"n:logan thompson:WSH": [
+{
+"cat": "inj",
+"f": [
+"dtd"
+],
+"ts": "2026-10-21T14:41:23"
+},
+{
+"cat": "inj",
+"f": [
+"dtd"
+],
+"ts": "2026-10-23T16:06:21"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-24T22:06:53"
+},
+{
+"cat": "inj",
+"f": [
+"full",
+"ret"
+],
+"ts": "2026-10-26T14:44:07"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-10-27T16:30:27"
+}
+],
+"n:mads sogaard:TBL": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-13T15:05:51"
+},
+{
+"cat": "move",
+"f": [
+"down",
+"up"
+],
+"ts": "2026-10-14T16:02:52"
+}
+],
+"n:matthew murray:NSH": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-03T15:43:07"
+},
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-10-04T15:09:48"
+},
+{
+"cat": "move",
+"f": [
+"down",
+"up"
+],
+"ts": "2026-10-06T15:01:50"
+}
+],
+"n:melvin fernstrom:PIT": [
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-10-09T21:15:21"
+}
+],
+"n:thatcher demko:VAN": [
+{
+"cat": "inj",
+"f": [
+"gtd"
+],
+"ts": "2026-09-28T17:54:38"
+}
+],
+"n:tristan jarry:EDM": [
+{
+"cat": "inj",
+"f": [],
+"tl": 14,
+"ts": "2026-11-05T20:15:56"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-11-07T18:25:23"
+}
+],
+"n:ukko pekka luukkonen:BUF": [
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-09-27T03:50:03"
+},
+{
+"cat": "inj",
+"f": [
+"full",
+"ret"
+],
+"ts": "2026-09-29T15:22:59"
+}
+],
+"n:william stromgren:CGY": [
+{
+"cat": "move",
+"f": [
+"up"
+],
+"ts": "2026-10-30T15:19:09"
+}
 ]
 },
 "roster-moves": {
@@ -12334,7 +12848,79 @@
 "down": false,
 "ts": "2026-10-04T15:07:52",
 "up": true
+},
+"n:adam jiricek:STL": {
+"cond": false,
+"down": true,
+"ts": "2026-11-09T19:30:34",
+"up": false
+},
+"n:arvid soderblom:CHI": {
+"cond": false,
+"down": true,
+"ts": "2026-11-09T19:06:18",
+"up": false
+},
+"n:benjamin kraws:FA": {
+"cond": false,
+"down": false,
+"ts": "2026-04-19T04:03:41",
+"up": true
+},
+"n:caleb macdonald:CBJ": {
+"cond": false,
+"down": true,
+"ts": "2026-10-28T18:19:14",
+"up": false
+},
+"n:cameron lund:SJS": {
+"cond": false,
+"down": true,
+"ts": "2026-10-15T18:37:30",
+"up": false
+},
+"n:cole beaudoin:NYR": {
+"cond": false,
+"down": true,
+"ts": "2026-10-14T14:01:52",
+"up": true
+},
+"n:james reimer:NYR": {
+"cond": false,
+"down": true,
+"ts": "2026-11-06T19:18:18",
+"up": false
+},
+"n:josh samanski:EDM": {
+"cond": false,
+"down": true,
+"ts": "2026-10-17T21:02:18",
+"up": false
+},
+"n:mads sogaard:TBL": {
+"cond": false,
+"down": true,
+"ts": "2026-10-14T16:02:52",
+"up": true
+},
+"n:matthew murray:NSH": {
+"cond": false,
+"down": true,
+"ts": "2026-10-06T15:01:50",
+"up": true
+},
+"n:melvin fernstrom:PIT": {
+"cond": false,
+"down": true,
+"ts": "2026-10-09T21:15:21",
+"up": false
+},
+"n:william stromgren:CGY": {
+"cond": false,
+"down": false,
+"ts": "2026-10-30T15:19:09",
+"up": true
 }
 },
-"version": 15
+"version": 16
 }
