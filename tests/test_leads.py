@@ -440,7 +440,7 @@ def test_general_and_suspension_news(monkeypatch):
     assert c("Nazar has served his suspension and will return to the lineup Tuesday.").get("firm")
     assert c("Nazar has served his two-game suspension.") == {"firm": True}
     assert c("Wilson has been suspended two games.") == {"out_w": True}
-    assert c("Anderson is away from the team for personal reasons.") == {"out_w": True}
+    assert c("Anderson is away from the team for personal reasons.") == {"out_w": True, "pr": True}
     assert c("Smith will take a leave of absence.") == {"out_w": True}
     assert c("Jones is sick and will be a game-time decision.").get("ill")
     item = lambda pid, ts, cat, d: {"playerFiveVFiveId": pid, "createdAt": ts, "details": d, "newsCategoryName": cat}
