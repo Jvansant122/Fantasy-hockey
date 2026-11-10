@@ -24,6 +24,7 @@ def test_out_skater_practising_since_his_last_game_takes_the_day_to_day_cap(monk
     assert rating.SKATER_INJURY_CAP["OUT"] < p["cr_dress_next"] <= rating.SKATER_INJURY_CAP["DAY_TO_DAY"] + 1e-9
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_day_to_day_goalie_keeps_part_of_his_starts(monkeypatch, tmp_path):
     """A day-to-day goalie starts with INJURY_DRESS['DAY_TO_DAY'] (0.5) of his chance, an OUT one never.
     Kills: zero:INJURY_DRESS, R39 (DTD goalie at 1.0)."""

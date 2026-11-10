@@ -237,6 +237,7 @@ def test_matching_and_injuries(run):
     assert {r["status"] for r in logged} == {"OUT", "DAY_TO_DAY", "SUSPENSION"}
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_goalie_starts_follow_confirmed_starter(run):
     players, _, _ = run
     woll, stolarz, sway = players["Joseph Woll"], players["Anthony Stolarz"], players["Jeremy Swayman"]
@@ -249,6 +250,7 @@ def test_goalie_starts_follow_confirmed_starter(run):
     assert woll["cr_dress"] is None
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_confirmed_starter_on_waivers_leaves_tonight_to_his_team(monkeypatch, tmp_path):
     """On waivers until tomorrow, a goalie confirmed for tonight doesn't count tonight's start: with it, his team's goalies
     summed above its games and the 8 PM publish check blocked the run (Oct 13, CAR and VAN)."""
@@ -443,6 +445,7 @@ def test_no_game_yet_uses_last_seasons_role():
     assert rates[1]["pp_share"] == 1.0 and rates[2]["pp_share"] == 0.5
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_injured_starter_hands_starts_to_backup():
     """An injured no. 1's games go to his partner (findings section 48)."""
     model = rating.Model()
@@ -590,6 +593,7 @@ def test_goalie_new_team_season_share_counts_from_arrival():
     assert moved[1] == pytest.approx(base[1])
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_departed_goalie_takes_no_starts():
     """A goalie in the team's recent starts who is no longer on its roster gets none of its starts; with no roster
     the recent starters stand in (findings 160)."""
@@ -706,6 +710,7 @@ def test_goalie_who_came_on_in_relief_starts_more(monkeypatch):
     assert 3 in run([], relief={3})[1]  # no roster: the reliever is still a candidate
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_later_games_are_softened(monkeypatch):
     """Start chances two or more games ahead are pulled toward an even split; the next game is not (findings 134)."""
     model = rating.Model()
@@ -1289,6 +1294,7 @@ def test_history_runs_to_last_night_in_an_overnight_run(monkeypatch):
     assert rating.history_end(sat) == date(2026, 10, 9)
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_back_to_back_no1_early_in_the_season(monkeypatch):
     """Through a team's 10th game the no. 1 on night 2 gets an extra shift after the split; from the 11th, none (findings 213)."""
     monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
@@ -2796,6 +2802,7 @@ def test_a_three_or_four_goal_loss_also_lowers_the_game_after_next(monkeypatch):
     assert with_cut[1]["2026-10-24"] < without[1]["2026-10-24"]
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_three_goalie_team_no1_gets_more_of_the_games_after_the_next(monkeypatch):
     """Handoff 626, pinned on the shipped constant (handoff 638): 3+ goalies started the last 10: the no. 1 gets more of
     every game after the next; the next is unchanged, and each night's chances sum to 1."""
@@ -3424,6 +3431,7 @@ def test_208_constants_as_measured():
     assert rating.NO1_AFTER_OTHER_LOGIT == 0.1 and rating.LISTED_PLAYED_SEASON == -0.3 and rating.NEWS_CONDITIONING_SEASON == 0.5
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_no1_after_other_lift_is_on_the_reported_chance_only(monkeypatch):
     """Handoff 364 (ledger 2137 'q' mode): +0.1 on each game's reported chance; the chain keeps p, so with two goalies every
     game's log-odds move by exactly 0.1 (a chain version compounds on later games)."""
@@ -3804,6 +3812,7 @@ def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
     assert last({("BOS", d): f"{d}T23:59:00Z"}) == f"{d}T23:59:00Z"
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     """Handoff 756: the backup started night 1 of a back-to-back, so the rested no. 1's chance for night 2 gets +0.6 logit
     (team sum kept; re-sized to -0.1 by handoff 832); the later game, a no. 1 start yesterday, a day off between, and a Confirmed backup don't move."""
@@ -3826,6 +3835,7 @@ def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     assert nights(0.6, 2, confirmed={"2026-10-22": 2})[2]["2026-10-22"] == 1.0
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_no1_cut_after_his_backup_starts_two_straight(monkeypatch):
     """Handoff 832: a rested next game after another goalie started the team's last 2+ games: the no. 1's chance gets
     NO1_AFTER_OTHER_RUN_LOGIT (team sum kept); one backup start, night 2 and the later game don't move."""
@@ -3849,6 +3859,7 @@ def test_no1_cut_after_his_backup_starts_two_straight(monkeypatch):
     assert nights(k, [2, 2], "2026-10-22")[1] == pytest.approx(nights(0.0, [2, 2], "2026-10-22")[1])  # night 2
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_night_2_favourite_capped_until_daily_faceoff_says(monkeypatch):
     """Handoff 833: night 2 of a back-to-back, no goalie's reported chance above NIGHT2_CAP (the rest shared by the others'
     odds); a rested game, and a Likely or Confirmed starter, aren't capped."""
@@ -4034,6 +4045,7 @@ def test_rust_reaches_the_rating(monkeypatch, tmp_path):
     assert hurt["cr"] == pytest.approx(want, abs=0.03)
 
 
+@pytest.mark.usefixtures("whole_goalie_nights")
 def test_injured_goalie_with_positive_news_gets_starts(monkeypatch, tmp_path):
     """Handoff 869: an ESPN IR / OUT goalie whose latest Daily Faceoff item (at most 4 days old) is positive gets 0.4 of his
     chance next game and 0.65 later, in place of 0; without such news, or with older news, he stays at 0."""
@@ -4286,3 +4298,29 @@ def test_day_to_day_by_news_age_and_flag_age(monkeypatch, tmp_path):
     assert rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]["cr_dress_next"] >= 0.65
     monkeypatch.setattr(rating, "dtd_flag_days", lambda today: {101: 1})
     assert "dtd_age" not in rate(monkeypatch, tmp_path, p(), fake=fake())["Auston Matthews"]["cr_why"]
+
+
+def test_goalie_week_fixes(monkeypatch, tmp_path):
+    """Handoffs 895-897 (findings 4750): goalie Week points a start x 0.8 beside skaters (Week = pts/start x starts still);
+    an ESPN OUT / IR goalie with no news keeps a small start chance (OUT 0.08 / 0.12, IR 0.01 / 0.04); listed goalies'
+    unconfirmed nights leave 2-4% for a goalie not on the list, confirmed nights stay whole."""
+    assert rating.GOALIE_WEEK_SCALE == 0.8 and rating.UNLISTED_RESERVE == (0.98, 0.98, 0.97, 0.96)
+    assert rating.GOALIE_NO_NEWS_FACTORS == {"OUT": (0.08, 0.12), "INJURY_RESERVE": (0.01, 0.04)}
+    g = lambda **kw: [espn(111, "Joseph Woll", "TOR", "G", **kw), espn(112, "Anthony Stolarz", "TOR", "G")]
+    full = rate(monkeypatch, tmp_path, g())
+    w = full["Joseph Woll"]
+    assert w["cr_why"]["week_scale"] == 0.8 and w["cr"] == pytest.approx(w["cr_fpg"] * w["cr_games"], abs=0.02)
+    monkeypatch.setattr(rating, "GOALIE_WEEK_SCALE", 1.0)
+    w1 = rate(monkeypatch, tmp_path, g())["Joseph Woll"]
+    assert w["cr_fpg"] == pytest.approx(0.8 * w1["cr_fpg"], abs=0.02) and w["cr_games"] == w1["cr_games"]
+    for status, (nxt, later) in rating.GOALIE_NO_NEWS_FACTORS.items():
+        hurt = rate(monkeypatch, tmp_path, g(injury=status))
+        assert 0 < hurt["Joseph Woll"]["cr_games"] < 3 * later + 0.02, status
+    # the reserve: four unconfirmed nights sum to 0.98 + 0.98 + 0.97 + 0.96, a confirmed one to 1
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-23", "2026-10-24", "2026-10-26"]
+    out = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22))
+    assert sum(out.values()) == pytest.approx(0.98 + 0.98 + 0.97 + 0.96, abs=1e-6)
+    conf = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), {"2026-10-22": 1})
+    assert sum(conf.values()) == pytest.approx(1 + 0.98 + 0.97 + 0.96, abs=1e-6)
