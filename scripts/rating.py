@@ -710,6 +710,8 @@ SHIFT_EARLY_GAP, SHIFT_EARLY_CAP, SHIFT_EARLY_PIM = 10.0, 0.30, 10
 # full size beat half on the replay, by rows and by player (findings 4485, handoff 846). Per player-game the lift fits only
 # news whose sole why word is day-to-day (16: 0.28 vs 0.56); return / practising items were calibrated (31: 0.44 vs 0.45,
 # findings 4486)
+# the quiet -0.4 fits forwards only: 70 rows shown 0.54 dressed 0.39; defensemen were calibrated, 34 rows 0.38 vs 0.35
+# (findings 4496, handoff 847)
 DTD_NEWS_UP_LOGIT, DTD_QUIET_LOGIT = 0.85, -0.4
 # the same day-to-day-only news by hours from the item to his next puck (handoff 881, joint with 846 in findings 4488):
 # archive dressed 2.5% under 16 h, 15-17% at 16-48 h, 32% at 48-72 h, 51% at 72 h+; live the lift fits only items 48 h+ old
@@ -4458,7 +4460,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                                        week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None) if bare else None
                 age_cap = next((c for h, c in DTD_AGE_CAPS if age_h is not None and age_h < h), None)
                 dtd_z = DTD_NEWS_UP_LOGIT if bare and age_cap is None and shift > 0 and 1 <= missed <= 4 \
-                    else DTD_QUIET_LOGIT if not wk_why and missed <= 1 else 0.0
+                    else DTD_QUIET_LOGIT if not wk_why and missed <= 1 and p["pos"] != "D" else 0.0  # forwards only (847)
                 if age_cap is not None:  # fresh day-to-day-only news: not yet (handoff 881)
                     per_game = [round(min(per_game[0], age_cap), 4)] + per_game[1:]
                     dress_next = per_game[0]

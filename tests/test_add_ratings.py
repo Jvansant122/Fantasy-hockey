@@ -3655,6 +3655,8 @@ def test_day_to_day_next_game_follows_daily_faceoff_news(monkeypatch, tmp_path):
     prac = {**news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full", "dtd"]}]}}
     assert "dtd_news_z" not in rate(monkeypatch, tmp_path, p(), fake=fake(), dfo_news=prac)["Auston Matthews"]["cr_why"]
     assert rating.DTD_NEWS_UP_LOGIT == 0.85 and rating.DTD_QUIET_LOGIT == -0.4
+    d = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "D", injury="DAY_TO_DAY")])["Auston Matthews"]
+    assert "dtd_news_z" not in d["cr_why"]  # defensemen: the quiet cut is for forwards only (handoff 847)
 
 
 class Opener(FakeSession):  # no game played yet this season: every team's first game is still to come
