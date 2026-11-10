@@ -1783,7 +1783,7 @@
 {"date": "2026-11-09", "espn_id": 3904098, "nhl_id": 8478458, "name": "Jack Roslovic", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.698, "p_dress": 0.5}
 {"date": "2026-11-09", "espn_id": 3151187, "nhl_id": 8478010, "name": "Brayden Point", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.78, "p_dress": 0.15}
 {"date": "2026-11-10", "espn_id": 2591155, "nhl_id": 8475810, "name": "Bryan Rust", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.127, "p_dress": 0.127, "first": "INJURY_RESERVE"}
-{"date": "2026-11-10", "espn_id": 5161, "nhl_id": 8475168, "name": "Matt Duchene", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.1, "p_dress": 0.1, "first": "INJURY_RESERVE"}
+{"date": "2026-11-10", "espn_id": 5161, "nhl_id": 8475168, "name": "Matt Duchene", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.1, "p_dress": 0.0, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 5275337, "nhl_id": 8485395, "name": "James Hagens", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.566, "p_dress": 0.25, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 2967072, "nhl_id": 8476539, "name": "Jonathan Marchessault", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.427, "p_dress": 0.427, "first": "DAY_TO_DAY"}
 {"date": "2026-11-10", "espn_id": 4874721, "nhl_id": 8482667, "name": "William Eklund", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.062, "p_dress": 0.0, "first": "INJURY_RESERVE"}
@@ -1806,12 +1806,11 @@
 {"date": "2026-11-10", "espn_id": 5216882, "nhl_id": 8484797, "name": "Konsta Helenius", "status": "OUT", "long_note": true, "p_dress_table": 0.226, "p_dress": 0.2, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 2993474, "nhl_id": 8476925, "name": "Colton Sissons", "status": "OUT", "long_note": false, "p_dress_table": 0.88, "p_dress": 0.35, "first": "DAY_TO_DAY"}
 {"date": "2026-11-10", "espn_id": 4393049, "nhl_id": 8478133, "name": "Jake Evans", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.954, "p_dress": 0.85, "first": "DAY_TO_DAY"}
-{"date": "2026-11-10", "espn_id": 5103599, "nhl_id": 8483771, "name": "Sandis Vilmanis", "status": "OUT", "long_note": false, "p_dress_table": 0.333, "p_dress": 0.333, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 3041999, "nhl_id": 8477499, "name": "Rasmus Ristolainen", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.099, "p_dress": 0.099, "first": "INJURY_RESERVE"}
+{"date": "2026-11-10", "espn_id": 5103599, "nhl_id": 8483771, "name": "Sandis Vilmanis", "status": "OUT", "long_note": false, "p_dress_table": 0.333, "p_dress": 0.333, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 5334662, "nhl_id": 8485957, "name": "Alberts Smits", "status": "OUT", "long_note": true, "p_dress_table": 0.355, "p_dress": 0.2, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 4392260, "nhl_id": 8479576, "name": "Vincent Desharnais", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.154, "p_dress": 0.0, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 3042014, "nhl_id": 8477503, "name": "Max Domi", "status": "OUT", "long_note": true, "p_dress_table": 0.1, "p_dress": 0.05, "first": "OUT"}
-{"date": "2026-11-10", "espn_id": 4874940, "nhl_id": 8482703, "name": "Colton Dach", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.507, "p_dress": 0.507, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 3025524, "nhl_id": 8477845, "name": "Trevor van Riemsdyk", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.13, "p_dress": 0.13, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 5149180, "nhl_id": 8484240, "name": "Tom Willander", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.297, "p_dress": 0.297, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 3024798, "nhl_id": 8477220, "name": "Nate Schmidt", "status": "OUT", "long_note": true, "p_dress_table": 0.231, "p_dress": 0.0, "first": "OUT"}
@@ -1821,15 +1820,16 @@
 {"date": "2026-11-10", "espn_id": 5080179, "nhl_id": 8483455, "name": "Isaac Howard", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.12, "p_dress": 0.12, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 4419778, "nhl_id": 8483546, "name": "Marshall Rifai", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.131, "p_dress": 0.131, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 4587854, "nhl_id": 8481014, "name": "Alexander Romanov", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.086, "p_dress": 0.086, "first": "INJURY_RESERVE"}
+{"date": "2026-11-10", "espn_id": 4874723, "nhl_id": 8482699, "name": "Dylan Guenther", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.952, "p_dress": 0.85, "first": "DAY_TO_DAY"}
 {"date": "2026-11-10", "espn_id": 2976833, "nhl_id": 8476853, "name": "Morgan Rielly", "status": "OUT", "long_note": false, "p_dress_table": 0.267, "p_dress": 0.267, "first": "DAY_TO_DAY"}
-{"date": "2026-11-10", "espn_id": 5560, "nhl_id": 8475692, "name": "Mats Zuccarello", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.195, "p_dress": 0.195, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 4233648, "nhl_id": 8479977, "name": "Kailer Yamamoto", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.35, "p_dress": 0.25, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 4233536, "nhl_id": 8480036, "name": "Miro Heiskanen", "status": "DAY_TO_DAY", "long_note": false, "p_dress_table": 0.203, "p_dress": 0.203, "first": "DAY_TO_DAY"}
 {"date": "2026-11-10", "espn_id": 4565225, "nhl_id": 8481524, "name": "Bowen Byram", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.163, "p_dress": 0.163, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 3114777, "nhl_id": 8477955, "name": "Jared McCann", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.297, "p_dress": 0.297, "first": "INJURY_RESERVE"}
-{"date": "2026-11-10", "espn_id": 3114743, "nhl_id": 8477942, "name": "Kevin Fiala", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.1, "p_dress": 0.1, "first": "INJURY_RESERVE"}
+{"date": "2026-11-10", "espn_id": 3114743, "nhl_id": 8477942, "name": "Kevin Fiala", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.1, "p_dress": 0.1, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 2590829, "nhl_id": 8476312, "name": "Josh Manson", "status": "INJURY_RESERVE", "long_note": true, "p_dress_table": 0.081, "p_dress": 0.081, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 3114755, "nhl_id": 8477946, "name": "Dylan Larkin", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.349, "p_dress": 0.25, "first": "INJURY_RESERVE"}
+{"date": "2026-11-10", "espn_id": 3652964, "nhl_id": 8478396, "name": "Noah Hanifin", "status": "OUT", "long_note": false, "p_dress_table": 0.932, "p_dress": 0.35, "first": "OUT"}
 {"date": "2026-11-10", "espn_id": 3735, "nhl_id": 8474141, "name": "Patrick Kane", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.36, "p_dress": 0.25, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 5216860, "nhl_id": 8484984, "name": "Ivan Demidov", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.1, "p_dress": 0.1, "first": "INJURY_RESERVE"}
 {"date": "2026-11-10", "espn_id": 3899946, "nhl_id": 8478445, "name": "Mathew Barzal", "status": "INJURY_RESERVE", "long_note": false, "p_dress_table": 0.1, "p_dress": 0.1, "first": "INJURY_RESERVE"}
