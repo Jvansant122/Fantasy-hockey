@@ -549,6 +549,7 @@ function why(p) {
       : `his own ${own} pts per start` + (w.gs != null ? ` (${w.gs} start${w.gs === 1 ? "" : "s"} this season, pulled toward his last-season rate, or 2.9 without one)` : "")
         // this week's starts keep 0.4 of his gap to the league rate before the line or schedule (findings 231, 242)
         + (own !== fpg ? `; this week priced at ${fpg}: pulled most of the way to the league's rate (this week's starts keep 0.4 of his gap)${by ? `, then ${by}` : ""}` : ""));
+    if (w.week_scale) parts.push(`goalie Week ratings are scaled ×${w.week_scale} so they sit beside skaters' (goalies' weeks ran about a fifth under their ratings)`);  // handoff 895
     // what the Season rating is made of (handoff 605)
     // no share of the remaining starts: the rating is 0, not 0.32 (handoff 636)
     if (w.g_news_lift) parts.push("ESPN lists him injured, but Daily Faceoff's news in the last 4 days is positive (activated, practising, backing up or returning): such goalies started about 1 in 4 next games and 4 in 10 after, so he gets some starts back");

@@ -52,6 +52,16 @@ INJURY_DRESS = {"OUT": 0.0, "INJURY_RESERVE": 0.0, "SUSPENSION": 0.0, "DAY_TO_DA
 # an ESPN OUT / IR goalie whose latest Daily Faceoff item, at most 4 days old, has list 869-a positive wording started the
 # next game 25%, the second 43% (163 items, 2021-26): his factor next game / later in place of 0.0 (findings 4721, handoff 869)
 GOALIE_NEWS_LIFT, GOALIE_NEWS_DAYS = (0.4, 0.65), 4
+# ESPN OUT / IR goalie with no such news and no season-ending note: 2021-26 base start rates, next game / later games, in
+# place of 0 (live Oct 12-Nov 9: 28 team-nights started by an OUT / IR goalie shown 0; ledger 2060, findings 4750, 896)
+GOALIE_NO_NEWS_FACTORS = {"OUT": (0.08, 0.12), "INJURY_RESERVE": (0.01, 0.04)}
+# listed goalies' unconfirmed nightly start chances x these at 0 / 1 / 2 / 3+ days ahead: a goalie not on the list (a
+# call-up, a claim) started 2.1 / 1.7 / 2.9 / 4.2% of team-nights live (findings 4750, handoff 897); confirmed stay 1 / 0
+UNLISTED_RESERVE = (0.98, 0.98, 0.97, 0.96)
+# goalie Week value beside skaters' (the Week's analogue of 271's Season scale): live slope of week points on it 0.77
+# [0.56, 0.97]; x 0.8 the held-out pick on the 2023-26 pooled board every season, live weekly Spearman 0.652 -> 0.661, 4 of
+# 4 weeks (findings 4750, handoff 895). On his points a start, so Week = pts/start x starts still holds (P4)
+GOALIE_WEEK_SCALE = 0.8
 # hunt 15 round 3 goalie news (findings 4727, 4731, 4736, 4737, 4747): a day-to-day goalie started the next game 4%, then
 # 14%, 25% (883: his factor 0.1 / 0.25 / 0.45, then day-to-day's 0.5); a goalie call-up within 72 h of the next game: the
 # no. 1 started 47% vs 59% (878: x0.8 for 3 games) and the recalled goalie 9 / 13 / 10% (his cap); after a goalie
@@ -3334,6 +3344,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             rest = sum(v for gid, v in q.items() if gid != lk)
             q = {gid: LIKELY_START_FLOOR if gid == lk else (v / rest * (1 - LIKELY_START_FLOOR) if rest else 0.0)
                  for gid, v in q.items()}
+        if d not in confirmed and lk not in q:  # room for a goalie not on the list (897); a Likely tag is its own calibration (617)
+            r = UNLISTED_RESERVE[min(max((day - today).days, 0), len(UNLISTED_RESERVE) - 1)]  # by days ahead
+            q = {gid: v * r for gid, v in q.items()}
         if d in confirmed:
             p = q = {gid: float(gid == confirmed[d]) for gid in cands}
             if confirmed[d] == shift_gid:  # confirmed back in net: his last result no longer says anything
@@ -3901,6 +3914,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     goalie_lift[pid] = GOALIE_NEWS_LIFT
                 elif p["injury"] == "DAY_TO_DAY":
                     goalie_lift[pid] = GOALIE_DTD_FACTORS  # handoff 883
+                elif p["injury"] in GOALIE_NO_NEWS_FACTORS and pid not in goalie_gone:
+                    goalie_lift[pid] = GOALIE_NO_NEWS_FACTORS[p["injury"]]  # handoff 896
     g_news = goalie_news_moves(dfo_news, rosters, sched, starts_by_team, today, now_utc, week_starts)
     for p in players:  # ESPN cleared him in the last 7 days and he has not started since (handoff 884)
         pid = match(p) if p["pos"] == "G" and not p.get("injury") and p["id"] in flagged else None
@@ -4063,6 +4078,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             why["p_today_pre"] = round(goalie_today.get(pid, 0.0), 2) if pid else 0.0
             why["exp_starts"] = round(starts, 2)  # after tonight's start, waivers and news (findings 182)
             exp_games = starts  # ESPN injury already applied in goalie_starts, where his starts go to his partner
+            fpg *= GOALIE_WEEK_SCALE  # beside skaters' Week values (handoff 895)
+            why["week_scale"] = GOALIE_WEEK_SCALE
+            if "line" in why:
+                why["line"]["pps"] = round(why["line"]["pps"] * GOALIE_WEEK_SCALE, 2)
             p_dress = None
         else:
             gl = by_player.get(pid, []) if pid else []

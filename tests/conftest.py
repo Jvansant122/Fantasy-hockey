@@ -33,3 +33,12 @@ def reopen_tonight(d):
             dress = p.get("cr_dress_next") or 0
             p.update(today_start=None, games_left=1, cr_games=dress, cr=round((p.get("cr_fpg") or 0) * dress, 2))
     return d
+
+
+@pytest.fixture
+def whole_goalie_nights(monkeypatch):
+    """Tests of one goalie-start rule that check exact sums or logit steps: no reserve for unlisted goalies (handoff 897)
+    and ESPN OUT / IR goalies with no news at 0 (896), so one starter fills each game."""
+    import rating
+    monkeypatch.setattr(rating, "UNLISTED_RESERVE", (1.0,) * len(rating.UNLISTED_RESERVE))
+    monkeypatch.setattr(rating, "GOALIE_NO_NEWS_FACTORS", {k: (0.0, 0.0) for k in rating.GOALIE_NO_NEWS_FACTORS})
