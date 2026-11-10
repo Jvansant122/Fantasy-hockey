@@ -4255,10 +4255,16 @@ def test_day_to_day_by_news_age_and_flag_age(monkeypatch, tmp_path):
     log = tmp_path / "injury_log.jsonl"
     rows = [(d, s) for d, s in (("2026-11-06", "OUT"), ("2026-11-07", "DAY_TO_DAY"), ("2026-11-08", "DAY_TO_DAY"),
                                 ("2026-11-09", "DAY_TO_DAY"))]
-    log.write_text("".join(json.dumps({"date": d, "espn_id": 5, "status": s}) + "\n" for d, s in rows)
-                   + json.dumps({"date": "2026-11-08", "espn_id": 6, "status": "DAY_TO_DAY"}) + "\n")
+    log.write_text("".join(json.dumps({"date": d, "espn_id": 5, "status": "OUT", "first": s}) + "\n" for d, s in rows)
+                   + json.dumps({"date": "2026-11-08", "espn_id": 6, "status": "DAY_TO_DAY", "first": "DAY_TO_DAY"}) + "\n"
+                   + json.dumps({"date": "2026-11-09", "espn_id": 8, "status": "DAY_TO_DAY"}) + "\n")  # before "first"
     monkeypatch.setattr(rating, "INJURY_LOG", log)
-    assert rating.dtd_flag_days(date(2026, 11, 10)) == {5: 3, 6: 0}
+    assert rating.dtd_flag_days(date(2026, 11, 10)) == {5: 3, 6: 0}  # the day's first run counts, not its last (848)
+    # a later run the same day keeps the first run's status
+    rating.write_injury_log([{"date": "2026-11-09", "espn_id": 5, "status": "SUSPENSION"}, {"date": "2026-11-09", "espn_id": 9,
+                             "status": "OUT"}], date(2026, 11, 9))
+    rows9 = [json.loads(x) for x in log.read_text().splitlines() if '"2026-11-09"' in x]
+    assert {(r["espn_id"], r["status"], r["first"]) for r in rows9} == {(5, "SUSPENSION", "DAY_TO_DAY"), (9, "OUT", "OUT")}
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
             "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["dtd"]}]},
