@@ -637,6 +637,8 @@ def test_roster_size_rules(browser, server, data):
     for p in d["players"]:
         if p["owner"] in ("freeagent", "waivers") and p["pos"] != "G":
             p["games_left"] = 0
+        if p["owner"] in ("freeagent", "waivers") and p["pos"] == "G" and p.get("cr_why"):
+            p["cr_why"].pop("tonight", None)  # no stream tonight: a no-drop stream would take the open spot (handoff 900)
     team = d["teams"][0]
     roster = _mine(d, team)
     sk = [p for p in roster if p["pos"] != "G"]

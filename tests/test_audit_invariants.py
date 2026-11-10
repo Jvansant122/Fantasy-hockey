@@ -707,3 +707,47 @@ def test_stream_add_is_one_of_the_days_adds(browser, server, data):  # noqa: F81
     ctx.close()
     assert streamed, "no team was offered tonight's stream"
     assert not bad, bad[:4]
+
+
+def test_no_drop_adds_stay_within_the_open_roster_spots(browser, server, data):  # noqa: F811
+    """Adds the cards offer with no drop (a Stream goalie with no 'roster is full' drop, Best moves' 'Add ... open roster
+    spot' lines) never outnumber the open roster spots plus the Drop list's IR moves (handoff 900: one open spot, a
+    confirmed free-agent starter tonight, and Best moves also said 'no drop needed', 23 players)."""
+    if not data.get("rated"):
+        pytest.skip("needs rated data")
+    d, tonight = _thursday(data)
+    fa_g = next((p for p in d["players"] if p["pos"] == "G" and p["owner"] == "freeagent" and p.get("cr_matched")
+                 and tonight in (p.get("nights") or [])), None)
+    if fa_g is None:
+        pytest.skip("no free-agent goalie plays tonight")
+    fa_g.update(injury=None, games_left=max(fa_g["games_left"], 1), today_start=d["first_start"])
+    fa_g["cr_why"]["tonight"] = {"starting": True, "status": "Confirmed"}
+    for p in d["players"]:  # free-agent skaters well worth adding, so Best moves wants the open spot too
+        if p["pos"] != "G" and p["owner"] == "freeagent" and not p.get("injury") and p.get("cr_season") is not None:
+            p["cr_season"] += 2.0
+    for t in d["teams"]:
+        t["moves_used"] = 0
+    d["roster_max"] = max(sum(not p["ir"] for p in _mine(d, t)) for t in d["teams"]) + 1  # the fullest team: one open spot
+    ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 10))
+    bad, streamed_free = [], 0
+    for t in d["teams"]:
+        page.select_option("#team", str(t["id"]))
+        n = page.evaluate("""() => {
+          const cards = [...document.querySelectorAll('#upgrades .upg')];
+          const find = re => cards.find(c => re.test(c.innerText));
+          const lines = c => c ? [...c.querySelectorAll(':scope > div:not(.sub)')].map(l => l.innerText) : [];
+          const st = find(/^Stream a goalie tonight/);
+          return {
+            stream: st && lines(st).some(l => l.includes('starts tonight')) && !/roster is full/.test(st.innerText) ? 1 : 0,
+            best: lines(find(/^Best \\d* ?moves?\\b/)).filter(l => /^Add /.test(l)).length,
+            ir: lines(find(/^Drop list/)).filter(l => l.includes('Move to IR')).length,
+          };
+        }""")
+        open_spots = d["roster_max"] - sum(not p["ir"] for p in _mine(d, t))
+        streamed_free += n["stream"]
+        if n["stream"] + n["best"] > open_spots + n["ir"]:
+            bad.append((t["id"], open_spots, n))
+    assert errors == []
+    ctx.close()
+    assert streamed_free, "no team was offered tonight's stream into an open spot"
+    assert not bad, bad[:4]

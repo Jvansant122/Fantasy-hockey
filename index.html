@@ -1035,6 +1035,7 @@ function renderUpgrades() {
       ${sit.map(p => `<div>${esc(p.name)} <span class="sub">${esc(p.team)} · ${conf(p) ? "confirmed" : `${Math.round((p.cr_why?.p_today ?? 0) * 100)}% to start`}</span> <b>${fmt(gv(p))}</b><span class="sub"> expected pts tonight</span></div>`).join("")}</div>`);
   }
   const best = [];  // Best moves' picks: the IR stash's move budget counts them (findings 240)
+  let bestFree = freeSpots;  // open roster spots left for Best moves once tonight's stream takes one (handoff 900)
   let lastCall = false, spare = 2;  // ... and the moves Best moves holds for nights to come (findings 291 (1))
   let nextGames = () => null, oneWeek = false;  // games next week, per player, in one-week matchups (handoffs 801-803)
   // Best moves (research findings 68, handoff 488): the biggest keep-value gains over your weakest player at the same position
@@ -1097,6 +1098,9 @@ function renderUpgrades() {
     // the stream's drop, now that Best moves has picked its own (handoff 600)
     // the stream's drop is taken: the IR stash names another (handoff 635)
     if (streamIdx >= 0 && streamNeed) { cards[streamIdx] = streamCard(); if (streamDrop) dropped.add(streamDrop.id); }
+    // a stream with no drop fills an open roster spot, so Best moves' no-drop adds start after it (handoff 900: both said
+    // "no drop needed" with one open spot, 23 players)
+    if (streamIdx >= 0 && streamNeed && !streamDrop && freeSpots > 0) bestFree = freeSpots - 1;
     // every move left is held for the nights to come, though a free agent would gain: say so instead of going quiet
     if (!best.length && !lastCall && realLeft != null && movesLeft > 0 && spare === 0 && pick())
       // one moves-left count, the same as the Stream card's, and never folded away on phones (handoff 471)
@@ -1105,7 +1109,7 @@ function renderUpgrades() {
     const expire = lastCall ? `You have ${realLeft} move${realLeft === 1 ? "" : "s"} left, and the ones you don't use expire tonight: add next week's targets ${puck ? `before the first game at ${puck.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" })} ET` : "before ESPN's overnight rollover (about 3 AM ET)"}. Next Monday starts with a fresh set.` : "";
     // an open roster spot takes the first adds with no drop (findings 231); the ranking stays the same
     if (best.length) cards.push(`<div class="upg"><b>Best ${best.length === 1 ? "move" : `${best.length} moves`}</b> <span class="drop">· largest ${noMoves ? "Season-rating" : "keep-value"} gains over your weakest player at the same position${best.some(m => nextGames(m.fa) != null) ? `, counting next week's games, since ${lastCall ? "tonight's adds play from Monday" : "this week's adds stay on your roster into next week"}` : ""}.</span>${expire ? `<div class="sub warn">${esc(expire)}</div>` : ""}
-      ${best.map((m, i) => i < freeSpots
+      ${best.map((m, i) => i < bestFree
         ? `<div>Add ${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))}${nextGames(m.fa) != null ? ` · ${nextGames(m.fa)} game${nextGames(m.fa) === 1 ? "" : "s"} next week` : ""} (open roster spot, no drop needed)</span> <span class="up">${gainTxt(m.gain)}</span></div>`
         : `<div>${esc(m.fa.name)}${wvTag(m.fa)} <span class="sub">${esc(m.fa.team)} ${esc(posTxt(m.fa))}${nextGames(m.fa) != null ? ` · ${nextGames(m.fa)} game${nextGames(m.fa) === 1 ? "" : "s"} next week` : ""} for ${esc(m.worst.name)}</span> <span class="up">${gainTxt(m.gain)}</span>${!noMoves && d.rated && !d.final_matchup ? `<span class="sub"> (${score(m.fa) - score(m.worst) >= 0 ? "+" : "−"}${fmt(Math.abs(score(m.fa) - score(m.worst)))} this week)</span>` : ""}${chips.has(m.worst.id) ? '<span class="sub"> · try trading him first (Trade ideas)</span>' : ""}</div>`).join("")}</div>`);
   }
@@ -1128,7 +1132,7 @@ function renderUpgrades() {
   // and each named once: a free agent can be added only once (handoff 476)
   const named = new Set([...swapSubs, ...best.map(m => m.fa.id)]);
   // a player another card already drops points to that card, not a different add (handoff 647)
-  for (const m of best.slice(freeSpots)) planFor.set(m.worst.id, `Best move: ${m.fa.name} for him`);
+  for (const m of best.slice(bestFree)) planFor.set(m.worst.id, `Best move: ${m.fa.name} for him`);
   if (streamDrop && streamNeed) planFor.set(streamDrop.id, "Stream card: drop him for tonight's goalie");
   // Stash an injured free agent in an open IR slot (research findings 74): 1.5+ pts/game players only. Not in the final: no later weeks
   // with a full roster it takes a drop and a second move (findings 231)
