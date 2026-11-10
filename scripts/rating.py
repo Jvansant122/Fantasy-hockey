@@ -3352,9 +3352,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
 
 
 def write_injury_log(entries, today):
-    """Keep the last INJURY_LOG_DAYS days of ESPN injury overrides, one line per player per day, to check them later."""
+    """Keep the last INJURY_LOG_DAYS days of ESPN injury overrides, one line per player per day, to check them later.
+    Each row carries "first": his status on the day's first run that logged him, since a later run replaces the row and
+    ESPN often moves a day-to-day player to OUT on game day (handoff 848)."""
     cutoff = (today - timedelta(days=INJURY_LOG_DAYS)).isoformat()
-    kept = []
+    kept, first = [], {}
     if INJURY_LOG.exists():
         for line in INJURY_LOG.read_text().splitlines():
             try:
@@ -3363,6 +3365,9 @@ def write_injury_log(entries, today):
                 continue
             if cutoff <= row.get("date", "") < today.isoformat():
                 kept.append(row)
+            elif row.get("date", "")[:10] == today.isoformat() and row.get("espn_id") is not None:
+                first.setdefault(row["espn_id"], row.get("first") or row.get("status"))
+    entries = [{**e, "first": first.get(e.get("espn_id")) or e.get("status")} for e in entries]
     INJURY_LOG.write_text("".join(json.dumps(r) + "\n" for r in kept + entries))
 
 
@@ -3382,7 +3387,8 @@ def recently_flagged(today):
 
 
 def dtd_flag_days(today):
-    """{ESPN id: days in a row before today the injury log has him DAY_TO_DAY} (handoff 881)."""
+    """{ESPN id: days in a row before today the injury log has him DAY_TO_DAY on the day's first run} (handoffs 881, 848).
+    Rows from before "first" was logged don't count, so the floor waits for that history."""
     days = {}
     if INJURY_LOG.exists():
         for line in INJURY_LOG.read_text().splitlines():
@@ -3390,7 +3396,7 @@ def dtd_flag_days(today):
                 row = json.loads(line)
             except ValueError:
                 continue
-            if row.get("status") == "DAY_TO_DAY" and row.get("espn_id") is not None and row.get("date", "")[:10] < today.isoformat():
+            if row.get("first") == "DAY_TO_DAY" and row.get("espn_id") is not None and row.get("date", "")[:10] < today.isoformat():
                 days.setdefault(row["espn_id"], set()).add(row["date"][:10])
     out = {}
     for aid, ds in days.items():
