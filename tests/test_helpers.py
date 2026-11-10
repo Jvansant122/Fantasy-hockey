@@ -589,3 +589,23 @@ def test_mid_season_rookies_get_a_wider_season_range():
     assert r(41) == mid  # the late rule's own 1.10
     vet = lambda gp: m.season_range(1.5, False, 80, 80, age=29, gp_now=gp)[0]
     assert vet(20) == vet(0)
+
+
+def test_premerge_diff_flags_past_merge_wave_bugs():
+    """The pre-merge check (Jack, Nov 10) flags the two Nov 9 bugs: Duchene (IR after surgery) lifted by a send-down, and
+    McCarron's 0.65 floor shown as 0.5; an unchanged player and a kept floor pass."""
+    import premerge_diff
+
+    def pl(i, name, q, injury=None, **why):
+        return {"id": i, "name": name, "team": "DET", "cr": 1.0, "cr_dress_next": q, "games_left": 3, "injury": injury,
+                "cr_why": why}
+    base = {"players": [pl(1, "Matt Duchene", 0.0, "INJURY_RESERVE", back={"games": "10"}), pl(2, "Michael McCarron", 0.26,
+                        "DAY_TO_DAY"), pl(3, "Steady Eddie", 0.8), pl(4, "Kept Floor", 0.5, "DAY_TO_DAY")]}
+    new = {"players": [pl(1, "Matt Duchene", 0.6, "INJURY_RESERVE", back={"games": "10"}, team_move="down"),
+                       pl(2, "Michael McCarron", 0.5, "DAY_TO_DAY", dtd_age={"days": 2, "floor": 0.65}),
+                       pl(3, "Steady Eddie", 0.81), pl(4, "Kept Floor", 0.65, "DAY_TO_DAY", dtd_age={"days": 2, "floor": 0.65})]}
+    lines = premerge_diff.review(new, base)
+    assert any("Duchene" in x and "long-term" in x for x in lines)
+    assert any("McCarron" in x and "floor not kept" in x for x in lines)
+    assert not any("Steady Eddie" in x or "Kept Floor" in x for x in lines)
+    assert premerge_diff.review(base, base) == []
