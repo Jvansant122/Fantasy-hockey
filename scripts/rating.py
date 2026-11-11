@@ -332,6 +332,10 @@ RELIEF_LOGITS, RELIEF_RARE_LOGIT, RELIEF_RARE_STARTS = (1.2, 0.9), 0.5, 3
 # 2021: earliest Likely tag per team-game started 2,954 of 2,989 = 98.8%, 97.6-99.7% every season; Brier 0.01304 at 0.95,
 # 0.01158 at 0.985 (findings 4719, handoff 867)
 LIKELY_START_FLOOR = 0.985
+# Daily Faceoff's plain projected starter for tonight (status not Confirmed or Likely): his start odds x1.65 when the run
+# is 8 h or more before the puck, x3.32 under 8 h; the team's other goalies share the rest. Today's game only, before the
+# night-2 cap and the Likely floor (handoff 849, findings 4535: day-split hold-out Brier .1544 -> .1496 and .1720 -> .1433)
+DFO_PICK_ODDS = ((8, 1.65), (0, 3.32))
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -3037,7 +3041,8 @@ def back_from_spell(seq, gid):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None, g_news=None):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None, g_news=None,
+                  dfo_pick=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -3065,7 +3070,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     given, the no. 1's logit moves by opponent, form and days of rest (findings 262-263).
     start_wins: whether each start in starts_by_team[team] was a win; with it the no. 1's next game moves after a split
     back-to-back and after a backup's last result (findings 264-267).
-    off_movers: goalies with starts last season whose last team then wasn't this one (handoff 731)."""
+    off_movers: goalies with starts last season whose last team then wasn't this one (handoff 731).
+    dfo_pick: (goalie id, odds multiplier) for Daily Faceoff's unconfirmed projected starter in today's game (handoff 849)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -3326,6 +3332,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             was = q[no1]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_RUN_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
+        if dfo_pick and d == today.isoformat() and dfo_pick[0] in q and 0 < q[dfo_pick[0]] < 1 and len(q) > 1:  # handoff 849
+            gid, m = dfo_pick
+            was = q[gid]
+            now = m * was / (1 - was + m * was)
+            q = {g: now if g == gid else v * (1 - now) / (1 - was) for g, v in q.items()}
         fav = max(q, key=q.get) if q else None
         if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav != (likely_dfo or {}).get(d) and len(q) > 1:  # handoff 833
             rest = sum(v for gid, v in q.items() if gid != fav)
@@ -3935,6 +3946,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                   and WEEKDAYS[date.fromisoformat(d).weekday()] == item.get("day")), None)
         if d and d not in (confirmed.get(team) or {}) and d not in (likely.get(team) or {}):
             likely.setdefault(team, {})[d] = int(gid)
+    dfo_pick = {}  # Daily Faceoff's unconfirmed projected starter tonight, by hours to the puck (handoff 849)
+    for team, (who, status) in tonight.items():
+        puck = parse_utc(week_starts.get((team, today.isoformat())))
+        if isinstance(who, int) and status not in ("Confirmed", "Likely") and puck is not None and puck > now_utc:
+            hours = (puck - now_utc).total_seconds() / 3600
+            dfo_pick[team] = (who, next(m for h, m in DFO_PICK_ODDS if hours >= h))
     goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
@@ -3950,7 +3967,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
                             likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo,
                             {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team}, inj_lift=goalie_lift,
-                            g_news=g_news.get(team))  # handoffs 731, 869, 878, 883, 884, 894
+                            g_news=g_news.get(team), dfo_pick=dfo_pick.get(team))  # handoffs 731, 869, 878, 883, 884, 894, 849
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
@@ -3995,6 +4012,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if team in tonight and pid:
                 who, status = tonight[team]
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
+                if team in dfo_pick:
+                    why["tonight"]["odds"] = dfo_pick[team][1]
             # tonight's game already started: its start is no longer ahead (findings 178)
             started = game_started(p)
             # or he's on waivers until a later day, so today's game isn't his: its start comes off before the waiver

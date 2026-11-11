@@ -4324,3 +4324,35 @@ def test_goalie_week_fixes(monkeypatch, tmp_path):
     assert sum(out.values()) == pytest.approx(0.98 + 0.98 + 0.97 + 0.96, abs=1e-6)
     conf = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), {"2026-10-22": 1})
     assert sum(conf.values()) == pytest.approx(1 + 0.98 + 0.97 + 0.96, abs=1e-6)
+
+
+@pytest.mark.usefixtures("whole_goalie_nights")
+def test_unconfirmed_projected_starter_gets_better_odds_tonight(monkeypatch, tmp_path):
+    """Handoff 849: Daily Faceoff's plain projected starter (not Confirmed or Likely) multiplies his start odds tonight by
+    1.65 at 8 h or more before the puck and 3.32 under 8 h; later games and the team's total stay put."""
+    from datetime import datetime, timezone
+    starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}
+
+    def go(status, hour):
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(starts=starts))
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / f"log_{status}_{hour}.jsonl")
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
+        games = [{"team": "TOR", "goalie": "Joseph Woll", "status": status}] if status else []
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [{"date": "2026-10-09", "games": games}])
+        return {p["name"]: p["cr_why"] for p in players}
+
+    base, early, late = go(None, 12), go("Unconfirmed", 12), go("Unconfirmed", 18)
+    odds = lambda q: q / (1 - q)
+    w0, w1, w2 = (r["Joseph Woll"]["p_today"] for r in (base, early, late))
+    assert 0 < w0 < 1
+    assert odds(w1) / odds(w0) == pytest.approx(1.65, rel=0.03)  # 11 h before the 7 PM ET puck
+    assert odds(w2) / odds(w0) == pytest.approx(3.32, rel=0.03)  # 5 h before
+    assert early["Joseph Woll"]["tonight"] == {"starting": True, "status": "Unconfirmed", "odds": 1.65}
+    assert early["Anthony Stolarz"]["tonight"]["odds"] == 1.65 and not early["Anthony Stolarz"]["tonight"]["starting"]
+    for r in (early, late):  # the team's night still sums to one start; Sunday's game is left alone
+        assert r["Joseph Woll"]["p_today"] + r["Anthony Stolarz"]["p_today"] == pytest.approx(1, abs=0.01)
+        assert r["Joseph Woll"]["exp_starts"] - r["Joseph Woll"]["p_today"] == \
+            pytest.approx(base["Joseph Woll"]["exp_starts"] - w0, abs=0.02)  # both rounded
+    after = go("Unconfirmed", 23)  # the puck has dropped: nothing changes
+    assert "odds" not in after["Joseph Woll"]["tonight"]
