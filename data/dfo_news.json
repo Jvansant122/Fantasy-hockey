@@ -1,5 +1,5 @@
 {
-"fetched": "2026-11-12T22:11Z",
+"fetched": "2026-11-12T23:56Z",
 "general": {},
 "goalie-start": {
 "8475809": {
@@ -46,6 +46,10 @@
 "day": "thursday",
 "ts": "2026-11-12T17:39:57"
 },
+"8479312": {
+"day": "thursday",
+"ts": "2026-11-12T23:06:45"
+},
 "8479361": {
 "day": "monday",
 "ts": "2026-11-10T02:03:59"
@@ -90,6 +94,10 @@
 "day": "wednesday",
 "ts": "2026-11-11T20:02:22"
 },
+"8483710": {
+"day": "thursday",
+"ts": "2026-11-12T22:41:32"
+},
 "8484170": {
 "day": "thursday",
 "ts": "2026-11-11T17:40:10"
@@ -127,8 +135,8 @@
 "ts": "2026-11-12T19:16:50"
 },
 "n:logan thompson:WSH": {
-"day": "tuesday",
-"ts": "2026-11-10T20:40:11"
+"day": "thursday",
+"ts": "2026-11-12T23:01:19"
 },
 "n:mackenzie blackwood:COL": {
 "day": "tuesday",
@@ -614,16 +622,15 @@
 "ts": "2026-10-13T18:15:54"
 },
 "8476826": {
-"day": "sunday",
+"day": "thursday",
 "indefinite": false,
 "nf": [
-"ir",
-"ret"
+"out"
 ],
-"ret_m": true,
+"out_w": true,
 "season": false,
 "surgery": false,
-"ts": "2026-11-08T20:22:38"
+"ts": "2026-11-12T23:41:56"
 },
 "8476853": {
 "indefinite": false,
@@ -1340,15 +1347,15 @@
 "ts": "2026-09-23T18:24:24"
 },
 "8478416": {
-"day": "tuesday",
-"firm": true,
+"day": "thursday",
 "indefinite": false,
 "nf": [
-"ret"
+"out"
 ],
+"out_w": true,
 "season": false,
 "surgery": false,
-"ts": "2026-11-03T16:39:41"
+"ts": "2026-11-12T23:35:11"
 },
 "8478421": {
 "indefinite": false,
@@ -1529,15 +1536,16 @@
 "ts": "2026-11-01T20:33:06"
 },
 "8478519": {
-"day": "friday",
-"firm": true,
+"day": "thursday",
 "indefinite": false,
 "nf": [
-"ret"
+"dtd",
+"out"
 ],
+"out_w": true,
 "season": false,
 "surgery": false,
-"ts": "2026-10-23T18:14:19"
+"ts": "2026-11-12T23:35:39"
 },
 "8478542": {
 "day": "monday",
@@ -1626,12 +1634,15 @@
 "ts": "2026-10-20T15:21:30"
 },
 "8479312": {
+"gp": true,
 "indefinite": false,
-"nf": [],
+"nf": [
+"ir",
+"ret"
+],
 "season": false,
 "surgery": false,
-"trav": true,
-"ts": "2026-11-10T17:37:49"
+"ts": "2026-11-12T20:51:51"
 },
 "8479324": {
 "day": "wednesday",
@@ -1772,14 +1783,15 @@
 },
 "8479772": {
 "day": "thursday",
-"gtd": true,
+"exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [
-"gtd"
+"ret"
 ],
 "season": false,
 "surgery": false,
-"ts": "2026-11-12T16:37:14"
+"ts": "2026-11-12T23:33:48"
 },
 "8479941": {
 "indefinite": false,
@@ -4883,6 +4895,13 @@
 "ret"
 ],
 "ts": "2026-11-08T20:22:38"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"ts": "2026-11-12T23:41:56"
 }
 ],
 "8476853": [
@@ -6536,6 +6555,13 @@
 "ret"
 ],
 "ts": "2026-11-03T16:39:41"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"ts": "2026-11-12T23:35:11"
 }
 ],
 "8478421": [
@@ -6991,6 +7017,14 @@
 "ret"
 ],
 "ts": "2026-10-23T18:14:19"
+},
+{
+"cat": "inj",
+"f": [
+"dtd",
+"out"
+],
+"ts": "2026-11-12T23:35:39"
 }
 ],
 "8478542": [
@@ -7220,6 +7254,13 @@
 "cat": "inj",
 "f": [],
 "ts": "2026-11-10T17:37:49"
+},
+{
+"cat": "inj",
+"f": [
+"ret"
+],
+"ts": "2026-11-12T20:51:51"
 },
 {
 "cat": "move",
@@ -7646,6 +7687,13 @@
 "gtd"
 ],
 "ts": "2026-11-12T16:37:14"
+},
+{
+"cat": "inj",
+"f": [
+"ret"
+],
+"ts": "2026-11-12T23:33:48"
 }
 ],
 "8479941": [
@@ -10662,6 +10710,13 @@
 "up"
 ],
 "ts": "2026-11-08T15:06:31"
+},
+{
+"cat": "move",
+"f": [
+"down"
+],
+"ts": "2026-11-12T22:16:06"
 }
 ],
 "8483435": [
@@ -13251,10 +13306,10 @@
 },
 "8483433": {
 "cond": false,
-"down": false,
+"down": true,
 "team": "FLA",
-"ts": "2026-11-08T15:06:31",
-"up": true
+"ts": "2026-11-12T22:16:06",
+"up": false
 },
 "8483435": {
 "cond": false,
