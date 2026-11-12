@@ -3338,7 +3338,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             now = m * was / (1 - was + m * was)
             q = {g: now if g == gid else v * (1 - now) / (1 - was) for g, v in q.items()}
         fav = max(q, key=q.get) if q else None
-        if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav != (likely_dfo or {}).get(d) and len(q) > 1:  # handoff 833
+        picked = dfo_pick[0] if dfo_pick and d == today.isoformat() else None  # DFO's unconfirmed pick isn't capped (910)
+        if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav not in ((likely_dfo or {}).get(d), picked) \
+                and len(q) > 1:  # handoff 833
             rest = sum(v for gid, v in q.items() if gid != fav)
             q = {gid: NIGHT2_CAP if gid == fav else (v / rest * (1 - NIGHT2_CAP) if rest else (1 - NIGHT2_CAP) / (len(q) - 1))
                  for gid, v in q.items()}

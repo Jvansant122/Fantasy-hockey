@@ -3878,6 +3878,9 @@ def test_night_2_favourite_capped_until_daily_faceoff_says(monkeypatch):
     assert capped[1] == pytest.approx(cap) and sum(capped.values()) == pytest.approx(1.0)
     assert capped[2] / capped[3] == pytest.approx(free[2] / free[3])
     assert night(cap, likely_dfo={"2026-10-22": 1})[1] > cap
+    # Daily Faceoff's unconfirmed pick isn't capped either (handoff 910): he keeps 849's lift; the other goalie still is
+    assert night(cap, dfo_pick=(1, 1.65))[1] > free[1]
+    assert night(cap, dfo_pick=(2, 1.65))[1] == pytest.approx(cap)
     assert night(cap, confirmed={"2026-10-22": 1})[1] == 1.0
     assert night(cap, "2026-10-20")[1] == pytest.approx(night(1.0, "2026-10-20")[1])  # a day off: not night 2
 
