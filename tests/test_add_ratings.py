@@ -4359,3 +4359,28 @@ def test_unconfirmed_projected_starter_gets_better_odds_tonight(monkeypatch, tmp
             pytest.approx(base["Joseph Woll"]["exp_starts"] - w0, abs=0.02)  # both rounded
     after = go("Unconfirmed", 23)  # the puck has dropped: nothing changes
     assert "odds" not in after["Joseph Woll"]["tonight"]
+
+
+@pytest.mark.parametrize("status", ["OUT", "INJURY_RESERVE"])
+def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path, status):
+    """Handoffs 816, 911: an ESPN OUT / IR skater who sat his last game but is in Daily Faceoff's fresh lines gets at least
+    0.8 next game with practising / return news this week, else 0.4; not when ESPN's note has long wording; later games kept."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    base_news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {}}
+    prac = {**base_news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
+
+    def matthews(dfo_out=False, news=base_news, injuries=None):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=status), dfo_out=dfo_out, today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news, injuries=injuries)["Auston Matthews"]
+    off = matthews(dfo_out=None)
+    assert off["sat_last"] and off["cr_dress_next"] < 0.4 and "ir_lines" not in off["cr_why"]
+    lines = matthews()
+    assert lines["cr_dress_next"] == pytest.approx(rating.OUT_IR_IN_LINES_NEXT[1], abs=0.005)
+    assert lines["cr_why"]["ir_lines"] == {"floor": 0.4, "news": False}
+    practising = matthews(news=prac)
+    assert practising["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005 and practising["cr_why"]["ir_lines"]["news"]
+    assert lines["cr_games"] - lines["cr_dress_next"] == pytest.approx(off["cr_games"] - off["cr_dress_next"], abs=0.03)
+    surgery = [{"athlete_id": 101, "short": "Matthews will undergo surgery.", "long": "", "date": "2026-10-08T12:00Z"}]
+    assert "ir_lines" not in matthews(injuries=surgery)["cr_why"]

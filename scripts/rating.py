@@ -78,6 +78,11 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
+# an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
+# week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
+# 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
+OUT_IR_IN_LINES_NEXT = (0.8, 0.4)
+OUT_IR_RETURN_WHY = ("practising", "set to return", "could return")
 # a goalie with Daily Faceoff injury news since his last appearance (at most 14 days old, no return or full-practice
 # words): his start odds are multiplied by 0.2 for the team's next game and 0.35 later, min with ESPN's factor (handoff 679, findings 503)
 GOALIE_DFO_INJ_CAPS, GOALIE_DFO_INJ_DAYS = (0.2, 0.35), 14
@@ -4499,6 +4504,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # (handoff 846); past the day-to-day cap for the lift, which is what was measured
             dtd_z, dtd_age = 0.0, None
             news_floor = None  # a news floor on his next game that holds through the lineup step (handoffs 881, 893)
+            ir_lines = None
+            if p.get("injury") in ("OUT", "INJURY_RESERVE") and p.get("dfo_out") is False and sat_last and per_game and not skip \
+                    and not (note and note["long"]):  # in Daily Faceoff's lines despite ESPN's tag (handoffs 816, 911)
+                fl = OUT_IR_IN_LINES_NEXT[0] if set(OUT_IR_RETURN_WHY) & set(wk_why) else OUT_IR_IN_LINES_NEXT[1]
+                if per_game[0] < fl:
+                    per_game = [fl] + per_game[1:]
+                    dress_next = news_floor = fl
+                    ir_lines = {"floor": fl, "news": fl == OUT_IR_IN_LINES_NEXT[0]}
             if p.get("injury") == "DAY_TO_DAY" and per_game and not skip and per_game[0] > 0.001:
                 shift = (sum(wk_news) / len(wk_news) if wk_news else 0.0) + wk_down
                 bare = set(wk_why) == {"day-to-day"}
@@ -4692,6 +4705,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["dtd_news_z"] = dtd_z  # day-to-day next-game shift from Daily Faceoff news or its absence (handoff 846)
             if dtd_age:
                 why["dtd_age"] = dtd_age  # day-to-day by the news's age or the flag's (handoff 881)
+            if ir_lines:
+                why["ir_lines"] = ir_lines  # ESPN out or IR, but in Daily Faceoff's lines (handoffs 816, 911)
             if hurt_exit is not None and short_shift is None:
                 why["hurt_exit"] = hurt_exit  # left his last game at an injury stoppage (handoff 855)
             if short_shift is not None:
