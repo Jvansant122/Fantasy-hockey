@@ -35,6 +35,7 @@ def test_tonight_cap_only_for_regulars_with_no_status(monkeypatch, tmp_path, who
     of tonight's lines keeps the chance he has with no lines read."""
     team, pid, pos = {"Charlie McAvoy": ("BOS", 104, "D"),
                       "Auston Matthews": ("TOR", 101, "C")}[who]
+    monkeypatch.setattr(rating, "SCRATCH_ABSENT_LOGIT", 0.0)  # a scratch left out again has his own shift (818), not this cap
     out = _one(monkeypatch, tmp_path, who, dict(espn(pid, who, team, pos, **kw), today_start=TONIGHT, dfo_out=True), fake)
     none = _one(monkeypatch, tmp_path, who, dict(espn(pid, who, team, pos, **kw), today_start=TONIGHT, dfo_out=None), fake)
     assert none["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP  # the cap would bind

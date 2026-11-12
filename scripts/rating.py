@@ -78,6 +78,17 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
+# an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
+# week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
+# 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
+OUT_IR_IN_LINES_NEXT = (0.8, 0.4)
+# a day-to-day skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.85 next game, over fresh
+# day-to-day news (handoffs 815, 912: 9 of 9 dressed at 0.41 shown Oct 20-Nov 11; Brier .366 -> .023)
+DTD_IN_LINES_NEXT = 0.85
+# a skater with no ESPN status who sat his last game and is left out of Daily Faceoff's fresh lines again: next game's logit
+# (handoffs 818, 912: since Oct 30, 123 player-games .207 shown vs .106 dressed; Brier .0773 -> .0666)
+SCRATCH_ABSENT_LOGIT = -0.75
+OUT_IR_RETURN_WHY = ("practising", "set to return", "could return")
 # a goalie with Daily Faceoff injury news since his last appearance (at most 14 days old, no return or full-practice
 # words): his start odds are multiplied by 0.2 for the team's next game and 0.35 later, min with ESPN's factor (handoff 679, findings 503)
 GOALIE_DFO_INJ_CAPS, GOALIE_DFO_INJ_DAYS = (0.2, 0.35), 14
@@ -332,6 +343,10 @@ RELIEF_LOGITS, RELIEF_RARE_LOGIT, RELIEF_RARE_STARTS = (1.2, 0.9), 0.5, 3
 # 2021: earliest Likely tag per team-game started 2,954 of 2,989 = 98.8%, 97.6-99.7% every season; Brier 0.01304 at 0.95,
 # 0.01158 at 0.985 (findings 4719, handoff 867)
 LIKELY_START_FLOOR = 0.985
+# Daily Faceoff's plain projected starter for tonight (status not Confirmed or Likely): his start odds x1.65 when the run
+# is 8 h or more before the puck, x3.32 under 8 h; the team's other goalies share the rest. Today's game only, before the
+# night-2 cap and the Likely floor (handoff 849, findings 4535: day-split hold-out Brier .1544 -> .1496 and .1720 -> .1433)
+DFO_PICK_ODDS = ((8, 1.65), (0, 3.32))
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -3037,7 +3052,8 @@ def back_from_spell(seq, gid):
 
 def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates, today, confirmed=None, today_p=None, season_share=None,
                   injury=None, last_start=None, movers=(), relief=(), season_out=(), by_date=None, save_pcts=None, pulled=(), road=(),
-                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None, g_news=None):
+                  opp=None, nonwins=None, start_wins=None, likely_dfo=None, ages=None, team_left=0, dfo_inj=None, off_movers=(), inj_lift=None, g_news=None,
+                  dfo_pick=None):
     """Expected starts in the rest of this week for each goalie on the team.
 
     starts_by_team: this season's starter per team game, oldest first, as (date, goalie id).
@@ -3065,7 +3081,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     given, the no. 1's logit moves by opponent, form and days of rest (findings 262-263).
     start_wins: whether each start in starts_by_team[team] was a win; with it the no. 1's next game moves after a split
     back-to-back and after a backup's last result (findings 264-267).
-    off_movers: goalies with starts last season whose last team then wasn't this one (handoff 731)."""
+    off_movers: goalies with starts last season whose last team then wasn't this one (handoff 731).
+    dfo_pick: (goalie id, odds multiplier) for Daily Faceoff's unconfirmed projected starter in today's game (handoff 849)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -3326,8 +3343,15 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             was = q[no1]
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_RUN_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
+        if dfo_pick and d == today.isoformat() and dfo_pick[0] in q and 0 < q[dfo_pick[0]] < 1 and len(q) > 1:  # handoff 849
+            gid, m = dfo_pick
+            was = q[gid]
+            now = m * was / (1 - was + m * was)
+            q = {g: now if g == gid else v * (1 - now) / (1 - was) for g, v in q.items()}
         fav = max(q, key=q.get) if q else None
-        if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav != (likely_dfo or {}).get(d) and len(q) > 1:  # handoff 833
+        picked = dfo_pick[0] if dfo_pick and d == today.isoformat() else None  # DFO's unconfirmed pick isn't capped (910)
+        if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav not in ((likely_dfo or {}).get(d), picked) \
+                and len(q) > 1:  # handoff 833
             rest = sum(v for gid, v in q.items() if gid != fav)
             q = {gid: NIGHT2_CAP if gid == fav else (v / rest * (1 - NIGHT2_CAP) if rest else (1 - NIGHT2_CAP) / (len(q) - 1))
                  for gid, v in q.items()}
@@ -3935,6 +3959,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                   and WEEKDAYS[date.fromisoformat(d).weekday()] == item.get("day")), None)
         if d and d not in (confirmed.get(team) or {}) and d not in (likely.get(team) or {}):
             likely.setdefault(team, {})[d] = int(gid)
+    dfo_pick = {}  # Daily Faceoff's unconfirmed projected starter tonight, by hours to the puck (handoff 849)
+    for team, (who, status) in tonight.items():
+        puck = parse_utc(week_starts.get((team, today.isoformat())))
+        if isinstance(who, int) and status not in ("Confirmed", "Likely") and puck is not None and puck > now_utc:
+            hours = (puck - now_utc).total_seconds() / 3600
+            dfo_pick[team] = (who, next(m for h, m in DFO_PICK_ODDS if hours >= h))
     goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
@@ -3950,7 +3980,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                             {d: opp_str.get(o, 0.0) for d, o, _ in week_games.get(team, [])}, nonwins, start_wins.get(team, []),
                             likely.get(team), g_ages, max(SEASON_GAMES - len(team_games.get(team, [])), 0), goalie_dfo,
                             {gid for gid, t in prev_goalies.items() if t[0] and t[4] and t[4] != team}, inj_lift=goalie_lift,
-                            g_news=g_news.get(team))  # handoffs 731, 869, 878, 883, 884, 894
+                            g_news=g_news.get(team), dfo_pick=dfo_pick.get(team))  # handoffs 731, 869, 878, 883, 884, 894, 849
         # a goalie gets his numbers from the team whose roster lists him, not whichever team ran last (findings 160)
         mine = set(roster_g) | set((confirmed.get(team) or {}).values())
         # (decided once: deciding per output let the first one claim the goalie and dropped his Season, findings 230)
@@ -3995,6 +4025,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if team in tonight and pid:
                 who, status = tonight[team]
                 why["tonight"] = {"starting": who == pid, "status": status or "Unconfirmed"}
+                if team in dfo_pick:
+                    why["tonight"]["odds"] = dfo_pick[team][1]
             # tonight's game already started: its start is no longer ahead (findings 178)
             started = game_started(p)
             # or he's on waivers until a later day, so today's game isn't his: its start comes off before the waiver
@@ -4438,6 +4470,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     boost_wk = BOOST_WEEK_W * (logit(b) - logit(sum(live) / len(live)))
             has_news = bool(wk_news) and (any(wk_news) or bool(wk_down))
             post_g = [post_z + (by_res[min(k, len(by_res) - 1)] if by_res else 0.0) for k in range(len(per_game))]
+            scratch_absent = sat_last and not p.get("injury") and p.get("dfo_out") is True and bool(per_game) \
+                and base_dress is not None  # handoff 818, where the shift below runs
+            if scratch_absent:
+                post_g[0] += SCRATCH_ABSENT_LOGIT
             if per_game and base_dress is not None and (boost_wk is not None or has_news or any(post_g)):
                 shift = lambda news, down, extra=post_g: [
                     q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + (boost_wk or 0.0) + e + z + down))), cap, inj)
@@ -4478,6 +4514,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # (handoff 846); past the day-to-day cap for the lift, which is what was measured
             dtd_z, dtd_age = 0.0, None
             news_floor = None  # a news floor on his next game that holds through the lineup step (handoffs 881, 893)
+            ir_lines, dtd_lines = None, False
+            if p.get("injury") in ("OUT", "INJURY_RESERVE") and p.get("dfo_out") is False and sat_last and per_game and not skip \
+                    and not (note and note["long"]):  # in Daily Faceoff's lines despite ESPN's tag (handoffs 816, 911)
+                # a stated timeline or long-absence wording in the same news keeps him at the lower floor (Pulock, Nov 12:
+                # practising, but out three weeks from Nov 4)
+                fl = OUT_IR_IN_LINES_NEXT[0] if set(OUT_IR_RETURN_WHY) & set(wk_why) \
+                    and not {"timeline", "long absence"} & set(wk_why) else OUT_IR_IN_LINES_NEXT[1]
+                if per_game[0] < fl:
+                    per_game = [fl] + per_game[1:]
+                    dress_next = news_floor = fl
+                    ir_lines = {"floor": fl, "news": fl == OUT_IR_IN_LINES_NEXT[0]}
             if p.get("injury") == "DAY_TO_DAY" and per_game and not skip and per_game[0] > 0.001:
                 shift = (sum(wk_news) / len(wk_news) if wk_news else 0.0) + wk_down
                 bare = set(wk_why) == {"day-to-day"}
@@ -4500,6 +4547,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     q0 = min(max(per_game[0], 1e-3), 1 - 1e-3)
                     per_game = [round(1 / (1 + math.exp(-(math.log(q0 / (1 - q0)) + dtd_z))), 4)] + per_game[1:]
                     dress_next = per_game[0]
+            if p.get("injury") == "DAY_TO_DAY" and sat_last and p.get("dfo_out") is False and per_game and not skip:
+                # day-to-day but back in Daily Faceoff's fresh lines: the lines win over fresh day-to-day news (815, 912)
+                if per_game[0] < DTD_IN_LINES_NEXT:
+                    per_game = [DTD_IN_LINES_NEXT] + per_game[1:]
+                    dress_next = per_game[0]
+                news_floor = max(news_floor or 0.0, DTD_IN_LINES_NEXT)
+                dtd_age = None if dtd_age and dtd_age.get("cap") is not None else dtd_age
+                dtd_lines = True
             # Daily Faceoff's call on his next game: Line Change and injury news (handoffs 850, 854, 856, 858, 859); his own
             # first game must be the team's next
             lc = None
@@ -4671,6 +4726,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["dtd_news_z"] = dtd_z  # day-to-day next-game shift from Daily Faceoff news or its absence (handoff 846)
             if dtd_age:
                 why["dtd_age"] = dtd_age  # day-to-day by the news's age or the flag's (handoff 881)
+            if ir_lines:
+                why["ir_lines"] = ir_lines  # ESPN out or IR, but in Daily Faceoff's lines (handoffs 816, 911)
+            if dtd_lines:
+                why["dtd_lines"] = DTD_IN_LINES_NEXT  # day-to-day, but back in Daily Faceoff's lines (815, 912)
+            if scratch_absent and gl and pid:
+                why["scratch_absent"] = True  # sat, and left out of Daily Faceoff's lines again (818, 912)
             if hurt_exit is not None and short_shift is None:
                 why["hurt_exit"] = hurt_exit  # left his last game at an injury stoppage (handoff 855)
             if short_shift is not None:

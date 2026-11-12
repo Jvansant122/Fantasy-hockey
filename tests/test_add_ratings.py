@@ -948,7 +948,11 @@ def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         out[dfo] = players[0]
     assert out[None]["sat_last"] and out[None]["cr_dress_next"] < rating.DFO_LINEUP_NEXT
-    assert out[True]["cr"] == out[None]["cr"]
+    assert out[True]["cr"] < out[None]["cr"] and out[True]["cr_why"]["scratch_absent"]  # left out again (handoff 818)
+    monkeypatch.setattr(rating, "SCRATCH_ABSENT_LOGIT", 0.0)
+    players = [dict(espn(104, "Charlie McAvoy", "BOS", "D"), dfo_out=True)]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    assert players[0]["cr"] == out[None]["cr"]  # nothing else reads his absence from the lines
     assert out[False]["cr_dress_next"] >= rating.DFO_LINEUP_NEXT and out[False]["cr"] > out[None]["cr"]
     assert out[False]["sat_last"]  # still true; the page's Mid-week swaps card reads dfo_out to leave him out
     # no game left this week: Daily Faceoff's lines don't make one up (findings 182)
@@ -3878,6 +3882,9 @@ def test_night_2_favourite_capped_until_daily_faceoff_says(monkeypatch):
     assert capped[1] == pytest.approx(cap) and sum(capped.values()) == pytest.approx(1.0)
     assert capped[2] / capped[3] == pytest.approx(free[2] / free[3])
     assert night(cap, likely_dfo={"2026-10-22": 1})[1] > cap
+    # Daily Faceoff's unconfirmed pick isn't capped either (handoff 910): he keeps 849's lift; the other goalie still is
+    assert night(cap, dfo_pick=(1, 1.65))[1] > free[1]
+    assert night(cap, dfo_pick=(2, 1.65))[1] == pytest.approx(cap)
     assert night(cap, confirmed={"2026-10-22": 1})[1] == 1.0
     assert night(cap, "2026-10-20")[1] == pytest.approx(night(1.0, "2026-10-20")[1])  # a day off: not night 2
 
@@ -4324,3 +4331,90 @@ def test_goalie_week_fixes(monkeypatch, tmp_path):
     assert sum(out.values()) == pytest.approx(0.98 + 0.98 + 0.97 + 0.96, abs=1e-6)
     conf = rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, dates, date(2026, 10, 22), {"2026-10-22": 1})
     assert sum(conf.values()) == pytest.approx(1 + 0.98 + 0.97 + 0.96, abs=1e-6)
+
+
+@pytest.mark.usefixtures("whole_goalie_nights")
+def test_unconfirmed_projected_starter_gets_better_odds_tonight(monkeypatch, tmp_path):
+    """Handoff 849: Daily Faceoff's plain projected starter (not Confirmed or Likely) multiplies his start odds tonight by
+    1.65 at 8 h or more before the puck and 3.32 under 8 h; later games and the team's total stay put."""
+    from datetime import datetime, timezone
+    starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}
+
+    def go(status, hour):
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(starts=starts))
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / f"log_{status}_{hour}.jsonl")
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
+        games = [{"team": "TOR", "goalie": "Joseph Woll", "status": status}] if status else []
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [{"date": "2026-10-09", "games": games}])
+        return {p["name"]: p["cr_why"] for p in players}
+
+    base, early, late = go(None, 12), go("Unconfirmed", 12), go("Unconfirmed", 18)
+    odds = lambda q: q / (1 - q)
+    w0, w1, w2 = (r["Joseph Woll"]["p_today"] for r in (base, early, late))
+    assert 0 < w0 < 1
+    assert odds(w1) / odds(w0) == pytest.approx(1.65, rel=0.03)  # 11 h before the 7 PM ET puck
+    assert odds(w2) / odds(w0) == pytest.approx(3.32, rel=0.03)  # 5 h before
+    assert early["Joseph Woll"]["tonight"] == {"starting": True, "status": "Unconfirmed", "odds": 1.65}
+    assert early["Anthony Stolarz"]["tonight"]["odds"] == 1.65 and not early["Anthony Stolarz"]["tonight"]["starting"]
+    for r in (early, late):  # the team's night still sums to one start; Sunday's game is left alone
+        assert r["Joseph Woll"]["p_today"] + r["Anthony Stolarz"]["p_today"] == pytest.approx(1, abs=0.01)
+        assert r["Joseph Woll"]["exp_starts"] - r["Joseph Woll"]["p_today"] == \
+            pytest.approx(base["Joseph Woll"]["exp_starts"] - w0, abs=0.02)  # both rounded
+    after = go("Unconfirmed", 23)  # the puck has dropped: nothing changes
+    assert "odds" not in after["Joseph Woll"]["tonight"]
+
+
+@pytest.mark.parametrize("status", ["OUT", "INJURY_RESERVE"])
+def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path, status):
+    """Handoffs 816, 911: an ESPN OUT / IR skater who sat his last game but is in Daily Faceoff's fresh lines gets at least
+    0.8 next game with practising / return news this week, else 0.4; not when ESPN's note has long wording; later games kept."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    base_news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {}}
+    prac = {**base_news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
+
+    def matthews(dfo_out=False, news=base_news, injuries=None):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=status), dfo_out=dfo_out, today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news, injuries=injuries)["Auston Matthews"]
+    off = matthews(dfo_out=None)
+    assert off["sat_last"] and off["cr_dress_next"] < 0.4 and "ir_lines" not in off["cr_why"]
+    lines = matthews()
+    assert lines["cr_dress_next"] == pytest.approx(rating.OUT_IR_IN_LINES_NEXT[1], abs=0.005)
+    assert lines["cr_why"]["ir_lines"] == {"floor": 0.4, "news": False}
+    practising = matthews(news=prac)
+    assert practising["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005 and practising["cr_why"]["ir_lines"]["news"]
+    assert lines["cr_games"] - lines["cr_dress_next"] == pytest.approx(off["cr_games"] - off["cr_dress_next"], abs=0.03)
+    timeline = {**base_news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["limited"], "tl": 21.0}]}}
+    tl = matthews(news=timeline)  # practising, but out 3 weeks: the lower floor, not 0.8
+    assert tl["cr_dress_next"] >= 0.4 - 0.005 and tl["cr_why"].get("ir_lines", {}).get("floor") != 0.8
+    assert tl["cr_dress_next"] < rating.OUT_IR_IN_LINES_NEXT[0] - 0.05
+    surgery = [{"athlete_id": 101, "short": "Matthews will undergo surgery.", "long": "", "date": "2026-10-08T12:00Z"}]
+    assert "ir_lines" not in matthews(injuries=surgery)["cr_why"]
+
+
+def test_day_to_day_in_lines_floor_and_scratch_left_out(monkeypatch, tmp_path):
+    """Handoffs 815, 818 (912): a day-to-day skater who sat his last game but is in Daily Faceoff's fresh lines gets at least
+    DTD_IN_LINES_NEXT next game, even over fresh day-to-day news; an untagged scratch left out of the fresh lines again gets
+    SCRATCH_ABSENT_LOGIT on his next game only."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    fresh = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
+             "recent": {"1": [{"ts": "2026-10-09T12:00:00", "cat": "inj", "f": ["dtd"]}]}}
+
+    def matthews(injury=None, dfo_out=None, news=None):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=dfo_out, today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news)["Auston Matthews"]
+    off = matthews("DAY_TO_DAY")
+    assert off["sat_last"] and off["cr_dress_next"] < rating.DTD_IN_LINES_NEXT and "dtd_lines" not in off["cr_why"]
+    on = matthews("DAY_TO_DAY", dfo_out=False, news=fresh)
+    assert on["cr_dress_next"] >= rating.DTD_IN_LINES_NEXT - 0.005 and on["cr_why"]["dtd_lines"] == rating.DTD_IN_LINES_NEXT
+    assert "cap" not in (on["cr_why"].get("dtd_age") or {})
+    lo = lambda q: math.log(q / (1 - q))
+    plain, absent = matthews(), matthews(dfo_out=True)
+    assert absent["cr_why"].get("scratch_absent") and "scratch_absent" not in plain["cr_why"]
+    assert lo(absent["cr_dress_next"]) == pytest.approx(lo(plain["cr_dress_next"]) + rating.SCRATCH_ABSENT_LOGIT, abs=0.15)
+    later = lambda r: r["cr_games"] - r["cr_dress_next"]
+    assert later(absent) == pytest.approx(later(plain), abs=0.03)
