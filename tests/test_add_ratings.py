@@ -4386,6 +4386,10 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     practising = matthews(news=prac)
     assert practising["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005 and practising["cr_why"]["ir_lines"]["news"]
     assert lines["cr_games"] - lines["cr_dress_next"] == pytest.approx(off["cr_games"] - off["cr_dress_next"], abs=0.03)
+    timeline = {**base_news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["limited"], "tl": 21.0}]}}
+    tl = matthews(news=timeline)  # practising, but out 3 weeks: the lower floor, not 0.8
+    assert tl["cr_dress_next"] >= 0.4 - 0.005 and tl["cr_why"].get("ir_lines", {}).get("floor") != 0.8
+    assert tl["cr_dress_next"] < rating.OUT_IR_IN_LINES_NEXT[0] - 0.05
     surgery = [{"athlete_id": 101, "short": "Matthews will undergo surgery.", "long": "", "date": "2026-10-08T12:00Z"}]
     assert "ir_lines" not in matthews(injuries=surgery)["cr_why"]
 

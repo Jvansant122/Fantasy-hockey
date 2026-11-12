@@ -4517,7 +4517,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             ir_lines, dtd_lines = None, False
             if p.get("injury") in ("OUT", "INJURY_RESERVE") and p.get("dfo_out") is False and sat_last and per_game and not skip \
                     and not (note and note["long"]):  # in Daily Faceoff's lines despite ESPN's tag (handoffs 816, 911)
-                fl = OUT_IR_IN_LINES_NEXT[0] if set(OUT_IR_RETURN_WHY) & set(wk_why) else OUT_IR_IN_LINES_NEXT[1]
+                # a stated timeline or long-absence wording in the same news keeps him at the lower floor (Pulock, Nov 12:
+                # practising, but out three weeks from Nov 4)
+                fl = OUT_IR_IN_LINES_NEXT[0] if set(OUT_IR_RETURN_WHY) & set(wk_why) \
+                    and not {"timeline", "long absence"} & set(wk_why) else OUT_IR_IN_LINES_NEXT[1]
                 if per_game[0] < fl:
                     per_game = [fl] + per_game[1:]
                     dress_next = news_floor = fl
