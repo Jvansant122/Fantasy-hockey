@@ -4418,3 +4418,15 @@ def test_day_to_day_in_lines_floor_and_scratch_left_out(monkeypatch, tmp_path):
     assert lo(absent["cr_dress_next"]) == pytest.approx(lo(plain["cr_dress_next"]) + rating.SCRATCH_ABSENT_LOGIT, abs=0.15)
     later = lambda r: r["cr_games"] - r["cr_dress_next"]
     assert later(absent) == pytest.approx(later(plain), abs=0.03)
+
+
+def test_idle_cap_keeps_the_lines_floor(monkeypatch, tmp_path):
+    """Handoffs 817, 913: a skater idle long enough for the idle cap (0.5), who sat his last game but is in Daily Faceoff's
+    fresh lines, still gets DFO_LINEUP_NEXT next game (Korchinski 0.20, Clifton 0.50 published; both played)."""
+    monkeypatch.setattr(rating, "IDLE_DAYS", 0)  # McAvoy's last game (Oct 5) counts as idle: cap 0.5
+    monkeypatch.setattr(rating, "RETURN_NEXT_MIN", 1.01)  # no later-games floor (857), which would lift the caps itself
+    def mcavoy(dfo):
+        return rate(monkeypatch, tmp_path, [dict(espn(104, "Charlie McAvoy", "BOS", "D"), dfo_out=dfo)])["Charlie McAvoy"]
+    idle = mcavoy(None)
+    assert idle["sat_last"] and idle["cr_dress_next"] <= rating.IDLE_DRESS[0][1] + 0.001
+    assert mcavoy(False)["cr_dress_next"] >= rating.DFO_LINEUP_NEXT - 0.001

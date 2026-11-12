@@ -163,6 +163,7 @@ RECALL_NEW_DRESS, RECALL_NEW_DAYS = 0.25, 7
 PREV_MIN_GP = 10  # under this many games last season, use the season before (findings 216)
 # no NHL game in 14+ days while the team kept playing: cap by days since his last game (handoff 19-20 audit, re-test 3)
 IDLE_DRESS = ((21, 0.5), (35, 0.2))  # 15-21 days 0.5, 22-35 days 0.2, longer 0.1
+IDLE_DAYS = 14  # idle longer than this: the idle cap applies
 
 
 def idle_cap(days):
@@ -4189,7 +4190,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 p_dress = base_dress = model.dress_logit(df_w) if df_ else model.dress(f["dressed3"], f["dressed10"])
                 last = gl[-1]["date"] if gl else None
                 idle = None if last is None else (today - date.fromisoformat(last)).days
-                if len(tg) >= 3 and (idle is None or idle > 14):
+                if len(tg) >= 3 and (idle is None or idle > IDLE_DAYS):
                     cap = NOT_PLAYING_DRESS if idle is None else idle_cap(idle)
                     p_dress = min(p_dress, cap)
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
@@ -4664,6 +4665,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     lead_caps[0] = min(lead_caps[0], DFO_ABSENT_TODAY_CAP)
                 trips = after_trip(venue.get(espn_team, {}), all_dates)
                 line_floor = DFO_LINEUP_NEXT if in_lines else dfo_in_lines_floor(boost_q) if dfo_in else None  # 844, 850
+                if caps and line_floor is not None and not (lc and lc["cap"]):  # the idle cap mustn't clip the lines' floor (817, 913)
+                    caps[0] = max(caps[0], line_floor)
                 week_rows.append({"p": p, "pid": pid, "team": espn_team if traded else gl[-1]["team"], "isD": gl[-1].get("pos") == "D",
                                   "dates": wk_dates, "per_game": list(per_game), "before": list(per_game), "caps": caps,
                                   "missed": missed, "after_trip": trips[skip:skip + own_n], "j0": skip,
