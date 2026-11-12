@@ -170,6 +170,10 @@ def idle_cap(days):
     return next((cap for top, cap in IDLE_DRESS if days <= top), NOT_PLAYING_DRESS)
 ET = ZoneInfo("America/New_York")
 LINE_PPS_SLOPE = 3.0  # points per start per unit of win probability implied by the moneyline (findings section 30; 4.1 -> 3.0 on 7,650 lined starts 2022-26, findings 4702, handoff 852)
+# a skater's game with a pre-game moneyline (tonight's): points x (1 + SKATER_LINE_B x (team win chance - 0.5)) (handoff
+# 914, findings 4559: live Oct 16-Nov 11, 5,368 player-games, actual/site 0.988 under .40 to 1.134 at .60+; b 0.52, 95%
+# 0.22-0.86; held-out MSE 1.6688 -> 1.6624, per-night rank .2946 -> .3023)
+SKATER_LINE_B = 0.5
 # this week's starts (not Season): his own points per start already carry his team's strength, so with the line or the
 # schedule on top strong teams' starters read ~0.5 high. Week pricing keeps 0.4 of his gap to the league's rate this season
 # (shrunk over 300 starts to 2.89), and the schedule slope drops to 3.0. 13,120 starts 2021-26: per-start error -1.5% and
@@ -4117,6 +4121,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["line"]["pps"] = round(why["line"]["pps"] * GOALIE_WEEK_SCALE, 2)
             p_dress = None
         else:
+            skip = 0  # his team's games ahead that aren't his (set below when his games are read)
             gl = by_player.get(pid, []) if pid else []
             espn_team = ESPN_TO_NHL.get(p["team"], p["team"])
             team = gl[-1]["team"] if gl else espn_team
@@ -4642,7 +4647,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # in "others"): without it he fell back to the boosted share and moved his teammates (findings 565)
             if gl and pid and (per_game or out_idx):
                 caps = [min(cap, inj)] * len(per_game)
-                if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p) and not skip:
+                if p.get("injury") == "OUT" and not one_game_over and p.get("today_start") and not game_started(p) \
+                and not skip and p.get("owner") != "waivers":
                     caps[0] = min(caps[0], OUT_TODAY_CAP)
                 if dfo_absent and p.get("today_start") and not game_started(p) and not skip:
                     caps[0] = min(caps[0], DFO_ABSENT_TODAY_CAP)
@@ -4818,6 +4824,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             why["rust"] = {"m": rust, "fpg": round(fpg, 2), **({"back": True} if first_back else {})}
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
             fpg *= 1 - (1 - rust) * min(dress_next, exp_games) / exp_games
+        line_t = lines.get(ESPN_TO_NHL.get(p["team"], p["team"])) if p["pos"] != "G" else None
+        if line_t is not None and exp_games > 0 and dress_next and p.get("today_start") and not game_started(p) and not skip:
+            m = 1 + SKATER_LINE_B * (line_t - 0.5)  # tonight's game by the betting line, folded in like rust (handoff 914)
+            why["line"] = {"win_prob": round(line_t, 2), "m": round(m, 3), "pps": round(fpg * m, 2)}
+            why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
+            fpg *= 1 + (m - 1) * min(dress_next, exp_games) / exp_games
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
         p["cr_season"] = round(season, 2)
