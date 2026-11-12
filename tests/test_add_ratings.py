@@ -948,7 +948,11 @@ def test_sat_last_game_but_in_daily_faceoffs_lines(monkeypatch, tmp_path):
         rating.add_ratings(players, 2027, TODAY, MONDAY, [])
         out[dfo] = players[0]
     assert out[None]["sat_last"] and out[None]["cr_dress_next"] < rating.DFO_LINEUP_NEXT
-    assert out[True]["cr"] == out[None]["cr"]
+    assert out[True]["cr"] < out[None]["cr"] and out[True]["cr_why"]["scratch_absent"]  # left out again (handoff 818)
+    monkeypatch.setattr(rating, "SCRATCH_ABSENT_LOGIT", 0.0)
+    players = [dict(espn(104, "Charlie McAvoy", "BOS", "D"), dfo_out=True)]
+    rating.add_ratings(players, 2027, TODAY, MONDAY, [])
+    assert players[0]["cr"] == out[None]["cr"]  # nothing else reads his absence from the lines
     assert out[False]["cr_dress_next"] >= rating.DFO_LINEUP_NEXT and out[False]["cr"] > out[None]["cr"]
     assert out[False]["sat_last"]  # still true; the page's Mid-week swaps card reads dfo_out to leave him out
     # no game left this week: Daily Faceoff's lines don't make one up (findings 182)
@@ -4384,3 +4388,29 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     assert lines["cr_games"] - lines["cr_dress_next"] == pytest.approx(off["cr_games"] - off["cr_dress_next"], abs=0.03)
     surgery = [{"athlete_id": 101, "short": "Matthews will undergo surgery.", "long": "", "date": "2026-10-08T12:00Z"}]
     assert "ir_lines" not in matthews(injuries=surgery)["cr_why"]
+
+
+def test_day_to_day_in_lines_floor_and_scratch_left_out(monkeypatch, tmp_path):
+    """Handoffs 815, 818 (912): a day-to-day skater who sat his last game but is in Daily Faceoff's fresh lines gets at least
+    DTD_IN_LINES_NEXT next game, even over fresh day-to-day news; an untagged scratch left out of the fresh lines again gets
+    SCRATCH_ABSENT_LOGIT on his next game only."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    fresh = {"fetched": "2026-10-09T15:30Z", "roster-moves": {},
+             "recent": {"1": [{"ts": "2026-10-09T12:00:00", "cat": "inj", "f": ["dtd"]}]}}
+
+    def matthews(injury=None, dfo_out=None, news=None):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=dfo_out, today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news)["Auston Matthews"]
+    off = matthews("DAY_TO_DAY")
+    assert off["sat_last"] and off["cr_dress_next"] < rating.DTD_IN_LINES_NEXT and "dtd_lines" not in off["cr_why"]
+    on = matthews("DAY_TO_DAY", dfo_out=False, news=fresh)
+    assert on["cr_dress_next"] >= rating.DTD_IN_LINES_NEXT - 0.005 and on["cr_why"]["dtd_lines"] == rating.DTD_IN_LINES_NEXT
+    assert "cap" not in (on["cr_why"].get("dtd_age") or {})
+    lo = lambda q: math.log(q / (1 - q))
+    plain, absent = matthews(), matthews(dfo_out=True)
+    assert absent["cr_why"].get("scratch_absent") and "scratch_absent" not in plain["cr_why"]
+    assert lo(absent["cr_dress_next"]) == pytest.approx(lo(plain["cr_dress_next"]) + rating.SCRATCH_ABSENT_LOGIT, abs=0.15)
+    later = lambda r: r["cr_games"] - r["cr_dress_next"]
+    assert later(absent) == pytest.approx(later(plain), abs=0.03)

@@ -406,7 +406,7 @@ def warnings(data, prev):
         return bool(was and now) and any(t and was < t <= now for t in locks)
     def news_changed(p, o):  # new Daily Faceoff news or lines since the earlier run explain the move (handoff 845)
         w, v = p.get("cr_why") or {}, o.get("cr_why") or {}
-        return any(w.get(k) != v.get(k) for k in ("week_news", "dfo_inj", "back", "displaced", "line_change", "no_travel", "one_out", "ir_new", "trade", "team_move", "dtd_age", "ir_lines"))  # 850-893, 881, 911
+        return any(w.get(k) != v.get(k) for k in ("week_news", "dfo_inj", "back", "displaced", "line_change", "no_travel", "one_out", "ir_new", "trade", "team_move", "dtd_age", "ir_lines", "dtd_lines", "scratch_absent"))  # 850-893, 881, 911, 912
     jumps = [p["name"] for p, o in same if p.get("cr_dress_next") is not None and o.get("cr_dress_next") is not None
              and p["cr_dress_next"] - o["cr_dress_next"] > 0.15 and p.get("injury") == o.get("injury")
              and p.get("dfo_out") == o.get("dfo_out") and _gp(p) == _gp(o) and not locked_since(p)
