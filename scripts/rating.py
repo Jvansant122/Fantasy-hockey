@@ -3471,8 +3471,11 @@ def dtd_item_hours(dfo_news, pid, start, last_start):
     return (t0 - ts).total_seconds() / 3600
 
 
+RUN_CLOCK = None  # fetch.py pins its run's time here, so a game starting mid-run counts the same everywhere (G6, Nov 12)
+
+
 def utcnow():
-    return datetime.now(timezone.utc)
+    return RUN_CLOCK or datetime.now(timezone.utc)
 
 
 def game_started(p):
