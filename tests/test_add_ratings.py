@@ -4483,7 +4483,17 @@ def test_scoring_forward_later_games_follow_team_strength(monkeypatch, tmp_path)
     assert sk["cr"] > base["cr"] and sk["cr_games"] == base["cr_games"] and sk["cr_season"] == base["cr_season"]
     assert sk["cr"] == pytest.approx(sk["cr_fpg"] * sk["cr_games"], abs=0.02)  # P4
     assert sk["cr_why"]["sched_sk"] <= rating.SKATER_SCHED_B * 0.5
-    assert "sched_sk" not in strong["Charlie McAvoy"]["cr_why"]
+    # every defenseman counts as a top one here too (threshold 0): his games lean the smaller 0.1 (handoff 920)
+    bos = strong["Charlie McAvoy"]["cr_why"]["sched_sk"]
+    assert bos < 0 and abs(bos) <= rating.SKATER_SCHED_B_OTHER * 0.5
+
+
+def test_schedule_weight_by_role():
+    """Handoff 920: top forwards 0.3, top defensemen and depth forwards 0.1, depth defensemen nothing."""
+    top = rating.SKATER_LINE_TOP_FPG
+    assert rating.skater_sched_b("C", top) == rating.SKATER_SCHED_B == 0.3
+    assert rating.skater_sched_b("D", top) == rating.skater_sched_b("LW", top - 0.01) == rating.SKATER_SCHED_B_OTHER == 0.1
+    assert rating.skater_sched_b("D", top - 0.01) == 0
 
 
 def test_scoring_forward_later_games_use_predicted_winners(monkeypatch, tmp_path):
