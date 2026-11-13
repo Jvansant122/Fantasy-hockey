@@ -4484,3 +4484,24 @@ def test_scoring_forward_later_games_follow_team_strength(monkeypatch, tmp_path)
     assert sk["cr"] == pytest.approx(sk["cr_fpg"] * sk["cr_games"], abs=0.02)  # P4
     assert sk["cr_why"]["sched_sk"] <= rating.SKATER_SCHED_B * 0.5
     assert "sched_sk" not in strong["Charlie McAvoy"]["cr_why"]
+
+
+def test_scoring_forward_later_games_use_predicted_winners(monkeypatch, tmp_path):
+    """Handoff 918: a scoring forward's later games take the last Predicted winners run's win chance where it has one
+    (an away game at 1 - p_home), team strength only for games it doesn't price."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "SKATER_LINE_TOP_FPG", 0.0)
+    monkeypatch.setattr(rating, "team_strength", lambda s, season: {})  # no fallback: only the winners rows count
+
+    def run(prev):
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], prev_games=prev)["Auston Matthews"]
+    assert "sched_sk" not in run(None)["cr_why"]
+    rows = []
+    for d in ("2026-10-10", "2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16", "2026-10-17", "2026-10-18"):
+        for opp in "ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LAK MIN MTL NJD NSH NYI NYR OTT PHI PIT SEA SJS STL TBL UTA VAN VGK WPG WSH".split():
+                rows += [{"date": d, "home": "TOR", "away": opp, "p_home": 0.8}, {"date": d, "home": opp, "away": "TOR", "p_home": 0.2}]
+    got = run(rows)["cr_why"]["sched_sk"]
+    assert got == pytest.approx(rating.SKATER_SCHED_B * 0.3, abs=0.001)
+    started = [dict(r, started=True) for r in rows]  # a game already under way is never priced from an old pick
+    assert "sched_sk" not in run(started)["cr_why"]

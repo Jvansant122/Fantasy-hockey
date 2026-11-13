@@ -266,10 +266,16 @@ def test_stream_card_follows_the_first_puck(browser, server, data):
         d = json.loads(json.dumps(data))
         d["updated_date"] = datetime.now(ZoneInfo("America/New_York")).date().isoformat()  # not stale
         d["first_start"], d["move_limit"] = iso(first), None
+        nights = [n["sp"] for n in d["nights"] if not n["past"]]
+        nxt = nights[1] if len(nights) > 1 else None
         for p in d["players"]:
             if p["pos"] == "G" and p.get("cr_why"):
                 p["cr_why"].pop("tonight", None)  # every team has two open G slots tonight
                 p["cr_why"]["p_today"] = p["cr_why"]["p_today_pre"] = 0  # pre: a game already started on the real clock
+                if str(p.get("team_id")) == str(d["teams"][0]["id"]):
+                    # ... and tomorrow: a Friday with both his goalies playing Saturday shows no card after the puck (Nov 13)
+                    p["nights"] = [n for n in p.get("nights") or [] if n != nxt]
+                    p["cr_g_nights"] = {k: v for k, v in (p.get("cr_g_nights") or {}).items() if str(k) != str(nxt)}
         ctx, page, errors = open_page(browser, server, data=d)
         page.select_option("#team", str(d["teams"][0]["id"]))
         assert want in page.locator("#upgrades").inner_text()
