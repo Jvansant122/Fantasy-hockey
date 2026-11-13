@@ -181,6 +181,17 @@ SKATER_LINE_TOP_FPG, SKATER_LINE_B_TOP, SKATER_LINE_B_REST = 1.54, 0.43, 0.06
 # a scoring forward's later games with no line yet: x (1 + SKATER_SCHED_B x (model win chance - 0.5)) from team strength and
 # home ice, as the goalie schedule bonus (handoff 917, findings 4562: MSE 1.54042 -> 1.53947, 3 of 4 seasons)
 SKATER_SCHED_B = 0.3
+# 0.1 for a defenseman at SKATER_LINE_TOP_FPG+ and a forward under it, 0 for other defensemen (handoff 920, findings 4581:
+# leave-one-season-out MSE gain positive in all four 2022-26 seasons for both groups at 0.1, not at 0.2+)
+SKATER_SCHED_B_OTHER = 0.1
+
+
+def skater_sched_b(pos, fpg):
+    """The schedule's weight on a skater's later games with no line yet (handoffs 917, 920)."""
+    top = fpg >= SKATER_LINE_TOP_FPG
+    if pos == "D":
+        return SKATER_SCHED_B_OTHER if top else 0.0
+    return SKATER_SCHED_B if top else SKATER_SCHED_B_OTHER
 
 
 def skater_line_b(pos, fpg):
@@ -4854,7 +4865,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             fpg *= 1 - (1 - rust) * min(dress_next, exp_games) / exp_games
         team_n = ESPN_TO_NHL.get(p["team"], p["team"])
         base_fpg = fpg  # before the line and the schedule
-        top_f = p["pos"] not in ("G", "D") and skater_line_b(p["pos"], fpg) == SKATER_LINE_B_TOP
+        sched_b = skater_sched_b(p["pos"], fpg) if p["pos"] != "G" else 0.0
         line_t = lines.get(team_n) if p["pos"] != "G" else None
         lined = False
         if line_t is not None and exp_games > 0 and dress_next and p.get("today_start") and not game_started(p) and not skip:
@@ -4863,9 +4874,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
             fpg *= 1 + (m - 1) * min(dress_next, exp_games) / exp_games
             lined = True
-        # a scoring forward's games with no line yet follow team strength and home ice (handoff 917)
+        # a skater's games with no line yet follow the win chance, by role (handoffs 917, 920)
         rest = [(d, opp, home) for d, opp, home in week_games.get(team_n, [])
-                if d > today.isoformat() or (d == today.isoformat() and not lined and not game_started(p))] if top_f else []
+                if d > today.isoformat() or (d == today.isoformat() and not lined and not game_started(p))] if sched_b else []
         # each game's win chance from the last Predicted winners run (handoff 918), else team strength and home ice (917)
         chances = [game_win.get((d, team_n, opp, bool(home)))
                    if (d, team_n, opp, bool(home)) in game_win
@@ -4873,7 +4884,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                    for d, opp, home in rest]
         chances = [c for c in chances if c is not None]
         if chances and exp_games > 0 and not skip:
-            ms = sum(SKATER_SCHED_B * (c - 0.5) for c in chances) / len(chances)
+            ms = sum(sched_b * (c - 0.5) for c in chances) / len(chances)
             cover = max(0.0, exp_games - (min(dress_next, exp_games) if lined else 0.0))
             why["sched_sk"] = round(ms, 3)
             why.setdefault("season_pts", round(base_fpg, 2))  # the Season's own points a game stays his full rate (P5)
