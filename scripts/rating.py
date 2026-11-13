@@ -3713,8 +3713,11 @@ def team_venues(goalie_games, week_games):
 
 
 def add_ratings(players, espn_season, today, monday, starters=(), odds=None, injuries=None, weeks=1, reschedule=None,
-                dfo_news=None, winners=None, relineup=None, info=None, starts=None):
+                dfo_news=None, winners=None, relineup=None, info=None, starts=None, prev_games=None):
     """Add Claude Rating fields to each player dict from fetch.py (in place).
+
+    prev_games: the last published Predicted winners games (fetch.previous_winners); their home win chance prices a
+    scoring forward's later games (handoff 918), with team strength as the fallback.
 
     starters: Daily Faceoff starting-goalie pages (leads.fetch_starters) for today and later this week.
     odds: today's betting lines (leads.fetch_odds); they price tonight's goalie starts (research section 30).
@@ -3728,6 +3731,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     if dfo_news and (dfo_news.get("fetched") or "") < (now_utc - timedelta(days=NEWS_STALE_DAYS)).strftime("%Y-%m-%dT%H:%MZ"):
         dfo_news = None
     flagged = recently_flagged(today)  # read before this run rewrites the log
+    game_win = {}  # (date, team, opponent, home) -> the last Predicted winners run's win chance for a game not yet started
+    for g in prev_games or []:
+        if g.get("p_home") is not None and not g.get("started") and g.get("date") and g.get("home") and g.get("away"):
+            game_win[(g["date"], g["home"], g["away"], True)] = g["p_home"]
+            game_win[(g["date"], g["away"], g["home"], False)] = 1 - g["p_home"]
     dtd_days = dtd_flag_days(today)
     stored_notes = load_injury_notes()
     s = requests.Session()
@@ -4853,9 +4861,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         # a scoring forward's games with no line yet follow team strength and home ice (handoff 917)
         rest = [(d, opp, home) for d, opp, home in week_games.get(team_n, [])
                 if d > today.isoformat() or (d == today.isoformat() and not lined and not game_started(p))] if top_f else []
-        if rest and strength and team_n in strength and exp_games > 0 and not skip:
-            ms = sum(SKATER_SCHED_B * (model_win_prob(strength[team_n], strength.get(opp, 0.0), home) - 0.5)
-                     for _, opp, home in rest) / len(rest)
+        # each game's win chance from the last Predicted winners run (handoff 918), else team strength and home ice (917)
+        chances = [game_win.get((d, team_n, opp, bool(home)))
+                   if (d, team_n, opp, bool(home)) in game_win
+                   else model_win_prob(strength[team_n], strength.get(opp, 0.0), home) if strength and team_n in strength else None
+                   for d, opp, home in rest]
+        chances = [c for c in chances if c is not None]
+        if chances and exp_games > 0 and not skip:
+            ms = sum(SKATER_SCHED_B * (c - 0.5) for c in chances) / len(chances)
             cover = max(0.0, exp_games - (min(dress_next, exp_games) if lined else 0.0))
             why["sched_sk"] = round(ms, 3)
             why.setdefault("season_pts", round(base_fpg, 2))  # the Season's own points a game stays his full rate (P5)

@@ -767,6 +767,7 @@ def main():
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
         add_ratings(players, season, now, now - timedelta(days=now.weekday()), starters, odds, injuries, weeks=max(1, weeks_left),
                     reschedule=reschedule, dfo_news=news, winners=winners, info=info, starts=et_starts,
+                    prev_games=previous_winners(),
                     relineup=lambda last: leads.mark_lineups(players, lineups, ESPN_TO_NHL, last))
         for p in players:  # goalie start chances by night, keyed like nights (findings 236)
             if p["pos"] == "G" and "cr_g_nights" in p:
