@@ -178,6 +178,9 @@ LINE_PPS_SLOPE = 3.0  # points per start per unit of win probability implied by 
 # one B 0.25 (915) is now split by role (handoff 916, findings 4561): a forward at SKATER_LINE_TOP_FPG+ points a game before the line takes 0.43,
 # other forwards and all defensemen 0.06 (leave-one-season-out MSE 1.53775 vs 1.53893 for one 0.25, 4 of 4 seasons)
 SKATER_LINE_TOP_FPG, SKATER_LINE_B_TOP, SKATER_LINE_B_REST = 1.54, 0.43, 0.06
+# a scoring forward's later games with no line yet: x (1 + SKATER_SCHED_B x (model win chance - 0.5)) from team strength and
+# home ice, as the goalie schedule bonus (handoff 917, findings 4562: MSE 1.54042 -> 1.53947, 3 of 4 seasons)
+SKATER_SCHED_B = 0.3
 
 
 def skater_line_b(pos, fpg):
@@ -4833,12 +4836,27 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             why["rust"] = {"m": rust, "fpg": round(fpg, 2), **({"back": True} if first_back else {})}
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
             fpg *= 1 - (1 - rust) * min(dress_next, exp_games) / exp_games
-        line_t = lines.get(ESPN_TO_NHL.get(p["team"], p["team"])) if p["pos"] != "G" else None
+        team_n = ESPN_TO_NHL.get(p["team"], p["team"])
+        base_fpg = fpg  # before the line and the schedule
+        top_f = p["pos"] not in ("G", "D") and skater_line_b(p["pos"], fpg) == SKATER_LINE_B_TOP
+        line_t = lines.get(team_n) if p["pos"] != "G" else None
+        lined = False
         if line_t is not None and exp_games > 0 and dress_next and p.get("today_start") and not game_started(p) and not skip:
             m = 1 + skater_line_b(p["pos"], fpg) * (line_t - 0.5)  # tonight's game by the betting line (914, 916)
             why["line"] = {"win_prob": round(line_t, 2), "m": round(m, 3), "pps": round(fpg * m, 2)}
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
             fpg *= 1 + (m - 1) * min(dress_next, exp_games) / exp_games
+            lined = True
+        # a scoring forward's games with no line yet follow team strength and home ice (handoff 917)
+        rest = [(d, opp, home) for d, opp, home in week_games.get(team_n, [])
+                if d > today.isoformat() or (d == today.isoformat() and not lined and not game_started(p))] if top_f else []
+        if rest and strength and team_n in strength and exp_games > 0 and not skip:
+            ms = sum(SKATER_SCHED_B * (model_win_prob(strength[team_n], strength.get(opp, 0.0), home) - 0.5)
+                     for _, opp, home in rest) / len(rest)
+            cover = max(0.0, exp_games - (min(dress_next, exp_games) if lined else 0.0))
+            why["sched_sk"] = round(ms, 3)
+            why.setdefault("season_pts", round(base_fpg, 2))  # the Season's own points a game stays his full rate (P5)
+            fpg += base_fpg * ms * cover / exp_games
         p["cr"] = round(fpg * exp_games, 2)
         p["cr_fpg"] = round(fpg, 2)
         p["cr_season"] = round(season, 2)

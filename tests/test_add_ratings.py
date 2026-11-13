@@ -4040,6 +4040,7 @@ def test_rust_reaches_the_rating(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
     starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}
 
+    monkeypatch.setattr(rating, "SKATER_SCHED_B", 0.0)  # rust alone (917's schedule factor would add to it)
     def matthews(**item):
         news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {"1": item} if item else {}}
         p = dict(espn(101, "Auston Matthews", "TOR", "C"), injury="DAY_TO_DAY")
@@ -4463,3 +4464,23 @@ def test_line_weight_by_role():
     top = rating.SKATER_LINE_TOP_FPG
     assert rating.skater_line_b("C", top) == rating.SKATER_LINE_B_TOP > 0.3
     assert rating.skater_line_b("LW", top - 0.01) == rating.skater_line_b("D", top + 1) == rating.SKATER_LINE_B_REST < 0.1
+
+
+def test_scoring_forward_later_games_follow_team_strength(monkeypatch, tmp_path):
+    """Handoff 917: a scoring forward's games with no line yet follow team strength and home ice (x 1 + 0.3 x (win chance
+    - 0.5)); a defenseman's don't. P4 keeps, and the Season's own rate is unchanged."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "SKATER_LINE_TOP_FPG", 0.0)  # every forward counts as a scoring forward here
+
+    def run(strength):
+        monkeypatch.setattr(rating, "team_strength", lambda s, season: strength)
+        players = [espn(101, "Auston Matthews", "TOR", "C"), espn(104, "Charlie McAvoy", "BOS", "D")]
+        return rate(monkeypatch, tmp_path, players)
+    flat, strong = run({}), run({"TOR": 1.5, "BOS": 0.0})
+    sk, base = strong["Auston Matthews"], flat["Auston Matthews"]
+    assert "sched_sk" not in base["cr_why"] and sk["cr_why"]["sched_sk"] > 0
+    assert sk["cr"] > base["cr"] and sk["cr_games"] == base["cr_games"] and sk["cr_season"] == base["cr_season"]
+    assert sk["cr"] == pytest.approx(sk["cr_fpg"] * sk["cr_games"], abs=0.02)  # P4
+    assert sk["cr_why"]["sched_sk"] <= rating.SKATER_SCHED_B * 0.5
+    assert "sched_sk" not in strong["Charlie McAvoy"]["cr_why"]
