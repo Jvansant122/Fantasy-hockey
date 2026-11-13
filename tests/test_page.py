@@ -666,7 +666,8 @@ def test_roster_size_rules(browser, server, data):
     healthy = [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G" and not p.get("injury") and p is not fa]
     for p in healthy[:2]:
         p["cr_season"] = round(top + 1.0, 2)
-    for p in healthy[2:]:  # only those two: four Best moves would leave no room under the day's 4 adds for the stash (handoff 488)
+    for p in healthy[2:] + [p for p in d["players"] if p["owner"] == "waivers" and p["pos"] != "G"]:
+        # only those two (waiver players too): four Best moves would leave no room under the day's 4 adds for the stash (488)
         p.update(cr=0, cr_season=0, cr_fpg=0)
     ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
