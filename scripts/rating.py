@@ -4120,8 +4120,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             lined = team in lines and p_today > 0
             rest = [(d, opp, home) for d, opp, home in week_games.get(team, [])
                     if d > today.isoformat() or (d == today.isoformat() and not lined and not started)]
-            if strength and team in strength and rest and starts > 0:
-                bonus = sum(WEEK_SCHED_SLOPE * (model_win_prob(strength[team], strength.get(opp, 0.0), home) - 0.5) for _, opp, home in rest) / len(rest)
+            # each start's win chance from the last Predicted winners run (handoff 919), else team strength and home ice
+            chances = [game_win[(d, team, opp, bool(home))] if (d, team, opp, bool(home)) in game_win
+                       else model_win_prob(strength[team], strength.get(opp, 0.0), home) if strength and team in strength else None
+                       for d, opp, home in rest]
+            chances = [c for c in chances if c is not None]
+            if chances and starts > 0:
+                bonus = sum(WEEK_SCHED_SLOPE * (c - 0.5) for c in chances) / len(chances)
                 fpg += (starts - (p_today if lined else 0.0)) * bonus / starts
                 why["sched"] = round(bonus, 2)
             why["gs"] = own.get(pid, [0, 0])[1] if pid else None
