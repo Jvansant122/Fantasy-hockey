@@ -119,6 +119,13 @@ def test_page_numbers_keep_the_publish_rules_after_the_first_puck(browser, serve
     for p in d["players"]:  # tonight's line differs from the week's blended price, as it does for most goalies
         if p["pos"] == "G" and p["cr_why"].get("p_today"):
             p["cr_why"]["line"] = {"pps": round((p["cr_fpg"] or 0) + 1.0, 2), "win_prob": 0.5}
+        elif p["pos"] != "G" and p.get("today_start") and p.get("cr_why") is not None and p.get("cr_games"):
+            # a skater's tonight follows the betting line too (handoff 914): Week holds that price, pts/game the blend
+            pps = round((p["cr_fpg"] or 0) + 0.3, 2)
+            p["cr_why"]["line"] = {"pps": pps, "win_prob": 0.8}
+            share = min(p.get("cr_dress_next") or 0, p["cr_games"]) / p["cr_games"]
+            p["cr_fpg"] = round(((p["cr_fpg"] or 0) * (p["cr_games"] - share * p["cr_games"]) + pps * share * p["cr_games"]) / p["cr_games"], 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
     ctx, page, errors = open_page(browser, server, data=d, clock=_et(15, 20))  # 8 PM ET, games under way
     shown = page.evaluate("state.data.players")
     gone = [p for p in shown if p.get("today_start") and p.get("cr_games") is not None]

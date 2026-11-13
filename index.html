@@ -327,7 +327,8 @@ function dropStarted(d) {
       p.cr_games = +(p.cr_games - gone).toFixed(2);
       if (p.games_left === 0) p.cr = p.cr_games = 0;  // no rounding leftovers once nothing is left to play
       // a goalie's tonight was priced at its own line: the rest of his week's points per start is what's left (handoff 448)
-      if (p.pos === "G" && p.cr_games > 0) p.cr_fpg = +(p.cr / p.cr_games).toFixed(2);
+      // a skater's tonight follows the betting line too (handoff 914): the rest of his week is his rate without it
+      if ((p.pos === "G" || p.cr_why?.line) && p.cr_games > 0) p.cr_fpg = +(p.cr / p.cr_games).toFixed(2);
       if (p.cr_why?.exp_starts != null) p.cr_why.exp_starts = Math.max(0, +(p.cr_why.exp_starts - gone).toFixed(2));
       if (p.cr_why) { p.cr_why.p_today_pre ??= p.cr_why.p_today; p.cr_why.p_today = 0; }
     }
