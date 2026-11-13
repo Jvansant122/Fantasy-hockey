@@ -609,3 +609,15 @@ def test_premerge_diff_flags_past_merge_wave_bugs():
     assert any("McCarron" in x and "floor not kept" in x for x in lines)
     assert not any("Steady Eddie" in x or "Kept Floor" in x for x in lines)
     assert premerge_diff.review(base, base) == []
+
+
+def test_run_clock_decides_a_game_starting_mid_run(monkeypatch):
+    """A 10 PM ET puck during the run: the ratings judge it at the run's own time, the one check_data uses (G6, Nov 12:
+    Sorokin and Kuemper lost tonight from expected games but kept it in their nights, and the run was blocked)."""
+    from datetime import datetime, timezone
+    import rating
+    p = {"today_start": "2026-11-13T03:00:00Z"}
+    monkeypatch.setattr(rating, "RUN_CLOCK", datetime(2026, 11, 13, 2, 59, 50, tzinfo=timezone.utc))
+    assert not rating.game_started(p)
+    monkeypatch.setattr(rating, "RUN_CLOCK", None)
+    assert rating.game_started(p)  # the real clock is past it

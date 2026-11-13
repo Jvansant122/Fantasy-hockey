@@ -758,6 +758,10 @@ def main():
     et_starts = {(ESPN_TO_NHL.get(t["abbrev"].upper(), t["abbrev"].upper()),
                   datetime.fromisoformat(v.replace("Z", "+00:00")).astimezone(ET).date().isoformat()): v
                  for t in teams.values() for v in t.get("starts", {}).values() if v}
+    # the ratings judge "has his game started" at the run's own time, the one the page and check_data use (updated_utc):
+    # a 10 PM ET puck mid-run dropped tonight from two goalies' expected games but not from their nights (G6, Nov 12)
+    if rating.utcnow() >= datetime.fromisoformat(run_utc.replace("Z", "+00:00")):
+        rating.RUN_CLOCK = datetime.fromisoformat(run_utc.replace("Z", "+00:00"))
     try:
         # every remaining Monday-Sunday week of the matchup (2 in a playoff round's first week)
         weeks_left = -(-(now.weekday() + matchup_sps[-1] - today_sp + 1) // 7)
@@ -773,6 +777,8 @@ def main():
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
         rated = False
+    finally:
+        rating.RUN_CLOCK = None
 
     nights = [{
         "sp": sp,
