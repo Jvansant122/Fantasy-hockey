@@ -4433,7 +4433,7 @@ def test_idle_cap_keeps_the_lines_floor(monkeypatch, tmp_path):
 
 
 def test_tonights_line_scales_skater_points(monkeypatch, tmp_path):
-    """Handoff 914: a skater's game tonight counts 1 + SKATER_LINE_B x (win chance - 0.5) of his points a game, folded into
+    """Handoff 914: a skater's game tonight counts 1 + B x (win chance - 0.5) of his points a game, folded into
     the week's points a game (P4 keeps); later games, games left and the Season's own rate unchanged."""
     from datetime import datetime, timezone
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
@@ -4446,7 +4446,9 @@ def test_tonights_line_scales_skater_points(monkeypatch, tmp_path):
     tor, bos = fav["Auston Matthews"], fav["Charlie McAvoy"]
     assert "line" not in none["Auston Matthews"]["cr_why"]
     w = tor["cr_why"]["line"]
-    assert w["win_prob"] > 0.65 and w["m"] == pytest.approx(1 + rating.SKATER_LINE_B * (w["win_prob"] - 0.5), abs=0.002)
+    assert w["win_prob"] > 0.65 and w["m"] == pytest.approx(1 + rating.skater_line_b("C", none["Auston Matthews"]["cr_fpg"]) * (w["win_prob"] - 0.5), abs=0.003)
+    wd = bos["cr_why"]["line"]  # a defenseman barely follows the line (handoff 916)
+    assert wd["m"] == pytest.approx(1 + rating.SKATER_LINE_B_REST * (wd["win_prob"] - 0.5), abs=0.003)
     assert tor["cr"] > none["Auston Matthews"]["cr"] and bos["cr"] < none["Charlie McAvoy"]["cr"]
     assert tor["cr_games"] == none["Auston Matthews"]["cr_games"]
     base = none["Auston Matthews"]
@@ -4454,3 +4456,10 @@ def test_tonights_line_scales_skater_points(monkeypatch, tmp_path):
     assert tor["cr"] == pytest.approx(want, abs=0.03)
     assert tor["cr"] == pytest.approx(tor["cr_fpg"] * tor["cr_games"], abs=0.02)  # P4
     assert tor["cr_season"] == base["cr_season"]
+
+
+def test_line_weight_by_role():
+    """Handoff 916: scoring forwards follow tonight's betting line; other forwards and defensemen barely."""
+    top = rating.SKATER_LINE_TOP_FPG
+    assert rating.skater_line_b("C", top) == rating.SKATER_LINE_B_TOP > 0.3
+    assert rating.skater_line_b("LW", top - 0.01) == rating.skater_line_b("D", top + 1) == rating.SKATER_LINE_B_REST < 0.1
