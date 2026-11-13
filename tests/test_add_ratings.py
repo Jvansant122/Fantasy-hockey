@@ -4505,3 +4505,19 @@ def test_scoring_forward_later_games_use_predicted_winners(monkeypatch, tmp_path
     assert got == pytest.approx(rating.SKATER_SCHED_B * 0.3, abs=0.001)
     started = [dict(r, started=True) for r in rows]  # a game already under way is never priced from an old pick
     assert "sched_sk" not in run(started)["cr_why"]
+
+
+def test_goalie_later_starts_use_predicted_winners(monkeypatch, tmp_path):
+    """Handoff 919: the goalie schedule bonus takes the last Predicted winners run's win chance for each later start
+    (an away game at 1 - p_home), team strength only where it has none."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "team_strength", lambda s, season: {})  # no fallback: only the winners rows count
+
+    def run(prev):
+        return rate(monkeypatch, tmp_path, [espn(111, "Joseph Woll", "TOR", "G")], prev_games=prev)["Joseph Woll"]
+    assert "sched" not in run(None)["cr_why"]
+    teams = "ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LAK MIN MTL NJD NSH NYI NYR OTT PHI PIT SEA SJS STL TBL UTA VAN VGK WPG WSH"
+    rows = [r for d in ("2026-10-%02d" % k for k in range(9, 19)) for opp in teams.split()
+            for r in ({"date": d, "home": "TOR", "away": opp, "p_home": 0.7}, {"date": d, "home": opp, "away": "TOR", "p_home": 0.3})]
+    assert run(rows)["cr_why"]["sched"] == pytest.approx(rating.WEEK_SCHED_SLOPE * 0.2, abs=0.01)
