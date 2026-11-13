@@ -10,7 +10,7 @@
    "48": 0.18
   }
  },
- "updated_utc": "2026-11-13T03:06:31Z",
+ "updated_utc": "2026-11-13T03:06:23Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4453,7 +4453,7 @@
     "p_home": 0.595,
     "inputs": {
      "pts": [
-      8.73,
+      8.74,
       8.73
      ],
      "gd": [
@@ -4648,10 +4648,10 @@
     "away": "FLA",
     "home_name": "Stars",
     "away_name": "Panthers",
-    "p_home": 0.568,
+    "p_home": 0.569,
     "inputs": {
      "pts": [
-      8.73,
+      8.74,
       8.34
      ],
      "gd": [
@@ -51925,7 +51925,7 @@
     "lineup_slack": 0.3,
     "missing_regs": -0.1,
     "week_slack": -0.2,
-    "adp_pull": 1.009,
+    "adp_pull": 1.01,
     "adp": 229.7
    },
    "cr_pct": 21,
@@ -52282,7 +52282,7 @@
     "week_slack": 0.3
    },
    "cr_pct": 15,
-   "cr_season_pct": 8
+   "cr_season_pct": 7
   },
   {
    "id": 4587996,
@@ -56943,6 +56943,95 @@
    "cr_season_pct": 10
   },
   {
+   "id": 5161,
+   "name": "Matt Duchene",
+   "team": "DAL",
+   "games": 3,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    45,
+    47,
+    48
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-12T17:00:00Z",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F",
+    "LW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 41.8,
+   "adp": 174.1,
+   "gp": 0,
+   "ppg": 1.81,
+   "cur_ppg": null,
+   "last_ppg": 1.6,
+   "last_gp": 57,
+   "proj_ppg": 1.81,
+   "clears": null,
+   "dfo_out": true,
+   "proj_ppg_pre": 1.81,
+   "cr": 0.05,
+   "cr_fpg": 1.64,
+   "cr_season": 0.44,
+   "proj_gp": 17,
+   "cr_games": 0.03,
+   "cr_dress": 0.02,
+   "cr_dress_next": 0.02,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8475168,
+   "cr_why": {
+    "toi5": 16.51,
+    "toi": null,
+    "pp5": 2.32,
+    "sog": 1.56,
+    "blk": 0.4,
+    "gp": 0,
+    "last_fpg": 1.6,
+    "xfp": null,
+    "season_fpg": 1.59,
+    "opp_last": {
+     "ga": 0.007,
+     "move": 0.001
+    },
+    "week_news": {
+     "shift": -1.95,
+     "move": -0.084,
+     "why": [
+      "long absence",
+      "timeline"
+     ]
+    },
+    "season_pts": 1.71,
+    "espn_blend": 0.29,
+    "espn_proj": 1.81,
+    "season_share": 0.25,
+    "age_adj": -0.06,
+    "season_range": [
+     0.08,
+     0.83
+    ],
+    "back": {
+     "games": "10"
+    },
+    "sched_sk": 0.034,
+    "drift": 0.002,
+    "adp_pull": 1.065,
+    "adp": 174.1
+   },
+   "cr_pct": 7,
+   "cr_season_pct": 9
+  },
+  {
    "id": 3669,
    "name": "Jonathan Toews",
    "team": "WPG",
@@ -58006,7 +58095,7 @@
     "missing_regs_pp": -0.007,
     "missing_regs": -0.03,
     "week_slack": -0.3,
-    "adp_pull": 1.002,
+    "adp_pull": 1.003,
     "adp": 230.0
    },
    "cr_pct": 5,
@@ -58540,7 +58629,7 @@
     "adp_pull": 1.006,
     "adp": 229.9
    },
-   "cr_pct": 5,
+   "cr_pct": 4,
    "cr_season_pct": 2
   },
   {
@@ -58636,7 +58725,7 @@
     "adp_pull": 1.002,
     "adp": 230.0
    },
-   "cr_pct": 5,
+   "cr_pct": 4,
    "cr_season_pct": 3
   },
   {
@@ -58734,7 +58823,7 @@
     "adp_pull": 1.027,
     "adp": 183.2
    },
-   "cr_pct": 5,
+   "cr_pct": 4,
    "cr_season_pct": 57
   },
   {
@@ -58807,94 +58896,6 @@
    },
    "cr_pct": 49,
    "cr_season_pct": 53
-  },
-  {
-   "id": 5161,
-   "name": "Matt Duchene",
-   "team": "DAL",
-   "games": 3,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    45,
-    47,
-    48
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-12T17:00:00Z",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F",
-    "LW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 41.8,
-   "adp": 174.1,
-   "gp": 0,
-   "ppg": 1.81,
-   "cur_ppg": null,
-   "last_ppg": 1.6,
-   "last_gp": 57,
-   "proj_ppg": 1.81,
-   "clears": null,
-   "dfo_out": true,
-   "proj_ppg_pre": 1.81,
-   "cr": 0.0,
-   "cr_fpg": 1.59,
-   "cr_season": 0.29,
-   "proj_gp": 11,
-   "cr_games": 0.0,
-   "cr_dress": 0.0,
-   "cr_dress_next": 0.0,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8475168,
-   "cr_why": {
-    "toi5": 16.51,
-    "toi": null,
-    "pp5": 2.32,
-    "sog": 1.56,
-    "blk": 0.4,
-    "gp": 0,
-    "last_fpg": 1.6,
-    "xfp": null,
-    "season_fpg": 1.59,
-    "opp_last": {
-     "ga": 0.007,
-     "move": 0.001
-    },
-    "week_news": {
-     "shift": -1.95,
-     "move": 0.0,
-     "why": [
-      "long absence",
-      "timeline"
-     ]
-    },
-    "season_pts": 1.72,
-    "espn_blend": 0.29,
-    "espn_proj": 1.81,
-    "season_share": 0.17,
-    "age_adj": -0.06,
-    "season_range": [
-     0.0,
-     0.68
-    ],
-    "back": {
-     "days": 59
-    },
-    "drift": 0.002,
-    "adp_pull": 1.067,
-    "adp": 174.1
-   },
-   "cr_pct": 0,
-   "cr_season_pct": 7
   },
   {
    "id": 4874721,
