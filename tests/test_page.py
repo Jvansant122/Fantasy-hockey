@@ -210,7 +210,8 @@ def test_games_that_already_started_drop_out(browser, server, data):
     last["today_start"] = iso(now - timedelta(hours=1))
     ctx, page, errors = open_page(browser, server, data=late)
     got = lambda pid: page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {pid}); return [p.games_left, p.cr]; }})()")
-    assert got(sk["id"]) == [sk["games_left"] - 1, pytest.approx(max(0, sk["cr"] - sk["cr_fpg"] * min(sk["cr_dress_next"] or 0, sk["cr_games"])), abs=0.02)]
+    assert got(sk["id"]) == [sk["games_left"] - 1, pytest.approx(max(0, sk["cr"] - ((sk.get("cr_why") or {}).get("line") or {}).get("pps", sk["cr_fpg"])
+                                                       * min(sk["cr_dress_next"] or 0, sk["cr_games"])), abs=0.02)]  # tonight at its line (914)
     assert got(later["id"])[0] == later["games_left"]
     assert page.evaluate(f"(() => {{ const p = state.data.players.find(p => p.id === {last['id']}); return [p.games_left, p.cr, p.cr_games]; }})()") == [0, 0, 0]
     # the rest of the row follows (findings 182): no stale percentile, tonight's dot greyed, Open skips tonight
