@@ -656,8 +656,11 @@ def test_roster_size_rules(browser, server, data):
     fa["cr_why"] = {k: v for k, v in (fa.get("cr_why") or {}).items() if k != "back"}
     # two healthy free agents clearly better than his roster, so Best moves has an add with a drop whatever the day's data
     top = max(p.get("cr_season") or 0 for p in sk)
-    for p in [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G" and not p.get("injury") and p is not fa][:2]:
+    healthy = [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G" and not p.get("injury") and p is not fa]
+    for p in healthy[:2]:
         p["cr_season"] = round(top + 1.0, 2)
+    for p in healthy[2:]:  # only those two: four Best moves would leave no room under the day's 4 adds for the stash (handoff 488)
+        p.update(cr=0, cr_season=0, cr_fpg=0)
     ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
     page.select_option("#team", str(team["id"]))
     activate = _card(page, "Activate from IR")
@@ -1673,17 +1676,28 @@ def test_ir_stash_counts_best_moves(browser, server, data):
         if p["pos"] == "G" and p.get("cr_why"):
             p["cr_why"].pop("tonight", None)
             p["cr_why"]["p_today"] = 0
-    for used in (0, 4):  # 7 left: room for it; 3 left, one held for Sunday: Best moves takes up to the other 2
+    strong = max((p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] not in ("G", "D") and not p.get("injury")),
+                 key=lambda p: (p.get("cr") or 0) + 7 * (p.get("cr_season") or 0))
+    others = [p for p in d["players"] if p["owner"] == "freeagent" and p["pos"] != "G" and not p.get("injury") and p is not strong]
+    saved = [(p, p.get("cr"), p.get("cr_season"), p.get("cr_fpg")) for p in others]
+    seen = set()
+    # 7 left: room for it; 3 left, one held for Sunday: Best moves takes up to the other 2. Run once with the day's pool and
+    # once with only one free agent worth a Best move, so the stash is shown at least once
+    for used, thin in ((0, False), (4, False), (0, True), (4, True)):
+        for p, cr, season, fpg in saved:
+            p.update(cr=0, cr_season=0, cr_fpg=0) if thin else p.update(cr=cr, cr_season=season, cr_fpg=fpg)
         team["moves_used"] = team["moves_used_next"] = used  # after Sunday's first puck adds use next week's moves (handoff 263)
         d["move_limit_next"] = 7
         ctx, page, errors = open_page(browser, server, data=d, clock=SAT_10AM)
         page.select_option("#team", str(team["id"]))
         best = [l for l in _card(page, "Best").split("\n")[1:] if l.strip()]
         assert best and len(best) <= (4 if used == 0 else 2), best  # up to 4 adds a day (handoff 488)
-        shown = used == 0 or len(best) < 2
+        shown = len(best) < (4 if used == 0 else 2)  # the stash's add counts toward the day's 4 adds too (handoff 488)
         assert bool(_card(page, "IR stash")) == shown, (used, best, _card(page, "IR stash"))
+        seen.add(shown)
         assert errors == []
         ctx.close()
+    assert True in seen, "the IR stash was never shown"
 
 
 def test_reload_keeps_trade_picks(browser, server, data):

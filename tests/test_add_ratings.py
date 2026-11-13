@@ -4430,3 +4430,27 @@ def test_idle_cap_keeps_the_lines_floor(monkeypatch, tmp_path):
     idle = mcavoy(None)
     assert idle["sat_last"] and idle["cr_dress_next"] <= rating.IDLE_DRESS[0][1] + 0.001
     assert mcavoy(False)["cr_dress_next"] >= rating.DFO_LINEUP_NEXT - 0.001
+
+
+def test_tonights_line_scales_skater_points(monkeypatch, tmp_path):
+    """Handoff 914: a skater's game tonight counts 1 + SKATER_LINE_B x (win chance - 0.5) of his points a game, folded into
+    the week's points a game (P4 keeps); later games, games left and the Season's own rate unchanged."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "team_strength", lambda s, season: {})
+    def run(odds):
+        players = [dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z"),
+                   dict(espn(104, "Charlie McAvoy", "BOS", "D"), today_start="2026-10-09T23:00:00Z")]
+        return rate(monkeypatch, tmp_path, players, odds=odds)
+    none, fav = run(None), run({"games": [odds_game("TOR", "BOS", -250, 210)]})
+    tor, bos = fav["Auston Matthews"], fav["Charlie McAvoy"]
+    assert "line" not in none["Auston Matthews"]["cr_why"]
+    w = tor["cr_why"]["line"]
+    assert w["win_prob"] > 0.65 and w["m"] == pytest.approx(1 + rating.SKATER_LINE_B * (w["win_prob"] - 0.5), abs=0.002)
+    assert tor["cr"] > none["Auston Matthews"]["cr"] and bos["cr"] < none["Charlie McAvoy"]["cr"]
+    assert tor["cr_games"] == none["Auston Matthews"]["cr_games"]
+    base = none["Auston Matthews"]
+    want = base["cr_fpg"] * (base["cr_games"] + (w["m"] - 1) * base["cr_dress_next"])
+    assert tor["cr"] == pytest.approx(want, abs=0.03)
+    assert tor["cr"] == pytest.approx(tor["cr_fpg"] * tor["cr_games"], abs=0.02)  # P4
+    assert tor["cr_season"] == base["cr_season"]
