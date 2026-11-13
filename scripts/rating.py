@@ -170,12 +170,19 @@ def idle_cap(days):
     return next((cap for top, cap in IDLE_DRESS if days <= top), NOT_PLAYING_DRESS)
 ET = ZoneInfo("America/New_York")
 LINE_PPS_SLOPE = 3.0  # points per start per unit of win probability implied by the moneyline (findings section 30; 4.1 -> 3.0 on 7,650 lined starts 2022-26, findings 4702, handoff 852)
-# a skater's game with a pre-game moneyline (tonight's): points x (1 + SKATER_LINE_B x (team win chance - 0.5)) (handoff
+# a skater's game with a pre-game moneyline (tonight's): points x (1 + B x (team win chance - 0.5)), B from skater_line_b (handoff
 # 914, findings 4559: live Oct 16-Nov 11, 5,368 player-games, actual/site 0.988 under .40 to 1.134 at .60+; b 0.52, 95%
 # 0.22-0.86; held-out MSE 1.6688 -> 1.6624, per-night rank .2946 -> .3023)
 # halved to 0.25 (handoff 915, findings 4560: 2022-26 MoneyPuck pre-game odds, 144,867 skater-games, leave-one-season-out
 # with an opponent control: held-out MSE B 0 1.54042, 0.25 1.53893, 0.5 1.54155; 0.25 beats 0 in 4 of 4 seasons)
-SKATER_LINE_B = 0.25
+# one B 0.25 (915) is now split by role (handoff 916, findings 4561): a forward at SKATER_LINE_TOP_FPG+ points a game before the line takes 0.43,
+# other forwards and all defensemen 0.06 (leave-one-season-out MSE 1.53775 vs 1.53893 for one 0.25, 4 of 4 seasons)
+SKATER_LINE_TOP_FPG, SKATER_LINE_B_TOP, SKATER_LINE_B_REST = 1.54, 0.43, 0.06
+
+
+def skater_line_b(pos, fpg):
+    """The betting line's weight on a skater's game tonight: scoring forwards follow it, everyone else barely (916)."""
+    return SKATER_LINE_B_TOP if pos != "D" and fpg >= SKATER_LINE_TOP_FPG else SKATER_LINE_B_REST
 # this week's starts (not Season): his own points per start already carry his team's strength, so with the line or the
 # schedule on top strong teams' starters read ~0.5 high. Week pricing keeps 0.4 of his gap to the league's rate this season
 # (shrunk over 300 starts to 2.89), and the schedule slope drops to 3.0. 13,120 starts 2021-26: per-start error -1.5% and
@@ -4828,7 +4835,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             fpg *= 1 - (1 - rust) * min(dress_next, exp_games) / exp_games
         line_t = lines.get(ESPN_TO_NHL.get(p["team"], p["team"])) if p["pos"] != "G" else None
         if line_t is not None and exp_games > 0 and dress_next and p.get("today_start") and not game_started(p) and not skip:
-            m = 1 + SKATER_LINE_B * (line_t - 0.5)  # tonight's game by the betting line, folded in like rust (handoff 914)
+            m = 1 + skater_line_b(p["pos"], fpg) * (line_t - 0.5)  # tonight's game by the betting line (914, 916)
             why["line"] = {"win_prob": round(line_t, 2), "m": round(m, 3), "pps": round(fpg * m, 2)}
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
             fpg *= 1 + (m - 1) * min(dress_next, exp_games) / exp_games
