@@ -9,7 +9,7 @@
    "48": 0.2
   }
  },
- "updated_utc": "2026-11-13T23:49:48Z",
+ "updated_utc": "2026-11-13T23:49:50Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4451,10 +4451,10 @@
     "away": "BUF",
     "home_name": "Stars",
     "away_name": "Sabres",
-    "p_home": 0.594,
+    "p_home": 0.593,
     "inputs": {
      "pts": [
-      9.11,
+      9.1,
       8.94
      ],
      "gd": [
@@ -4649,10 +4649,10 @@
     "away": "FLA",
     "home_name": "Stars",
     "away_name": "Panthers",
-    "p_home": 0.569,
+    "p_home": 0.568,
     "inputs": {
      "pts": [
-      9.11,
+      9.1,
       8.49
      ],
      "gd": [
@@ -10571,6 +10571,11 @@
      0.67,
      1.52
     ],
+    "line": {
+     "win_prob": 0.59,
+     "m": 1.006,
+     "pps": 1.44
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.01,
     "lineup_slack": 0.3,
@@ -13591,6 +13596,11 @@
      0.61,
      1.46
     ],
+    "line": {
+     "win_prob": 0.41,
+     "m": 0.994,
+     "pps": 1.21
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.006,
     "lineup_slack": -0.5,
@@ -13856,88 +13866,6 @@
    },
    "cr_pct": 83,
    "cr_season_pct": 48
-  },
-  {
-   "id": 5206642,
-   "name": "Zeev Buium",
-   "team": "VAN",
-   "games": 3,
-   "games_left": 2,
-   "light": 3,
-   "light_left": 2,
-   "nights": [
-    42,
-    46,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 6.1,
-   "adp": 230.0,
-   "gp": 20,
-   "ppg": 0.85,
-   "cur_ppg": 0.75,
-   "last_ppg": 1.0,
-   "last_gp": 76,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 2.38,
-   "cr_fpg": 1.21,
-   "cr_season": 1.09,
-   "proj_gp": 77,
-   "cr_games": 1.97,
-   "cr_dress": 0.98,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8484798,
-   "cr_why": {
-    "toi5": 24.21,
-    "toi": 21.36,
-    "pp5": 1.9,
-    "sog": 0.9,
-    "blk": 0.9,
-    "gp": 20,
-    "last_fpg": 1.0,
-    "xfp": {
-     "gp": 20,
-     "fpg": 0.75,
-     "xfpg": 0.96,
-     "luck": "cold"
-    },
-    "season_fpg": 1.2,
-    "opp_last": {
-     "ga": -0.022,
-     "move": -0.002
-    },
-    "boost_week": -0.84,
-    "season_pts": 1.21,
-    "boost_dress": 0.88,
-    "boost_fpg": 1.19,
-    "age_adj": 0.03,
-    "season_range": [
-     0.66,
-     1.52
-    ],
-    "exp": "year 2",
-    "drift": -0.003,
-    "missing_regs_pp": -0.004,
-    "lineup_slack": 0.5,
-    "missing_regs": -0.04,
-    "week_slack": 0.2
-   },
-   "cr_pct": 85,
-   "cr_season_pct": 55
   },
   {
    "id": 5452,
@@ -14251,7 +14179,7 @@
     "missing_regs": -0.16,
     "week_slack": -0.1
    },
-   "cr_pct": 84,
+   "cr_pct": 85,
    "cr_season_pct": 99
   },
   {
@@ -14335,7 +14263,7 @@
     "missing_regs": -0.11,
     "week_slack": -0.0
    },
-   "cr_pct": 84,
+   "cr_pct": 85,
    "cr_season_pct": 100
   },
   {
@@ -14422,6 +14350,93 @@
    },
    "cr_pct": 82,
    "cr_season_pct": 97
+  },
+  {
+   "id": 5206642,
+   "name": "Zeev Buium",
+   "team": "VAN",
+   "games": 3,
+   "games_left": 2,
+   "light": 3,
+   "light_left": 2,
+   "nights": [
+    42,
+    46,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 6.1,
+   "adp": 230.0,
+   "gp": 20,
+   "ppg": 0.85,
+   "cur_ppg": 0.75,
+   "last_ppg": 1.0,
+   "last_gp": 76,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 2.36,
+   "cr_fpg": 1.2,
+   "cr_season": 1.09,
+   "proj_gp": 77,
+   "cr_games": 1.97,
+   "cr_dress": 0.98,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8484798,
+   "cr_why": {
+    "toi5": 24.21,
+    "toi": 21.36,
+    "pp5": 1.9,
+    "sog": 0.9,
+    "blk": 0.9,
+    "gp": 20,
+    "last_fpg": 1.0,
+    "xfp": {
+     "gp": 20,
+     "fpg": 0.75,
+     "xfpg": 0.96,
+     "luck": "cold"
+    },
+    "season_fpg": 1.2,
+    "opp_last": {
+     "ga": -0.022,
+     "move": -0.002
+    },
+    "boost_week": -0.84,
+    "season_pts": 1.21,
+    "boost_dress": 0.88,
+    "boost_fpg": 1.19,
+    "age_adj": 0.03,
+    "season_range": [
+     0.66,
+     1.52
+    ],
+    "exp": "year 2",
+    "line": {
+     "win_prob": 0.34,
+     "m": 0.99,
+     "pps": 1.2
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.004,
+    "lineup_slack": 0.5,
+    "missing_regs": -0.04,
+    "week_slack": 0.2
+   },
+   "cr_pct": 84,
+   "cr_season_pct": 55
   },
   {
    "id": 4024868,
@@ -15631,6 +15646,11 @@
      1.4
     ],
     "exp": "year 2",
+    "line": {
+     "win_prob": 0.41,
+     "m": 0.994,
+     "pps": 1.15
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.007,
     "lineup_slack": -0.5,
@@ -16567,93 +16587,6 @@
    "cr_season_pct": 93
   },
   {
-   "id": 5238086,
-   "name": "Elias N. Pettersson",
-   "team": "VAN",
-   "games": 3,
-   "games_left": 2,
-   "light": 3,
-   "light_left": 2,
-   "nights": [
-    42,
-    46,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 27.6,
-   "adp": 228.7,
-   "gp": 20,
-   "ppg": 1.31,
-   "cur_ppg": 1.49,
-   "last_ppg": 1.05,
-   "last_gp": 70,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 2.18,
-   "cr_fpg": 1.24,
-   "cr_season": 1.07,
-   "proj_gp": 74,
-   "cr_games": 1.76,
-   "cr_dress": 0.88,
-   "cr_dress_next": 0.95,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8483678,
-   "cr_why": {
-    "toi5": 18.34,
-    "toi": 18.56,
-    "pp5": 0.05,
-    "sog": 0.9,
-    "blk": 1.55,
-    "gp": 20,
-    "last_fpg": 1.05,
-    "xfp": {
-     "gp": 20,
-     "fpg": 1.47,
-     "xfpg": 1.32
-    },
-    "season_fpg": 1.21,
-    "opp_last": {
-     "ga": -0.022,
-     "move": -0.002
-    },
-    "toi_rank": "other",
-    "boost_week": 0.1,
-    "form": {
-     "shift": -0.12,
-     "why": [
-      "slump",
-      "depth_d"
-     ]
-    },
-    "season_pts": 1.27,
-    "boost_dress": 0.83,
-    "boost_fpg": 1.35,
-    "season_range": [
-     0.6,
-     1.45
-    ],
-    "drift": -0.003,
-    "missing_regs_pp": -0.006,
-    "lineup_slack": 0.5,
-    "missing_regs": -0.04,
-    "week_slack": 0.2
-   },
-   "cr_pct": 79,
-   "cr_season_pct": 53
-  },
-  {
    "id": 3904173,
    "name": "Sebastian Aho",
    "team": "CAR",
@@ -16886,7 +16819,7 @@
     "adp_pull": 0.995,
     "adp": 151.3
    },
-   "cr_pct": 79,
+   "cr_pct": 80,
    "cr_season_pct": 91
   },
   {
@@ -17157,6 +17090,98 @@
    "cr_season_pct": 91
   },
   {
+   "id": 5238086,
+   "name": "Elias N. Pettersson",
+   "team": "VAN",
+   "games": 3,
+   "games_left": 2,
+   "light": 3,
+   "light_left": 2,
+   "nights": [
+    42,
+    46,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 27.6,
+   "adp": 228.7,
+   "gp": 20,
+   "ppg": 1.31,
+   "cur_ppg": 1.49,
+   "last_ppg": 1.05,
+   "last_gp": 70,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 2.16,
+   "cr_fpg": 1.23,
+   "cr_season": 1.07,
+   "proj_gp": 74,
+   "cr_games": 1.76,
+   "cr_dress": 0.88,
+   "cr_dress_next": 0.95,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8483678,
+   "cr_why": {
+    "toi5": 18.34,
+    "toi": 18.56,
+    "pp5": 0.05,
+    "sog": 0.9,
+    "blk": 1.55,
+    "gp": 20,
+    "last_fpg": 1.05,
+    "xfp": {
+     "gp": 20,
+     "fpg": 1.47,
+     "xfpg": 1.32
+    },
+    "season_fpg": 1.21,
+    "opp_last": {
+     "ga": -0.022,
+     "move": -0.002
+    },
+    "toi_rank": "other",
+    "boost_week": 0.1,
+    "form": {
+     "shift": -0.12,
+     "why": [
+      "slump",
+      "depth_d"
+     ]
+    },
+    "season_pts": 1.27,
+    "boost_dress": 0.83,
+    "boost_fpg": 1.35,
+    "season_range": [
+     0.6,
+     1.45
+    ],
+    "line": {
+     "win_prob": 0.34,
+     "m": 0.99,
+     "pps": 1.23
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.006,
+    "lineup_slack": 0.5,
+    "missing_regs": -0.04,
+    "week_slack": 0.2
+   },
+   "cr_pct": 79,
+   "cr_season_pct": 53
+  },
+  {
    "id": 3891952,
    "name": "Artemi Panarin",
    "team": "LA",
@@ -17396,87 +17421,6 @@
    "cr_season_pct": 99
   },
   {
-   "id": 2562625,
-   "name": "Jamie Oleksiak",
-   "team": "VAN",
-   "games": 3,
-   "games_left": 2,
-   "light": 3,
-   "light_left": 2,
-   "nights": [
-    42,
-    46,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 4.5,
-   "adp": 229.9,
-   "gp": 18,
-   "ppg": 1.3,
-   "cur_ppg": 1.41,
-   "last_ppg": 1.18,
-   "last_gp": 78,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 2.15,
-   "cr_fpg": 1.14,
-   "cr_season": 0.93,
-   "proj_gp": 71,
-   "cr_games": 1.89,
-   "cr_dress": 0.95,
-   "cr_dress_next": 0.96,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476467,
-   "cr_why": {
-    "toi5": 15.13,
-    "toi": 17.52,
-    "pp5": 0.01,
-    "sog": 0.67,
-    "blk": 1.33,
-    "gp": 18,
-    "last_fpg": 1.18,
-    "xfp": {
-     "gp": 18,
-     "fpg": 1.41,
-     "xfpg": 1.13,
-     "luck": "hot"
-    },
-    "season_fpg": 1.14,
-    "opp_last": {
-     "ga": -0.022,
-     "move": -0.002
-    },
-    "boost_week": -0.41,
-    "season_pts": 1.13,
-    "boost_dress": 0.84,
-    "boost_fpg": 1.18,
-    "age_adj": -0.04,
-    "season_range": [
-     0.46,
-     1.31
-    ],
-    "drift": -0.003,
-    "missing_regs_pp": -0.006,
-    "lineup_slack": 0.5,
-    "missing_regs": -0.04,
-    "week_slack": 0.2
-   },
-   "cr_pct": 77,
-   "cr_season_pct": 39
-  },
-  {
    "id": 4419638,
    "name": "Nick Perbix",
    "team": "NSH",
@@ -17547,6 +17491,11 @@
      0.5,
      1.35
     ],
+    "line": {
+     "win_prob": 0.41,
+     "m": 0.994,
+     "pps": 1.1
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.007,
     "lineup_slack": -0.5,
@@ -17555,7 +17504,7 @@
     "adp_pull": 0.991,
     "adp": 230.0
    },
-   "cr_pct": 77,
+   "cr_pct": 78,
    "cr_season_pct": 42
   },
   {
@@ -17640,8 +17589,94 @@
     "missing_regs": -0.02,
     "week_slack": 0.3
    },
-   "cr_pct": 77,
+   "cr_pct": 78,
    "cr_season_pct": 93
+  },
+  {
+   "id": 2562625,
+   "name": "Jamie Oleksiak",
+   "team": "VAN",
+   "games": 3,
+   "games_left": 2,
+   "light": 3,
+   "light_left": 2,
+   "nights": [
+    42,
+    46,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 4.5,
+   "adp": 229.9,
+   "gp": 18,
+   "ppg": 1.3,
+   "cur_ppg": 1.41,
+   "last_ppg": 1.18,
+   "last_gp": 78,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 2.14,
+   "cr_fpg": 1.13,
+   "cr_season": 0.93,
+   "proj_gp": 71,
+   "cr_games": 1.89,
+   "cr_dress": 0.95,
+   "cr_dress_next": 0.96,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476467,
+   "cr_why": {
+    "toi5": 15.13,
+    "toi": 17.52,
+    "pp5": 0.01,
+    "sog": 0.67,
+    "blk": 1.33,
+    "gp": 18,
+    "last_fpg": 1.18,
+    "xfp": {
+     "gp": 18,
+     "fpg": 1.41,
+     "xfpg": 1.13,
+     "luck": "hot"
+    },
+    "season_fpg": 1.14,
+    "opp_last": {
+     "ga": -0.022,
+     "move": -0.002
+    },
+    "boost_week": -0.41,
+    "season_pts": 1.13,
+    "boost_dress": 0.84,
+    "boost_fpg": 1.18,
+    "age_adj": -0.04,
+    "season_range": [
+     0.46,
+     1.31
+    ],
+    "line": {
+     "win_prob": 0.34,
+     "m": 0.99,
+     "pps": 1.12
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.006,
+    "lineup_slack": 0.5,
+    "missing_regs": -0.04,
+    "week_slack": 0.2
+   },
+   "cr_pct": 77,
+   "cr_season_pct": 39
   },
   {
    "id": 3069394,
@@ -21093,6 +21128,11 @@
      "fpg": 1.16,
      "back": true
     },
+    "line": {
+     "win_prob": 0.34,
+     "m": 0.99,
+     "pps": 1.1
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.009,
     "lineup_slack": 0.5,
@@ -21915,6 +21955,11 @@
      0.4,
      1.24
     ],
+    "line": {
+     "win_prob": 0.59,
+     "m": 1.006,
+     "pps": 1.16
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.016,
     "lineup_slack": 0.3,
@@ -22106,97 +22151,6 @@
    },
    "cr_pct": 69,
    "cr_season_pct": 32
-  },
-  {
-   "id": 4565269,
-   "name": "Jayden Struble",
-   "team": "NSH",
-   "games": 4,
-   "games_left": 2,
-   "light": 2,
-   "light_left": 2,
-   "nights": [
-    43,
-    44,
-    46,
-    48
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.7,
-   "adp": 229.9,
-   "gp": 18,
-   "ppg": 1.05,
-   "cur_ppg": 1.31,
-   "last_ppg": 0.75,
-   "last_gp": 59,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 1.88,
-   "cr_fpg": 1.01,
-   "cr_season": 0.81,
-   "proj_gp": 68,
-   "cr_games": 1.86,
-   "cr_dress": 0.93,
-   "cr_dress_next": 0.95,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8481593,
-   "cr_why": {
-    "toi5": 15.15,
-    "toi": 15.08,
-    "pp5": 0.0,
-    "sog": 0.33,
-    "blk": 1.28,
-    "gp": 18,
-    "last_fpg": 0.75,
-    "xfp": {
-     "gp": 18,
-     "fpg": 1.31,
-     "xfpg": 1.15,
-     "luck": "hot"
-    },
-    "season_fpg": 1.02,
-    "opp_last": {
-     "ga": 0.051,
-     "move": 0.004
-    },
-    "depth_point": true,
-    "toi_rank": "other",
-    "boost_week": -0.17,
-    "form": {
-     "shift": -0.025,
-     "why": [
-      "depth_d"
-     ]
-    },
-    "season_pts": 1.05,
-    "boost_dress": 0.79,
-    "boost_fpg": 1.1,
-    "season_range": [
-     0.43,
-     1.27
-    ],
-    "drift": -0.003,
-    "missing_regs_pp": -0.011,
-    "lineup_slack": -0.5,
-    "missing_regs": -0.06,
-    "week_slack": -0.3,
-    "adp_pull": 0.998,
-    "adp": 229.9
-   },
-   "cr_pct": 70,
-   "cr_season_pct": 30
   },
   {
    "id": 4233555,
@@ -22604,6 +22558,102 @@
    },
    "cr_pct": 69,
    "cr_season_pct": 84
+  },
+  {
+   "id": 4565269,
+   "name": "Jayden Struble",
+   "team": "NSH",
+   "games": 4,
+   "games_left": 2,
+   "light": 2,
+   "light_left": 2,
+   "nights": [
+    43,
+    44,
+    46,
+    48
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.7,
+   "adp": 229.9,
+   "gp": 18,
+   "ppg": 1.05,
+   "cur_ppg": 1.31,
+   "last_ppg": 0.75,
+   "last_gp": 59,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 1.86,
+   "cr_fpg": 1.0,
+   "cr_season": 0.81,
+   "proj_gp": 68,
+   "cr_games": 1.86,
+   "cr_dress": 0.93,
+   "cr_dress_next": 0.95,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8481593,
+   "cr_why": {
+    "toi5": 15.15,
+    "toi": 15.08,
+    "pp5": 0.0,
+    "sog": 0.33,
+    "blk": 1.28,
+    "gp": 18,
+    "last_fpg": 0.75,
+    "xfp": {
+     "gp": 18,
+     "fpg": 1.31,
+     "xfpg": 1.15,
+     "luck": "hot"
+    },
+    "season_fpg": 1.02,
+    "opp_last": {
+     "ga": 0.051,
+     "move": 0.004
+    },
+    "depth_point": true,
+    "toi_rank": "other",
+    "boost_week": -0.17,
+    "form": {
+     "shift": -0.025,
+     "why": [
+      "depth_d"
+     ]
+    },
+    "season_pts": 1.05,
+    "boost_dress": 0.79,
+    "boost_fpg": 1.1,
+    "season_range": [
+     0.43,
+     1.27
+    ],
+    "line": {
+     "win_prob": 0.41,
+     "m": 0.994,
+     "pps": 1.0
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.011,
+    "lineup_slack": -0.5,
+    "missing_regs": -0.06,
+    "week_slack": -0.3,
+    "adp_pull": 0.998,
+    "adp": 229.9
+   },
+   "cr_pct": 70,
+   "cr_season_pct": 30
   },
   {
    "id": 4024998,
@@ -30371,6 +30421,91 @@
    "cr_season_pct": 70
   },
   {
+   "id": 4697402,
+   "name": "Braden Schneider",
+   "team": "NYR",
+   "games": 3,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    42,
+    44,
+    46
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 1.6,
+   "adp": 229.5,
+   "gp": 20,
+   "ppg": 1.23,
+   "cur_ppg": 1.1,
+   "last_ppg": 1.42,
+   "last_gp": 82,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 1.47,
+   "cr_fpg": 1.48,
+   "cr_season": 1.3,
+   "proj_gp": 78,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482073,
+   "cr_why": {
+    "toi5": 21.13,
+    "toi": 18.49,
+    "pp5": 0.16,
+    "sog": 1.5,
+    "blk": 1.25,
+    "gp": 20,
+    "last_fpg": 1.42,
+    "xfp": {
+     "gp": 20,
+     "fpg": 1.1,
+     "xfpg": 1.29,
+     "luck": "cold"
+    },
+    "season_fpg": 1.45,
+    "opp_last": {
+     "ga": 0.207,
+     "move": 0.019
+    },
+    "boost_week": -0.14,
+    "season_pts": 1.43,
+    "boost_dress": 0.91,
+    "boost_fpg": 1.4,
+    "season_range": [
+     0.83,
+     1.68
+    ],
+    "line": {
+     "win_prob": 0.66,
+     "m": 1.01,
+     "pps": 1.48
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.003,
+    "lineup_slack": 0.4,
+    "missing_regs": -0.04,
+    "week_slack": 0.4
+   },
+   "cr_pct": 56,
+   "cr_season_pct": 73
+  },
+  {
    "id": 3151137,
    "name": "Ville Husso",
    "team": "ANA",
@@ -30523,86 +30658,6 @@
    },
    "cr_pct": 54,
    "cr_season_pct": 61
-  },
-  {
-   "id": 4697402,
-   "name": "Braden Schneider",
-   "team": "NYR",
-   "games": 3,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    42,
-    44,
-    46
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 1.6,
-   "adp": 229.5,
-   "gp": 20,
-   "ppg": 1.23,
-   "cur_ppg": 1.1,
-   "last_ppg": 1.42,
-   "last_gp": 82,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 1.46,
-   "cr_fpg": 1.47,
-   "cr_season": 1.3,
-   "proj_gp": 78,
-   "cr_games": 0.99,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482073,
-   "cr_why": {
-    "toi5": 21.13,
-    "toi": 18.49,
-    "pp5": 0.16,
-    "sog": 1.5,
-    "blk": 1.25,
-    "gp": 20,
-    "last_fpg": 1.42,
-    "xfp": {
-     "gp": 20,
-     "fpg": 1.1,
-     "xfpg": 1.29,
-     "luck": "cold"
-    },
-    "season_fpg": 1.45,
-    "opp_last": {
-     "ga": 0.207,
-     "move": 0.019
-    },
-    "boost_week": -0.14,
-    "season_pts": 1.43,
-    "boost_dress": 0.91,
-    "boost_fpg": 1.4,
-    "season_range": [
-     0.83,
-     1.68
-    ],
-    "drift": -0.003,
-    "missing_regs_pp": -0.003,
-    "lineup_slack": 0.4,
-    "missing_regs": -0.04,
-    "week_slack": 0.4
-   },
-   "cr_pct": 56,
-   "cr_season_pct": 73
   },
   {
    "id": 5614,
@@ -31371,7 +31426,7 @@
     "adp_pull": 0.975,
     "adp": 229.7
    },
-   "cr_pct": 55,
+   "cr_pct": 54,
    "cr_season_pct": 70
   },
   {
@@ -31459,6 +31514,93 @@
    },
    "cr_pct": 52,
    "cr_season_pct": 62
+  },
+  {
+   "id": 3942292,
+   "name": "Vladislav Gavrikov",
+   "team": "NYR",
+   "games": 3,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    42,
+    44,
+    46
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 10,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 57.3,
+   "adp": 221.4,
+   "gp": 20,
+   "ppg": 1.53,
+   "cur_ppg": 1.56,
+   "last_ppg": 1.49,
+   "last_gp": 82,
+   "proj_ppg": 1.49,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 1.49,
+   "cr": 1.43,
+   "cr_fpg": 1.44,
+   "cr_season": 1.29,
+   "proj_gp": 80,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478882,
+   "cr_why": {
+    "toi5": 22.21,
+    "toi": 21.55,
+    "pp5": 0.67,
+    "sog": 1.5,
+    "blk": 1.9,
+    "gp": 20,
+    "last_fpg": 1.48,
+    "xfp": {
+     "gp": 20,
+     "fpg": 1.53,
+     "xfpg": 1.6
+    },
+    "season_fpg": 1.39,
+    "opp_last": {
+     "ga": 0.207,
+     "move": 0.019
+    },
+    "boost_week": 0.21,
+    "season_pts": 1.38,
+    "boost_dress": 0.94,
+    "boost_fpg": 1.38,
+    "espn_blend": 0.09,
+    "espn_proj": 1.49,
+    "season_range": [
+     0.82,
+     1.67
+    ],
+    "line": {
+     "win_prob": 0.66,
+     "m": 1.01,
+     "pps": 1.44
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.002,
+    "lineup_slack": 0.4,
+    "missing_regs": -0.04,
+    "week_slack": 0.4
+   },
+   "cr_pct": 54,
+   "cr_season_pct": 72
   },
   {
    "id": 5149172,
@@ -31693,7 +31835,7 @@
     "adp_pull": 0.992,
     "adp": 229.5
    },
-   "cr_pct": 54,
+   "cr_pct": 53,
    "cr_season_pct": 65
   },
   {
@@ -32026,7 +32168,7 @@
     "missing_regs": -0.09,
     "week_slack": 0.5
    },
-   "cr_pct": 54,
+   "cr_pct": 53,
    "cr_season_pct": 71
   },
   {
@@ -32277,88 +32419,6 @@
    },
    "cr_pct": 51,
    "cr_season_pct": 69
-  },
-  {
-   "id": 3942292,
-   "name": "Vladislav Gavrikov",
-   "team": "NYR",
-   "games": 3,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    42,
-    44,
-    46
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 10,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 57.3,
-   "adp": 221.4,
-   "gp": 20,
-   "ppg": 1.53,
-   "cur_ppg": 1.56,
-   "last_ppg": 1.49,
-   "last_gp": 82,
-   "proj_ppg": 1.49,
-   "clears": null,
-   "dfo_out": false,
-   "proj_ppg_pre": 1.49,
-   "cr": 1.41,
-   "cr_fpg": 1.42,
-   "cr_season": 1.29,
-   "proj_gp": 80,
-   "cr_games": 0.99,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8478882,
-   "cr_why": {
-    "toi5": 22.21,
-    "toi": 21.55,
-    "pp5": 0.67,
-    "sog": 1.5,
-    "blk": 1.9,
-    "gp": 20,
-    "last_fpg": 1.48,
-    "xfp": {
-     "gp": 20,
-     "fpg": 1.53,
-     "xfpg": 1.6
-    },
-    "season_fpg": 1.39,
-    "opp_last": {
-     "ga": 0.207,
-     "move": 0.019
-    },
-    "boost_week": 0.21,
-    "season_pts": 1.38,
-    "boost_dress": 0.94,
-    "boost_fpg": 1.38,
-    "espn_blend": 0.09,
-    "espn_proj": 1.49,
-    "season_range": [
-     0.82,
-     1.67
-    ],
-    "drift": -0.003,
-    "missing_regs_pp": -0.002,
-    "lineup_slack": 0.4,
-    "missing_regs": -0.04,
-    "week_slack": 0.4
-   },
-   "cr_pct": 53,
-   "cr_season_pct": 72
   },
   {
    "id": 5149231,
@@ -35729,7 +35789,7 @@
     "adp_pull": 0.999,
     "adp": 229.4
    },
-   "cr_pct": 46,
+   "cr_pct": 45,
    "cr_season_pct": 57
   },
   {
@@ -35811,8 +35871,92 @@
     "adp_pull": 0.994,
     "adp": 229.8
    },
-   "cr_pct": 46,
+   "cr_pct": 45,
    "cr_season_pct": 56
+  },
+  {
+   "id": 3114995,
+   "name": "Marcus Pettersson",
+   "team": "NYR",
+   "games": 3,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    42,
+    44,
+    46
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-14T02:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.7,
+   "adp": 229.9,
+   "gp": 20,
+   "ppg": 1.21,
+   "cur_ppg": 1.17,
+   "last_ppg": 1.26,
+   "last_gp": 82,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 1.27,
+   "cr_fpg": 1.28,
+   "cr_season": 1.09,
+   "proj_gp": 78,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8477969,
+   "cr_why": {
+    "toi5": 21.5,
+    "toi": 20.92,
+    "pp5": 0.22,
+    "sog": 0.6,
+    "blk": 1.5,
+    "gp": 20,
+    "last_fpg": 1.26,
+    "xfp": {
+     "gp": 20,
+     "fpg": 1.17,
+     "xfpg": 1.3
+    },
+    "season_fpg": 1.2,
+    "opp_last": {
+     "ga": 0.207,
+     "move": 0.019
+    },
+    "boost_week": -0.01,
+    "season_pts": 1.2,
+    "boost_dress": 0.91,
+    "boost_fpg": 1.23,
+    "season_range": [
+     0.62,
+     1.47
+    ],
+    "line": {
+     "win_prob": 0.66,
+     "m": 1.01,
+     "pps": 1.28
+    },
+    "drift": -0.003,
+    "missing_regs_pp": -0.003,
+    "lineup_slack": 0.4,
+    "missing_regs": -0.04,
+    "week_slack": 0.4
+   },
+   "cr_pct": 45,
+   "cr_season_pct": 55
   },
   {
    "id": 4064936,
@@ -35891,7 +36035,7 @@
     "missing_regs": -0.02,
     "week_slack": 0.3
    },
-   "cr_pct": 46,
+   "cr_pct": 45,
    "cr_season_pct": 57
   },
   {
@@ -35976,7 +36120,7 @@
     "adp_pull": 1.004,
     "adp": 208.6
    },
-   "cr_pct": 46,
+   "cr_pct": 45,
    "cr_season_pct": 72
   },
   {
@@ -36061,7 +36205,7 @@
     "adp_pull": 1.01,
     "adp": 178.5
    },
-   "cr_pct": 46,
+   "cr_pct": 45,
    "cr_season_pct": 49
   },
   {
@@ -36314,85 +36458,6 @@
    },
    "cr_pct": 44,
    "cr_season_pct": 54
-  },
-  {
-   "id": 3114995,
-   "name": "Marcus Pettersson",
-   "team": "NYR",
-   "games": 3,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    42,
-    44,
-    46
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-14T02:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.7,
-   "adp": 229.9,
-   "gp": 20,
-   "ppg": 1.21,
-   "cur_ppg": 1.17,
-   "last_ppg": 1.26,
-   "last_gp": 82,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 1.25,
-   "cr_fpg": 1.26,
-   "cr_season": 1.09,
-   "proj_gp": 78,
-   "cr_games": 0.99,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8477969,
-   "cr_why": {
-    "toi5": 21.5,
-    "toi": 20.92,
-    "pp5": 0.22,
-    "sog": 0.6,
-    "blk": 1.5,
-    "gp": 20,
-    "last_fpg": 1.26,
-    "xfp": {
-     "gp": 20,
-     "fpg": 1.17,
-     "xfpg": 1.3
-    },
-    "season_fpg": 1.2,
-    "opp_last": {
-     "ga": 0.207,
-     "move": 0.019
-    },
-    "boost_week": -0.01,
-    "season_pts": 1.2,
-    "boost_dress": 0.91,
-    "boost_fpg": 1.23,
-    "season_range": [
-     0.62,
-     1.47
-    ],
-    "drift": -0.003,
-    "missing_regs_pp": -0.003,
-    "lineup_slack": 0.4,
-    "missing_regs": -0.04,
-    "week_slack": 0.4
-   },
-   "cr_pct": 44,
-   "cr_season_pct": 55
   },
   {
    "id": 3069621,
@@ -50740,8 +50805,8 @@
    "proj_ppg": null,
    "clears": null,
    "dfo_out": true,
-   "cr": 0.44,
-   "cr_fpg": 1.27,
+   "cr": 0.45,
+   "cr_fpg": 1.28,
    "cr_season": 0.87,
    "proj_gp": 56,
    "cr_games": 0.35,
@@ -50794,6 +50859,11 @@
      "m": 0.93,
      "fpg": 1.36,
      "back": true
+    },
+    "line": {
+     "win_prob": 0.66,
+     "m": 1.01,
+     "pps": 1.28
     },
     "drift": -0.003,
     "missing_regs_pp": -0.008,
@@ -51346,7 +51416,7 @@
     "week_slack": 0.3
    },
    "cr_pct": 16,
-   "cr_season_pct": 7
+   "cr_season_pct": 8
   },
   {
    "id": 3759,
@@ -51926,6 +51996,11 @@
      0.07,
      0.91
     ],
+    "line": {
+     "win_prob": 0.34,
+     "m": 0.99,
+     "pps": 0.94
+    },
     "drift": -0.003,
     "missing_regs_pp": -0.011,
     "lineup_slack": 0.5,
@@ -52724,6 +52799,11 @@
      "m": 0.93,
      "fpg": 1.37,
      "back": true
+    },
+    "line": {
+     "win_prob": 0.59,
+     "m": 1.006,
+     "pps": 1.36
     },
     "drift": -0.003,
     "missing_regs_pp": -0.011,
@@ -56704,95 +56784,6 @@
    "cr_season_pct": 12
   },
   {
-   "id": 5161,
-   "name": "Matt Duchene",
-   "team": "DAL",
-   "games": 3,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    45,
-    47,
-    48
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "C",
-   "slots": [
-    "C",
-    "F",
-    "LW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 41.8,
-   "adp": 173.6,
-   "gp": 0,
-   "ppg": 1.81,
-   "cur_ppg": null,
-   "last_ppg": 1.6,
-   "last_gp": 57,
-   "proj_ppg": 1.81,
-   "clears": null,
-   "dfo_out": true,
-   "proj_ppg_pre": 1.81,
-   "cr": 0.05,
-   "cr_fpg": 1.63,
-   "cr_season": 0.43,
-   "proj_gp": 17,
-   "cr_games": 0.03,
-   "cr_dress": 0.02,
-   "cr_dress_next": 0.02,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8475168,
-   "cr_why": {
-    "toi5": 16.51,
-    "toi": null,
-    "pp5": 2.32,
-    "sog": 1.56,
-    "blk": 0.4,
-    "gp": 0,
-    "last_fpg": 1.6,
-    "xfp": null,
-    "season_fpg": 1.59,
-    "opp_last": {
-     "ga": 0.007,
-     "move": 0.001
-    },
-    "week_news": {
-     "shift": -1.95,
-     "move": -0.084,
-     "why": [
-      "long absence",
-      "timeline"
-     ]
-    },
-    "season_pts": 1.68,
-    "espn_blend": 0.29,
-    "espn_proj": 1.81,
-    "season_share": 0.25,
-    "age_adj": -0.06,
-    "season_range": [
-     0.07,
-     0.82
-    ],
-    "back": {
-     "games": "10"
-    },
-    "sched_sk": 0.024,
-    "drift": 0.002,
-    "adp_pull": 1.043,
-    "adp": 173.6
-   },
-   "cr_pct": 7,
-   "cr_season_pct": 9
-  },
-  {
    "id": 3669,
    "name": "Jonathan Toews",
    "team": "WPG",
@@ -56860,7 +56851,7 @@
     "sched_sk": 0.009,
     "drift": 0.002
    },
-   "cr_pct": 7,
+   "cr_pct": 8,
    "cr_season_pct": 3
   },
   {
@@ -57872,7 +57863,7 @@
    "clears": null,
    "dfo_out": true,
    "cr": 0.02,
-   "cr_fpg": 0.75,
+   "cr_fpg": 0.76,
    "cr_season": 0.41,
    "proj_gp": 46,
    "cr_games": 0.03,
@@ -57930,6 +57921,11 @@
      "m": 0.93,
      "fpg": 0.81,
      "back": true
+    },
+    "line": {
+     "win_prob": 0.66,
+     "m": 1.01,
+     "pps": 0.76
     },
     "drift": -0.003,
     "missing_regs_pp": -0.009,
@@ -58626,6 +58622,94 @@
    },
    "cr_pct": 0,
    "cr_season_pct": 77
+  },
+  {
+   "id": 5161,
+   "name": "Matt Duchene",
+   "team": "DAL",
+   "games": 3,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    45,
+    47,
+    48
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "C",
+   "slots": [
+    "C",
+    "F",
+    "LW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 41.8,
+   "adp": 173.6,
+   "gp": 0,
+   "ppg": 1.81,
+   "cur_ppg": null,
+   "last_ppg": 1.6,
+   "last_gp": 57,
+   "proj_ppg": 1.81,
+   "clears": null,
+   "dfo_out": true,
+   "proj_ppg_pre": 1.81,
+   "cr": 0.0,
+   "cr_fpg": 1.59,
+   "cr_season": 0.28,
+   "proj_gp": 11,
+   "cr_games": 0.0,
+   "cr_dress": 0.0,
+   "cr_dress_next": 0.0,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8475168,
+   "cr_why": {
+    "toi5": 16.51,
+    "toi": null,
+    "pp5": 2.32,
+    "sog": 1.56,
+    "blk": 0.4,
+    "gp": 0,
+    "last_fpg": 1.6,
+    "xfp": null,
+    "season_fpg": 1.59,
+    "opp_last": {
+     "ga": 0.007,
+     "move": 0.001
+    },
+    "week_news": {
+     "shift": -1.95,
+     "move": 0.0,
+     "why": [
+      "long absence",
+      "timeline"
+     ]
+    },
+    "season_pts": 1.68,
+    "espn_blend": 0.29,
+    "espn_proj": 1.81,
+    "season_share": 0.17,
+    "age_adj": -0.06,
+    "season_range": [
+     0.0,
+     0.67
+    ],
+    "back": {
+     "days": 58
+    },
+    "drift": 0.002,
+    "adp_pull": 1.044,
+    "adp": 173.6
+   },
+   "cr_pct": 0,
+   "cr_season_pct": 7
   },
   {
    "id": 4697448,
