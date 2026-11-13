@@ -4464,6 +4464,7 @@ def test_line_weight_by_role():
     top = rating.SKATER_LINE_TOP_FPG
     assert rating.skater_line_b("C", top) == rating.SKATER_LINE_B_TOP > 0.3
     assert rating.skater_line_b("LW", top - 0.01) == rating.skater_line_b("D", top + 1) == rating.SKATER_LINE_B_REST < 0.1
+    assert rating.skater_line_b("D", top - 0.01) == 0  # depth defensemen don't follow it (handoff 921)
 
 
 def test_scoring_forward_later_games_follow_team_strength(monkeypatch, tmp_path):

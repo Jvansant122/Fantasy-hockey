@@ -195,8 +195,12 @@ def skater_sched_b(pos, fpg):
 
 
 def skater_line_b(pos, fpg):
-    """The betting line's weight on a skater's game tonight: scoring forwards follow it, everyone else barely (916)."""
-    return SKATER_LINE_B_TOP if pos != "D" and fpg >= SKATER_LINE_TOP_FPG else SKATER_LINE_B_REST
+    """The betting line's weight on a skater's game tonight: scoring forwards follow it, top defensemen and other forwards
+    barely (916), other defensemen not at all (handoff 921, findings 4583: 4 of 4 seasons, as 920's later nights)."""
+    top = fpg >= SKATER_LINE_TOP_FPG
+    if pos == "D":
+        return SKATER_LINE_B_REST if top else 0.0
+    return SKATER_LINE_B_TOP if top else SKATER_LINE_B_REST
 # this week's starts (not Season): his own points per start already carry his team's strength, so with the line or the
 # schedule on top strong teams' starters read ~0.5 high. Week pricing keeps 0.4 of his gap to the league's rate this season
 # (shrunk over 300 starts to 2.89), and the schedule slope drops to 3.0. 13,120 starts 2021-26: per-start error -1.5% and
@@ -4868,7 +4872,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         sched_b = skater_sched_b(p["pos"], fpg) if p["pos"] != "G" else 0.0
         line_t = lines.get(team_n) if p["pos"] != "G" else None
         lined = False
-        if line_t is not None and exp_games > 0 and dress_next and p.get("today_start") and not game_started(p) and not skip:
+        if line_t is not None and exp_games > 0 and dress_next and p.get("today_start") and not game_started(p) and not skip \
+                and skater_line_b(p["pos"], fpg) > 0:
             m = 1 + skater_line_b(p["pos"], fpg) * (line_t - 0.5)  # tonight's game by the betting line (914, 916)
             why["line"] = {"win_prob": round(line_t, 2), "m": round(m, 3), "pps": round(fpg * m, 2)}
             why.setdefault("season_pts", round(fpg, 2))  # the Season's own points a game stays his full rate (P5)
