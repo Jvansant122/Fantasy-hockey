@@ -173,7 +173,9 @@ LINE_PPS_SLOPE = 3.0  # points per start per unit of win probability implied by 
 # a skater's game with a pre-game moneyline (tonight's): points x (1 + SKATER_LINE_B x (team win chance - 0.5)) (handoff
 # 914, findings 4559: live Oct 16-Nov 11, 5,368 player-games, actual/site 0.988 under .40 to 1.134 at .60+; b 0.52, 95%
 # 0.22-0.86; held-out MSE 1.6688 -> 1.6624, per-night rank .2946 -> .3023)
-SKATER_LINE_B = 0.5
+# halved to 0.25 (handoff 915, findings 4560: 2022-26 MoneyPuck pre-game odds, 144,867 skater-games, leave-one-season-out
+# with an opponent control: held-out MSE B 0 1.54042, 0.25 1.53893, 0.5 1.54155; 0.25 beats 0 in 4 of 4 seasons)
+SKATER_LINE_B = 0.25
 # this week's starts (not Season): his own points per start already carry his team's strength, so with the line or the
 # schedule on top strong teams' starters read ~0.5 high. Week pricing keeps 0.4 of his gap to the league's rate this season
 # (shrunk over 300 starts to 2.89), and the schedule slope drops to 3.0. 13,120 starts 2021-26: per-start error -1.5% and
