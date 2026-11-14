@@ -4532,3 +4532,46 @@ def test_goalie_later_starts_use_predicted_winners(monkeypatch, tmp_path):
     rows = [r for d in ("2026-10-%02d" % k for k in range(9, 19)) for opp in teams.split()
             for r in ({"date": d, "home": "TOR", "away": opp, "p_home": 0.7}, {"date": d, "home": opp, "away": "TOR", "p_home": 0.3})]
     assert run(rows)["cr_why"]["sched"] == pytest.approx(rating.WEEK_SCHED_SLOPE * 0.2, abs=0.01)
+
+
+def test_dfo_pick_backup_helper():
+    """Handoff 922: a pick with fewer of the last 10 starts than another roster goalie is a backup pick; ties and no history aren't."""
+    roster = [(1, "A", "G"), (2, "B", "G"), (3, "C", "C")]
+    hist = [("d", 1)] * 6 + [("d", 2)] * 4
+    assert rating.dfo_pick_is_backup(2, roster, hist)
+    assert not rating.dfo_pick_is_backup(1, roster, hist)
+    assert not rating.dfo_pick_is_backup(2, roster, [("d", 1)] * 5 + [("d", 2)] * 5)
+    assert not rating.dfo_pick_is_backup(2, roster, [])
+    assert not rating.dfo_pick_is_backup(2, roster, [("d", 1)] * 20 + [("d", 2)] * 10)  # only the last 10 count: 0 vs 10
+    assert rating.dfo_pick_is_backup(1, roster, [("d", 1)] * 20 + [("d", 2)] * 10)
+
+
+@pytest.mark.usefixtures("whole_goalie_nights")
+def test_unconfirmed_backup_pick_gets_bigger_push_early(monkeypatch, tmp_path):
+    """Handoff 922: 8 h+ before the puck, Daily Faceoff's plain pick who trails a teammate in the last 10 starts gets x4.8;
+    the leader keeps x1.65 and under 8 h both get x3.32."""
+    from datetime import datetime, timezone
+    starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}
+
+    def go(goalie, status, hour):
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(starts=starts))
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / f"log_{goalie}_{status}_{hour}.jsonl")
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        players = [espn(111, "Joseph Woll", "TOR", "G"), espn(112, "Anthony Stolarz", "TOR", "G")]
+        games = [{"team": "TOR", "goalie": goalie, "status": status}] if status else []
+        rating.add_ratings(players, 2027, TODAY, MONDAY, [{"date": "2026-10-09", "games": games}])
+        return {p["name"]: p["cr_why"] for p in players}
+
+    # the fake league's two goalies split the last 10 evenly (a tie keeps x1.65), so Woll is made the leader here
+    real = rating.dfo_pick_is_backup
+    assert not real(1, [(1, "", "G"), (2, "", "G")], [("d", 1), ("d", 2)])
+    monkeypatch.setattr(rating, "dfo_pick_is_backup", lambda who, roster, seq: who == 12)
+    lead, back = "Joseph Woll", "Anthony Stolarz"
+    base = go(lead, None, 12)
+    odds = lambda q: q / (1 - q)
+    early_b, late_b, early_l = go(back, "Unconfirmed", 12), go(back, "Unconfirmed", 18), go(lead, "Unconfirmed", 12)
+    assert early_b[back]["tonight"]["odds"] == rating.DFO_PICK_BACKUP_ODDS == 4.8
+    assert odds(early_b[back]["p_today"]) / odds(base[back]["p_today"]) == pytest.approx(4.8, rel=0.03)
+    assert late_b[back]["tonight"]["odds"] == 3.32
+    assert early_l[lead]["tonight"]["odds"] == 1.65
+    assert early_b[back]["p_today"] + early_b[lead]["p_today"] == pytest.approx(1, abs=0.01)
