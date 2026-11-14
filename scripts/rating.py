@@ -381,8 +381,9 @@ LIKELY_START_FLOOR = 0.985
 DFO_PICK_ODDS = ((8, 1.65), (0, 3.32))
 # ...but 8 h+ out, a pick who is not his team's share-of-last-10-starts leader (another goalie on the roster has more of the
 # last 10) is the news itself: backup picks started 75% of 108 Oct 16-Nov 11 but showed 54%; x4.8 held-out Brier .2010 ->
-# .1685 (halves 4.9 / 4.75). The no. 1 and tied picks keep x1.65 (handoff 922, findings 4604)
-DFO_PICK_BACKUP_ODDS = 4.8
+# .1685 (halves 4.9 / 4.75). The no. 1 and tied picks keep x1.65 (handoff 922, findings 4604). Under 8 h a backup pick gets
+# x6 for x3.32: last pre-puck runs, backup picks started 88% of 49 but showed 61%; Brier .1198 -> .1052 (handoff 923, findings 4605)
+DFO_PICK_BACKUP_ODDS = ((8, 4.8), (0, 6.0))
 LATER_GAME_TEMP = 0.8  # start logits for games 2+ ahead are scaled by this: the chained week runs overconfident (findings 134)
 # a goalie in his first 1-3 starts for a new team after a trade or claim: the team got him to play him, but his old-team
 # starts don't count, so he reads as a backup (next-game start 0.20 against 0.32 actual, findings 156)
@@ -4021,9 +4022,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         puck = parse_utc(week_starts.get((team, today.isoformat())))
         if isinstance(who, int) and status not in ("Confirmed", "Likely") and puck is not None and puck > now_utc:
             hours = (puck - now_utc).total_seconds() / 3600
-            m = next(m for h, m in DFO_PICK_ODDS if hours >= h)
-            if hours >= DFO_PICK_ODDS[0][0] and dfo_pick_is_backup(who, rosters.get(team, []), starts_by_team.get(team, [])):
-                m = DFO_PICK_BACKUP_ODDS  # handoff 922
+            backup = dfo_pick_is_backup(who, rosters.get(team, []), starts_by_team.get(team, []))  # handoffs 922, 923
+            m = next(m for h, m in (DFO_PICK_BACKUP_ODDS if backup else DFO_PICK_ODDS) if hours >= h)
             dfo_pick[team] = (who, m)
     goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
