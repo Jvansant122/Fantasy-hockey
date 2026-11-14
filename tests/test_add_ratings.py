@@ -4549,7 +4549,7 @@ def test_dfo_pick_backup_helper():
 @pytest.mark.usefixtures("whole_goalie_nights")
 def test_unconfirmed_backup_pick_gets_bigger_push_early(monkeypatch, tmp_path):
     """Handoff 922: 8 h+ before the puck, Daily Faceoff's plain pick who trails a teammate in the last 10 starts gets x4.8;
-    the leader keeps x1.65 and under 8 h both get x3.32."""
+    the leader keeps x1.65; under 8 h the backup pick gets x6 (handoff 923) and the leader x3.32."""
     from datetime import datetime, timezone
     starts = {"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"}
 
@@ -4570,8 +4570,10 @@ def test_unconfirmed_backup_pick_gets_bigger_push_early(monkeypatch, tmp_path):
     base = go(lead, None, 12)
     odds = lambda q: q / (1 - q)
     early_b, late_b, early_l = go(back, "Unconfirmed", 12), go(back, "Unconfirmed", 18), go(lead, "Unconfirmed", 12)
-    assert early_b[back]["tonight"]["odds"] == rating.DFO_PICK_BACKUP_ODDS == 4.8
+    assert early_b[back]["tonight"]["odds"] == rating.DFO_PICK_BACKUP_ODDS[0][1] == 4.8
     assert odds(early_b[back]["p_today"]) / odds(base[back]["p_today"]) == pytest.approx(4.8, rel=0.03)
-    assert late_b[back]["tonight"]["odds"] == 3.32
+    assert late_b[back]["tonight"]["odds"] == 6.0
+    assert odds(late_b[back]["p_today"]) / odds(base[back]["p_today"]) == pytest.approx(6.0, rel=0.03)
     assert early_l[lead]["tonight"]["odds"] == 1.65
+    assert go(lead, "Unconfirmed", 18)[lead]["tonight"]["odds"] == 3.32
     assert early_b[back]["p_today"] + early_b[lead]["p_today"] == pytest.approx(1, abs=0.01)
