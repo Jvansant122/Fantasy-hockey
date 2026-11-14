@@ -1,5 +1,5 @@
 {
- "updated": "Sat Nov 14, 4:45 PM ET",
+ "updated": "Sat Nov 14, 4:51 PM ET",
  "updated_date": "2026-11-14",
  "first_start": "2026-11-14T18:00:00Z",
  "stats_missing": 0,
@@ -9,7 +9,7 @@
    "48": 0.17
   }
  },
- "updated_utc": "2026-11-14T21:45:01Z",
+ "updated_utc": "2026-11-14T21:50:41Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4439,7 +4439,7 @@
     "state": "FUT",
     "started": false,
     "p_line": 0.428,
-    "p_model": 0.383
+    "p_model": 0.382
    },
    {
     "date": "2026-11-14",
@@ -4564,7 +4564,7 @@
       -0.02
      ],
      "sv": [
-      0.886,
+      0.885,
       0.895
      ],
      "b2b": [
@@ -4828,8 +4828,8 @@
     "home": {
      "id": 6,
      "name": "Justin TimberSkate",
-     "now": 71.7,
-     "rest": 30.7,
+     "now": 71.9,
+     "rest": 30.5,
      "total": 102.4
     },
     "away": {
@@ -4839,7 +4839,7 @@
      "rest": 37.0,
      "total": 108.1
     },
-    "p_home": 0.287,
+    "p_home": 0.286,
     "sd": 10.1
    },
    {
@@ -4854,8 +4854,8 @@
      "id": 12,
      "name": "New York Mess",
      "now": 63.0,
-     "rest": 34.1,
-     "total": 97.1
+     "rest": 33.9,
+     "total": 96.9
     },
     "p_home": 0.993,
     "sd": 10.8
@@ -4883,8 +4883,8 @@
      "id": 4,
      "name": "Nico de gallo",
      "now": 52.8,
-     "rest": 38.6,
-     "total": 91.4
+     "rest": 38.4,
+     "total": 91.2
     },
     "away": {
      "id": 10,
@@ -4893,7 +4893,7 @@
      "rest": 32.5,
      "total": 79.5
     },
-    "p_home": 0.857,
+    "p_home": 0.854,
     "sd": 11.1
    }
   ],
@@ -7462,6 +7462,81 @@
    "cr_season_pct": 76
   },
   {
+   "id": 4894487,
+   "name": "Devon Levi",
+   "team": "EDM",
+   "games": 4,
+   "games_left": 2,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    42,
+    44,
+    47,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-15T00:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 7,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 47.1,
+   "adp": 214.8,
+   "gp": 9,
+   "ppg": 3.84,
+   "cur_ppg": 3.84,
+   "last_ppg": null,
+   "last_gp": 0,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "47": 0.9,
+    "48": 0.28
+   },
+   "cr": 3.07,
+   "cr_fpg": 2.58,
+   "cr_season": 0.96,
+   "proj_gp": 26,
+   "cr_games": 1.19,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482221,
+   "cr_why": {
+    "exp_starts": 1.19,
+    "team_games": 2,
+    "share10": 0.2,
+    "n10": 10,
+    "tonight": {
+     "starting": true,
+     "status": "Unconfirmed",
+     "odds": 6.0
+    },
+    "own_pps": 3.25,
+    "g_season_share": 0.26,
+    "season_pps": 3.4,
+    "line": {
+     "win_prob": 0.57,
+     "pps": 2.54
+    },
+    "sched": 0.42,
+    "gs": 9,
+    "p_today": 0.9,
+    "p_today_pre": 0.9,
+    "week_scale": 0.8
+   },
+   "cr_pct": 100,
+   "cr_season_pct": 67
+  },
+  {
    "id": 4565231,
    "name": "Vasily Podkolzin",
    "team": "EDM",
@@ -7901,7 +7976,7 @@
     "adp_pull": 1.008,
     "adp": 48.9
    },
-   "cr_pct": 100,
+   "cr_pct": 99,
    "cr_season_pct": 95
   },
   {
@@ -8178,81 +8253,6 @@
    },
    "cr_pct": 94,
    "cr_season_pct": 70
-  },
-  {
-   "id": 4894487,
-   "name": "Devon Levi",
-   "team": "EDM",
-   "games": 4,
-   "games_left": 2,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    42,
-    44,
-    47,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-15T00:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 7,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 47.1,
-   "adp": 214.8,
-   "gp": 9,
-   "ppg": 3.84,
-   "cur_ppg": 3.84,
-   "last_ppg": null,
-   "last_gp": 0,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "47": 0.85,
-    "48": 0.28
-   },
-   "cr": 2.93,
-   "cr_fpg": 2.59,
-   "cr_season": 0.96,
-   "proj_gp": 26,
-   "cr_games": 1.13,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482221,
-   "cr_why": {
-    "exp_starts": 1.13,
-    "team_games": 2,
-    "share10": 0.2,
-    "n10": 10,
-    "tonight": {
-     "starting": true,
-     "status": "Unconfirmed",
-     "odds": 3.32
-    },
-    "own_pps": 3.25,
-    "g_season_share": 0.26,
-    "season_pps": 3.4,
-    "line": {
-     "win_prob": 0.57,
-     "pps": 2.54
-    },
-    "sched": 0.42,
-    "gs": 9,
-    "p_today": 0.85,
-    "p_today_pre": 0.85,
-    "week_scale": 0.8
-   },
-   "cr_pct": 99,
-   "cr_season_pct": 67
   },
   {
    "id": 4874730,
@@ -15163,6 +15163,78 @@
    "cr_season_pct": 87
   },
   {
+   "id": 3042020,
+   "name": "Tristan Jarry",
+   "team": "EDM",
+   "games": 4,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    42,
+    44,
+    47,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-14T18:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 29.5,
+   "adp": 224.8,
+   "gp": 9,
+   "ppg": 3.33,
+   "cur_ppg": 4.24,
+   "last_ppg": 2.92,
+   "last_gp": 29,
+   "proj_ppg": 3.0,
+   "clears": null,
+   "dfo_out": null,
+   "proj_ppg_pre": 3.0,
+   "cr_g_nights": {
+    "47": 0.08,
+    "48": 0.68
+   },
+   "cr": 1.86,
+   "cr_fpg": 2.74,
+   "cr_season": 1.2,
+   "proj_gp": 34,
+   "cr_games": 0.68,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8477465,
+   "cr_why": {
+    "exp_starts": 0.68,
+    "team_games": 1,
+    "share10": 0.6,
+    "n10": 10,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed",
+     "odds": 6.0
+    },
+    "own_pps": 3.33,
+    "g_season_share": 0.39,
+    "season_pps": 3.12,
+    "sched": 0.42,
+    "gs": 9,
+    "p_today": 0.0,
+    "p_today_pre": 0.08,
+    "week_scale": 0.8
+   },
+   "cr_pct": 86,
+   "cr_season_pct": 83
+  },
+  {
    "id": 3900219,
    "name": "Thomas Chabot",
    "team": "OTT",
@@ -15324,78 +15396,6 @@
    },
    "cr_pct": 86,
    "cr_season_pct": 16
-  },
-  {
-   "id": 3042020,
-   "name": "Tristan Jarry",
-   "team": "EDM",
-   "games": 4,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    42,
-    44,
-    47,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-14T18:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 29.5,
-   "adp": 224.8,
-   "gp": 9,
-   "ppg": 3.33,
-   "cur_ppg": 4.24,
-   "last_ppg": 2.92,
-   "last_gp": 29,
-   "proj_ppg": 3.0,
-   "clears": null,
-   "dfo_out": null,
-   "proj_ppg_pre": 3.0,
-   "cr_g_nights": {
-    "47": 0.13,
-    "48": 0.68
-   },
-   "cr": 1.85,
-   "cr_fpg": 2.73,
-   "cr_season": 1.2,
-   "proj_gp": 34,
-   "cr_games": 0.68,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8477465,
-   "cr_why": {
-    "exp_starts": 0.68,
-    "team_games": 1,
-    "share10": 0.6,
-    "n10": 10,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed",
-     "odds": 3.32
-    },
-    "own_pps": 3.33,
-    "g_season_share": 0.39,
-    "season_pps": 3.12,
-    "sched": 0.42,
-    "gs": 9,
-    "p_today": 0.0,
-    "p_today_pre": 0.13,
-    "week_scale": 0.8
-   },
-   "cr_pct": 86,
-   "cr_season_pct": 83
   },
   {
    "id": 3899978,
@@ -19839,83 +19839,6 @@
    "cr_season_pct": 68
   },
   {
-   "id": 3026526,
-   "name": "Laurent Brossoit",
-   "team": "ANA",
-   "games": 3,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    44,
-    47,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-15T03:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 4,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 2.3,
-   "adp": 229.9,
-   "gp": 5,
-   "ppg": -2.52,
-   "cur_ppg": 2.44,
-   "last_ppg": -3.4,
-   "last_gp": 1,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "47": 0.18,
-    "48": 0.46
-   },
-   "cr": 1.52,
-   "cr_fpg": 2.39,
-   "cr_season": 0.69,
-   "proj_gp": 18,
-   "cr_games": 0.64,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476316,
-   "cr_why": {
-    "exp_starts": 0.64,
-    "team_games": 2,
-    "share10": 0.5,
-    "n10": 10,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed",
-     "odds": 3.32
-    },
-    "own_pps": 2.48,
-    "mover_pps": 2.56,
-    "g_season_share": 0.2,
-    "season_pps": 2.56,
-    "line": {
-     "win_prob": 0.5,
-     "pps": 2.12
-    },
-    "sched": 0.45,
-    "gs": 5,
-    "p_today": 0.18,
-    "p_today_pre": 0.18,
-    "week_scale": 0.8,
-    "adp_pull": 0.994,
-    "adp": 229.9
-   },
-   "cr_pct": 81,
-   "cr_season_pct": 59
-  },
-  {
    "id": 5216918,
    "name": "Cole Hutson",
    "team": "WSH",
@@ -21887,6 +21810,83 @@
    },
    "cr_pct": 73,
    "cr_season_pct": 67
+  },
+  {
+   "id": 3026526,
+   "name": "Laurent Brossoit",
+   "team": "ANA",
+   "games": 3,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    44,
+    47,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-15T03:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 4,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 2.3,
+   "adp": 229.9,
+   "gp": 5,
+   "ppg": -2.52,
+   "cur_ppg": 2.44,
+   "last_ppg": -3.4,
+   "last_gp": 1,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "47": 0.11,
+    "48": 0.46
+   },
+   "cr": 1.38,
+   "cr_fpg": 2.42,
+   "cr_season": 0.69,
+   "proj_gp": 18,
+   "cr_games": 0.57,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476316,
+   "cr_why": {
+    "exp_starts": 0.57,
+    "team_games": 2,
+    "share10": 0.5,
+    "n10": 10,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed",
+     "odds": 6.0
+    },
+    "own_pps": 2.48,
+    "mover_pps": 2.56,
+    "g_season_share": 0.2,
+    "season_pps": 2.56,
+    "line": {
+     "win_prob": 0.5,
+     "pps": 2.12
+    },
+    "sched": 0.45,
+    "gs": 5,
+    "p_today": 0.11,
+    "p_today_pre": 0.11,
+    "week_scale": 0.8,
+    "adp_pull": 0.994,
+    "adp": 229.9
+   },
+   "cr_pct": 81,
+   "cr_season_pct": 59
   },
   {
    "id": 3899946,
@@ -28967,7 +28967,7 @@
     "tonight": {
      "starting": false,
      "status": "Unconfirmed",
-     "odds": 3.32
+     "odds": 6.0
     },
     "own_pps": 2.24,
     "g_season_share": 0.2,
@@ -31713,7 +31713,7 @@
    "dfo_out": null,
    "proj_ppg_pre": 2.68,
    "cr_g_nights": {
-    "47": 0.54,
+    "47": 0.61,
     "48": 0.15
    },
    "cr": 0.37,
@@ -31734,7 +31734,7 @@
     "tonight": {
      "starting": true,
      "status": "Unconfirmed",
-     "odds": 3.32
+     "odds": 6.0
     },
     "own_pps": 2.19,
     "g_season_share": 0.44,
@@ -31742,7 +31742,7 @@
     "sched": 0.45,
     "gs": 10,
     "p_today": 0.0,
-    "p_today_pre": 0.54,
+    "p_today_pre": 0.61,
     "week_scale": 0.8,
     "adp_pull": 0.997,
     "adp": 227.8
@@ -34152,7 +34152,7 @@
     "tonight": {
      "starting": false,
      "status": "Unconfirmed",
-     "odds": 3.32
+     "odds": 6.0
     },
     "own_pps": 2.15,
     "mover_pps": 1.79,
@@ -56883,7 +56883,7 @@
     "tonight": {
      "starting": false,
      "status": "Unconfirmed",
-     "odds": 3.32
+     "odds": 6.0
     },
     "own_pps": 2.77,
     "g_season_share": 0.0,
@@ -62087,7 +62087,7 @@
    "adp": 137.4,
    "gp": 17,
    "ppg": 1.58,
-   "cur_ppg": 1.16,
+   "cur_ppg": 1.17,
    "last_ppg": 1.69,
    "last_gp": 67,
    "proj_ppg": 2.01,
