@@ -395,7 +395,11 @@ def test_stream_card_drops_the_third_goalie(browser, server, data):
         if g3 and m:  # 3 goalies: the stream slot's goalie; 4+: the first the card lists (handoff 633)
             gm = re.search(r"drop (.+?) for a confirmed starter", g3) or re.search(r"(?:skater|start)\. ([^.]+?) [A-Z]{2,3}, ", g3)  # after handoff 653's note when it shows
             gname = gm.group(1)
-            if m.group(1) != gname:
+            # a goalie who is his team's no. 1 (over 55% of its last 10 starts) keeps his spot through the stream: the skater
+            # drop instead (handoff 805), even when a 4-goalie team's Goalies card lists him as the spare
+            no1 = any(p["name"] == gname and p["pos"] == "G" and p.get("team_id") == t["id"]
+                      and ((p.get("cr_why") or {}).get("share10") or 0) > 0.55 for p in d["players"])
+            if m.group(1) != gname and not no1:
                 bad.append((t["id"], m.group(1), gname))
     assert not bad, f"Stream card drops a skater while the Goalies card names the third goalie: {bad[:4]}"
     assert errors == []
