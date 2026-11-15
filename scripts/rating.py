@@ -266,8 +266,15 @@ RUN_NO1_LOGIT, RUN_NO1_RANGE = -0.6, (3, 7)
 # run's unconfirmed calls showed run 3-7 at 0.759 and 2 at 0.604 but 0.481 and 0.536 started (handoff 924, findings 4617).
 # Sized by the build thread: with 922/923 applied first, every run window Oct 17-Nov 14 (741 goalie-rows, rested, not
 # Confirmed/Likely) Brier -0.0038 at this size, -0.0071 at -0.5/-1.0; but the 2021-26 replay (no Daily Faceoff, 9,417 rows)
-# got worse at full size in 5 of 5 seasons (+0.0051) and is flat here (+0.0004: 2021-24 worse, 2024-26 better)
-RUN_ANY_LOGITS = (-0.3, -0.5)
+# got worse at full size in 5 of 5 seasons (+0.0051). Nearly all those morning cases were Daily Faceoff's unconfirmed pick
+# (50 of 52, shown 0.775, started 0.500), which the replay never sees: so only the run goalie who is that pick, 8 h+ before
+# the puck (under 8 h, after 923's odds, he is about right: 0.71 vs 0.69), at full size (handoff 925, findings 4620)
+RUN_ANY_LOGITS = (-0.5, -1.0)
+# Daily Faceoff's unconfirmed pick is his team's share-of-last-10 leader (not 922's backup) on a rested game after another
+# goalie started the last one: shown 0.73-0.78 but started 0.89-0.91 in every run window (238 cases Oct 17-Nov 14). With
+# 922/923 applied, all windows' goalie-rows Brier -0.0037 for this and the pick-only run rule vs -0.0014 for 924 as first
+# shipped, better in every window and both halves (handoff 925, findings 4620)
+DFO_LEADER_BACK_LOGIT = 0.8
 ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
 PATTERN_LOGITS = {(3, True): 0.8, (3, False): -0.4, (4, False): -0.8}  # last starter's next game in a repeating A A B or
 # A A B B pattern: (period, the pattern keeps him in) -> shift; a period-4 stay gets nothing (findings 243)
@@ -3125,7 +3132,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
     start_wins: whether each start in starts_by_team[team] was a win; with it the no. 1's next game moves after a split
     back-to-back and after a backup's last result (findings 264-267).
     off_movers: goalies with starts last season whose last team then wasn't this one (handoff 731).
-    dfo_pick: (goalie id, odds multiplier) for Daily Faceoff's unconfirmed projected starter in today's game (handoff 849)."""
+    dfo_pick: (goalie id, odds multiplier[, 8 h+ before the puck]) for Daily Faceoff's unconfirmed projected starter in
+    today's game (handoffs 849, 925)."""
     confirmed, injury = confirmed or {}, injury or {}
     hist = starts_by_team.get(team, [])
     seq = [gid for _, gid in hist]
@@ -3254,6 +3262,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         # a team-wide break rests everyone: the last starter isn't benched just because days passed (findings 196)
         gap = (day - date.fromisoformat(last_date)).days if ahead == 0 and last_date else 0
         rested = next((v for days, v in BREAK_LOGITS if gap >= days), 0.0)
+        # Daily Faceoff's unconfirmed pick for today's game, and whether it came 8 h+ before the puck (handoff 925)
+        pick_today = dfo_pick[0] if dfo_pick and d == today.isoformat() else None
+        pick_early = pick_today if pick_today is not None and len(dfo_pick) > 2 and dfo_pick[2] else None
         night2_no1 = False
         night_after = prev_d is not None and (day - prev_d).days == 1  # the night after the previous game still to play
         if gap == 1 and seq:  # night 2 of a back-to-back: shift whoever started night 1, by role
@@ -3325,7 +3336,11 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     z += RUN_BACKUP_LOGIT
                 elif gid == no1 and RUN_NO1_RANGE[0] <= run <= RUN_NO1_RANGE[1]:
                     z += RUN_NO1_LOGIT
-                z += RUN_ANY_LOGITS[0] if run == 2 else RUN_ANY_LOGITS[1] if RUN_NO1_RANGE[0] <= run <= RUN_NO1_RANGE[1] else 0.0  # 924
+                if pick_early == gid:  # 924, 925
+                    z += RUN_ANY_LOGITS[0] if run == 2 else RUN_ANY_LOGITS[1] if RUN_NO1_RANGE[0] <= run <= RUN_NO1_RANGE[1] else 0.0
+            if ahead == 0 and gap != 1 and seq and gid != seq[-1] and pick_today == gid \
+                    and not any(seq[-10:].count(x) > seq[-10:].count(gid) for x in set(seq[-10:]) if x != gid):  # 925
+                z += DFO_LEADER_BACK_LOGIT
             if ahead == 0 and gid in off_movers and gid != no1 and len(seq) <= OFFSEASON_MOVER_GAMES:  # handoff 731
                 z += OFFSEASON_MOVER_NEXT_LOGIT
             if seq and gid == seq[0] and ahead == 0 and len(seq) <= OPENING_STARTER_GAMES and gap != 1:  # handoff 733
@@ -3388,7 +3403,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             now = 1 / (1 + math.exp(-(math.log(was / (1 - was)) + NO1_AFTER_OTHER_RUN_LOGIT)))
             q = {gid: now if gid == no1 else v * (1 - now) / (1 - was) for gid, v in q.items()}
         if dfo_pick and d == today.isoformat() and dfo_pick[0] in q and 0 < q[dfo_pick[0]] < 1 and len(q) > 1:  # handoff 849
-            gid, m = dfo_pick
+            gid, m = dfo_pick[:2]
             was = q[gid]
             now = m * was / (1 - was + m * was)
             q = {g: now if g == gid else v * (1 - now) / (1 - was) for g, v in q.items()}
@@ -4031,7 +4046,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             hours = (puck - now_utc).total_seconds() / 3600
             backup = dfo_pick_is_backup(who, rosters.get(team, []), starts_by_team.get(team, []))  # handoffs 922, 923
             m = next(m for h, m in (DFO_PICK_BACKUP_ODDS if backup else DFO_PICK_ODDS) if hours >= h)
-            dfo_pick[team] = (who, m)
+            dfo_pick[team] = (who, m, hours >= DFO_PICK_ODDS[0][0])  # 8 h+ out (handoff 925)
     goalie_dfo, goalie_dfo_day = goalie_dfo_cuts(dfo_news, rosters, goalie_dates, confirmed, today)
     goalie_exp, goalie_today, goalie_season, goalie_nights = {}, {}, {}, {}
     lines = line_win_probs(odds, today)
