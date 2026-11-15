@@ -1075,6 +1075,28 @@ def test_runs_of_starts_outside_night_2(monkeypatch):
         assert p([2] + [1] * k, b, n)[1] == pytest.approx(p([2] + [1] * k, 0.0, 0.0)[1])
 
 
+def test_any_run_of_two_to_seven_rests_a_little_more(monkeypatch):
+    """Handoff 924: on a rested next game the last starter on a run of exactly 2 gets RUN_ANY_LOGITS[0] and on 3-7 gets
+    [1], no. 1 or backup, on top of 831; one start, 8+ straight and night 2 get nothing; the team's night keeps its total."""
+    model = rating.Model()
+
+    def p(tail, logits, gap=2):
+        monkeypatch.setattr(rating, "RUN_ANY_LOGITS", logits)
+        seq = [1, 1, 1, 2] * 3 + tail
+        hist = [((date(2026, 10, 1) + timedelta(days=2 * i)).isoformat(), g) for i, g in enumerate(seq)]
+        nxt = date.fromisoformat(hist[-1][0]) + timedelta(days=gap)
+        out = {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 50, 2: 32}, [nxt.isoformat()], nxt, today_p=out)
+        return out
+    on = rating.RUN_ANY_LOGITS
+    assert on[1] <= on[0] < 0
+    for tail, g in (([2, 1, 1], 1), ([1, 2, 2], 2), ([2, 1, 1, 1], 1), ([2] + [1] * 7, 1), ([1, 1, 2, 2, 2], 2)):
+        assert p(tail, on)[g] < p(tail, (0.0, 0.0))[g] - 0.01, tail
+        assert sum(p(tail, on).values()) == pytest.approx(sum(p(tail, (0.0, 0.0)).values()), abs=0.011)  # rounded
+    for tail, g in (([1, 1, 2], 2), ([2] + [1] * 8, 1)):
+        assert p(tail, on)[g] == pytest.approx(p(tail, (0.0, 0.0))[g])
+    assert p([1, 2, 2], on, gap=1)[2] == pytest.approx(p([1, 2, 2], (0.0, 0.0), gap=1)[2])  # night 2: 830's rules
+
 def test_starter_five_to_seven_straight_is_due_a_rest(monkeypatch):
     """The last starter on a 5-7 start run gets -1.0 next game; 4 or 8+ straight, nothing (findings 202)."""
     model = rating.Model()
