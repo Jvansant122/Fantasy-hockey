@@ -262,6 +262,12 @@ STREAK_LOGIT, STREAK_RANGE = -1.0, (5, 7)
 # chance is shared out (leave-one-season-out picks 0.9-1.1 and -0.6 to -0.8): Brier -4.7% and -1.7% on those team-games
 RUN_BACKUP_LOGIT, RUN_BACKUP_MIN = 0.9, 2
 RUN_NO1_LOGIT, RUN_NO1_RANGE = -0.6, (3, 7)
+# ... and on top of those, any last starter on a run of exactly 2 or of 3-7 (no. 1 or not): live Oct 17-Nov 14, the morning
+# run's unconfirmed calls showed run 3-7 at 0.759 and 2 at 0.604 but 0.481 and 0.536 started (handoff 924, findings 4617).
+# Sized by the build thread: with 922/923 applied first, every run window Oct 17-Nov 14 (741 goalie-rows, rested, not
+# Confirmed/Likely) Brier -0.0038 at this size, -0.0071 at -0.5/-1.0; but the 2021-26 replay (no Daily Faceoff, 9,417 rows)
+# got worse at full size in 5 of 5 seasons (+0.0051) and is flat here (+0.0004: 2021-24 worse, 2024-26 better)
+RUN_ANY_LOGITS = (-0.3, -0.5)
 ROTATION_LOGIT, ROTATION_STARTS = -1.2, 6  # last starter's next game when the last 6+ starts strictly alternate (findings 227)
 PATTERN_LOGITS = {(3, True): 0.8, (3, False): -0.4, (4, False): -0.8}  # last starter's next game in a repeating A A B or
 # A A B B pattern: (period, the pattern keeps him in) -> shift; a period-4 stay gets nothing (findings 243)
@@ -3319,6 +3325,7 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
                     z += RUN_BACKUP_LOGIT
                 elif gid == no1 and RUN_NO1_RANGE[0] <= run <= RUN_NO1_RANGE[1]:
                     z += RUN_NO1_LOGIT
+                z += RUN_ANY_LOGITS[0] if run == 2 else RUN_ANY_LOGITS[1] if RUN_NO1_RANGE[0] <= run <= RUN_NO1_RANGE[1] else 0.0  # 924
             if ahead == 0 and gid in off_movers and gid != no1 and len(seq) <= OFFSEASON_MOVER_GAMES:  # handoff 731
                 z += OFFSEASON_MOVER_NEXT_LOGIT
             if seq and gid == seq[0] and ahead == 0 and len(seq) <= OPENING_STARTER_GAMES and gap != 1:  # handoff 733
