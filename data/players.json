@@ -4,7 +4,7 @@
  "first_start": "2026-11-16T00:30:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-15T12:50:34Z",
+ "updated_utc": "2026-11-15T12:50:44Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4794,7 +4794,7 @@
     "away": "VAN",
     "home_name": "Golden Knights",
     "away_name": "Canucks",
-    "p_home": 0.795,
+    "p_home": 0.796,
     "inputs": {
      "pts": [
       9.29,
@@ -4806,7 +4806,7 @@
      ],
      "sv": [
       0.895,
-      0.868
+      0.867
      ],
      "b2b": [
       0,
@@ -4820,7 +4820,7 @@
     "state": "FUT",
     "started": false,
     "p_line": 0.772,
-    "p_model": 0.817
+    "p_model": 0.818
    }
   ],
   "record": {
@@ -18741,20 +18741,20 @@
    "dfo_out": null,
    "proj_ppg_pre": 2.7,
    "cr_g_nights": {
-    "48": 0.79
+    "48": 0.85
    },
-   "cr": 0.71,
+   "cr": 0.76,
    "cr_fpg": 0.9,
    "cr_season": 0.52,
    "proj_gp": 23,
-   "cr_games": 0.79,
+   "cr_games": 0.85,
    "cr_dress": null,
    "cr_dress_next": null,
    "sat_last": false,
    "cr_matched": true,
    "nhl_id": 8480947,
    "cr_why": {
-    "exp_starts": 0.79,
+    "exp_starts": 0.85,
     "team_games": 1,
     "share10": 0.2,
     "n10": 10,
@@ -18771,8 +18771,8 @@
      "pps": 0.9
     },
     "gs": 8,
-    "p_today": 0.79,
-    "p_today_pre": 0.79,
+    "p_today": 0.85,
+    "p_today_pre": 0.85,
     "week_scale": 0.8
    },
    "cr_pct": 93,
@@ -19688,79 +19688,6 @@
    "cr_season_pct": 17
   },
   {
-   "id": 4894703,
-   "name": "Leevi Merilainen",
-   "team": "VAN",
-   "games": 3,
-   "games_left": 1,
-   "light": 3,
-   "light_left": 1,
-   "nights": [
-    42,
-    46,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-16T00:30:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 3.1,
-   "adp": 229.8,
-   "gp": 13,
-   "ppg": 1.26,
-   "cur_ppg": 1.45,
-   "last_ppg": 1.14,
-   "last_gp": 19,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "48": 0.19
-   },
-   "cr": 0.23,
-   "cr_fpg": 1.22,
-   "cr_season": 0.82,
-   "proj_gp": 49,
-   "cr_games": 0.19,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482447,
-   "cr_why": {
-    "exp_starts": 0.19,
-    "team_games": 1,
-    "share10": 0.8,
-    "n10": 10,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed",
-     "odds": 4.8
-    },
-    "own_pps": 1.69,
-    "mover_pps": 1.22,
-    "g_season_share": 0.57,
-    "season_pps": 1.22,
-    "line": {
-     "win_prob": 0.23,
-     "pps": 1.22
-    },
-    "gs": 13,
-    "p_today": 0.19,
-    "p_today_pre": 0.19,
-    "week_scale": 0.8
-   },
-   "cr_pct": 91,
-   "cr_season_pct": 62
-  },
-  {
    "id": 4588331,
    "name": "Filip Hallander",
    "team": "EDM",
@@ -19860,6 +19787,79 @@
    },
    "cr_pct": 74,
    "cr_season_pct": 7
+  },
+  {
+   "id": 4894703,
+   "name": "Leevi Merilainen",
+   "team": "VAN",
+   "games": 3,
+   "games_left": 1,
+   "light": 3,
+   "light_left": 1,
+   "nights": [
+    42,
+    46,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-16T00:30:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 3.1,
+   "adp": 229.8,
+   "gp": 13,
+   "ppg": 1.26,
+   "cur_ppg": 1.45,
+   "last_ppg": 1.14,
+   "last_gp": 19,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "48": 0.13
+   },
+   "cr": 0.16,
+   "cr_fpg": 1.22,
+   "cr_season": 0.82,
+   "proj_gp": 49,
+   "cr_games": 0.13,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482447,
+   "cr_why": {
+    "exp_starts": 0.13,
+    "team_games": 1,
+    "share10": 0.8,
+    "n10": 10,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed",
+     "odds": 4.8
+    },
+    "own_pps": 1.69,
+    "mover_pps": 1.22,
+    "g_season_share": 0.57,
+    "season_pps": 1.22,
+    "line": {
+     "win_prob": 0.23,
+     "pps": 1.22
+    },
+    "gs": 13,
+    "p_today": 0.13,
+    "p_today_pre": 0.13,
+    "week_scale": 0.8
+   },
+   "cr_pct": 91,
+   "cr_season_pct": 62
   },
   {
    "id": 5188341,
