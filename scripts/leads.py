@@ -734,6 +734,30 @@ def last_logged(key, now, hours=24):
     return None
 
 
+
+def last_logged_starters(day, now, hours=12):
+    """Daily Faceoff's starters for `day` (a date) from the newest logged run within `hours` of `now` (naive ET) that read
+    them, else None. A Daily Faceoff outage then keeps the night's goalies (handoff 926: a 403 at the 5:11 PM run on Nov 15
+    dropped all 27 and flipped Anaheim's pick)."""
+    for path in sorted(LOG_DIR.glob("*.json.gz"), reverse=True):
+        try:
+            at = datetime.strptime(path.name[:15], "%Y-%m-%d-%H%M")
+        except ValueError:
+            continue
+        if (now - at).total_seconds() > hours * 3600 or at > now:
+            continue
+        try:
+            with gzip.open(path, "rt") as f:
+                rec = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if f"starters {day}" in (rec.get("errors") or {}):
+            continue
+        got = next((s for s in rec.get("starters") or [] if s.get("date") == day.isoformat() and s.get("games")), None)
+        if got:
+            return got
+    return None
+
 def write_log(now, players, starters, errors, s, odds=None, injuries=None, league=None, lineups=None):
     """One gzipped JSON per run in data/log, named by ET date and time."""
     rec = {"run_at": now.isoformat(timespec="minutes"), "starters": starters, "errors": dict(errors)}
