@@ -4,7 +4,7 @@
  "first_start": "2026-11-16T00:30:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-15T09:52:18Z",
+ "updated_utc": "2026-11-15T09:52:20Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4794,7 +4794,7 @@
     "away": "VAN",
     "home_name": "Golden Knights",
     "away_name": "Canucks",
-    "p_home": 0.791,
+    "p_home": 0.79,
     "inputs": {
      "pts": [
       9.29,
@@ -4806,7 +4806,7 @@
      ],
      "sv": [
       0.895,
-      0.875
+      0.877
      ],
      "b2b": [
       0,
@@ -4820,7 +4820,7 @@
     "state": "FUT",
     "started": false,
     "p_line": 0.772,
-    "p_model": 0.809
+    "p_model": 0.807
    }
   ],
   "record": {
@@ -4917,7 +4917,7 @@
      "total": 119.1
     },
     "p_home": 0.001,
-    "sd": 6.6
+    "sd": 6.5
    },
    {
     "home": {
@@ -18455,6 +18455,79 @@
    "cr_season_pct": 23
   },
   {
+   "id": 4894703,
+   "name": "Leevi Merilainen",
+   "team": "VAN",
+   "games": 3,
+   "games_left": 1,
+   "light": 3,
+   "light_left": 1,
+   "nights": [
+    42,
+    46,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-16T00:30:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 3.1,
+   "adp": 229.8,
+   "gp": 13,
+   "ppg": 1.26,
+   "cur_ppg": 1.45,
+   "last_ppg": 1.14,
+   "last_gp": 19,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": null,
+   "cr_g_nights": {
+    "48": 0.64
+   },
+   "cr": 0.78,
+   "cr_fpg": 1.22,
+   "cr_season": 0.82,
+   "proj_gp": 49,
+   "cr_games": 0.64,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482447,
+   "cr_why": {
+    "exp_starts": 0.64,
+    "team_games": 1,
+    "share10": 0.8,
+    "n10": 10,
+    "tonight": {
+     "starting": true,
+     "status": "Unconfirmed",
+     "odds": 1.65
+    },
+    "own_pps": 1.69,
+    "mover_pps": 1.22,
+    "g_season_share": 0.57,
+    "season_pps": 1.22,
+    "line": {
+     "win_prob": 0.23,
+     "pps": 1.22
+    },
+    "gs": 13,
+    "p_today": 0.64,
+    "p_today_pre": 0.64,
+    "week_scale": 0.8
+   },
+   "cr_pct": 93,
+   "cr_season_pct": 62
+  },
+  {
    "id": 3941965,
    "name": "Mathieu Joseph",
    "team": "EDM",
@@ -18720,79 +18793,6 @@
    },
    "cr_pct": 75,
    "cr_season_pct": 10
-  },
-  {
-   "id": 4894703,
-   "name": "Leevi Merilainen",
-   "team": "VAN",
-   "games": 3,
-   "games_left": 1,
-   "light": 3,
-   "light_left": 1,
-   "nights": [
-    42,
-    46,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-16T00:30:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 3.1,
-   "adp": 229.8,
-   "gp": 13,
-   "ppg": 1.26,
-   "cur_ppg": 1.45,
-   "last_ppg": 1.14,
-   "last_gp": 19,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": null,
-   "cr_g_nights": {
-    "48": 0.54
-   },
-   "cr": 0.66,
-   "cr_fpg": 1.22,
-   "cr_season": 0.82,
-   "proj_gp": 49,
-   "cr_games": 0.54,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482447,
-   "cr_why": {
-    "exp_starts": 0.54,
-    "team_games": 1,
-    "share10": 0.8,
-    "n10": 10,
-    "tonight": {
-     "starting": true,
-     "status": "Unconfirmed",
-     "odds": 1.65
-    },
-    "own_pps": 1.69,
-    "mover_pps": 1.22,
-    "g_season_share": 0.57,
-    "season_pps": 1.22,
-    "line": {
-     "win_prob": 0.23,
-     "pps": 1.22
-    },
-    "gs": 13,
-    "p_today": 0.54,
-    "p_today_pre": 0.54,
-    "week_scale": 0.8
-   },
-   "cr_pct": 93,
-   "cr_season_pct": 62
   },
   {
    "id": 4393408,
@@ -19418,79 +19418,6 @@
    "cr_season_pct": 14
   },
   {
-   "id": 4341584,
-   "name": "Kevin Lankinen",
-   "team": "VAN",
-   "games": 3,
-   "games_left": 1,
-   "light": 3,
-   "light_left": 1,
-   "nights": [
-    42,
-    46,
-    48
-   ],
-   "games_next2": 7,
-   "today_start": "2026-11-16T02:00:00Z",
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 8,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 5.8,
-   "adp": 228.5,
-   "gp": 8,
-   "ppg": 1.69,
-   "cur_ppg": -1.5,
-   "last_ppg": 1.51,
-   "last_gp": 43,
-   "proj_ppg": 2.7,
-   "clears": null,
-   "dfo_out": null,
-   "proj_ppg_pre": 2.7,
-   "cr_g_nights": {
-    "48": 0.44
-   },
-   "cr": 0.39,
-   "cr_fpg": 0.9,
-   "cr_season": 0.52,
-   "proj_gp": 23,
-   "cr_games": 0.44,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8480947,
-   "cr_why": {
-    "exp_starts": 0.44,
-    "team_games": 1,
-    "share10": 0.2,
-    "n10": 10,
-    "tonight": {
-     "starting": false,
-     "status": "Unconfirmed",
-     "odds": 1.65
-    },
-    "own_pps": 0.67,
-    "g_season_share": 0.24,
-    "season_pps": 1.13,
-    "line": {
-     "win_prob": 0.23,
-     "pps": 0.9
-    },
-    "gs": 8,
-    "p_today": 0.44,
-    "p_today_pre": 0.44,
-    "week_scale": 0.8
-   },
-   "cr_pct": 90,
-   "cr_season_pct": 52
-  },
-  {
    "id": 3939714,
    "name": "Adin Hill",
    "team": "VGK",
@@ -19560,7 +19487,7 @@
     "p_today_pre": 0.14,
     "week_scale": 0.8
    },
-   "cr_pct": 90,
+   "cr_pct": 91,
    "cr_season_pct": 81
   },
   {
@@ -19635,7 +19562,7 @@
     "p_today_pre": 0.19,
     "week_scale": 0.8
    },
-   "cr_pct": 90,
+   "cr_pct": 91,
    "cr_season_pct": 82
   },
   {
@@ -19708,7 +19635,7 @@
     "p_today_pre": 0.14,
     "week_scale": 0.8
    },
-   "cr_pct": 89,
+   "cr_pct": 90,
    "cr_season_pct": 77
   },
   {
@@ -19873,8 +19800,81 @@
     "p_today_pre": 0.14,
     "week_scale": 0.8
    },
-   "cr_pct": 88,
+   "cr_pct": 89,
    "cr_season_pct": 54
+  },
+  {
+   "id": 4341584,
+   "name": "Kevin Lankinen",
+   "team": "VAN",
+   "games": 3,
+   "games_left": 1,
+   "light": 3,
+   "light_left": 1,
+   "nights": [
+    42,
+    46,
+    48
+   ],
+   "games_next2": 7,
+   "today_start": "2026-11-16T02:00:00Z",
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 8,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 5.8,
+   "adp": 228.5,
+   "gp": 8,
+   "ppg": 1.69,
+   "cur_ppg": -1.5,
+   "last_ppg": 1.51,
+   "last_gp": 43,
+   "proj_ppg": 2.7,
+   "clears": null,
+   "dfo_out": null,
+   "proj_ppg_pre": 2.7,
+   "cr_g_nights": {
+    "48": 0.34
+   },
+   "cr": 0.31,
+   "cr_fpg": 0.9,
+   "cr_season": 0.52,
+   "proj_gp": 23,
+   "cr_games": 0.34,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8480947,
+   "cr_why": {
+    "exp_starts": 0.34,
+    "team_games": 1,
+    "share10": 0.2,
+    "n10": 10,
+    "tonight": {
+     "starting": false,
+     "status": "Unconfirmed",
+     "odds": 1.65
+    },
+    "own_pps": 0.67,
+    "g_season_share": 0.24,
+    "season_pps": 1.13,
+    "line": {
+     "win_prob": 0.23,
+     "pps": 0.9
+    },
+    "gs": 8,
+    "p_today": 0.34,
+    "p_today_pre": 0.34,
+    "week_scale": 0.8
+   },
+   "cr_pct": 88,
+   "cr_season_pct": 52
   },
   {
    "id": 3151136,
