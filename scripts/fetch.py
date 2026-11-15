@@ -718,6 +718,10 @@ def main():
                 starters.append(leads.fetch_starters(web, day))
             except Exception as e:  # noqa: BLE001 - starters are a bonus, never block the update
                 lead_errors[f"starters {day}"] = repr(e)
+                got = leads.last_logged_starters(day, datetime.now(ET).replace(tzinfo=None))  # handoff 926
+                if got is not None:
+                    starters.append(got)
+                    lead_errors[f"starters {day}"] += " (used the last logged copy)"
     lineups = None
     try:  # Daily Faceoff lineups: the page's "Tonight" note benches skaters left out (findings section 65)
         lineups = leads.fetch_lineups(web)

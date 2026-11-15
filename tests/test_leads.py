@@ -503,3 +503,22 @@ def test_trade_team(monkeypatch):
     assert leads.trade_team("Nashville has acquired Matthew Wood from Seattle for Shane Wright") == "NSH"
     assert leads.trade_team("The Capitals have acquired Rémi Poirier from the Devils for a 2027 7th-round pick.") == "WSH"
     assert leads.trade_team("Wood was placed on waivers.") is None
+
+
+def test_last_logged_starters_keeps_tonights_goalies(tmp_path, monkeypatch):
+    """Handoff 926: a Daily Faceoff outage reuses the newest logged starters for that date from a run that read them
+    (not one that itself failed or reused a copy), within 12 hours; another date's or an empty list doesn't count."""
+    import gzip
+    from datetime import date, datetime
+    monkeypatch.setattr(leads, "LOG_DIR", tmp_path)
+    def log(name, rec):
+        with gzip.open(tmp_path / f"{name}.json.gz", "wt") as f:
+            json.dump(rec, f)
+    night = {"date": "2026-11-15", "games": [{"team": "ANA", "goalie": "Ville Husso", "status": "Unconfirmed"}]}
+    log("2026-11-15-1240", {"starters": [{"date": "2026-11-15", "games": [{"team": "ANA", "goalie": "Old"}]}], "errors": {}})
+    log("2026-11-15-1702", {"starters": [night, {"date": "2026-11-16", "games": []}], "errors": {}})
+    log("2026-11-15-1711", {"starters": [night], "errors": {"starters 2026-11-15": "403 (used the last logged copy)"}})
+    now = datetime(2026, 11, 15, 17, 45)
+    assert leads.last_logged_starters(date(2026, 11, 15), now) == night
+    assert leads.last_logged_starters(date(2026, 11, 16), now) is None  # empty that night
+    assert leads.last_logged_starters(date(2026, 11, 15), datetime(2026, 11, 16, 6, 0)) is None  # over 12 h old
