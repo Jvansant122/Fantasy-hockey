@@ -1,10 +1,10 @@
 {
- "updated": "Sun Nov 15, 5:42 PM ET",
+ "updated": "Sun Nov 15, 5:45 PM ET",
  "updated_date": "2026-11-15",
  "first_start": "2026-11-16T00:30:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-15T22:42:24Z",
+ "updated_utc": "2026-11-15T22:45:32Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4724,11 +4724,11 @@
     "away": "FLA",
     "home_name": "Stars",
     "away_name": "Panthers",
-    "p_home": 0.55,
+    "p_home": 0.549,
     "inputs": {
      "pts": [
       8.49,
-      8.39
+      8.41
      ],
      "gd": [
       0.29,
@@ -4750,7 +4750,7 @@
     "state": "FUT",
     "started": false,
     "p_line": 0.543,
-    "p_model": 0.557
+    "p_model": 0.556
    },
    {
     "date": "2026-11-15",
@@ -7091,6 +7091,95 @@
    "cr_season_pct": 89
   },
   {
+   "id": 3041992,
+   "name": "Seth Jones",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    43,
+    45,
+    47,
+    48
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-16T01:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 13,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 89.8,
+   "adp": 173.9,
+   "gp": 21,
+   "ppg": 2.21,
+   "cur_ppg": 2.5,
+   "last_ppg": 1.75,
+   "last_gp": 52,
+   "proj_ppg": 1.78,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 1.78,
+   "cr": 2.05,
+   "cr_fpg": 2.07,
+   "cr_season": 1.85,
+   "proj_gp": 77,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8477495,
+   "cr_why": {
+    "toi5": 23.78,
+    "toi": 24.57,
+    "pp5": 4.63,
+    "sog": 2.43,
+    "blk": 1.29,
+    "gp": 21,
+    "last_fpg": 1.75,
+    "xfp": {
+     "gp": 21,
+     "fpg": 2.5,
+     "xfpg": 2.32,
+     "luck": "hot"
+    },
+    "season_fpg": 2.13,
+    "opp_last": {
+     "ga": -0.106,
+     "move": -0.01
+    },
+    "boost_week": -0.65,
+    "season_pts": 2.08,
+    "boost_dress": 0.88,
+    "boost_fpg": 2.13,
+    "espn_blend": 0.09,
+    "espn_proj": 1.78,
+    "season_range": [
+     1.29,
+     2.25
+    ],
+    "line": {
+     "win_prob": 0.46,
+     "m": 0.997,
+     "pps": 2.07
+    },
+    "drift": -0.006,
+    "missing_regs_pp": -0.008,
+    "lineup_slack": 0.8,
+    "missing_regs": -0.08,
+    "week_slack": 0.9
+   },
+   "cr_pct": 98,
+   "cr_season_pct": 93
+  },
+  {
    "id": 5037,
    "name": "Steven Stamkos",
    "team": "NSH",
@@ -7362,95 +7451,6 @@
    },
    "cr_pct": 96,
    "cr_season_pct": 89
-  },
-  {
-   "id": 3041992,
-   "name": "Seth Jones",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    43,
-    45,
-    47,
-    48
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-16T01:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 13,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 89.8,
-   "adp": 173.9,
-   "gp": 21,
-   "ppg": 2.21,
-   "cur_ppg": 2.5,
-   "last_ppg": 1.75,
-   "last_gp": 52,
-   "proj_ppg": 1.78,
-   "clears": null,
-   "dfo_out": false,
-   "proj_ppg_pre": 1.78,
-   "cr": 2.03,
-   "cr_fpg": 2.07,
-   "cr_season": 1.85,
-   "proj_gp": 77,
-   "cr_games": 0.98,
-   "cr_dress": 0.98,
-   "cr_dress_next": 0.98,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8477495,
-   "cr_why": {
-    "toi5": 23.78,
-    "toi": 24.57,
-    "pp5": 4.63,
-    "sog": 2.43,
-    "blk": 1.29,
-    "gp": 21,
-    "last_fpg": 1.75,
-    "xfp": {
-     "gp": 21,
-     "fpg": 2.5,
-     "xfpg": 2.32,
-     "luck": "hot"
-    },
-    "season_fpg": 2.13,
-    "opp_last": {
-     "ga": -0.106,
-     "move": -0.01
-    },
-    "boost_week": -0.65,
-    "season_pts": 2.08,
-    "boost_dress": 0.88,
-    "boost_fpg": 2.13,
-    "espn_blend": 0.09,
-    "espn_proj": 1.78,
-    "season_range": [
-     1.29,
-     2.25
-    ],
-    "line": {
-     "win_prob": 0.46,
-     "m": 0.997,
-     "pps": 2.07
-    },
-    "drift": -0.006,
-    "missing_regs_pp": -0.008,
-    "lineup_slack": 0.8,
-    "missing_regs": -0.08,
-    "week_slack": 0.1
-   },
-   "cr_pct": 98,
-   "cr_season_pct": 93
   },
   {
    "id": 3899938,
@@ -11449,7 +11449,7 @@
     "missing_regs_pp": -0.012,
     "lineup_slack": 0.8,
     "missing_regs": -0.08,
-    "week_slack": 0.1
+    "week_slack": 0.9
    },
    "cr_pct": 89,
    "cr_season_pct": 57
@@ -14461,8 +14461,91 @@
     "missing_regs": -0.07,
     "week_slack": 0.3
    },
-   "cr_pct": 83,
+   "cr_pct": 82,
    "cr_season_pct": 31
+  },
+  {
+   "id": 3151784,
+   "name": "Gustav Forsling",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    43,
+    45,
+    47,
+    48
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-16T01:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 4,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 16.6,
+   "adp": 227.5,
+   "gp": 20,
+   "ppg": 1.1,
+   "cur_ppg": 0.97,
+   "last_ppg": 1.21,
+   "last_gp": 80,
+   "proj_ppg": 1.29,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 1.29,
+   "cr": 1.17,
+   "cr_fpg": 1.18,
+   "cr_season": 1.03,
+   "proj_gp": 76,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478055,
+   "cr_why": {
+    "toi5": 21.28,
+    "toi": 21.19,
+    "pp5": 0.22,
+    "sog": 1.45,
+    "blk": 1.0,
+    "gp": 20,
+    "last_fpg": 1.21,
+    "xfp": {
+     "gp": 20,
+     "fpg": 0.97,
+     "xfpg": 1.08
+    },
+    "season_fpg": 1.18,
+    "opp_last": {
+     "ga": -0.106,
+     "move": -0.01
+    },
+    "boost_week": -0.16,
+    "season_pts": 1.17,
+    "boost_dress": 0.88,
+    "boost_fpg": 1.14,
+    "espn_blend": 0.09,
+    "espn_proj": 1.29,
+    "season_range": [
+     0.56,
+     1.41
+    ],
+    "drift": -0.006,
+    "missing_regs_pp": -0.008,
+    "lineup_slack": 0.8,
+    "missing_regs": -0.08,
+    "week_slack": 0.9
+   },
+   "cr_pct": 82,
+   "cr_season_pct": 45
   },
   {
    "id": 3942905,
@@ -14553,89 +14636,6 @@
    },
    "cr_pct": 84,
    "cr_season_pct": 46
-  },
-  {
-   "id": 3151784,
-   "name": "Gustav Forsling",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    43,
-    45,
-    47,
-    48
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-16T01:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 4,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 16.6,
-   "adp": 227.5,
-   "gp": 20,
-   "ppg": 1.1,
-   "cur_ppg": 0.97,
-   "last_ppg": 1.21,
-   "last_gp": 80,
-   "proj_ppg": 1.29,
-   "clears": null,
-   "dfo_out": false,
-   "proj_ppg_pre": 1.29,
-   "cr": 1.16,
-   "cr_fpg": 1.18,
-   "cr_season": 1.03,
-   "proj_gp": 76,
-   "cr_games": 0.98,
-   "cr_dress": 0.98,
-   "cr_dress_next": 0.98,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8478055,
-   "cr_why": {
-    "toi5": 21.28,
-    "toi": 21.19,
-    "pp5": 0.22,
-    "sog": 1.45,
-    "blk": 1.0,
-    "gp": 20,
-    "last_fpg": 1.21,
-    "xfp": {
-     "gp": 20,
-     "fpg": 0.97,
-     "xfpg": 1.08
-    },
-    "season_fpg": 1.18,
-    "opp_last": {
-     "ga": -0.106,
-     "move": -0.01
-    },
-    "boost_week": -0.16,
-    "season_pts": 1.17,
-    "boost_dress": 0.88,
-    "boost_fpg": 1.14,
-    "espn_blend": 0.09,
-    "espn_proj": 1.29,
-    "season_range": [
-     0.56,
-     1.41
-    ],
-    "drift": -0.006,
-    "missing_regs_pp": -0.008,
-    "lineup_slack": 0.8,
-    "missing_regs": -0.08,
-    "week_slack": 0.1
-   },
-   "cr_pct": 82,
-   "cr_season_pct": 45
   },
   {
    "id": 4874940,
@@ -15524,13 +15524,13 @@
    "proj_ppg": null,
    "clears": null,
    "dfo_out": false,
-   "cr": 1.09,
+   "cr": 1.1,
    "cr_fpg": 1.11,
    "cr_season": 0.95,
    "proj_gp": 76,
-   "cr_games": 0.98,
-   "cr_dress": 0.98,
-   "cr_dress_next": 0.98,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
    "sat_last": false,
    "cr_matched": true,
    "nhl_id": 8478859,
@@ -15564,7 +15564,7 @@
     "missing_regs_pp": -0.009,
     "lineup_slack": 0.8,
     "missing_regs": -0.08,
-    "week_slack": 0.1
+    "week_slack": 0.9
    },
    "cr_pct": 81,
    "cr_season_pct": 38
@@ -16437,89 +16437,6 @@
    },
    "cr_pct": 79,
    "cr_season_pct": 31
-  },
-  {
-   "id": 5502,
-   "name": "Radko Gudas",
-   "team": "FLA",
-   "games": 4,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    43,
-    45,
-    47,
-    48
-   ],
-   "games_next2": 5,
-   "today_start": "2026-11-16T00:30:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 1.0,
-   "adp": 229.5,
-   "gp": 15,
-   "ppg": 1.24,
-   "cur_ppg": 0.97,
-   "last_ppg": 1.46,
-   "last_gp": 56,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_out": false,
-   "cr": 1.04,
-   "cr_fpg": 1.16,
-   "cr_season": 0.76,
-   "proj_gp": 58,
-   "cr_games": 0.9,
-   "cr_dress": 0.9,
-   "cr_dress_next": 0.9,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475462,
-   "cr_why": {
-    "toi5": 14.41,
-    "toi": 14.02,
-    "pp5": 0.0,
-    "sog": 0.93,
-    "blk": 1.4,
-    "gp": 15,
-    "last_fpg": 1.46,
-    "xfp": {
-     "gp": 15,
-     "fpg": 0.98,
-     "xfpg": 1.15,
-     "luck": "cold"
-    },
-    "season_fpg": 1.16,
-    "opp_last": {
-     "ga": -0.106,
-     "move": -0.01
-    },
-    "boost_week": -1.14,
-    "boost_week_move": -0.1,
-    "season_pts": 1.13,
-    "boost_dress": 0.66,
-    "boost_fpg": 1.18,
-    "age_adj": -0.07,
-    "season_range": [
-     0.38,
-     1.22
-    ],
-    "drift": -0.006,
-    "missing_regs_pp": -0.018,
-    "lineup_slack": 0.8,
-    "missing_regs": -0.08,
-    "week_slack": 0.1
-   },
-   "cr_pct": 78,
-   "cr_season_pct": 24
   },
   {
    "id": 2562625,
@@ -17885,7 +17802,7 @@
     "missing_regs": -0.06,
     "week_slack": -0.1
    },
-   "cr_pct": 77,
+   "cr_pct": 78,
    "cr_season_pct": 16
   },
   {
@@ -19726,7 +19643,7 @@
     "missing_regs": -0.04,
     "week_slack": -0.0
    },
-   "cr_pct": 76,
+   "cr_pct": 77,
    "cr_season_pct": 14
   },
   {
@@ -20809,7 +20726,7 @@
     "adp_pull": 1.003,
     "adp": 127.8
    },
-   "cr_pct": 75,
+   "cr_pct": 76,
    "cr_season_pct": 80
   },
   {
@@ -21346,6 +21263,90 @@
    },
    "cr_pct": 74,
    "cr_season_pct": 11
+  },
+  {
+   "id": 5502,
+   "name": "Radko Gudas",
+   "team": "FLA",
+   "games": 4,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    43,
+    45,
+    47,
+    48
+   ],
+   "games_next2": 5,
+   "today_start": "2026-11-16T00:30:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 1.0,
+   "adp": 229.5,
+   "gp": 15,
+   "ppg": 1.24,
+   "cur_ppg": 0.97,
+   "last_ppg": 1.46,
+   "last_gp": 56,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_out": false,
+   "cr": 0.03,
+   "cr_fpg": 1.16,
+   "cr_season": 0.76,
+   "proj_gp": 58,
+   "cr_games": 0.03,
+   "cr_dress": 0.03,
+   "cr_dress_next": 0.03,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8475462,
+   "cr_why": {
+    "toi5": 14.41,
+    "toi": 14.02,
+    "pp5": 0.0,
+    "sog": 0.93,
+    "blk": 1.4,
+    "gp": 15,
+    "last_fpg": 1.46,
+    "xfp": {
+     "gp": 15,
+     "fpg": 0.98,
+     "xfpg": 1.15,
+     "luck": "cold"
+    },
+    "season_fpg": 1.16,
+    "opp_last": {
+     "ga": -0.106,
+     "move": -0.01
+    },
+    "line_change": "out",
+    "boost_week": -1.14,
+    "boost_week_move": -0.1,
+    "season_pts": 1.13,
+    "boost_dress": 0.66,
+    "boost_fpg": 1.18,
+    "age_adj": -0.07,
+    "season_range": [
+     0.38,
+     1.22
+    ],
+    "drift": -0.006,
+    "missing_regs_pp": -0.018,
+    "lineup_slack": 0.8,
+    "missing_regs": -0.08,
+    "week_slack": 0.9
+   },
+   "cr_pct": 74,
+   "cr_season_pct": 24
   },
   {
    "id": 5080162,
@@ -50041,7 +50042,7 @@
    "proj_ppg_pre": 1.45,
    "cr": 0.0,
    "cr_fpg": 1.52,
-   "cr_season": 1.35,
+   "cr_season": 1.34,
    "proj_gp": 78,
    "cr_games": 0,
    "cr_dress": 0.96,
@@ -50063,15 +50064,15 @@
      "xfpg": 1.73,
      "luck": "cold"
     },
-    "season_fpg": 1.48,
+    "season_fpg": 1.47,
     "season_pts": 1.49,
     "boost_dress": 0.92,
     "boost_fpg": 1.5,
     "espn_blend": 0.09,
     "espn_proj": 1.45,
     "season_range": [
-     0.89,
-     1.8
+     0.88,
+     1.79
     ],
     "drift": 0.003,
     "missing_regs_pp": -0.014,
