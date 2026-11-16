@@ -909,9 +909,12 @@ def one_out_kind(dfo_news, pid, played_dates, starts):
     return "personal" if item.get("pr") else "ill" if item.get("ill") else "hurt"
 
 
-def team_move_after(dfo_news, pid, team, start, now_utc):
+def team_move_after(dfo_news, pid, team, start, now_utc, dfo_out=None):
     """("up" / "down", the item is a maybe, within 16 h) when his team called up or sent down a skater (not a conditioning
-    loan) after his latest Daily Faceoff injury item (no long-term words) and before his next game (handoffs 892, 893)."""
+    loan) after his latest Daily Faceoff injury item (no long-term words) and before his next game (handoffs 892, 893).
+    A send-down says nothing when Daily Faceoff's fresh lines leave him out (dfo_out True): the archive behind 893 had no
+    lines, and live ESPN out / IR skaters who sat and were left out of fresh lines dressed 7 of 657 (Oct 15-Nov 15), while
+    the 0.9 send-down floor fired on Faber (Nov 10) and van Riemsdyk (Nov 14), both left out, neither dressed (findings 568)."""
     news = dfo_news or {}
     item = (news.get("injuries") or {}).get(str(pid)) if pid else None
     ts, t0 = (parse_utc(item.get("ts")) if item else None), parse_utc(start)
@@ -924,6 +927,8 @@ def team_move_after(dfo_news, pid, team, start, now_utc):
     if not moves:
         return None
     kind = moves[-1][1]
+    if kind == "down" and dfo_out is True:
+        return None
     return kind, bool(item.get("soft") or item.get("gtd") or item.get("exp_ret")), (t0 - moves[-1][0]) <= timedelta(hours=16)
 
 
@@ -4696,7 +4701,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 dress_next = per_game[0]
             # a skater call-up or send-down by his team after his latest injury item (handoffs 892, 893)
             team_move = team_move_after(dfo_news, pid, team, week_starts.get((espn_team, wk_dates[0])) if wk_dates else None,
-                                        now_utc) if per_game and not skip and p.get("pos") != "G" and (missed >= 1 or p.get("injury")) else None
+                                        now_utc, p.get("dfo_out")) if per_game and not skip and p.get("pos") != "G" and (missed >= 1 or p.get("injury")) else None
             if team_move:
                 kind, maybe, near_m = team_move
                 q0 = per_game[0]
