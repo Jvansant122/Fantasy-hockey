@@ -4298,6 +4298,20 @@ def test_team_moves_after_injury_news():
     assert rating.team_move_after(old, 7, "TOR", start, now) is None  # item over 7 days before the puck (Duchene, Nov 9)
 
 
+def test_send_down_needs_him_not_left_out_of_fresh_lines():
+    """Findings 568: a send-down floor (893) never lifts a skater Daily Faceoff's fresh lines leave out (Faber Nov 10, van
+    Riemsdyk Nov 14: IR, out of the lines, 0.9 shown, sat); a call-up still reads, and unknown lines change nothing."""
+    from datetime import datetime, timezone
+    now, start = datetime(2026, 11, 10, 15, tzinfo=timezone.utc), "2026-11-11T00:00:00Z"
+    news = lambda mv, **it: {"injuries": {"7": {"ts": "2026-11-09T15:00:00", **it}}, "roster-moves": mv}
+    up = {"9": {"ts": "2026-11-10T12:00:00", "team": "TOR", "up": True}}
+    down = {"9": {"ts": "2026-11-09T20:00:00", "team": "TOR", "down": True}}
+    assert rating.team_move_after(news(down, gtd=True), 7, "TOR", start, now, True) is None
+    assert rating.team_move_after(news(down, gtd=True), 7, "TOR", start, now, False) == ("down", True, False)
+    assert rating.team_move_after(news(down, gtd=True), 7, "TOR", start, now, None) == ("down", True, False)
+    assert rating.team_move_after(news(up), 7, "TOR", start, now, True) == ("up", False, True)
+
+
 def test_first_game_back_scores_less(monkeypatch, tmp_path):
     """Handoff 889: back from a missed game, his next game at 0.93 of his points (0.87 after illness), folded into the
     Week's points a game; P4 holds."""
