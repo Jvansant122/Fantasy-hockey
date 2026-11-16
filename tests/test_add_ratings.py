@@ -4676,3 +4676,29 @@ def test_regular_who_dressed_last_game_lifted_next(monkeypatch, tmp_path):
     assert "reg_next" not in hurt["cr_why"]
     out = rate(monkeypatch, tmp_path, [{**espn(101, "Auston Matthews", "TOR", "C"), "dfo_out": True}])["Auston Matthews"]
     assert "reg_next" not in out["cr_why"]
+
+
+def test_injured_goalie_named_tonights_starter_starts_most_nights():
+    """Handoff 929 (findings 4649): an ESPN-tagged goalie Daily Faceoff names as tonight's unconfirmed starter takes no
+    ESPN factor tonight and at least TAGGED_PICK_FLOOR; his later games keep the tag; out for the season keeps 0."""
+    assert rating.TAGGED_PICK_FLOOR == 0.65
+    model = rating.Model()
+    hist = [(f"2026-10-{d:02d}", 1 if i % 6 else 2) for i, d in enumerate(range(1, 21, 2))]
+    dates = ["2026-10-22", "2026-10-24"]
+
+    def run(injury=None, pick=None, gone=(), lift=None):
+        tod, nights = {}, {}
+        rating.goalie_starts(model, "TOR", [1, 2], {"TOR": hist}, {1: 60, 2: 22}, dates, date(2026, 10, 22), today_p=tod,
+                             by_date=nights, injury=injury, season_out=gone, dfo_pick=pick, inj_lift=lift)
+        return tod, nights
+    for inj, lift in (({1: 0.0}, None), ({1: 0.5}, {1: rating.GOALIE_DTD_FACTORS})):
+        hurt_tod, hurt = run(inj, lift=lift)
+        tod, nights = run(inj, (1, 1.65, True), lift=lift)
+        assert hurt_tod.get(1, 0) < 0.5 and tod[1] >= rating.TAGGED_PICK_FLOOR - 1e-9
+        assert tod[1] + tod.get(2, 0) == pytest.approx(hurt_tod.get(1, 0) + hurt_tod.get(2, 0), abs=1e-6)
+        assert nights[1]["2026-10-24"] == pytest.approx(hurt[1]["2026-10-24"], abs=0.05)  # later games keep the tag
+    gone_tod, _ = run({1: 0.0}, (1, 1.65, True), gone={1})
+    assert gone_tod.get(1, 0) < 0.05
+    healthy_tod, _ = run(None, (2, 1.65, True))  # an untagged pick is unchanged by the floor
+    base_tod, _ = run(None)
+    assert healthy_tod[2] < rating.TAGGED_PICK_FLOOR and healthy_tod[2] > base_tod[2]
