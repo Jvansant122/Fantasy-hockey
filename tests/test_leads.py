@@ -522,3 +522,11 @@ def test_last_logged_starters_keeps_tonights_goalies(tmp_path, monkeypatch):
     assert leads.last_logged_starters(date(2026, 11, 15), now) == night
     assert leads.last_logged_starters(date(2026, 11, 16), now) is None  # empty that night
     assert leads.last_logged_starters(date(2026, 11, 15), datetime(2026, 11, 16, 6, 0)) is None  # over 12 h old
+    # handoff 927: past 6 h only Confirmed and Likely games are kept
+    log("2026-11-16-0610", {"starters": [{"date": "2026-11-16", "games": [
+        {"team": "ANA", "goalie": "A", "status": "Unconfirmed"}, {"team": "TOR", "goalie": "B", "status": "Confirmed"},
+        {"team": "BOS", "goalie": "C", "status": "Likely"}]}], "errors": {}})
+    got = leads.last_logged_starters(date(2026, 11, 16), datetime(2026, 11, 16, 11, 0))
+    assert [g["goalie"] for g in got["games"]] == ["A", "B", "C"]  # 5 h old: all
+    got = leads.last_logged_starters(date(2026, 11, 16), datetime(2026, 11, 16, 13, 0))
+    assert [g["goalie"] for g in got["games"]] == ["B", "C"] and got["date"] == "2026-11-16"  # 7 h old: no plain pick
