@@ -475,6 +475,11 @@ WEEK_SLACK = (2.8, 1.0)
 # gives them: + this on the logit after the slack fit, outside its sums (handoff 355, findings 317: site 0.951 vs actual 0.981
 # live Oct 9-13; still ~0.96 after the boosted Week model and the slack fit)
 HEALTHY_REG_LOGIT = 0.5
+# a regular (Season stay-in-lineup chance boost_dress REG_NEXT_MIN_BOOST+) who dressed his team's last game, has no ESPN
+# status, no week news and isn't left out of Daily Faceoff's lines, still shown REG_NEXT_RANGE for his next game after every
+# other step: + this on that game's logit, capped at REG_NEXT_CAP (handoff 928, findings 4648: Oct 9-Nov 8 shown .842 dressed
+# .931, fit +0.8; held out Nov 9-15 shown .833 dressed .947, Brier .0665 -> .0520)
+REG_NEXT_LOGIT, REG_NEXT_CAP, REG_NEXT_MIN_BOOST, REG_NEXT_RANGE = 0.8, 0.97, 0.7, (0.3, 0.9)
 # a healthy depth skater (under DEPTH_TOI, not left early) with FIGHT_PIM+ penalty minutes in his last game keeps his spot:
 # + this on the same step (handoff 356, findings 323: +0.065/+0.092 dressed over the site's chance, offset +0.75/+0.57)
 FIGHT_LOGIT, FIGHT_PIM = 0.5, 5
@@ -4095,6 +4100,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     season_open = min((g["date"] for g in games), default=None)
     injury_log = []
     shift_cache, pbp_cache = {}, {}  # NHL shift charts and injury stoppages read this run, by game (handoffs 851, 855)
+    dressed_last = set()  # ESPN ids of skaters who dressed their team's last game (handoff 928)
     for p in players:
         pid = match(p)
         if pid is None:
@@ -4287,6 +4293,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     p_dress = min(p_dress, cap)
             # missed his team's most recent game: the mid-week swap card's trigger (findings section 51)
             sat_last = bool(pid and tg and tg[-1] not in {g["game"] for g in gl})
+            if gl and tg and not sat_last:
+                dressed_last.add(p["id"])  # dressed his team's last game (handoff 928)
             # ESPN dropped his status within the week and he hasn't played since: a suspension served, an injury healed
             # flagged, and no game since: one who played through the flag and then sat isn't coming back (findings 183)
             # flagged the day of his last game counts only if he left that game early, hurt in it (findings 213)
@@ -5008,6 +5016,26 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_fpg"] = round(p["cr_fpg"] + NEXT_UP_PP_D_FPG, 2)
             p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
             p["cr_why"]["pp_d_out"] = top
+
+    # regulars who dressed the last game but are still shown under the floors for the next: lift that game (handoff 928)
+    # ... under the caps his next game already has (an injury stoppage, a left-early or day-to-day news cap)
+    next_caps = {r["pid"]: r["caps"][0] for r in week_rows if r.get("caps") and not r.get("j0")}
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p["id"] not in dressed_last or q is None or w is None or p.get("injury") or w.get("week_news") \
+                or (w.get("boost_dress") or 0.0) < REG_NEXT_MIN_BOOST or p.get("dfo_out") is True or game_started(p) \
+                or not REG_NEXT_RANGE[0] <= q < REG_NEXT_RANGE[1]:
+            continue
+        nxt = max(q, min(REG_NEXT_CAP, next_caps.get(p.get("nhl_id"), 1.0), 1 / (1 + math.exp(-(logit(q) + REG_NEXT_LOGIT)))))
+        if nxt <= q:
+            continue
+        if p.get("games_left") and p.get("cr_games"):  # his next game is in this matchup
+            games = p["cr_games"] + nxt - q
+            p["cr_games"] = round(games, 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+            p["cr_dress"] = round(games / p["games_left"], 2)
+        p["cr_dress_next"] = round(nxt, 2)
+        w["reg_next"] = round(nxt - q, 2)
 
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
