@@ -69,6 +69,11 @@ GOALIE_WEEK_SCALE = 0.8
 # ESPN cleared in the last 7 days with no start since started 41 / 51 / 37% (884: floor 0.35 / 0.45); Goalie Start news
 # naming a later game: started it 199 of 200 (874: that game reads as Daily Faceoff's Likely tag)
 GOALIE_DTD_FACTORS = (0.1, 0.25, 0.45, 0.5)
+# an ESPN-tagged goalie (day-to-day, out, IR; not out for the season) whom Daily Faceoff names as tonight's unconfirmed
+# starter: no ESPN factor on tonight's game (later games keep theirs), the 849 lift applies, and tonight at least this
+# (handoff 929, findings 4649: 8 such games Oct 24-Nov 12 shown 1.45 in all, 6 started; the untagged pick's hit rate
+# 252/385; Brier .714 -> .235)
+TAGGED_PICK_FLOOR = 0.65
 CALLUP_HOURS, CALLUP_NO1_MULT, CALLUP_CAPS = 72, 0.8, (0.09, 0.13, 0.10)
 SENDDOWN_DAYS, SENDDOWN_IDLE_DAYS, SENDDOWN_FLOORS = 4, 10, (0.27, 0.2, 0.2)
 CLEARED_G_DAYS, CLEARED_G_FLOORS = 7, (0.35, 0.45)
@@ -3377,6 +3382,8 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             f = injury.get(gid, 1.0)
             if gid in (inj_lift or {}):  # injured with positive news (869), day-to-day by game (883)
                 f = inj_lift[gid][min(ahead, len(inj_lift[gid]) - 1)]
+            if gid == pick_today and gid not in season_out:  # Daily Faceoff's pick tonight overrules ESPN's tag (929)
+                f = 1.0
             raw[gid] *= min(f, cut[min(ahead, 1)]) if cut else f
             if callup is not None and gid == no1 and gid != callup and ahead < len(CALLUP_CAPS):  # handoff 878
                 raw[gid] *= CALLUP_NO1_MULT
@@ -3417,6 +3424,9 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
             was = q[gid]
             now = m * was / (1 - was + m * was)
             q = {g: now if g == gid else v * (1 - now) / (1 - was) for g, v in q.items()}
+        if pick_today in q and (injury or {}).get(pick_today, 1.0) < 1 and pick_today not in season_out and len(q) > 1 \
+                and q[pick_today] < TAGGED_PICK_FLOOR:  # an injured pick still starts most nights (929)
+            q = pin(q, pick_today, TAGGED_PICK_FLOOR)
         fav = max(q, key=q.get) if q else None
         picked = dfo_pick[0] if dfo_pick and d == today.isoformat() else None  # DFO's unconfirmed pick isn't capped (910)
         if night2 and fav is not None and q[fav] > NIGHT2_CAP and fav not in ((likely_dfo or {}).get(d), picked) \
