@@ -2184,6 +2184,7 @@ def test_week_news_lands_on_top_of_the_weekly_boosted_model(monkeypatch, tmp_pat
     monkeypatch.setattr(rating.season_boost, "load", lambda n: {"features": [], "baseline": 0.5, "trees": []} if n == "week" else real(n))
     monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", 0.0)  # news players don't get it; keep both runs alike (handoff 355)
     monkeypatch.setattr(rating, "DTD_NEXT_LOGIT", 0.0)  # the label below would add handoff 624's next-game cut
+    monkeypatch.setattr(rating, "REG_NEXT_LOGIT", 0.0)  # handoff 928 would lift the run without news on top
 
     def run(z):
         monkeypatch.setattr(rating, "week_news_logit", lambda news, pid, last, sat, st, dates, *a: ([z] * len(dates), 0.0, False, ["day-to-day"] if z else []))
@@ -2802,6 +2803,7 @@ def test_lowest_minutes_depth_skater_sits_more(monkeypatch, tmp_path):
                             row["timeOnIcePerGame"] = pasta_toi
                 return r
         monkeypatch.setattr(rating, "DEPTH_RANK_LOGIT", {"lowest": -0.1, "other": 0.1} if on else {})
+        monkeypatch.setattr(rating, "REG_NEXT_LOGIT", 0.0)  # handoff 928's lift on top would blur the small shift
         fake = Rank()
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
@@ -3776,6 +3778,7 @@ def test_return_from_absence_rules(monkeypatch, tmp_path):
     monkeypatch.setattr(rating, "fillins_back", lambda by_player, team_games: {1})
     assert -1 < rating.FILLIN_BACK_LOGIT < 0
     monkeypatch.setattr(rating, "FILLIN_BACK_LOGIT", -3.0)  # an everyday regular at 0.99: a large logit to see the wiring
+    monkeypatch.setattr(rating, "REG_NEXT_LOGIT", 0.0)  # handoff 928 lifts a regular shown under 0.9 back up
     assert run()["cr_dress_next"] < plain["cr_dress_next"] - 0.1
     monkeypatch.setattr(rating, "FILLIN_BACK_LOGIT", 0.0)
     assert run()["cr_dress_next"] == pytest.approx(plain["cr_dress_next"])
@@ -4642,3 +4645,34 @@ def test_unconfirmed_backup_pick_gets_bigger_push_early(monkeypatch, tmp_path):
     assert early_l[lead]["tonight"]["odds"] == 1.65
     assert go(lead, "Unconfirmed", 18)[lead]["tonight"]["odds"] == 3.32
     assert early_b[back]["p_today"] + early_b[lead]["p_today"] == pytest.approx(1, abs=0.01)
+
+
+def test_regular_who_dressed_last_game_lifted_next(monkeypatch, tmp_path):
+    """Handoff 928 (findings 4648): a regular (boost_dress 0.7+) who dressed his team's last game, with no status or week
+    news, shown 0.3-0.9 for his next game gets +0.8 on its logit, capped at 0.97; P4 holds; one who sat the last game,
+    an injured one and one left out of Daily Faceoff's lines don't."""
+    from datetime import datetime, timezone
+    assert (rating.REG_NEXT_LOGIT, rating.REG_NEXT_CAP, rating.REG_NEXT_MIN_BOOST) == (0.8, 0.97, 0.7)
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "REG_NEXT_RANGE", (0.0, 1.0))  # the fake league's regulars are shown 0.9+
+    gaps = lambda: FakeSession(missed={1: set(range(len(PAST) - 6, len(PAST) - 1))})  # sat 5 of 6 before the last
+    monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", -3.0)  # the fake league's regulars are shown 0.9+: bring one under
+    monkeypatch.setattr(rating, "REG_NEXT_LOGIT", 0.0)
+    off = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], fake=gaps())["Auston Matthews"]
+    monkeypatch.setattr(rating, "REG_NEXT_LOGIT", 0.8)
+    on = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")], fake=gaps())["Auston Matthews"]
+    if (off["cr_why"].get("boost_dress") or 0) < 0.7:
+        pytest.skip("no boosted dress share in the fake league")
+    q = off["cr_dress_next"]
+    assert q < 0.9, q
+    want = min(0.97, 1 / (1 + math.exp(-(rating.logit(q) + 0.8))))
+    assert on["cr_dress_next"] == pytest.approx(want, abs=0.011) and on["cr_why"]["reg_next"] > 0
+    assert on["cr_games"] == pytest.approx(off["cr_games"] + on["cr_dress_next"] - q, abs=0.02)
+    assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    sat = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C")],
+               fake=FakeSession(missed={1: {len(PAST) - 1}}))["Auston Matthews"]
+    assert "reg_next" not in sat["cr_why"]
+    hurt = rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY")])["Auston Matthews"]
+    assert "reg_next" not in hurt["cr_why"]
+    out = rate(monkeypatch, tmp_path, [{**espn(101, "Auston Matthews", "TOR", "C"), "dfo_out": True}])["Auston Matthews"]
+    assert "reg_next" not in out["cr_why"]
