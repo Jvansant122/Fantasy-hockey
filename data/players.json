@@ -1,10 +1,10 @@
 {
- "updated": "Mon Nov 16, 12:48 PM ET",
+ "updated": "Mon Nov 16, 12:52 PM ET",
  "updated_date": "2026-11-16",
  "first_start": "2026-11-17T00:30:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-16T17:47:54Z",
+ "updated_utc": "2026-11-16T17:52:20Z",
  "team": "New York Mess",
  "matchup_period": 8,
  "matchup_weeks": 1,
@@ -2991,11 +2991,11 @@
     "away": "EDM",
     "home_name": "Panthers",
     "away_name": "Oilers",
-    "p_home": 0.487,
+    "p_home": 0.486,
     "inputs": {
      "pts": [
       8.39,
-      9.74
+      9.76
      ],
      "gd": [
       0.13,
@@ -3618,11 +3618,11 @@
     "away": "EDM",
     "home_name": "Lightning",
     "away_name": "Oilers",
-    "p_home": 0.574,
+    "p_home": 0.573,
     "inputs": {
      "pts": [
       9.24,
-      9.74
+      9.76
      ],
      "gd": [
       0.58,
@@ -3816,11 +3816,11 @@
     "away": "EDM",
     "home_name": "Hurricanes",
     "away_name": "Oilers",
-    "p_home": 0.681,
+    "p_home": 0.68,
     "inputs": {
      "pts": [
       10.26,
-      9.74
+      9.76
      ],
      "gd": [
       1.25,
@@ -4377,11 +4377,11 @@
     "away": "EDM",
     "home_name": "Blues",
     "away_name": "Oilers",
-    "p_home": 0.401,
+    "p_home": 0.4,
     "inputs": {
      "pts": [
       7.37,
-      9.74
+      9.76
      ],
      "gd": [
       -0.18,
@@ -4527,10 +4527,10 @@
      "id": 8,
      "name": "Jerry Slafkovsky",
      "now": 0.0,
-     "rest": 108.2,
-     "total": 108.2
+     "rest": 108.1,
+     "total": 108.1
     },
-    "p_home": 0.222,
+    "p_home": 0.224,
     "sd": 18.2
    },
    {
@@ -15038,73 +15038,6 @@
    "cr_season_pct": 52
   },
   {
-   "id": 4712036,
-   "name": "Jeremy Swayman",
-   "team": "BOS",
-   "games": 3,
-   "games_left": 3,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    50,
-    51,
-    54
-   ],
-   "games_next2": 5,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 8,
-   "ir": false,
-   "bench": true,
-   "injury": null,
-   "owned": 96.0,
-   "adp": 102.3,
-   "gp": 15,
-   "ppg": 3.3,
-   "cur_ppg": 3.47,
-   "last_ppg": 3.58,
-   "last_gp": 54,
-   "proj_ppg": 3.16,
-   "clears": null,
-   "dfo_out": null,
-   "proj_ppg_pre": 3.16,
-   "cr_g_nights": {
-    "50": 0.51,
-    "51": 0.65,
-    "54": 0.8
-   },
-   "cr": 4.95,
-   "cr_fpg": 2.53,
-   "cr_season": 1.96,
-   "proj_gp": 58,
-   "cr_games": 1.95,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8480280,
-   "cr_why": {
-    "exp_starts": 1.95,
-    "team_games": 3,
-    "share10": 0.7,
-    "n10": 10,
-    "own_pps": 3.44,
-    "g_season_share": 0.66,
-    "season_pps": 3.43,
-    "sched": 0.12,
-    "gs": 15,
-    "p_today": 0.0,
-    "p_today_pre": 0.0,
-    "week_scale": 0.8
-   },
-   "cr_pct": 93,
-   "cr_season_pct": 97
-  },
-  {
    "id": 5160,
    "name": "John Tavares",
    "team": "TOR",
@@ -15188,6 +15121,73 @@
    },
    "cr_pct": 81,
    "cr_season_pct": 76
+  },
+  {
+   "id": 4712036,
+   "name": "Jeremy Swayman",
+   "team": "BOS",
+   "games": 3,
+   "games_left": 3,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    50,
+    51,
+    54
+   ],
+   "games_next2": 5,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 8,
+   "ir": false,
+   "bench": true,
+   "injury": null,
+   "owned": 96.0,
+   "adp": 102.3,
+   "gp": 15,
+   "ppg": 3.3,
+   "cur_ppg": 3.47,
+   "last_ppg": 3.58,
+   "last_gp": 54,
+   "proj_ppg": 3.16,
+   "clears": null,
+   "dfo_out": null,
+   "proj_ppg_pre": 3.16,
+   "cr_g_nights": {
+    "50": 0.51,
+    "51": 0.65,
+    "54": 0.8
+   },
+   "cr": 4.94,
+   "cr_fpg": 2.53,
+   "cr_season": 1.96,
+   "proj_gp": 58,
+   "cr_games": 1.95,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8480280,
+   "cr_why": {
+    "exp_starts": 1.95,
+    "team_games": 3,
+    "share10": 0.7,
+    "n10": 10,
+    "own_pps": 3.44,
+    "g_season_share": 0.66,
+    "season_pps": 3.43,
+    "sched": 0.12,
+    "gs": 15,
+    "p_today": 0.0,
+    "p_today_pre": 0.0,
+    "week_scale": 0.8
+   },
+   "cr_pct": 93,
+   "cr_season_pct": 97
   },
   {
    "id": 3041994,
@@ -47356,6 +47356,71 @@
    "cr_season_pct": 59
   },
   {
+   "id": 2590824,
+   "name": "John Gibson",
+   "team": "DET",
+   "games": 2,
+   "games_left": 2,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    51,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "G",
+   "slots": [
+    "G"
+   ],
+   "owner": "other",
+   "team_id": 9,
+   "ir": false,
+   "bench": true,
+   "injury": null,
+   "owned": 47.7,
+   "adp": 166.6,
+   "gp": 13,
+   "ppg": 2.21,
+   "cur_ppg": 0.94,
+   "last_ppg": 3.01,
+   "last_gp": 57,
+   "proj_ppg": 3.02,
+   "clears": null,
+   "dfo_out": null,
+   "proj_ppg_pre": 3.02,
+   "cr_g_nights": {
+    "51": 0.5,
+    "54": 0.5
+   },
+   "cr": 2.05,
+   "cr_fpg": 2.04,
+   "cr_season": 1.07,
+   "proj_gp": 41,
+   "cr_games": 1.0,
+   "cr_dress": null,
+   "cr_dress_next": null,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476434,
+   "cr_why": {
+    "exp_starts": 1.0,
+    "team_games": 2,
+    "share10": 0.5,
+    "n10": 10,
+    "own_pps": 2.03,
+    "g_season_share": 0.44,
+    "season_pps": 2.36,
+    "sched": 0.07,
+    "gs": 13,
+    "p_today": 0.0,
+    "p_today_pre": 0.0,
+    "week_scale": 0.8
+   },
+   "cr_pct": 64,
+   "cr_season_pct": 73
+  },
+  {
    "id": 4331604,
    "name": "Michael Kesselring",
    "team": "SJ",
@@ -47513,71 +47578,6 @@
    },
    "cr_pct": 26,
    "cr_season_pct": 26
-  },
-  {
-   "id": 2590824,
-   "name": "John Gibson",
-   "team": "DET",
-   "games": 2,
-   "games_left": 2,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    51,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "G",
-   "slots": [
-    "G"
-   ],
-   "owner": "other",
-   "team_id": 9,
-   "ir": false,
-   "bench": true,
-   "injury": null,
-   "owned": 47.7,
-   "adp": 166.6,
-   "gp": 13,
-   "ppg": 2.21,
-   "cur_ppg": 0.94,
-   "last_ppg": 3.01,
-   "last_gp": 57,
-   "proj_ppg": 3.02,
-   "clears": null,
-   "dfo_out": null,
-   "proj_ppg_pre": 3.02,
-   "cr_g_nights": {
-    "51": 0.5,
-    "54": 0.5
-   },
-   "cr": 2.04,
-   "cr_fpg": 2.04,
-   "cr_season": 1.07,
-   "proj_gp": 41,
-   "cr_games": 1.0,
-   "cr_dress": null,
-   "cr_dress_next": null,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476434,
-   "cr_why": {
-    "exp_starts": 1.0,
-    "team_games": 2,
-    "share10": 0.5,
-    "n10": 10,
-    "own_pps": 2.03,
-    "g_season_share": 0.44,
-    "season_pps": 2.36,
-    "sched": 0.07,
-    "gs": 13,
-    "p_today": 0.0,
-    "p_today_pre": 0.0,
-    "week_scale": 0.8
-   },
-   "cr_pct": 64,
-   "cr_season_pct": 73
   },
   {
    "id": 2273,
