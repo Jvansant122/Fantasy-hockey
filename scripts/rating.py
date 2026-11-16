@@ -485,6 +485,9 @@ HEALTHY_REG_LOGIT = 0.5
 # other step: + this on that game's logit, capped at REG_NEXT_CAP (handoff 928, findings 4648: Oct 9-Nov 8 shown .842 dressed
 # .931, fit +0.8; held out Nov 9-15 shown .833 dressed .947, Brier .0665 -> .0520)
 REG_NEXT_LOGIT, REG_NEXT_CAP, REG_NEXT_MIN_BOOST, REG_NEXT_RANGE = 0.8, 0.97, 0.7, (0.3, 0.9)
+# ... and once the day's lines are in (a run at or after REG_NEXT_SAME_DAY_UTC, his next game today) straight to the cap
+# (handoff 930, findings 4651: Oct 20-Nov 15 noon and evening same-day rows 111, shown .84, all 111 dressed)
+REG_NEXT_SAME_DAY_UTC = (16, 30)
 # a healthy depth skater (under DEPTH_TOI, not left early) with FIGHT_PIM+ penalty minutes in his last game keeps his spot:
 # + this on the same step (handoff 356, findings 323: +0.065/+0.092 dressed over the site's chance, offset +0.75/+0.57)
 FIGHT_LOGIT, FIGHT_PIM = 0.5, 5
@@ -5030,13 +5033,16 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     # regulars who dressed the last game but are still shown under the floors for the next: lift that game (handoff 928)
     # ... under the caps his next game already has (an injury stoppage, a left-early or day-to-day news cap)
     next_caps = {r["pid"]: r["caps"][0] for r in week_rows if r.get("caps") and not r.get("j0")}
+    same_day_lines = (now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC
     for p in players:
         w, q = p.get("cr_why"), p.get("cr_dress_next")
         if p["pos"] == "G" or p["id"] not in dressed_last or q is None or w is None or p.get("injury") or w.get("week_news") \
                 or (w.get("boost_dress") or 0.0) < REG_NEXT_MIN_BOOST or p.get("dfo_out") is True or game_started(p) \
                 or not REG_NEXT_RANGE[0] <= q < REG_NEXT_RANGE[1]:
             continue
-        nxt = max(q, min(REG_NEXT_CAP, next_caps.get(p.get("nhl_id"), 1.0), 1 / (1 + math.exp(-(logit(q) + REG_NEXT_LOGIT)))))
+        lifted = REG_NEXT_CAP if same_day_lines and p.get("today_start") \
+            else 1 / (1 + math.exp(-(logit(q) + REG_NEXT_LOGIT)))  # his next game today, the day's lines in (930)
+        nxt = max(q, min(REG_NEXT_CAP, next_caps.get(p.get("nhl_id"), 1.0), lifted))
         if nxt <= q:
             continue
         if p.get("games_left") and p.get("cr_games"):  # his next game is in this matchup

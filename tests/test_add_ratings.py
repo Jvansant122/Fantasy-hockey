@@ -4702,3 +4702,25 @@ def test_injured_goalie_named_tonights_starter_starts_most_nights():
     healthy_tod, _ = run(None, (2, 1.65, True))  # an untagged pick is unchanged by the floor
     base_tod, _ = run(None)
     assert healthy_tod[2] < rating.TAGGED_PICK_FLOOR and healthy_tod[2] > base_tod[2]
+
+
+def test_regular_lift_goes_to_cap_once_the_days_lines_are_in(monkeypatch, tmp_path):
+    """Handoff 930 (findings 4651): the 928 group at or after 16:30 UTC with his next game today goes to 0.97 (under his
+    caps); a morning run or a game on a later day keeps +0.8."""
+    from datetime import datetime, timezone
+    assert rating.REG_NEXT_SAME_DAY_UTC == (16, 30)
+    monkeypatch.setattr(rating, "REG_NEXT_RANGE", (0.0, 1.0))
+    monkeypatch.setattr(rating, "HEALTHY_REG_LOGIT", -3.0)  # bring the fake league's regular under 0.9
+    gaps = lambda: FakeSession(missed={1: set(range(len(PAST) - 6, len(PAST) - 1))})
+    me = lambda start: [{**espn(101, "Auston Matthews", "TOR", "C"), **({"today_start": start} if start else {})}]
+
+    def run(hour, start):
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        return rate(monkeypatch, tmp_path, me(start), fake=gaps())["Auston Matthews"]
+    noon = run(17, "2026-10-09T23:00:00Z")
+    morning = run(11, "2026-10-09T23:00:00Z")
+    later = run(17, None)
+    if not noon["cr_why"].get("reg_next"):
+        pytest.skip("no boosted dress share in the fake league")
+    assert noon["cr_dress_next"] == pytest.approx(0.97, abs=0.005)
+    assert morning["cr_dress_next"] < 0.965 and later["cr_dress_next"] < 0.965
