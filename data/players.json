@@ -4,7 +4,7 @@
  "first_start": "2026-11-16T00:30:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-16T00:46:15Z",
+ "updated_utc": "2026-11-16T00:46:10Z",
  "team": "New York Mess",
  "matchup_period": 7,
  "matchup_weeks": 1,
@@ -4725,10 +4725,10 @@
     "away": "FLA",
     "home_name": "Stars",
     "away_name": "Panthers",
-    "p_home": 0.55,
+    "p_home": 0.548,
     "inputs": {
      "pts": [
-      8.51,
+      8.46,
       8.42
      ],
      "gd": [
@@ -4751,7 +4751,7 @@
     "state": "PRE",
     "started": false,
     "p_line": 0.543,
-    "p_model": 0.556
+    "p_model": 0.554
    },
    {
     "date": "2026-11-15",
@@ -9903,7 +9903,7 @@
     "week_slack": -0.4
    },
    "cr_pct": 91,
-   "cr_season_pct": 7
+   "cr_season_pct": 8
   },
   {
    "id": 3939714,
@@ -10648,11 +10648,11 @@
    "proj_ppg_pre": 1.81,
    "cr": 0.0,
    "cr_fpg": 1.59,
-   "cr_season": 0.42,
-   "proj_gp": 16,
+   "cr_season": 0.28,
+   "proj_gp": 11,
    "cr_games": 0,
-   "cr_dress": 0.1,
-   "cr_dress_next": 0.03,
+   "cr_dress": 0.0,
+   "cr_dress_next": 0.0,
    "sat_last": true,
    "cr_matched": true,
    "nhl_id": 8475168,
@@ -10668,29 +10668,29 @@
     "season_fpg": 1.59,
     "week_news": {
      "shift": -1.25,
-     "move": -0.069,
+     "move": 0.0,
      "why": [
       "timeline"
      ]
     },
-    "season_pts": 1.64,
+    "season_pts": 1.65,
     "espn_blend": 0.29,
     "espn_proj": 1.81,
-    "season_share": 0.25,
+    "season_share": 0.17,
     "age_adj": -0.06,
     "season_range": [
-     0.06,
-     0.81
+     0.0,
+     0.67
     ],
     "back": {
-     "games": "10"
+     "days": 56
     },
     "drift": 0.003,
-    "adp_pull": 1.021,
+    "adp_pull": 1.022,
     "adp": 174.4
    },
    "cr_pct": 0,
-   "cr_season_pct": 8
+   "cr_season_pct": 6
   },
   {
    "id": 3042003,
@@ -38643,7 +38643,7 @@
     "lineup_slack": -0.4
    },
    "cr_pct": 0,
-   "cr_season_pct": 6
+   "cr_season_pct": 7
   },
   {
    "id": 4352800,
