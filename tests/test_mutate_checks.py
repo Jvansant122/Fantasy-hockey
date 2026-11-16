@@ -44,12 +44,14 @@ def _break(d, how):
         n = next(n for n in d["nights"] if n["games"] > 0)
         n["games"] = 0
     elif how == "G2":
-        team = next(t for t in {p["team"] for p in d["players"] if p["pos"] == "G" and p["team"] != "FA"}
-                    if sum(1 for p in d["players"] if p["pos"] == "G" and p["team"] == t and p["games_left"] > 0
-                           and (p.get("cr_why") or {}).get("exp_starts") is not None) >= 2)
+        rated = lambda t, left: sum(1 for p in d["players"] if p["pos"] == "G" and p["team"] == t and p["games_left"] >= left
+                                    and (p.get("cr_why") or {}).get("exp_starts") is not None)
+        teams = sorted({p["team"] for p in d["players"] if p["pos"] == "G" and p["team"] != "FA"})
+        # a team with two goalies still to play; on the week's last night after the puck none may have one, so any two
+        team = next((t for t in teams if rated(t, 1) >= 2), None) or next(t for t in teams if rated(t, 0) >= 2)
         for p in d["players"]:
             if p["pos"] == "G" and p["team"] == team and (p.get("cr_why") or {}).get("exp_starts") is not None:
-                p["cr_why"]["exp_starts"] = p["games_left"]
+                p["cr_why"]["exp_starts"] = max(p["games_left"], 0.5)
     elif how == "WS1":
         w = d["season_weeks"][0]
         w["light"] = list(w.get("light") or []) + [w["sps"][-1] + 1]
