@@ -150,7 +150,8 @@ OUT_TODAY_CAP = 0.03
 DFO_ABSENT_TODAY_CAP = 0.15
 # an IR skater Daily Faceoff leaves out of its lines for a game today, once the day's lines are in (a run at or after
 # REG_NEXT_SAME_DAY_UTC): tonight at most this, past the practising and return news (handoff 932, findings 4664: Nov 1-16
-# last pre-puck runs 207 rows shown 12.75 in all, 3 dressed; the 25 shown above .05 all sat; Brier .0295 -> .0148)
+# last pre-puck runs 207 rows shown 12.75 in all, 3 dressed; the 25 shown above .05 all sat; Brier .0295 -> .0148), and
+# one with no game this season (934: Oct 20-Nov 16, 111 rows shown 6.43, 1 dressed; Brier .0221 -> .0099)
 IR_ABSENT_TODAY_CAP = 0.05
 # ESPN OUT the day before his team's next game (the team idle today), no practising / could return / set to return news
 # and no recent illness note: that game at most this (handoff 933, findings 4668: Oct 20-Nov 16 last run the day before,
@@ -4636,7 +4637,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 per_game[0] = min(per_game[0], DFO_ABSENT_TODAY_CAP)
                 dress_next = per_game[0]
             # handoff 932: IR, out of Daily Faceoff's lines for a game today, the day's lines in
-            ir_absent = p.get("injury") == "INJURY_RESERVE" and p.get("dfo_out") is True and bool(gl) and bool(tg) \
+            # ... no game of his own this season counts too (handoff 934, findings 4674: 111 rows shown 6.43, 1 dressed)
+            ir_absent = p.get("injury") == "INJURY_RESERVE" and p.get("dfo_out") is True and bool(tg) \
                 and not skip and bool(p.get("today_start")) and not game_started(p) \
                 and (now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC
             if ir_absent and per_game:
