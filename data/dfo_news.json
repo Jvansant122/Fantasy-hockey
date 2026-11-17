@@ -1,5 +1,5 @@
 {
-"fetched": "2026-11-17T17:21Z",
+"fetched": "2026-11-17T17:26Z",
 "general": {
 "8477527": {
 "cat": "General",
@@ -125,10 +125,6 @@
 "n:jacob markstrom:FLA": {
 "day": "tuesday",
 "ts": "2026-11-17T15:58:22"
-},
-"n:mackenzie blackwood:COL": {
-"day": "saturday",
-"ts": "2026-11-14T17:21:45"
 },
 "n:sergei bobrovsky:TOR": {
 "day": "tuesday",
@@ -1999,15 +1995,15 @@
 "ts": "2026-11-14T01:36:19"
 },
 "8480192": {
-"indefinite": true,
+"indefinite": false,
 "indefinite_ts": "2026-11-13T18:41:40",
 "nf": [
-"ir",
 "out"
 ],
 "season": false,
 "surgery": false,
-"ts": "2026-11-13T18:41:40"
+"tl": 35.0,
+"ts": "2026-11-17T17:20:36"
 },
 "8480281": {
 "day": "tuesday",
@@ -8618,6 +8614,14 @@
 "out"
 ],
 "ts": "2026-11-13T18:41:40"
+},
+{
+"cat": "inj",
+"f": [
+"out"
+],
+"tl": 35.0,
+"ts": "2026-11-17T17:20:36"
 }
 ],
 "8480259": [
