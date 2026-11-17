@@ -4791,3 +4791,20 @@ def test_out_the_day_before_his_next_game_capped_unless_return_news(monkeypatch,
     assert matthews(idle, prac)["cr_dress_next"] == pytest.approx(matthews(idle, prac, cap=1.0)["cr_dress_next"], abs=1e-9)
     two_days = ["2026-10-05", "2026-10-07", "2026-10-11", "2026-10-12"]
     assert matthews(two_days)["cr_dress_next"] == pytest.approx(matthews(two_days, cap=1.0)["cr_dress_next"], abs=1e-9)
+
+
+def test_ir_skater_with_no_game_this_season_left_out_of_todays_lines_capped(monkeypatch, tmp_path):
+    """Handoff 934 (findings 4674): 932's cap also holds an IR skater with no NHL game this season (Huberdeau, Nov 17:
+    .10 with practising news)."""
+    from datetime import datetime, timezone
+    news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {},
+            "recent": {"9": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
+
+    def spooner(cap):
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 17, tzinfo=timezone.utc))
+        monkeypatch.setattr(rating, "IR_ABSENT_TODAY_CAP", cap)
+        p = dict(espn(110, "Ryan Spooner", "BOS", "C", injury="INJURY_RESERVE"), dfo_out=True, today_start="2026-10-09T23:00:00Z")
+        return rate(monkeypatch, tmp_path, [p], dfo_news=news)["Ryan Spooner"]
+    capped, free = spooner(0.05), spooner(1.0)
+    assert capped["cr_why"]["gp"] == 0 and capped["cr_dress_next"] <= 0.05 + 1e-9
+    assert free["cr_dress_next"] > 0.05 and capped["cr_games"] < free["cr_games"]
