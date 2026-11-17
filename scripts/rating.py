@@ -148,6 +148,10 @@ OUT_TODAY_CAP = 0.03
 # a regular (dressed his team's last game, no ESPN status) whom Daily Faceoff's fresh lines leave out of tonight's game: dressed
 # 4 of 45 live, Oct 8-15 (findings 509 (5), handoff 696); tonight's game only
 DFO_ABSENT_TODAY_CAP = 0.15
+# an IR skater Daily Faceoff leaves out of its lines for a game today, once the day's lines are in (a run at or after
+# REG_NEXT_SAME_DAY_UTC): tonight at most this, past the practising and return news (handoff 932, findings 4664: Nov 1-16
+# last pre-puck runs 207 rows shown 12.75 in all, 3 dressed; the 25 shown above .05 all sat; Brier .0295 -> .0148)
+IR_ABSENT_TODAY_CAP = 0.05
 # a long ESPN note that is only week-to-week, only a timeline, or only LTIR: per-game caps (game today or tomorrow, game 2+
 # days after the run) instead of 0. Week-to-week / timeline-only long notes dressed 0.04-0.21, LTIR 0.01-0.13
 # (hunt14/returns, findings 489; handoff 657)
@@ -4619,6 +4623,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
                 per_game[0] = min(per_game[0], DFO_ABSENT_TODAY_CAP)
                 dress_next = per_game[0]
+            # handoff 932: IR, out of Daily Faceoff's lines for a game today, the day's lines in
+            ir_absent = p.get("injury") == "INJURY_RESERVE" and p.get("dfo_out") is True and bool(gl) and bool(tg) \
+                and not skip and bool(p.get("today_start")) and not game_started(p) \
+                and (now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC
+            if ir_absent and per_game:
+                per_game[0] = min(per_game[0], IR_ABSENT_TODAY_CAP)
+                dress_next = per_game[0]
             if game_caps == "ir":
                 game_caps = None if practising else [
                     (lambda k: max(IR_DAY_CAPS[k], word_floor) if k and word_floor is not None else IR_DAY_CAPS[k])(
@@ -4776,6 +4787,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     caps = [min(c, q) for c, q in zip(caps, per_game)] if lc["cap"] else [max(c, q) for c, q in zip(caps, per_game)]
                 elif later_floor:
                     caps = [max(c, q) for c, q in zip(caps, per_game)]
+                if ir_absent and caps:  # past every news floor above (932)
+                    caps[0] = min(caps[0], IR_ABSENT_TODAY_CAP)
                 lead_caps = [min(cap, inj, c) for c in (lead_game_caps or [1.0] * len(out_idx))]
                 if out_idx and p.get("injury") == "OUT" and not one_game_over and all_dates[out_idx[0]] == today.isoformat() and tonight_ahead:
                     lead_caps[0] = min(lead_caps[0], OUT_TODAY_CAP)
