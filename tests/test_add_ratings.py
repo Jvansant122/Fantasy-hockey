@@ -4808,3 +4808,33 @@ def test_ir_skater_with_no_game_this_season_left_out_of_todays_lines_capped(monk
     capped, free = spooner(0.05), spooner(1.0)
     assert capped["cr_why"]["gp"] == 0 and capped["cr_dress_next"] <= 0.05 + 1e-9
     assert free["cr_dress_next"] > 0.05 and capped["cr_games"] < free["cr_games"]
+
+
+@pytest.mark.parametrize("tagged_on", ["2026-10-09", "2026-10-08"])
+def test_just_activated_skater_in_todays_lines_floored(monkeypatch, tmp_path, tagged_on):
+    """Handoff 935 (findings 4676): ESPN tagged him (day-to-day, out, IR) today or yesterday and has no tag now; in Daily
+    Faceoff's lines for a game today, from 16:30 UTC his next game is at least 0.95, even after he sat the last game; tagged
+    three days ago, out of the lines, a morning run or no game today keeps his number."""
+    import json
+    from datetime import datetime, timezone
+    assert rating.BACK_IN_LINES_DAYS == 1
+    monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.5)  # under the 844 floor, so 935 is what lifts him
+    monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(missed={1: {len(PAST) - 1}}))
+    log = tmp_path / "injury_log.jsonl"
+    monkeypatch.setattr(rating, "INJURY_LOG", log)
+
+    def run(hour=17, day=tagged_on, dfo=False, start="2026-10-09T23:00:00Z", status="OUT"):
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        log.write_text(json.dumps({"date": day, "espn_id": 101, "nhl_id": 1, "name": "Auston Matthews",
+                                   "status": status}) + "\n")
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), dfo_out=dfo, **({"today_start": start} if start else {}))
+        rating.add_ratings([p], 2027, TODAY, MONDAY, [])
+        return p
+    back = run()
+    old = run(day="2026-10-06")
+    assert old["cr_dress_next"] < 0.94, "the fake league's skater who sat should start under the floor"
+    assert back["cr_dress_next"] == pytest.approx(0.95, abs=0.005) and back["cr_why"]["back_in_lines"] > 0
+    assert back["cr"] == pytest.approx(back["cr_fpg"] * back["cr_games"], abs=0.02)
+    assert run(status="SUSPENSION")["cr_dress_next"] < 0.94
+    for kw in ({"dfo": None}, {"dfo": True}, {"hour": 11}, {"start": None}):
+        assert run(**kw)["cr_dress_next"] < 0.94, kw

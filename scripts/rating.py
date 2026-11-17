@@ -501,6 +501,10 @@ REG_NEXT_SAME_DAY_UTC = (16, 30)
 # a game today, on those runs: at least this (handoff 931, findings 4652: Oct 20-Nov 15, 670 rows shown under .945, shown
 # .879, dressed .984; depth players 256 rows shown .837, dressed .965)
 IN_LINES_SAME_DAY_FLOOR = 0.95
+# ... and for a skater ESPN tagged day-to-day, out or IR today or yesterday who has no tag now, whether or not he dressed
+# last game or has news: 89 rows Oct 20-Nov 16 shown 82.99, 88 dressed; the 46 under .95 dressed .978 (findings 4676,
+# handoff 935)
+BACK_IN_LINES_DAYS = 1
 # a healthy depth skater (under DEPTH_TOI, not left early) with FIGHT_PIM+ penalty minutes in his last game keeps his spot:
 # + this on the same step (handoff 356, findings 323: +0.065/+0.092 dressed over the site's chance, offset +0.75/+0.57)
 FIGHT_LOGIT, FIGHT_PIM = 0.5, 5
@@ -3518,6 +3522,23 @@ def recently_flagged(today):
     return out
 
 
+def recently_tagged(today, days=BACK_IN_LINES_DAYS):
+    """ESPN ids the injury log has day-to-day, out or on IR on any run today or in the `days` days before (handoff 935)."""
+    cutoff = (today - timedelta(days=days)).isoformat()
+    out = set()
+    if INJURY_LOG.exists():
+        for line in INJURY_LOG.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("date", "")[:10] >= cutoff and row.get("espn_id") is not None \
+                    and (row.get("status") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE")
+                         or row.get("first") in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE")):
+                out.add(row["espn_id"])
+    return out
+
+
 def dtd_flag_days(today):
     """{ESPN id: days in a row before today the injury log has him DAY_TO_DAY on the day's first run} (handoffs 881, 848).
     Rows from before "first" was logged don't count, so the floor waits for that history."""
@@ -3819,6 +3840,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     if dfo_news and (dfo_news.get("fetched") or "") < (now_utc - timedelta(days=NEWS_STALE_DAYS)).strftime("%Y-%m-%dT%H:%MZ"):
         dfo_news = None
     flagged = recently_flagged(today)  # read before this run rewrites the log
+    tagged_lately = recently_tagged(today)
     game_win = {}  # (date, team, opponent, home) -> the last Predicted winners run's win chance for a game not yet started
     for g in prev_games or []:
         if g.get("p_home") is not None and not g.get("started") and g.get("date") and g.get("home") and g.get("away"):
@@ -5063,6 +5085,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
             p["cr_why"]["pp_d_out"] = top
 
+    def lift_next(p, q, nxt):
+        """Raise his next game's chance to play from q to nxt, and the Week with it when that game is in this matchup."""
+        if p.get("games_left") and p.get("cr_games"):
+            games = p["cr_games"] + nxt - q
+            p["cr_games"] = round(games, 2)
+            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
+            p["cr_dress"] = round(games / p["games_left"], 2)
+        p["cr_dress_next"] = round(nxt, 2)
+
     # regulars who dressed the last game but are still shown under the floors for the next: lift that game (handoff 928)
     # ... under the caps his next game already has (an injury stoppage, a left-early or day-to-day news cap)
     next_caps = {r["pid"]: r["caps"][0] for r in week_rows if r.get("caps") and not r.get("j0")}
@@ -5079,15 +5110,19 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if same_day_lines and p.get("today_start") and p.get("dfo_out") is False:  # in tonight's lines, any skater (931)
             lifted = max(lifted, IN_LINES_SAME_DAY_FLOOR)
         nxt = max(q, min(REG_NEXT_CAP, next_caps.get(p.get("nhl_id"), 1.0), lifted))
-        if nxt <= q:
+        if nxt > q:
+            lift_next(p, q, nxt)
+            w["reg_next"] = round(nxt - q, 2)
+    # just activated: tagged today or yesterday, no tag now, in today's lines once they're in (handoff 935)
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p["id"] not in tagged_lately or q is None or q <= 0.001 or w is None or p.get("injury") \
+                or not same_day_lines or not p.get("today_start") or p.get("dfo_out") is not False or game_started(p):
             continue
-        if p.get("games_left") and p.get("cr_games"):  # his next game is in this matchup
-            games = p["cr_games"] + nxt - q
-            p["cr_games"] = round(games, 2)
-            p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
-            p["cr_dress"] = round(games / p["games_left"], 2)
-        p["cr_dress_next"] = round(nxt, 2)
-        w["reg_next"] = round(nxt - q, 2)
+        nxt = max(q, min(next_caps.get(p.get("nhl_id"), 1.0), IN_LINES_SAME_DAY_FLOOR))
+        if nxt > q:
+            lift_next(p, q, nxt)
+            w["back_in_lines"] = round(nxt - q, 2)
 
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
