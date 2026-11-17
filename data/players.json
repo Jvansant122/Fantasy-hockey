@@ -4,7 +4,7 @@
  "first_start": "2026-11-18T00:00:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-17T20:47:22Z",
+ "updated_utc": "2026-11-17T20:47:26Z",
  "team": "New York Mess",
  "matchup_period": 8,
  "matchup_weeks": 1,
@@ -3282,7 +3282,7 @@
     "p_home": 0.568,
     "inputs": {
      "pts": [
-      7.73,
+      7.72,
       5.9
      ],
      "gd": [
@@ -4243,7 +4243,7 @@
     "p_home": 0.549,
     "inputs": {
      "pts": [
-      7.73,
+      7.72,
       7.18
      ],
      "gd": [
@@ -38938,110 +38938,6 @@
    "cr_season_pct": 30
   },
   {
-   "id": 3042017,
-   "name": "Alexander Wennberg",
-   "team": "SJ",
-   "games": 2,
-   "games_left": 2,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    54
-   ],
-   "games_next2": 8,
-   "today_start": "2026-11-18T00:00:00Z",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 7.5,
-   "adp": 228.4,
-   "gp": 11,
-   "ppg": 1.38,
-   "cur_ppg": 0.85,
-   "last_ppg": 1.74,
-   "last_gp": 80,
-   "proj_ppg": 1.64,
-   "clears": null,
-   "dfo_out": false,
-   "proj_ppg_pre": 1.64,
-   "cr": 2.77,
-   "cr_fpg": 1.52,
-   "cr_season": 1.05,
-   "proj_gp": 54,
-   "cr_games": 1.82,
-   "cr_dress": 0.91,
-   "cr_dress_next": 0.95,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8477505,
-   "cr_why": {
-    "toi5": 21.29,
-    "toi": 20.46,
-    "pp5": 5.51,
-    "sog": 1.45,
-    "blk": 0.73,
-    "gp": 11,
-    "last_fpg": 1.74,
-    "xfp": {
-     "gp": 11,
-     "fpg": 0.85,
-     "xfpg": 1.65
-    },
-    "season_fpg": 1.58,
-    "opp_last": {
-     "ga": 0.016,
-     "move": 0.002
-    },
-    "later_floor": true,
-    "week_news": {
-     "shift": 0.53,
-     "move": 0.131,
-     "why": [
-      "could return",
-      "day-to-day"
-     ]
-    },
-    "boost_week": -1.46,
-    "boost_week_move": -0.33,
-    "season_pts": 1.49,
-    "boost_dress": 0.66,
-    "boost_fpg": 1.39,
-    "espn_blend": 0.16,
-    "espn_proj": 1.64,
-    "season_range": [
-     0.59,
-     1.5
-    ],
-    "rust": {
-     "m": 0.93,
-     "fpg": 1.57,
-     "back": true
-    },
-    "line": {
-     "win_prob": 0.54,
-     "m": 1.003,
-     "pps": 1.51
-    },
-    "sched_sk": 0.004,
-    "drift": 0.004,
-    "missing_regs_pp": -0.02,
-    "lineup_slack": 0.7,
-    "missing_regs": -0.1,
-    "week_slack": 0.7,
-    "back_in_lines": 0.05
-   },
-   "cr_pct": 39,
-   "cr_season_pct": 47
-  },
-  {
    "id": 4697461,
    "name": "Mason Lohrei",
    "team": "BOS",
@@ -40075,7 +39971,7 @@
     "missing_regs": -0.1,
     "week_slack": 0.0
    },
-   "cr_pct": 36,
+   "cr_pct": 37,
    "cr_season_pct": 63
   },
   {
@@ -40176,7 +40072,7 @@
     "adp_pull": 0.997,
     "adp": 229.9
    },
-   "cr_pct": 36,
+   "cr_pct": 37,
    "cr_season_pct": 30
   },
   {
@@ -40425,6 +40321,109 @@
    },
    "cr_pct": 36,
    "cr_season_pct": 63
+  },
+  {
+   "id": 3042017,
+   "name": "Alexander Wennberg",
+   "team": "SJ",
+   "games": 2,
+   "games_left": 2,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    54
+   ],
+   "games_next2": 8,
+   "today_start": "2026-11-18T00:00:00Z",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 7.5,
+   "adp": 228.4,
+   "gp": 11,
+   "ppg": 1.38,
+   "cur_ppg": 0.85,
+   "last_ppg": 1.74,
+   "last_gp": 80,
+   "proj_ppg": 1.64,
+   "clears": null,
+   "dfo_out": false,
+   "proj_ppg_pre": 1.64,
+   "cr": 2.69,
+   "cr_fpg": 1.52,
+   "cr_season": 1.05,
+   "proj_gp": 54,
+   "cr_games": 1.77,
+   "cr_dress": 0.88,
+   "cr_dress_next": 0.9,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8477505,
+   "cr_why": {
+    "toi5": 21.29,
+    "toi": 20.46,
+    "pp5": 5.51,
+    "sog": 1.45,
+    "blk": 0.73,
+    "gp": 11,
+    "last_fpg": 1.74,
+    "xfp": {
+     "gp": 11,
+     "fpg": 0.85,
+     "xfpg": 1.65
+    },
+    "season_fpg": 1.58,
+    "opp_last": {
+     "ga": 0.016,
+     "move": 0.002
+    },
+    "later_floor": true,
+    "week_news": {
+     "shift": 0.53,
+     "move": 0.131,
+     "why": [
+      "could return",
+      "day-to-day"
+     ]
+    },
+    "boost_week": -1.46,
+    "boost_week_move": -0.33,
+    "season_pts": 1.49,
+    "boost_dress": 0.66,
+    "boost_fpg": 1.39,
+    "espn_blend": 0.16,
+    "espn_proj": 1.64,
+    "season_range": [
+     0.59,
+     1.5
+    ],
+    "rust": {
+     "m": 0.93,
+     "fpg": 1.57,
+     "back": true
+    },
+    "line": {
+     "win_prob": 0.54,
+     "m": 1.003,
+     "pps": 1.51
+    },
+    "sched_sk": 0.004,
+    "drift": 0.004,
+    "missing_regs_pp": -0.02,
+    "lineup_slack": 0.7,
+    "missing_regs": -0.1,
+    "week_slack": 0.7
+   },
+   "cr_pct": 36,
+   "cr_season_pct": 47
   },
   {
    "id": 5361711,
