@@ -4733,3 +4733,61 @@ def test_regular_lift_goes_to_cap_once_the_days_lines_are_in(monkeypatch, tmp_pa
                                                            fake=gaps())["Auston Matthews"]
     assert lined(False)["cr_dress_next"] == pytest.approx(0.95, abs=0.005)
     assert lined(None)["cr_dress_next"] < 0.94 and lined(False, None)["cr_dress_next"] < 0.94
+
+
+@pytest.mark.parametrize("sat", [True, False])
+def test_ir_skater_left_out_of_todays_lines_capped_once_lines_are_in(monkeypatch, tmp_path, sat):
+    """Handoff 932 (findings 4664): an IR skater Daily Faceoff leaves out of its lines for a game today is at most 0.05
+    tonight from 16:30 UTC, past practising news; a morning run, a later game and a day-to-day player keep theirs."""
+    from datetime import datetime, timezone
+    assert rating.IR_ABSENT_TODAY_CAP == 0.05
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}} if sat else {})
+    news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {},
+            "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
+
+    def run(hour, injury="INJURY_RESERVE", start="2026-10-09T23:00:00Z"):
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=True,
+                 **({"today_start": start} if start else {}))
+        return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news)["Auston Matthews"]
+    noon = run(17)
+    assert noon["cr_dress_next"] <= rating.IR_ABSENT_TODAY_CAP + 1e-9
+    assert noon["cr"] == pytest.approx(noon["cr_fpg"] * noon["cr_games"], abs=0.02)
+    monkeypatch.setattr(rating, "IR_ABSENT_TODAY_CAP", 1.0)
+    uncapped = run(17)
+    monkeypatch.setattr(rating, "IR_ABSENT_TODAY_CAP", 0.05)
+    assert uncapped["cr_dress_next"] > 0.3 or not sat  # practising news lifts one who sat (Durzi .50, Nov 16)
+    if uncapped["cr_dress_next"] > 0.05:  # the cap is what holds him down
+        assert noon["cr_games"] < uncapped["cr_games"]
+        assert run(11)["cr_dress_next"] == pytest.approx(uncapped["cr_dress_next"], abs=0.01)
+    dtd = run(17, injury="DAY_TO_DAY")
+    monkeypatch.setattr(rating, "IR_ABSENT_TODAY_CAP", 1.0)
+    assert dtd["cr_dress_next"] == pytest.approx(run(17, injury="DAY_TO_DAY")["cr_dress_next"], abs=1e-9)
+
+
+def test_out_the_day_before_his_next_game_capped_unless_return_news(monkeypatch, tmp_path):
+    """Handoff 933 (findings 4668): ESPN OUT, his team idle today and playing tomorrow, no practising / could return / set
+    to return news: that game at most OUT_TOMORROW_CAP; later games keep the OUT cap; with practising news, or a game
+    today, unchanged."""
+    import sys
+    from datetime import datetime, timezone
+    assert rating.OUT_TOMORROW_CAP == 0.05
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 16, tzinfo=timezone.utc))
+    here = sys.modules[__name__]
+    prac = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {},
+            "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
+
+    def matthews(week, news=None, cap=0.05):
+        monkeypatch.setattr(here, "WEEK", week)
+        monkeypatch.setattr(rating, "OUT_TOMORROW_CAP", cap)
+        kw = {"dfo_news": news} if news else {}
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury="OUT")],
+                    fake=FakeSession(missed={1: {len(PAST) - 1}}), **kw)["Auston Matthews"]  # sat his last game, as OUT
+    idle = ["2026-10-05", "2026-10-07", "2026-10-10", "2026-10-12"]
+    capped, plain = matthews(idle), matthews(idle, cap=1.0)
+    assert capped["cr_dress_next"] <= 0.05 + 1e-9 and plain["cr_dress_next"] > 0.2
+    assert capped["cr_games"] == pytest.approx(plain["cr_games"] - plain["cr_dress_next"] + capped["cr_dress_next"], abs=0.02)
+    assert capped["cr"] == pytest.approx(capped["cr_fpg"] * capped["cr_games"], abs=0.02)
+    assert matthews(idle, prac)["cr_dress_next"] == pytest.approx(matthews(idle, prac, cap=1.0)["cr_dress_next"], abs=1e-9)
+    two_days = ["2026-10-05", "2026-10-07", "2026-10-11", "2026-10-12"]
+    assert matthews(two_days)["cr_dress_next"] == pytest.approx(matthews(two_days, cap=1.0)["cr_dress_next"], abs=1e-9)
