@@ -1,5 +1,5 @@
 {
-"fetched": "2026-11-18T11:11Z",
+"fetched": "2026-11-18T14:10Z",
 "general": {
 "8477527": {
 "cat": "General",
@@ -710,15 +710,13 @@
 "ts": "2026-11-15T22:07:55"
 },
 "8476878": {
-"day": "thursday",
-"firm": true,
+"day": "tuesday",
 "indefinite": false,
-"nf": [
-"ret"
-],
+"left": true,
+"nf": [],
 "season": false,
 "surgery": false,
-"ts": "2026-11-05T23:52:54"
+"ts": "2026-11-18T11:58:23"
 },
 "8476882": {
 "day": "saturday",
@@ -3371,12 +3369,16 @@
 },
 "8484144": {
 "day": "tuesday",
+"days": [
+"tuesday",
+"wednesday"
+],
 "indefinite": false,
+"left": true,
 "nf": [],
-"ret_m": true,
 "season": false,
 "surgery": false,
-"ts": "2026-10-13T15:43:40"
+"ts": "2026-11-18T12:03:39"
 },
 "8484145": {
 "day": "tuesday",
@@ -3394,17 +3396,13 @@
 "ts": "2026-11-03T17:12:35"
 },
 "8484180": {
-"day": "tuesday",
 "indefinite": false,
 "nf": [
-"practice"
+"wtw"
 ],
-"prac": true,
 "season": false,
-"soft": true,
 "surgery": false,
-"tl": 140.8,
-"ts": "2026-11-10T16:33:06"
+"ts": "2026-11-18T11:44:39"
 },
 "8484200": {
 "indefinite": true,
@@ -5427,6 +5425,11 @@
 "ret"
 ],
 "ts": "2026-11-05T23:52:54"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-11-18T11:58:23"
 }
 ],
 "8476882": [
@@ -12050,6 +12053,11 @@
 "cat": "inj",
 "f": [],
 "ts": "2026-10-13T15:43:40"
+},
+{
+"cat": "inj",
+"f": [],
+"ts": "2026-11-18T12:03:39"
 }
 ],
 "8484145": [
@@ -12190,6 +12198,13 @@
 "down"
 ],
 "ts": "2026-11-11T20:03:25"
+},
+{
+"cat": "inj",
+"f": [
+"wtw"
+],
+"ts": "2026-11-18T11:44:39"
 }
 ],
 "8484185": [
