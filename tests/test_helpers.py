@@ -621,3 +621,31 @@ def test_run_clock_decides_a_game_starting_mid_run(monkeypatch):
     assert not rating.game_started(p)
     monkeypatch.setattr(rating, "RUN_CLOCK", None)
     assert rating.game_started(p)  # the real clock is past it
+
+
+def test_stats_rows_reads_every_page_in_a_fixed_order():
+    """Since Nov 19 2026 the NHL stats API returns at most 100 rows a call: stats_rows pages through all of them, sorted
+    so the pages neither overlap nor skip rows (the 5 PM run lost 558 skater games without it)."""
+    import json as _json
+    data = [{"playerId": i, "gameId": 7} for i in range(250)]
+    calls = []
+
+    class Resp:
+        def __init__(self, j):
+            self.j = j
+        def json(self):
+            return self.j
+        def raise_for_status(self):
+            pass
+
+    class S:
+        def get(self, url, params=None, headers=None, timeout=None):
+            calls.append(params)
+            a = params["start"]
+            return Resp({"data": data[a:a + min(params["limit"], 100)], "total": len(data)})
+    rows = rating.stats_rows(S(), "skater/summary", isAggregate="false", isGame="true", cayenneExp="x")
+    assert rows == data and [c["start"] for c in calls] == [0, 100, 200]
+    assert [k["property"] for k in _json.loads(calls[0]["sort"])] == ["gameId", "playerId"]
+    calls.clear()
+    assert rating.stats_rows(S(), "skater/bios", isAggregate="true", isGame="false", cayenneExp="x") == data
+    assert [k["property"] for k in _json.loads(calls[0]["sort"])] == ["playerId"]
