@@ -1214,6 +1214,27 @@ NHL_CACHE = os.environ.get("NHL_CACHE")
 CACHE_SETTLED_DAYS = 3  # a week whose last day is at least this many days before today is cached
 
 
+STATS_PAGE = 100  # the stats API returns at most 100 rows a call since Nov 19 2026, whatever the limit asked
+
+
+def stats_rows(s, report, **params):
+    """Every row of one NHL stats API query, a page at a time (limit=-1 stopped returning them all on Nov 19 2026, so the
+    5 PM run lost every game after the first 100 rows of each uncached week). Pages until "total" rows or a short page."""
+    # a fixed order, so pages don't overlap or skip rows (the default order isn't stable: 756 rows held 754 player-games)
+    keys = (["gameId"] if params.get("isGame") == "true" else []) + ["playerId"] \
+        + (["teamAbbrevs"] if params.get("isGame") != "true" and params.get("isAggregate") == "false" else [])
+    order = json.dumps([{"property": k, "direction": "ASC"} for k in keys])
+    rows = []
+    for _ in range(1000):  # a feed that ignores start can't loop forever
+        j = nhl_get(s, f"{NHL_STATS}/{report}", start=len(rows), limit=STATS_PAGE, sort=order, **params).json()
+        page = j["data"]
+        rows += page
+        total = j.get("total")
+        if not page or len(page) < STATS_PAGE or (isinstance(total, int) and len(rows) >= total):
+            break
+    return rows
+
+
 def stats_report(s, report, season, start=None, end=None, teams=False):
     """One NHL stats API report. With dates: one row per player-game; without: season totals per player
     (teams=True keeps the teamAbbrevs column, which the aggregate view leaves empty)."""
@@ -1227,8 +1248,8 @@ def stats_report(s, report, season, start=None, end=None, teams=False):
             return json.loads(path.read_text())
         except (OSError, ValueError):
             pass
-    data = nhl_get(s, f"{NHL_STATS}/{report}", isAggregate="false" if start or teams else "true", isGame="true" if start else "false",
-                   start=0, limit=-1, cayenneExp=exp).json()["data"]
+    data = stats_rows(s, report, isAggregate="false" if start or teams else "true", isGame="true" if start else "false",
+                      cayenneExp=exp)
     if path is not None:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -1457,8 +1478,8 @@ def relief_points(s, season):
     """{goalie id: fantasy points in his relief appearances}. ESPN scores relief appearances 0 in this league (since Oct 11
     2026, retroactively), so a per-start rate counts started games only (handoff 486). Empty if the report can't be read."""
     try:
-        rows = nhl_get(s, f"{NHL_STATS}/goalie/summary", isAggregate="false", isGame="true", start=0, limit=-1,
-                       cayenneExp=f"seasonId={season} and gameTypeId=2 and gamesStarted=0").json()["data"]
+        rows = stats_rows(s, "goalie/summary", isAggregate="false", isGame="true",
+                          cayenneExp=f"seasonId={season} and gameTypeId=2 and gamesStarted=0")
     except (requests.RequestException, KeyError, ValueError) as e:
         print(f"Relief appearances {season} unavailable: {e!r}", file=sys.stderr)
         return {}
