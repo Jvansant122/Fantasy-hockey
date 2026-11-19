@@ -613,6 +613,10 @@ DTD_NEXT_LOGIT = -0.4
 # ESPN-listed, note's stated return 0-7 days away: games before it dressed 0.18 / 0.19 vs 0.28 / 0.24 predicted
 # (hunt14/returns2, findings 496, handoff 670)
 BEFORE_RETURN_LOGIT = -0.6
+# an ESPN-tagged skater (day-to-day, out, IR): each of his games after the next one +0.5 on the logit, past the status caps;
+# morning runs Oct 26-Nov 14 (136 players, 1,110 rows): later games played 331 vs 229.6 shown, under all 3 weeks and every
+# tag; fitted Oct 26-Nov 8, held out Nov 9-14 expected 80.8 -> 109.6 vs 126 played (findings 4914, handoff 936)
+TAGGED_LATER_LOGIT = 0.5
 # the scratch lifts above (teammate left early, last result, the scratch logit itself) are applied after the boosted Week
 # model, with the news: before it, the boost took back ~90% of them (handoffs 515-516, hunt13/lift_order)
 # a depth skater (under DEPTH_TOI minutes) with a point in his last game keeps his spot more (findings 304, handoff 351)
@@ -2667,6 +2671,14 @@ def adp_week_pull(players, team_games):
             p["cr_why"]["adp_week"] = round(f, 3)
 
 
+def tagged_later(p, per_game):
+    """Handoff 936: an ESPN-tagged skater's games after his next one, TAGGED_LATER_LOGIT higher; 0 stays 0."""
+    if p.get("pos") == "G" or p.get("injury") not in ("DAY_TO_DAY", "OUT", "INJURY_RESERVE") or len(per_game) < 2:
+        return per_game
+    return per_game[:1] + [q if q <= 0.001 else 1 / (1 + math.exp(-(logit(min(q, 0.999)) + TAGGED_LATER_LOGIT)))
+                           for q in per_game[1:]]
+
+
 def week_slack(rows, boost_x, boost_week, missing=None):
     """Open lineup spots per team game in the Week (handoff 489, findings 402): per NHL team, position group and remaining
     game date, LINEUP_SPOTS minus the summed per-game Week chances of its skaters with games this season (team = his
@@ -2735,7 +2747,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         if counts[(r["team"], r["isD"])] < LINEUP_SPOTS[r["isD"]]:
             if any(regs):
                 r["per_game"] = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + z))), c) for q, z, c in zip(r["per_game"], regs, r["caps"])]
-            r["per_game"] = lineup_floor(r, r["per_game"])
+            r["per_game"] = tagged_later(p, lineup_floor(r, r["per_game"]))
             if r["per_game"] != r.get("before", r["per_game"]):  # ... but keep the trip and absence shifts
                 p["cr_games"] = round(sum(r["per_game"]), 2)
                 p["cr"] = round(p["cr_fpg"] * p["cr_games"], 2)
@@ -2745,7 +2757,7 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         slack = [(LINEUP_SPOTS[r["isD"]] - sums[(r["team"], r["isD"], d)]) / 3 for d in r["dates"]]
         per_game = [q if q <= 0.001 else min(1 / (1 + math.exp(-(logit(q) + WEEK_SLACK[0] * min(s, 0) + WEEK_SLACK[1] * max(s, 0) + z))), c)
                     for q, s, z, c in zip(r["per_game"], slack, regs, r["caps"])]
-        per_game = lineup_floor(r, per_game)
+        per_game = tagged_later(p, lineup_floor(r, per_game))
         games = sum(per_game)
         p["cr_why"]["week_slack"] = round(3 * slack[0], 1)
         p["cr_games"] = round(games, 2)

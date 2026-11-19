@@ -781,6 +781,7 @@ def test_scratched_defenseman_early_in_the_season_keeps_more_season_share(monkey
 def test_skater_who_left_last_game_early_rarely_dresses(monkeypatch, tmp_path):
     """Dressed for the last game but played under 40% of his average ice time: big dress cut for the next games, until
     ESPN flags him; 40-55% a small one for two games (findings 165)."""
+    monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", 0.0)  # pins the caps under handoff 936's later-game shift
     monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", 0.0)  # handoff 846's no-news shift aside: the caps on their own
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     def matthews(toi=None, injury=None):
@@ -2156,6 +2157,7 @@ def test_boosted_model_walks_its_trees_like_sklearn():
 
 def test_weekly_boosted_dress_model_moves_the_week_toward_its_share(monkeypatch, tmp_path):
     """Handoff 411: each remaining game's dress logit moves 0.8 x (logit(b) - logit(his mean)); injury caps still hold."""
+    monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", 0.0)  # pins the caps under handoff 936's later-game shift
     monkeypatch.setattr(rating, "DTD_QUIET_LOGIT", 0.0)  # handoff 846's no-news shift aside: the caps on their own
     import season_boost
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
@@ -3055,6 +3057,7 @@ def _mcavoy5(monkeypatch, tmp_path, injury, short, long="", when="2026-10-08T12:
 
 def test_week_to_week_note_caps_each_game(monkeypatch, tmp_path):
     """Handoff 657: a note whose only long word is week-to-week caps today's game at 0.05 and Sunday's at 0.20 (it was 0)."""
+    monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", 0.0)  # pins the caps under handoff 936's later-game shift
     p = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) is considered week-to-week.")
     assert p["cr_dress_next"] <= 0.05 + 1e-9 and 0.05 < p["cr_games"] <= 0.25 + 1e-9
     surgery = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) will undergo surgery and is week-to-week.")
@@ -3063,6 +3066,7 @@ def test_week_to_week_note_caps_each_game(monkeypatch, tmp_path):
 
 def test_timeline_only_note_caps_each_game(monkeypatch, tmp_path):
     """Handoff 657: a note that is long only for its stated 4-6 weeks caps at 0.10 today, 0.30 after."""
+    monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", 0.0)  # pins the caps under handoff 936's later-game shift
     p = _mcavoy5(monkeypatch, tmp_path, "INJURY_RESERVE", "McAvoy (knee) is expected to miss four to six weeks.")
     assert p["cr_dress_next"] <= 0.10 + 1e-9 and p["cr_games"] > p["cr_dress_next"]
     assert p["cr_games"] <= 0.40 + 1e-9
@@ -3150,6 +3154,7 @@ def test_fresh_illness_note_lifts_the_injury_cap(monkeypatch, tmp_path):
 
 def test_return_words_lift_the_cap_and_the_chance(monkeypatch, tmp_path):
     """Handoff 677: ESPN return words about him lift OUT's cap to 0.5 and add RETURN_LOGIT to each game; hedged words don't."""
+    monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", 0.0)  # pins the caps under handoff 936's later-game shift
     plain = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) won't play Friday.")
     back = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) practiced fully Thursday and will play Sunday.")
     hedged = _mcavoy5(monkeypatch, tmp_path, "OUT", "McAvoy (upper body) hopes he will play Sunday.")
@@ -4838,3 +4843,24 @@ def test_just_activated_skater_in_todays_lines_floored(monkeypatch, tmp_path, ta
     assert run(status="SUSPENSION")["cr_dress_next"] < 0.94
     for kw in ({"dfo": None}, {"dfo": True}, {"hour": 11}, {"start": None}):
         assert run(**kw)["cr_dress_next"] < 0.94, kw
+
+
+@pytest.mark.parametrize("injury", ["DAY_TO_DAY", "OUT", "INJURY_RESERVE"])
+def test_tagged_skater_later_games_raised_next_game_kept(monkeypatch, tmp_path, injury):
+    """Handoff 936 (findings 4914): an ESPN-tagged skater's games after the next one are 0.5 higher on the logit, past
+    the status caps; his next game, a healthy skater and a goalie are unchanged."""
+    assert rating.TAGGED_LATER_LOGIT == 0.5
+    def run(shift, inj=injury):
+        monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", shift)
+        return rate(monkeypatch, tmp_path, [espn(101, "Auston Matthews", "TOR", "C", injury=inj)])["Auston Matthews"]
+    on, off = run(0.5), run(0.0)
+    assert on["games_left"] >= 2, "the fake week should leave him a game after the next"
+    assert on["cr_dress_next"] == pytest.approx(off["cr_dress_next"], abs=1e-9)
+    assert on["cr_games"] > off["cr_games"] + 0.01
+    assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    assert run(0.5, None)["cr_games"] == pytest.approx(run(0.0, None)["cr_games"], abs=1e-9)
+    monkeypatch.setattr(rating, "TAGGED_LATER_LOGIT", 0.5)
+    q = 0.2
+    assert rating.tagged_later({"injury": injury, "pos": "C"}, [q, q, 0.0])[1:] == \
+        [pytest.approx(1 / (1 + math.exp(-(math.log(q / (1 - q)) + 0.5)))), 0.0]
+    assert rating.tagged_later({"injury": injury, "pos": "G"}, [q, q]) == [q, q]
