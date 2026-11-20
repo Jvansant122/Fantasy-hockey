@@ -36,6 +36,7 @@ def test_tonight_cap_only_for_regulars_with_no_status(monkeypatch, tmp_path, who
     team, pid, pos = {"Charlie McAvoy": ("BOS", 104, "D"),
                       "Auston Matthews": ("TOR", 101, "C")}[who]
     monkeypatch.setattr(rating, "SCRATCH_ABSENT_LOGIT", 0.0)  # a scratch left out again has his own shift (818), not this cap
+    monkeypatch.setattr(rating, "DTD_MORNING_K", 1.0)  # no lines read moves a morning day-to-day chance (940)
     out = _one(monkeypatch, tmp_path, who, dict(espn(pid, who, team, pos, **kw), today_start=TONIGHT, dfo_out=True), fake)
     none = _one(monkeypatch, tmp_path, who, dict(espn(pid, who, team, pos, **kw), today_start=TONIGHT, dfo_out=None), fake)
     assert none["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP  # the cap would bind
@@ -47,6 +48,7 @@ def test_fresh_lines_floor_not_for_espn_listed(monkeypatch, tmp_path):
     regular in the lines keeps his own chance under the injury cap. Kills: A14."""
     monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: 0.5)  # a chance under his day-to-day cap
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
+    monkeypatch.setattr(rating, "DTD_MORNING_K", 1.0)  # no lines read moves a morning day-to-day chance (940)
     p = lambda dfo: dict(espn(101, "Auston Matthews", "TOR", "C", injury="DAY_TO_DAY"), today_start=TONIGHT, dfo_out=dfo)
     inl, none = _one(monkeypatch, tmp_path, "Auston Matthews", p(False)), _one(monkeypatch, tmp_path, "Auston Matthews", p(None))
     assert none["cr_dress_next"] < rating.DTD_PLAYED_CAPS[-1][1] - 0.05  # the floor would bind
