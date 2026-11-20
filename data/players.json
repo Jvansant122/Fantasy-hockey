@@ -4,7 +4,7 @@
  "first_start": null,
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-20T17:50:41Z",
+ "updated_utc": "2026-11-20T17:50:42Z",
  "team": "New York Mess",
  "matchup_period": 8,
  "matchup_weeks": 1,
@@ -4483,7 +4483,7 @@
     "p_home": 0.698,
     "inputs": {
      "pts": [
-      9.04,
+      9.02,
       7.87
      ],
      "gd": [
@@ -54559,92 +54559,6 @@
    "cr_season_pct": 48
   },
   {
-   "id": 5161,
-   "name": "Matt Duchene",
-   "team": "DAL",
-   "games": 3,
-   "games_left": 1,
-   "light": 1,
-   "light_left": 1,
-   "nights": [
-    50,
-    52,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "C",
-   "slots": [
-    "C",
-    "F",
-    "LW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 41.0,
-   "adp": 172.7,
-   "gp": 0,
-   "ppg": 1.81,
-   "cur_ppg": null,
-   "last_ppg": 1.6,
-   "last_gp": 57,
-   "proj_ppg": 1.81,
-   "clears": null,
-   "dfo_out": true,
-   "proj_ppg_pre": 1.81,
-   "cr": 0.05,
-   "cr_fpg": 1.69,
-   "cr_season": 0.27,
-   "proj_gp": 10,
-   "cr_games": 0.03,
-   "cr_dress": 0.03,
-   "cr_dress_next": 0.03,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8475168,
-   "cr_why": {
-    "toi5": 16.51,
-    "toi": null,
-    "pp5": 2.32,
-    "sog": 1.56,
-    "blk": 0.4,
-    "gp": 0,
-    "last_fpg": 1.6,
-    "xfp": null,
-    "season_fpg": 1.59,
-    "opp_last": {
-     "ga": 0.04,
-     "move": 0.003
-    },
-    "week_news": {
-     "shift": -1.25,
-     "move": -0.069,
-     "why": [
-      "timeline"
-     ]
-    },
-    "season_pts": 1.61,
-    "espn_blend": 0.29,
-    "espn_proj": 1.81,
-    "season_share": 0.17,
-    "age_adj": -0.06,
-    "season_range": [
-     0.0,
-     0.66
-    ],
-    "back": {
-     "games": "10"
-    },
-    "sched_sk": 0.059,
-    "drift": 0.005
-   },
-   "cr_pct": 9,
-   "cr_season_pct": 6
-  },
-  {
    "id": 3096217,
    "name": "Thatcher Demko",
    "team": "VAN",
@@ -54787,7 +54701,7 @@
     "sched_sk": 0.005,
     "drift": 0.005
    },
-   "cr_pct": 9,
+   "cr_pct": 10,
    "cr_season_pct": 4
   },
   {
@@ -54858,7 +54772,7 @@
     "sched_sk": -0.009,
     "drift": 0.005
    },
-   "cr_pct": 9,
+   "cr_pct": 10,
    "cr_season_pct": 3
   },
   {
@@ -55018,7 +54932,7 @@
     "missing_regs": -0.05,
     "week_slack": 0.4
    },
-   "cr_pct": 9,
+   "cr_pct": 10,
    "cr_season_pct": 81
   },
   {
@@ -56115,6 +56029,91 @@
    },
    "cr_pct": 8,
    "cr_season_pct": 5
+  },
+  {
+   "id": 5161,
+   "name": "Matt Duchene",
+   "team": "DAL",
+   "games": 3,
+   "games_left": 1,
+   "light": 1,
+   "light_left": 1,
+   "nights": [
+    50,
+    52,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "C",
+   "slots": [
+    "C",
+    "F",
+    "LW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 41.0,
+   "adp": 172.7,
+   "gp": 0,
+   "ppg": 1.81,
+   "cur_ppg": null,
+   "last_ppg": 1.6,
+   "last_gp": 57,
+   "proj_ppg": 1.81,
+   "clears": null,
+   "dfo_out": true,
+   "proj_ppg_pre": 1.81,
+   "cr": 0.0,
+   "cr_fpg": 1.59,
+   "cr_season": 0.18,
+   "proj_gp": 7,
+   "cr_games": 0.0,
+   "cr_dress": 0.0,
+   "cr_dress_next": 0.0,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8475168,
+   "cr_why": {
+    "toi5": 16.51,
+    "toi": null,
+    "pp5": 2.32,
+    "sog": 1.56,
+    "blk": 0.4,
+    "gp": 0,
+    "last_fpg": 1.6,
+    "xfp": null,
+    "season_fpg": 1.59,
+    "opp_last": {
+     "ga": 0.04,
+     "move": 0.003
+    },
+    "week_news": {
+     "shift": -1.25,
+     "move": 0.0,
+     "why": [
+      "timeline"
+     ]
+    },
+    "season_pts": 1.61,
+    "espn_blend": 0.29,
+    "espn_proj": 1.81,
+    "season_share": 0.11,
+    "age_adj": -0.06,
+    "season_range": [
+     0.0,
+     0.57
+    ],
+    "back": {
+     "days": 51
+    },
+    "drift": 0.005
+   },
+   "cr_pct": 0,
+   "cr_season_pct": 6
   },
   {
    "id": 4874721,
