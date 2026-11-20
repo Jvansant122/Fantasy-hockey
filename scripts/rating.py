@@ -83,9 +83,10 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
-# ... the game-day cap after his team's 2+ days off, while Daily Faceoff has no fresh lines for it: dressed 16 of 166 (9.6%)
-# at 6 AM vs 3.3% shown, Oct 12-Nov 19, both months; 0-1 days off 2.8% vs 3.4% (findings 4943-4945, handoff 939)
-IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.09, 2
+# ... the game-day cap after his team's 2+ days off, on a run before REG_NEXT_SAME_DAY_UTC unless he is in Daily Faceoff's
+# lines (those have 816/911): 6 AM, Oct 12-Nov 19, fresh lines without him dressed 11 of 155 (7.1%; Oct 6.1%, Nov 7.9%)
+# vs 3.2% shown, no fresh lines 0 of 4; 0-1 days off 2.8% vs 3.4% (findings 4943-4945, 4947, handoffs 939, 941)
+IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.07, 2
 # ESPN day-to-day skater in Daily Faceoff's lines for a game today, on a run before REG_NEXT_SAME_DAY_UTC: tonight's chance
 # raised to c + k x (chance - c) when that is higher (handoff 940, findings 4946 re-measured on the live 6 and 9 AM pages,
 # Oct 12-Nov 19: in the morning lines 74 of 112 dressed against 58 shown, Brier .2632 -> .2143, fit on Oct and tested on
@@ -4713,9 +4714,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     (lambda k: max(IR_DAY_CAPS[k], word_floor) if k and word_floor is not None else IR_DAY_CAPS[k])(
                         min((date.fromisoformat(d) - today).days, 2)) for d in wk_dates]
                 last_tg = max(team_dates.get(team) or [""])[:10]
-                if game_caps and wk_dates[0] == today.isoformat() and p.get("dfo_out") is None and last_tg \
+                if game_caps and wk_dates[0] == today.isoformat() and p.get("dfo_out") is not False and last_tg \
+                        and (now_utc.hour, now_utc.minute) < REG_NEXT_SAME_DAY_UTC \
                         and (today - date.fromisoformat(last_tg)).days - 1 >= IR_RESTED_DAYS_OFF:
-                    game_caps[0] = max(game_caps[0], IR_RESTED_TODAY_CAP)  # rested team, no fresh lines yet (939)
+                    game_caps[0] = max(game_caps[0], IR_RESTED_TODAY_CAP)  # rested team, a morning run (939, 941)
             elif game_caps == "long":
                 game_caps = [long_caps[0] if (date.fromisoformat(d) - today).days <= 1 else long_caps[1] for d in wk_dates]
             if game_caps and per_game:
