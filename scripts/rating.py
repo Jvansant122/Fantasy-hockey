@@ -86,11 +86,12 @@ IR_DAY_CAPS = (0.05, 0.15, 0.25)
 # ... the game-day cap after his team's 2+ days off, while Daily Faceoff has no fresh lines for it: dressed 16 of 166 (9.6%)
 # at 6 AM vs 3.3% shown, Oct 12-Nov 19, both months; 0-1 days off 2.8% vs 3.4% (findings 4943-4945, handoff 939)
 IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.09, 2
-# ESPN day-to-day skater, game today, before the day's lines (a run before REG_NEXT_SAME_DAY_UTC, no fresh Daily Faceoff
-# lines for his team): tonight's chance pulled toward the middle, c + k x (chance - c) (handoff 940, findings 4946: live 6 AM
-# calls Oct 12-Nov 19 Brier .2452 vs .2450 for a flat .43; halfway shrink .2328 pooled, k .6 best within .0005 on the
-# whole span and on Nov 10-19 alone, where k .7 was best). Midday calls are informative and stay as they are.
-DTD_MORNING_MID, DTD_MORNING_K = 0.45, 0.6
+# ESPN day-to-day skater in Daily Faceoff's lines for a game today, on a run before REG_NEXT_SAME_DAY_UTC: tonight's chance
+# raised to c + k x (chance - c) when that is higher (handoff 940, findings 4946 re-measured on the live 6 and 9 AM pages,
+# Oct 12-Nov 19: in the morning lines 74 of 112 dressed against 58 shown, Brier .2632 -> .2143, fit on Oct and tested on
+# Nov .2487 -> .1879, the other way .2762 -> .2381, Nov 10-19 .2859 -> .2008). Out of the lines the current number already
+# beat any shrink since Nov 10, and with no lines read (26 rows) it's too few to size, so both stay as they are.
+DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
 # an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
 # 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
@@ -5168,15 +5169,15 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt > q:
             lift_next(p, q, nxt)
             w["back_in_lines"] = round(nxt - q, 2)
-    # day-to-day, game today, the day's lines not in yet: pulled toward the middle (handoff 940)
+    # day-to-day, in Daily Faceoff's lines for a game today, a morning run: raised toward 0.75 (handoff 940)
     if not same_day_lines:
         for p in players:
             w, q = p.get("cr_why"), p.get("cr_dress_next")
             if p["pos"] == "G" or p.get("injury") != "DAY_TO_DAY" or q is None or q <= 0.001 or w is None \
-                    or not p.get("today_start") or p.get("dfo_out") is not None or game_started(p) or w.get("line_change"):
+                    or not p.get("today_start") or p.get("dfo_out") is not False or game_started(p) or w.get("line_change"):
                 continue  # Daily Faceoff's own call on tonight's game (850-859) keeps its number
-            nxt = round(DTD_MORNING_MID + DTD_MORNING_K * (q - DTD_MORNING_MID), 2)
-            if nxt != q:
+            nxt = max(q, round(DTD_MORNING_MID + DTD_MORNING_K * (q - DTD_MORNING_MID), 2))
+            if nxt > q:
                 lift_next(p, q, nxt)
                 w["dtd_morning"] = round(nxt - q, 2)
 
