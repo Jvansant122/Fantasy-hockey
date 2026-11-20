@@ -4867,23 +4867,25 @@ def test_tagged_skater_later_games_raised_next_game_kept(monkeypatch, tmp_path, 
     assert rating.tagged_later({"injury": injury, "pos": "G"}, [q, q]) == [q, q]
 
 
-def test_ir_cap_raised_after_team_days_off_until_fresh_lines(monkeypatch, tmp_path):
-    """Handoff 939 (findings 4943-4945): an IR skater whose team had 2+ days off before today's game is capped at 0.09
-    tonight, not 0.05, while Daily Faceoff has no fresh lines for his team; with lines (in or out) or fewer days off, 0.05."""
+def test_ir_cap_raised_after_team_days_off_on_morning_runs(monkeypatch, tmp_path):
+    """Handoffs 939, 941 (findings 4943-4945, 4947): an IR skater whose team had 2+ days off before today's game is capped at
+    0.07 tonight, not 0.05, on a run before 16:30 UTC, with no fresh lines or left out of them; in the lines, fewer days off
+    or a midday run keep 0.05 (or the in-lines rules)."""
     from datetime import datetime, timezone
-    assert rating.IR_RESTED_TODAY_CAP == 0.09 and rating.IR_RESTED_DAYS_OFF == 2
-    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 11, tzinfo=timezone.utc))
+    assert rating.IR_RESTED_TODAY_CAP == 0.07 and rating.IR_RESTED_DAYS_OFF == 2
 
-    def run(days_off, **kw):
+    def run(days_off, hour=11, **kw):
         monkeypatch.setattr(rating, "IR_RESTED_DAYS_OFF", days_off)
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
         p = dict(espn(101, "Auston Matthews", "TOR", "C", injury="INJURY_RESERVE"), today_start="2026-10-09T23:00:00Z", **kw)
         return rate(monkeypatch, tmp_path, [p])["Auston Matthews"]
-    rested = run(0)
-    assert rested["cr_dress_next"] == pytest.approx(0.09, abs=0.005)
-    assert rested["cr"] == pytest.approx(rested["cr_fpg"] * rested["cr_games"], abs=0.02)
-    assert run(99)["cr_dress_next"] <= 0.05 + 1e-9  # not enough days off
-    assert run(0, dfo_out=False)["cr_dress_next"] != pytest.approx(0.09, abs=0.005)  # fresh lines decide instead
-    assert run(0, dfo_out=True)["cr_dress_next"] <= 0.05 + 1e-9
+    for kw in ({}, {"dfo_out": True}):
+        rested = run(0, **kw)
+        assert rested["cr_dress_next"] == pytest.approx(0.07, abs=0.005), kw
+        assert rested["cr"] == pytest.approx(rested["cr_fpg"] * rested["cr_games"], abs=0.02)
+        assert run(99, **kw)["cr_dress_next"] <= 0.05 + 1e-9, kw  # not enough days off
+        assert run(0, hour=17, **kw)["cr_dress_next"] <= 0.05 + 1e-9, kw  # the day's lines decide from midday
+    assert run(0, dfo_out=False)["cr_dress_next"] != pytest.approx(0.07, abs=0.005)  # in the lines: their own rules
 
 
 def test_day_to_day_in_morning_lines_raised(monkeypatch, tmp_path):
