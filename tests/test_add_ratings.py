@@ -4864,3 +4864,22 @@ def test_tagged_skater_later_games_raised_next_game_kept(monkeypatch, tmp_path, 
     assert rating.tagged_later({"injury": injury, "pos": "C"}, [q, q, 0.0])[1:] == \
         [pytest.approx(1 / (1 + math.exp(-(math.log(q / (1 - q)) + 0.5)))), 0.0]
     assert rating.tagged_later({"injury": injury, "pos": "G"}, [q, q]) == [q, q]
+
+
+def test_ir_cap_raised_after_team_days_off_until_fresh_lines(monkeypatch, tmp_path):
+    """Handoff 939 (findings 4943-4945): an IR skater whose team had 2+ days off before today's game is capped at 0.09
+    tonight, not 0.05, while Daily Faceoff has no fresh lines for his team; with lines (in or out) or fewer days off, 0.05."""
+    from datetime import datetime, timezone
+    assert rating.IR_RESTED_TODAY_CAP == 0.09 and rating.IR_RESTED_DAYS_OFF == 2
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 11, tzinfo=timezone.utc))
+
+    def run(days_off, **kw):
+        monkeypatch.setattr(rating, "IR_RESTED_DAYS_OFF", days_off)
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury="INJURY_RESERVE"), today_start="2026-10-09T23:00:00Z", **kw)
+        return rate(monkeypatch, tmp_path, [p])["Auston Matthews"]
+    rested = run(0)
+    assert rested["cr_dress_next"] == pytest.approx(0.09, abs=0.005)
+    assert rested["cr"] == pytest.approx(rested["cr_fpg"] * rested["cr_games"], abs=0.02)
+    assert run(99)["cr_dress_next"] <= 0.05 + 1e-9  # not enough days off
+    assert run(0, dfo_out=False)["cr_dress_next"] != pytest.approx(0.09, abs=0.005)  # fresh lines decide instead
+    assert run(0, dfo_out=True)["cr_dress_next"] <= 0.05 + 1e-9

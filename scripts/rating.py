@@ -83,6 +83,9 @@ SKATER_INJURY_CAP = {"OUT": 0.35, "INJURY_RESERVE": 0.15, "SUSPENSION": 0.0, "DA
 # IR, game today / tomorrow / 2+ days after the run: dressed 0.05 / 0.07 / 0.19, players come off IR during the week
 # (hunt14/dress2, findings 476, handoff 629); the week-level cap is the 2+ day one
 IR_DAY_CAPS = (0.05, 0.15, 0.25)
+# ... the game-day cap after his team's 2+ days off, while Daily Faceoff has no fresh lines for it: dressed 16 of 166 (9.6%)
+# at 6 AM vs 3.3% shown, Oct 12-Nov 19, both months; 0-1 days off 2.8% vs 3.4% (findings 4943-4945, handoff 939)
+IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.09, 2
 # an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
 # 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
@@ -4703,6 +4706,10 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 game_caps = None if practising else [
                     (lambda k: max(IR_DAY_CAPS[k], word_floor) if k and word_floor is not None else IR_DAY_CAPS[k])(
                         min((date.fromisoformat(d) - today).days, 2)) for d in wk_dates]
+                last_tg = max(team_dates.get(team) or [""])[:10]
+                if game_caps and wk_dates[0] == today.isoformat() and p.get("dfo_out") is None and last_tg \
+                        and (today - date.fromisoformat(last_tg)).days - 1 >= IR_RESTED_DAYS_OFF:
+                    game_caps[0] = max(game_caps[0], IR_RESTED_TODAY_CAP)  # rested team, no fresh lines yet (939)
             elif game_caps == "long":
                 game_caps = [long_caps[0] if (date.fromisoformat(d) - today).days <= 1 else long_caps[1] for d in wk_dates]
             if game_caps and per_game:
