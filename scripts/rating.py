@@ -87,11 +87,10 @@ IR_DAY_CAPS = (0.05, 0.15, 0.25)
 # lines (those have 816/911): 6 AM, Oct 12-Nov 19, fresh lines without him dressed 11 of 155 (7.1%; Oct 6.1%, Nov 7.9%)
 # vs 3.2% shown, no fresh lines 0 of 4; 0-1 days off 2.8% vs 3.4% (findings 4943-4945, 4947, handoffs 939, 941)
 IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.07, 2
-# ESPN day-to-day skater in Daily Faceoff's lines for a game today, on a run before REG_NEXT_SAME_DAY_UTC: tonight's chance
-# raised to c + k x (chance - c) when that is higher (handoff 940, findings 4946 re-measured on the live 6 and 9 AM pages,
-# Oct 12-Nov 19: in the morning lines 74 of 112 dressed against 58 shown, Brier .2632 -> .2143, fit on Oct and tested on
-# Nov .2487 -> .1879, the other way .2762 -> .2381, Nov 10-19 .2859 -> .2008). Out of the lines the current number already
-# beat any shrink since Nov 10, and with no lines read (26 rows) it's too few to size, so both stay as they are.
+# ESPN day-to-day skater in Daily Faceoff's lines for a game today, any run before it, when a reporter or DFO Projections posted
+# them (not a "Last Game" copy): tonight's chance raised to c + k x (chance - c) when that is higher (handoffs 940, 943,
+# findings 4946, 4956: Oct 12-Nov 19, 6 AM reporter lines 23 of 29 dressed, Brier sum 8.01 -> 5.37; 12:40 7.41 -> 5.16; under
+# Last Game copies the lift hurt, 6.67 -> 8.04 and 2.40 -> 4.49; each the same way in both halves, split at Nov 4)
 DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
 # an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
@@ -5177,17 +5176,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt > q:
             lift_next(p, q, nxt)
             w["back_in_lines"] = round(nxt - q, 2)
-    # day-to-day, in Daily Faceoff's lines for a game today, a morning run: raised toward 0.75 (handoff 940)
-    if not same_day_lines:
-        for p in players:
-            w, q = p.get("cr_why"), p.get("cr_dress_next")
-            if p["pos"] == "G" or p.get("injury") != "DAY_TO_DAY" or q is None or q <= 0.001 or w is None \
-                    or not p.get("today_start") or p.get("dfo_out") is not False or game_started(p) or w.get("line_change"):
-                continue  # Daily Faceoff's own call on tonight's game (850-859) keeps its number
-            nxt = max(q, round(DTD_MORNING_MID + DTD_MORNING_K * (q - DTD_MORNING_MID), 2))
-            if nxt > q:
-                lift_next(p, q, nxt)
-                w["dtd_morning"] = round(nxt - q, 2)
+    # day-to-day, in a reporter's or DFO's lines (not a "Last Game" copy) for a game today: raised toward 0.75 (940, 943)
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p.get("injury") != "DAY_TO_DAY" or q is None or q <= 0.001 or w is None \
+                or not p.get("today_start") or p.get("dfo_out") is not False or game_started(p) or w.get("line_change") \
+                or (p.get("dfo_src") or "").startswith("Last Game"):
+            continue  # Daily Faceoff's own call on tonight's game (850-859) keeps its number
+        nxt = max(q, round(DTD_MORNING_MID + DTD_MORNING_K * (q - DTD_MORNING_MID), 2))
+        if nxt > q:
+            lift_next(p, q, nxt)
+            w["dtd_morning"] = round(nxt - q, 2)
 
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
