@@ -4714,7 +4714,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             out_tomorrow = p.get("injury") == "OUT" and bool(per_game) and not skip and bool(wk_dates) \
                 and today.isoformat() not in sched.get(espn_team, []) \
                 and wk_dates[0] == (today + timedelta(days=1)).isoformat() \
-                and not set(OUT_IR_RETURN_WHY) & set(wk_why) and word_floor != ILLNESS_CAP
+                and not set(OUT_IR_RETURN_WHY) & set(wk_why) and word_floor != ILLNESS_CAP \
+                and not (p.get("dfo_out") is False and sat_last and not (p.get("dfo_src") or "").startswith("Last Game"))  # 947
             if out_tomorrow:
                 per_game[0] = min(per_game[0], OUT_TOMORROW_CAP)
                 dress_next = per_game[0]
@@ -4759,9 +4760,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 # practising, but out three weeks from Nov 4)
                 fl = OUT_IR_IN_LINES_NEXT[0] if set(OUT_IR_RETURN_WHY) & set(wk_why) \
                     and not {"timeline", "long absence"} & set(wk_why) else OUT_IR_IN_LINES_NEXT[1]
-                if fl == OUT_IR_IN_LINES_NEXT[1] and wk_dates and wk_dates[0] == today.isoformat() and p.get("today_start") \
-                        and not game_started(p) and not (p.get("dfo_src") or "").startswith("Last Game"):
-                    fl = OUT_IR_IN_REPORTER_LINES_TODAY  # a reporter's lines for a game today (946)
+                today_game = wk_dates and wk_dates[0] == today.isoformat() and p.get("today_start") and not game_started(p)
+                # ... or for tomorrow's game, his team idle today (947): practice lines
+                tomorrow_game = wk_dates and wk_dates[0] == (today + timedelta(days=1)).isoformat() \
+                    and today.isoformat() not in sched.get(espn_team, [])
+                if fl == OUT_IR_IN_LINES_NEXT[1] and (today_game or tomorrow_game) \
+                        and not (p.get("dfo_src") or "").startswith("Last Game"):
+                    fl = OUT_IR_IN_REPORTER_LINES_TODAY  # a reporter's lines for a game today (946) or tomorrow (947)
                 if per_game[0] < fl:
                     per_game = [fl] + per_game[1:]
                     dress_next = news_floor = fl
