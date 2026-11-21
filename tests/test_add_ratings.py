@@ -4513,6 +4513,19 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     assert matthews(src="DFO Projections")["cr_dress_next"] == pytest.approx(0.7, abs=0.005)
     assert matthews(src="Jane Reporter", news=prac)["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005  # news tier kept
     assert matthews(src="Jane Reporter", start=None)["cr_dress_next"] < 0.7 - 0.05  # no game today
+    # handoff 947: practice lines the day before his next game, his team idle today, get the same floor
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 10, 21, tzinfo=timezone.utc))
+
+    def day_before(src):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=status, games_left=1), dfo_out=False, dfo_src=src)
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake())
+        rating.add_ratings([p], 2027, date(2026, 10, 10), MONDAY, [], dfo_news={**base_news, "fetched": "2026-10-10T20:30Z"})
+        return p
+    rep = day_before("Jane Reporter")
+    assert rep["cr_dress_next"] == pytest.approx(rating.OUT_IR_IN_REPORTER_LINES_TODAY, abs=0.005)
+    assert rep["cr_why"]["ir_lines"] == {"floor": 0.7, "news": False}
+    copy = rating.OUT_TOMORROW_CAP if status == "OUT" else rating.OUT_IR_IN_LINES_NEXT[1]  # a copy keeps 933 / 816
+    assert day_before("Last Game (Oct 9)")["cr_dress_next"] == pytest.approx(copy, abs=0.005)
 
 
 def test_day_to_day_in_lines_floor_and_scratch_left_out(monkeypatch, tmp_path):
