@@ -446,8 +446,9 @@ def test_no_game_yet_uses_last_seasons_role():
 
 
 @pytest.mark.usefixtures("whole_goalie_nights")
-def test_injured_starter_hands_starts_to_backup():
+def test_injured_starter_hands_starts_to_backup(monkeypatch):
     """An injured no. 1's games go to his partner (findings section 48)."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 4 else 2) for i, d in enumerate(range(1, 21, 2))]
     dates = ["2026-10-22", "2026-10-24", "2026-10-26", "2026-10-28"]
@@ -1014,6 +1015,7 @@ def test_last_starter_after_a_long_team_break(monkeypatch):
 
 def test_second_night_of_a_back_to_back(monkeypatch):
     """Night 2: the no. 1 who played night 1 rests more, a backup who played night 1 goes again more (findings 200)."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     model = rating.Model()
 
@@ -1351,6 +1353,7 @@ def test_history_runs_to_last_night_in_an_overnight_run(monkeypatch):
 @pytest.mark.usefixtures("whole_goalie_nights")
 def test_back_to_back_no1_early_in_the_season(monkeypatch):
     """Through a team's 10th game the no. 1 on night 2 gets an extra shift after the split; from the 11th, none (findings 213)."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     model = rating.Model()
 
@@ -1575,6 +1578,7 @@ def test_season_out_share_also_goes_to_hurt_partners():
 
 def test_back_to_back_no1_counts_only_goalies_still_here(monkeypatch):
     """Night 2: the no. 1 is the most-used of the goalies still on the team, not a departed one (findings 234)."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     model = rating.Model()
     seq = [9] * 12 + [2, 1, 2, 2]  # 9 was traded away; 2 is the no. 1 now and started night 1
@@ -2000,10 +2004,11 @@ def test_no1_by_opponent_form_and_rest():
     assert p1([tue], opp={tue: 2.0}) == p1([tue])  # without nonwins nothing changes
 
 
-def test_no1_after_split_back_to_back_and_backup_results():
+def test_no1_after_split_back_to_back_and_backup_results(monkeypatch):
     """Handoffs 334-335 (findings 264-267), next game only: +0.8 when the no. 1 started one night of a back-to-back and the
     next game is 2 days after night 2; +0.8 when a backup started and didn't win the last game; -0.6 when the latest backup
     start was a win 2-3 team games ago."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     model = rating.Model()
     def p1(hist, wins, days, **kw):
         out = {}
@@ -3433,9 +3438,10 @@ def _nights(dates, **kw):
     return nights[1]
 
 
-def test_goalie_dfo_factor_is_min_with_espn_and_per_game():
+def test_goalie_dfo_factor_is_min_with_espn_and_per_game(monkeypatch):
     """Handoff 679: the factor is min(ESPN's, 0.2) on the next game and min(ESPN's, 0.35) later, so an ESPN-OUT goalie stays 0
     and the later games are cut less than the next one."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     one, two = ["2026-10-22"], ["2026-10-22", "2026-10-24"]
     cut = {1: (0.2, 0.35)}
     # next game: the same as an ESPN factor of 0.2; DTD 0.5 -> 0.2; OUT 0 stays 0
@@ -3878,6 +3884,7 @@ def test_lines_are_judged_by_the_last_games_real_start(monkeypatch, tmp_path):
 def test_rested_no1_lift_on_night_two_after_a_backup_start(monkeypatch):
     """Handoff 756: the backup started night 1 of a back-to-back, so the rested no. 1's chance for night 2 gets +0.6 logit
     (team sum kept; re-sized to -0.1 by handoff 832); the later game, a no. 1 start yesterday, a day off between, and a Confirmed backup don't move."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     monkeypatch.setattr(rating, "NIGHT2_CAP", 1.0)  # these rules, before handoff 833's cap
     import math
     lo = lambda v: math.log(v / (1 - v))
@@ -3925,6 +3932,7 @@ def test_no1_cut_after_his_backup_starts_two_straight(monkeypatch):
 def test_night_2_favourite_capped_until_daily_faceoff_says(monkeypatch):
     """Handoff 833: night 2 of a back-to-back, no goalie's reported chance above NIGHT2_CAP (the rest shared by the others'
     odds); a rested game, and a Likely or Confirmed starter, aren't capped."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     cap = rating.NIGHT2_CAP
     assert 0.5 < cap < 1
     def night(c, last_day="2026-10-21", **kw):
@@ -4115,6 +4123,7 @@ def test_rust_reaches_the_rating(monkeypatch, tmp_path):
 def test_injured_goalie_with_positive_news_gets_starts(monkeypatch, tmp_path):
     """Handoff 869: an ESPN IR / OUT goalie whose latest Daily Faceoff item (at most 4 days old) is positive gets 0.4 of his
     chance next game and 0.65 later, in place of 0; without such news, or with older news, he stays at 0."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
@@ -4237,6 +4246,7 @@ def test_new_why_keys_reach_the_page(monkeypatch, tmp_path):
 
 def test_round3_goalie_news(monkeypatch, tmp_path):
     """Handoffs 874, 878, 883, 884, 894 on a two-goalie team."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     from datetime import datetime, timezone
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
@@ -4260,6 +4270,8 @@ def test_round3_goalie_news(monkeypatch, tmp_path):
     monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(TODAY.year, TODAY.month, TODAY.day, 15, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)
+    monkeypatch.setattr(rating, "INJURY_NOTES", tmp_path / "injury_notes.json")
     assert dtd["Joseph Woll"]["cr_games"] < flat["Joseph Woll"]["cr_games"]
     # 874: Goalie Start news naming the second game's day makes him that game's likely starter
     later = date.fromisoformat(nights[1])
@@ -4384,6 +4396,7 @@ def test_goalie_week_fixes(monkeypatch, tmp_path):
     """Handoffs 895-897 (findings 4750): goalie Week points a start x 0.8 beside skaters (Week = pts/start x starts still);
     an ESPN OUT / IR goalie with no news keeps a small start chance (OUT 0.08 / 0.12, IR 0.01 / 0.04); listed goalies'
     unconfirmed nights leave 2-4% for a goalie not on the list, confirmed nights stay whole."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     assert rating.GOALIE_WEEK_SCALE == 0.8 and rating.UNLISTED_RESERVE == (0.98, 0.98, 0.97, 0.96)
     assert rating.GOALIE_NO_NEWS_FACTORS == {"OUT": (0.08, 0.12), "INJURY_RESERVE": (0.01, 0.04)}
     g = lambda **kw: [espn(111, "Joseph Woll", "TOR", "G", **kw), espn(112, "Anthony Stolarz", "TOR", "G")]
@@ -4684,9 +4697,10 @@ def test_regular_who_dressed_last_game_lifted_next(monkeypatch, tmp_path):
     assert "reg_next" not in out["cr_why"]
 
 
-def test_injured_goalie_named_tonights_starter_starts_most_nights():
+def test_injured_goalie_named_tonights_starter_starts_most_nights(monkeypatch):
     """Handoff 929 (findings 4649): an ESPN-tagged goalie Daily Faceoff names as tonight's unconfirmed starter takes no
     ESPN factor tonight and at least TAGGED_PICK_FLOOR; his later games keep the tag; out for the season keeps 0."""
+    monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
     assert rating.TAGGED_PICK_FLOOR == 0.65
     model = rating.Model()
     hist = [(f"2026-10-{d:02d}", 1 if i % 6 else 2) for i, d in enumerate(range(1, 21, 2))]
@@ -4946,3 +4960,25 @@ def test_healthy_scratch_left_out_of_midday_lines_capped(monkeypatch, tmp_path):
     assert run(src="DFO Projections")["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9
     assert run(hour=11)["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP + 0.05  # morning lines: left alone
     assert run(dfo=False)["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP + 0.05
+
+
+def test_untagged_goalie_start_capped(monkeypatch):
+    """Handoff 944 (findings 4960): a game Daily Faceoff hasn't tagged him Confirmed or Likely for shows at most
+    UNTAGGED_START_CAP, the cut going to his partner and the team-night total kept; Confirmed and Likely tags keep theirs."""
+    assert rating.UNTAGGED_START_CAP == 0.85
+    hist = [(f"2026-10-{d:02d}", 1 if i % 10 else 2) for i, d in enumerate(range(1, 21))]  # no. 1 started 18 of 20
+    dates = ["2026-10-22", "2026-10-25"]
+
+    def run(cap, **kw):
+        monkeypatch.setattr(rating, "UNTAGGED_START_CAP", cap)
+        nights = {}
+        rating.goalie_starts(rating.Model(), "TOR", [1, 2], {"TOR": hist}, {1: 60, 2: 10}, dates, date(2026, 10, 22),
+                             by_date=nights, **kw)
+        return nights
+    off, on = run(1.0), run(0.85)
+    assert off[1][dates[0]] > 0.87, "the fake no. 1 should start over the cap"
+    for d in dates:
+        assert on[1][d] == pytest.approx(min(off[1][d], 0.85))
+        assert on[1][d] + on[2][d] == pytest.approx(off[1][d] + off[2][d])
+    assert run(0.85, confirmed={dates[0]: 1})[1][dates[0]] == 1.0
+    assert run(0.85, likely_dfo={dates[0]: 1})[1][dates[0]] > 0.87
