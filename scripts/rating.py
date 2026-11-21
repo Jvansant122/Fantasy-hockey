@@ -95,6 +95,7 @@ DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
 DTD_OUT_OF_REPORTER_LINES = 0.75  # 948: day-to-day, left out of a reporter's fresh lines (findings 4966: 22.3 shown, 13 dressed)
 IR_OUT_OF_REPORTER_LINES_TOMORROW = 0.6  # 949: IR, team idle today, out of a reporter's lines for tomorrow (findings 4967: 13.69 shown, 5 dressed)
 REG_OUT_OF_REPORTER_LINES_TOMORROW = 0.5  # 951: healthy, played last game, team idle today, out of a reporter's lines for tomorrow (findings 4969)
+IN_REPORTER_LINES_TOMORROW_FLOOR = 0.9  # 953: healthy, team idle today, in a reporter's lines for tomorrow (findings 4973: 35 rows under .9, 28.15 shown, 33 dressed)
 # an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
 # 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
@@ -5268,6 +5269,20 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt < q:
             lift_next(p, q, nxt)
             w["reg_absent_tomorrow"] = round(q - nxt, 2)
+    # ... and one in those lines: at least 0.9 for tomorrow's game, under any cap his next game already has (953)
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p.get("injury") or q is None or q <= 0.001 or w is None \
+                or p.get("dfo_out") is not False or w.get("line_change") \
+                or not p.get("dfo_src") or p["dfo_src"].startswith("Last Game"):
+            continue
+        dates = sched.get(ESPN_TO_NHL.get(p["team"], p["team"]), [])
+        if today.isoformat() in dates or min((d for d in dates if d > today.isoformat()), default=None) != tomorrow:
+            continue
+        nxt = max(q, min(next_caps.get(p.get("nhl_id"), 1.0), IN_REPORTER_LINES_TOMORROW_FLOOR))
+        if nxt > q:
+            lift_next(p, q, nxt)
+            w["in_lines_tomorrow"] = round(nxt - q, 2)
     # ... and on a morning run (before 16:30 UTC) for a game today: the reporter's lines are usually the last practice's,
     # so x 0.5 rather than the 0.15 cap (952)
     for p in players:

@@ -5156,3 +5156,35 @@ def test_regular_left_out_of_reporter_lines_on_a_morning_run_halved(monkeypatch,
     for kw in ({"src": "Last Game (Oct 8)"}, {"src": ""}, {"hour": 17}, {"src": "Last Game (Oct 8)", "hour": 17}):
         r = run(**kw)
         assert r["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9 and "reg_absent_morning" not in r["cr_why"], kw
+
+
+def test_in_reporter_lines_day_before_floored(monkeypatch, tmp_path):
+    """Handoff 953 (findings 4973): a healthy skater in a reporter's or DFO Projections' fresh lines, his team idle today
+    and playing tomorrow, gets at least 0.9 for tomorrow's game; a 'Last Game' copy, out of the lines, an injury listing
+    or a team that plays today keep the number."""
+    from datetime import datetime, timezone
+    assert rating.IN_REPORTER_LINES_TOMORROW_FLOOR == 0.9
+    base_news = {"fetched": "2026-10-10T20:30Z", "roster-moves": {}, "injuries": {}}
+    monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: 0.2)  # a depth player, well under 0.9
+    monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.0)
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
+
+    def run(floor, injury=None, dfo=False, src="Jane Reporter", day=10):
+        monkeypatch.setattr(rating, "IN_REPORTER_LINES_TOMORROW_FLOOR", floor)
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, day, 21, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury, games_left=1), dfo_out=dfo, dfo_src=src)
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        (tmp_path / "injury_log.jsonl").unlink(missing_ok=True)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        rating.add_ratings([p], 2027, date(2026, 10, day), MONDAY, [], dfo_news=base_news)
+        return p
+    on, off = run(0.9), run(0.0)
+    q = off["cr_dress_next"]
+    assert 0.001 < q < 0.85, "the fake skater should start well under the floor"
+    assert on["cr_dress_next"] == pytest.approx(0.9, abs=0.006)
+    assert on["cr_why"]["in_lines_tomorrow"] == pytest.approx(0.9 - q, abs=0.011)
+    assert on["cr_games"] == pytest.approx(off["cr_games"] + 0.9 - q, abs=0.02)
+    assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    for kw in ({"src": "Last Game (Oct 9)"}, {"src": ""}, {"dfo": True}, {"dfo": None}, {"injury": "DAY_TO_DAY"}, {"day": 9}):
+        assert run(0.9, **kw)["cr_dress_next"] == pytest.approx(run(0.0, **kw)["cr_dress_next"], abs=1e-9), kw
