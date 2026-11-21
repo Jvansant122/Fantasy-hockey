@@ -5034,3 +5034,35 @@ def test_untagged_goalie_start_capped(monkeypatch):
         assert run((0.85, 0.75), [d], likely_dfo={d: 1})[1][d] > 0.87
     b2b = ["2026-10-21"]  # night 2 after the Oct 20 game: no cap
     assert run((0.85, 0.75), b2b)[1][b2b[0]] == pytest.approx(run((1.0, 1.0), b2b)[1][b2b[0]])
+
+
+def test_day_to_day_left_out_of_reporter_lines_scaled(monkeypatch, tmp_path):
+    """Handoff 948 (findings 4966): an ESPN day-to-day skater left out of a reporter's or DFO Projections' fresh lines has
+    his next game x 0.75 on every run; a 'Last Game' copy, in the lines, no lines, another status or Daily Faceoff's own
+    call keep the number."""
+    from datetime import datetime, timezone
+    assert rating.DTD_OUT_OF_REPORTER_LINES == 0.75
+    monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: 0.5)
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
+    monkeypatch.setattr(rating, "DTD_MORNING_K", 1.0)  # the in-lines lift (940) has its own test
+
+    def run(scale, hour=11, injury="DAY_TO_DAY", dfo=True, src="Jane Reporter", news=None, start="2026-10-09T23:00:00Z"):
+        monkeypatch.setattr(rating, "DTD_OUT_OF_REPORTER_LINES", scale)
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=dfo, dfo_src=src,
+                 **({"today_start": start} if start else {}))
+        return rate(monkeypatch, tmp_path, [p], **({"dfo_news": news} if news else {}))["Auston Matthews"]
+    for hour in (11, 17, 22):
+        on, off = run(0.75, hour=hour), run(1.0, hour=hour)
+        q = off["cr_dress_next"]
+        assert q > 0.05
+        assert on["cr_dress_next"] == pytest.approx(0.75 * q, abs=0.006), hour
+        assert on["cr_why"]["dtd_absent"] == pytest.approx(q - on["cr_dress_next"], abs=0.006)
+        assert on["cr_games"] == pytest.approx(off["cr_games"] - (q - on["cr_dress_next"]), abs=0.02)
+        assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    assert run(0.75, src="DFO Projections")["cr_dress_next"] < run(1.0, src="DFO Projections")["cr_dress_next"] - 0.01
+    for kw in ({"src": "Last Game (Oct 8)"}, {"src": ""}, {"dfo": False}, {"dfo": None}, {"injury": "OUT"}, {"injury": None}):
+        assert run(0.75, **kw)["cr_dress_next"] == pytest.approx(run(1.0, **kw)["cr_dress_next"], abs=1e-9), kw
+    news = {"fetched": "2026-10-09T10:30Z", "injuries": {}, "roster-moves": {},
+            "line-matches": {"1": {"ts": "2026-10-09T10:00:00", "lc": "in"}}}
+    assert run(0.75, news=news)["cr_dress_next"] == pytest.approx(run(1.0, news=news)["cr_dress_next"], abs=1e-9)
