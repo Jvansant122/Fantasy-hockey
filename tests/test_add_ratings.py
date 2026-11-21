@@ -4513,6 +4513,9 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     assert matthews(src="DFO Projections")["cr_dress_next"] == pytest.approx(0.7, abs=0.005)
     assert matthews(src="Jane Reporter", news=prac)["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005  # news tier kept
     assert matthews(src="Jane Reporter", start=None)["cr_dress_next"] < 0.7 - 0.05  # no game today
+    called = matthews(src="Jane Reporter", news={**base_news, "line-matches": {"1": {"ts": "2026-10-09T15:00:00", "lc": "out"}}})
+    assert called["cr_why"].get("line_change") == "out" and called["cr_dress_next"] < 0.2
+    assert "ir_lines" not in called["cr_why"]  # Daily Faceoff's out call wins, and the details don't claim the floor
     # handoff 947: practice lines the day before his next game, his team idle today, get the same floor
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 10, 21, tzinfo=timezone.utc))
 
@@ -5066,3 +5069,32 @@ def test_day_to_day_left_out_of_reporter_lines_scaled(monkeypatch, tmp_path):
     news = {"fetched": "2026-10-09T10:30Z", "injuries": {}, "roster-moves": {},
             "line-matches": {"1": {"ts": "2026-10-09T10:00:00", "lc": "in"}}}
     assert run(0.75, news=news)["cr_dress_next"] == pytest.approx(run(1.0, news=news)["cr_dress_next"], abs=1e-9)
+
+
+def test_ir_left_out_of_reporter_lines_day_before_scaled(monkeypatch, tmp_path):
+    """Handoff 949 (findings 4967): an ESPN IR skater whose team is idle today and plays tomorrow, left out of a reporter's
+    or DFO Projections' fresh lines, has tomorrow's game x 0.6; a 'Last Game' copy, in the lines, another status, or a
+    team that plays today keep the number."""
+    from datetime import datetime, timezone
+    assert rating.IR_OUT_OF_REPORTER_LINES_TOMORROW == 0.6
+    fake = lambda: FakeSession(missed={1: {len(PAST) - 1}})
+    base_news = {"fetched": "2026-10-10T20:30Z", "roster-moves": {}, "injuries": {}}
+
+    def run(scale, injury="INJURY_RESERVE", dfo=True, src="Jane Reporter", day=10):
+        monkeypatch.setattr(rating, "IR_OUT_OF_REPORTER_LINES_TOMORROW", scale)
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, day, 21, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury, games_left=1), dfo_out=dfo, dfo_src=src)
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake())
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        rating.add_ratings([p], 2027, date(2026, 10, day), MONDAY, [], dfo_news=base_news)
+        return p
+    on, off = run(0.6), run(1.0)
+    q = off["cr_dress_next"]
+    assert q > 0.05
+    assert on["cr_dress_next"] == pytest.approx(0.6 * q, abs=0.006)
+    assert on["cr_why"]["ir_absent_tomorrow"] == pytest.approx(q - on["cr_dress_next"], abs=0.006)
+    assert on["cr_games"] == pytest.approx(off["cr_games"] - (q - on["cr_dress_next"]), abs=0.02)
+    assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    for kw in ({"src": "Last Game (Oct 9)"}, {"src": ""}, {"dfo": False}, {"dfo": None}, {"injury": "DAY_TO_DAY"},
+               {"day": 9}):  # Oct 9 is a TOR game day
+        assert run(0.6, **kw)["cr_dress_next"] == pytest.approx(run(1.0, **kw)["cr_dress_next"], abs=1e-9), kw
