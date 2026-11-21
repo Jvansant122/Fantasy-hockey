@@ -1,5 +1,5 @@
 {
-"fetched": "2026-11-21T22:19Z",
+"fetched": "2026-11-21T22:40Z",
 "general": {
 "8478508": {
 "cat": "General",
@@ -296,14 +296,15 @@
 },
 "8475158": {
 "day": "saturday",
-"gtd": true,
+"exp_ret": true,
+"firm": true,
 "indefinite": false,
 "nf": [
-"gtd"
+"ret"
 ],
 "season": false,
 "surgery": false,
-"ts": "2026-11-21T21:14:53"
+"ts": "2026-11-21T22:37:14"
 },
 "8475166": {
 "day": "saturday",
@@ -4423,6 +4424,13 @@
 "gtd"
 ],
 "ts": "2026-11-21T21:14:53"
+},
+{
+"cat": "inj",
+"f": [
+"ret"
+],
+"ts": "2026-11-21T22:37:14"
 }
 ],
 "8475166": [
