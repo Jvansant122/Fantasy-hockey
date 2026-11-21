@@ -4,7 +4,7 @@
  "first_start": "2026-11-21T18:00:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-21T17:53:41Z",
+ "updated_utc": "2026-11-21T17:53:44Z",
  "team": "New York Mess",
  "matchup_period": 8,
  "matchup_weeks": 1,
@@ -4445,7 +4445,7 @@
     "p_home": 0.417,
     "inputs": {
      "pts": [
-      7.87,
+      7.86,
       10.13
      ],
      "gd": [
@@ -47931,6 +47931,85 @@
    "cr_season_pct": 18
   },
   {
+   "id": 4996099,
+   "name": "Max Sasson",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    49,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.2,
+   "adp": 230.0,
+   "gp": 24,
+   "ppg": 1.0,
+   "cur_ppg": 1.07,
+   "last_ppg": 0.9,
+   "last_gp": 66,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "Andrew Crane",
+   "dfo_out": true,
+   "cr": 0.75,
+   "cr_fpg": 0.8,
+   "cr_season": 0.69,
+   "proj_gp": 74,
+   "cr_games": 0.94,
+   "cr_dress": 0.94,
+   "cr_dress_next": 0.94,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8484136,
+   "cr_why": {
+    "toi5": 9.65,
+    "toi": 12.1,
+    "pp5": 0.0,
+    "sog": 1.12,
+    "blk": 0.71,
+    "gp": 24,
+    "last_fpg": 0.9,
+    "xfp": {
+     "gp": 24,
+     "fpg": 1.07,
+     "xfpg": 0.97
+    },
+    "season_fpg": 0.82,
+    "opp_last": {
+     "ga": -0.057,
+     "move": -0.005
+    },
+    "season_pts": 0.85,
+    "boost_fpg": 0.9,
+    "season_range": [
+     0.33,
+     1.08
+    ],
+    "sched_sk": -0.008,
+    "drift": 0.005,
+    "missing_regs_pp": -0.006,
+    "lineup_slack": -0.3,
+    "missing_regs": -0.04,
+    "week_slack": 0.5
+   },
+   "cr_pct": 23,
+   "cr_season_pct": 18
+  },
+  {
    "id": 4697394,
    "name": "Yaroslav Askarov",
    "team": "SJ",
@@ -48255,7 +48334,7 @@
     "missing_regs": -0.03,
     "week_slack": 0.6
    },
-   "cr_pct": 23,
+   "cr_pct": 22,
    "cr_season_pct": 21
   },
   {
@@ -48345,7 +48424,7 @@
     "missing_regs": -0.07,
     "week_slack": -0.1
    },
-   "cr_pct": 23,
+   "cr_pct": 22,
    "cr_season_pct": 17
   },
   {
@@ -49045,7 +49124,7 @@
     "lineup_slack": -0.3,
     "week_slack": 0.0
    },
-   "cr_pct": 22,
+   "cr_pct": 21,
    "cr_season_pct": 16
   },
   {
@@ -50167,7 +50246,7 @@
     "missing_regs": -0.1,
     "week_slack": 0.2
    },
-   "cr_pct": 21,
+   "cr_pct": 20,
    "cr_season_pct": 31
   },
   {
@@ -50502,86 +50581,6 @@
    "cr_season_pct": 26
   },
   {
-   "id": 4996099,
-   "name": "Max Sasson",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    49,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.2,
-   "adp": 230.0,
-   "gp": 24,
-   "ppg": 1.0,
-   "cur_ppg": 1.07,
-   "last_ppg": 0.9,
-   "last_gp": 66,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Andrew Crane",
-   "dfo_out": true,
-   "cr": 0.38,
-   "cr_fpg": 0.8,
-   "cr_season": 0.69,
-   "proj_gp": 74,
-   "cr_games": 0.47,
-   "cr_dress": 0.47,
-   "cr_dress_next": 0.47,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8484136,
-   "cr_why": {
-    "toi5": 9.65,
-    "toi": 12.1,
-    "pp5": 0.0,
-    "sog": 1.12,
-    "blk": 0.71,
-    "gp": 24,
-    "last_fpg": 0.9,
-    "xfp": {
-     "gp": 24,
-     "fpg": 1.07,
-     "xfpg": 0.97
-    },
-    "season_fpg": 0.82,
-    "opp_last": {
-     "ga": -0.057,
-     "move": -0.005
-    },
-    "season_pts": 0.85,
-    "boost_fpg": 0.9,
-    "season_range": [
-     0.33,
-     1.08
-    ],
-    "sched_sk": -0.008,
-    "drift": 0.005,
-    "missing_regs_pp": -0.006,
-    "lineup_slack": -0.3,
-    "missing_regs": -0.04,
-    "week_slack": 0.5,
-    "reg_absent_tomorrow": 0.47
-   },
-   "cr_pct": 20,
-   "cr_season_pct": 18
-  },
-  {
    "id": 5193,
    "name": "Nicolas Deslauriers",
    "team": "CAR",
@@ -50763,6 +50762,97 @@
    },
    "cr_pct": 24,
    "cr_season_pct": 11
+  },
+  {
+   "id": 4697820,
+   "name": "Matt Rempe",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    49,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "RW",
+   "slots": [
+    "F",
+    "RW"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.7,
+   "adp": 229.5,
+   "gp": 6,
+   "ppg": 0.57,
+   "cur_ppg": 0.55,
+   "last_ppg": 0.58,
+   "last_gp": 26,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "Andrew Crane",
+   "dfo_out": true,
+   "cr": 0.3,
+   "cr_fpg": 0.72,
+   "cr_season": 0.19,
+   "proj_gp": 22,
+   "cr_games": 0.42,
+   "cr_dress": 0.42,
+   "cr_dress_next": 0.42,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8482460,
+   "cr_why": {
+    "toi5": 6.26,
+    "toi": 6.85,
+    "pp5": 0.0,
+    "sog": 0.67,
+    "blk": 0.17,
+    "gp": 6,
+    "last_fpg": 0.58,
+    "xfp": {
+     "gp": 6,
+     "fpg": 0.55,
+     "xfpg": 0.78
+    },
+    "season_fpg": 0.7,
+    "opp_last": {
+     "ga": -0.057,
+     "move": -0.005
+    },
+    "toi_chg": 0.012,
+    "toi_rank": "lowest",
+    "st_role": "none",
+    "boost_week": 0.11,
+    "form": {
+     "shift": -0.02,
+     "why": [
+      "depth_f"
+     ]
+    },
+    "season_pts": 0.73,
+    "boost_dress": 0.31,
+    "boost_fpg": 0.73,
+    "season_range": [
+     0.0,
+     0.58
+    ],
+    "sched_sk": -0.008,
+    "drift": 0.005,
+    "missing_regs_pp": -0.007,
+    "lineup_slack": -0.3,
+    "missing_regs": -0.04,
+    "week_slack": 0.5,
+    "newcomer": "Max Sasson"
+   },
+   "cr_pct": 19,
+   "cr_season_pct": 6
   },
   {
    "id": 4393408,
@@ -52037,7 +52127,7 @@
     "missing_regs": -0.05,
     "week_slack": 0.4
    },
-   "cr_pct": 18,
+   "cr_pct": 17,
    "cr_season_pct": 34
   },
   {
@@ -52304,100 +52394,8 @@
     "lineup_slack": 0.1,
     "week_slack": 1.3
    },
-   "cr_pct": 18,
-   "cr_season_pct": 71
-  },
-  {
-   "id": 4697820,
-   "name": "Matt Rempe",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    49,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "RW",
-   "slots": [
-    "F",
-    "RW"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.7,
-   "adp": 229.5,
-   "gp": 6,
-   "ppg": 0.57,
-   "cur_ppg": 0.55,
-   "last_ppg": 0.58,
-   "last_gp": 26,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Andrew Crane",
-   "dfo_out": true,
-   "cr": 0.15,
-   "cr_fpg": 0.72,
-   "cr_season": 0.19,
-   "proj_gp": 22,
-   "cr_games": 0.21,
-   "cr_dress": 0.21,
-   "cr_dress_next": 0.21,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8482460,
-   "cr_why": {
-    "toi5": 6.26,
-    "toi": 6.85,
-    "pp5": 0.0,
-    "sog": 0.67,
-    "blk": 0.17,
-    "gp": 6,
-    "last_fpg": 0.58,
-    "xfp": {
-     "gp": 6,
-     "fpg": 0.55,
-     "xfpg": 0.78
-    },
-    "season_fpg": 0.7,
-    "opp_last": {
-     "ga": -0.057,
-     "move": -0.005
-    },
-    "toi_chg": 0.012,
-    "toi_rank": "lowest",
-    "st_role": "none",
-    "boost_week": 0.11,
-    "form": {
-     "shift": -0.02,
-     "why": [
-      "depth_f"
-     ]
-    },
-    "season_pts": 0.73,
-    "boost_dress": 0.31,
-    "boost_fpg": 0.73,
-    "season_range": [
-     0.0,
-     0.58
-    ],
-    "sched_sk": -0.008,
-    "drift": 0.005,
-    "missing_regs_pp": -0.007,
-    "lineup_slack": -0.3,
-    "missing_regs": -0.04,
-    "week_slack": 0.5,
-    "newcomer": "Max Sasson",
-    "reg_absent_tomorrow": 0.21
-   },
    "cr_pct": 17,
-   "cr_season_pct": 6
+   "cr_season_pct": 71
   },
   {
    "id": 5216868,
@@ -61049,7 +61047,6 @@
     "xfp": null,
     "season_fpg": 1.17,
     "season_pts": 1.17,
-    "reg_absent_tomorrow": 0.05,
     "no_record": true
    },
    "cr_pct": 0,
