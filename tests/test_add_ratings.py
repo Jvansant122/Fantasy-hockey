@@ -4918,3 +4918,27 @@ def test_day_to_day_in_morning_lines_raised(monkeypatch, tmp_path):
     assert called["cr_dress_next"] <= 0.05 and "dtd_morning" not in called["cr_why"]  # Daily Faceoff's call keeps its number
     monkeypatch.setattr(rating, "DTD_MORNING_K", 0.4)
     assert rating.DTD_MORNING_MID + 0.4 * (0.9 - rating.DTD_MORNING_MID) < 0.9  # a lift only: 0.9 would stay 0.9
+
+
+def test_healthy_scratch_left_out_of_midday_lines_capped(monkeypatch, tmp_path):
+    """Handoff 942 (findings 4954): a healthy skater who sat his team's last game and is left out of the day's fresh lines
+    for a game today is capped at DFO_ABSENT_TODAY_CAP from 16:30 UTC when a reporter or DFO Projections posted the lines;
+    a 'Last Game' copy, a morning run or being in the lines keeps his number."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "SCRATCH_ABSENT_LOGIT", 0.0)  # 818's own shift aside, so the chance starts over the cap
+    monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.0)
+
+    def run(hour=17, dfo=True, src="Jane Reporter"):
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        monkeypatch.setattr(rating.requests, "Session", lambda: FakeSession(missed={1: {len(PAST) - 1}}))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z", dfo_out=dfo, dfo_src=src)
+        rating.add_ratings([p], 2027, TODAY, MONDAY, [])
+        return p
+    copy = run(src="Last Game (Oct 8)")
+    assert copy["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP + 0.05, "the fake scratch should start over the cap"
+    capped = run()
+    assert capped["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9
+    assert capped["cr"] == pytest.approx(capped["cr_fpg"] * capped["cr_games"], abs=0.02)
+    assert run(src="DFO Projections")["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9
+    assert run(hour=11)["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP + 0.05  # morning lines: left alone
+    assert run(dfo=False)["cr_dress_next"] > rating.DFO_ABSENT_TODAY_CAP + 0.05

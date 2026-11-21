@@ -129,7 +129,9 @@ def mark_lineups(players, lineups, to_nhl, last_start=None):
         lineup = groups.get(team) if p["pos"] != "G" else None
         if lineup is None:
             p["dfo_out"] = None
+            p.pop("dfo_src", None)
             continue
+        p["dfo_src"] = (lineups[team].get("source") or "")[:40]  # who posted the lines: a reporter, DFO Projections, Last Game (942)
         if plain(p["name"]) in {plain(n) for n, _ in lineup}:
             p["dfo_out"] = False
             continue

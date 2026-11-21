@@ -530,3 +530,12 @@ def test_last_logged_starters_keeps_tonights_goalies(tmp_path, monkeypatch):
     assert [g["goalie"] for g in got["games"]] == ["A", "B", "C"]  # 5 h old: all
     got = leads.last_logged_starters(date(2026, 11, 16), datetime(2026, 11, 16, 13, 0))
     assert [g["goalie"] for g in got["games"]] == ["B", "C"] and got["date"] == "2026-11-16"  # 7 h old: no plain pick
+
+
+def test_mark_lineups_keeps_the_lineup_source():
+    """Handoff 942: the lineup's source (a reporter, DFO Projections or a 'Last Game' copy) rides along with dfo_out."""
+    ps = [{"name": "Auston Matthews", "pos": "C", "team": "TOR"}, {"name": "Brad Marchand", "pos": "LW", "team": "BOS"}]
+    leads.mark_lineups(ps, {"TOR": {"updated": "2026-10-09T15:00:00Z", "source": "Last Game (Oct 8)",
+                                    "players": [["Auston Matthews", "f1", None, None]]}}, {})
+    assert ps[0]["dfo_out"] is False and ps[0]["dfo_src"] == "Last Game (Oct 8)"
+    assert ps[1]["dfo_out"] is None and "dfo_src" not in ps[1]

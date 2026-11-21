@@ -158,6 +158,10 @@ OUT_TODAY_CAP = 0.03
 # a regular (dressed his team's last game, no ESPN status) whom Daily Faceoff's fresh lines leave out of tonight's game: dressed
 # 4 of 45 live, Oct 8-15 (findings 509 (5), handoff 696); tonight's game only
 DFO_ABSENT_TODAY_CAP = 0.15
+# ... also for a healthy scratch (sat his team's last game, no ESPN status) left out of the day's lines (a run at or after
+# REG_NEXT_SAME_DAY_UTC) when a reporter or DFO Projections posted them, not a "Last Game" copy: 12:40 runs Nov 1-19, 35 shown
+# over the cap, 12.9 shown vs 2 dressed, Brier sum 5.255 -> 2.188, both halves; the same group under Last Game copies was
+# calibrated (13.0 vs 14), and 6 AM lines are left alone (handoff 942, findings 4954)
 # an IR skater Daily Faceoff leaves out of its lines for a game today, once the day's lines are in (a run at or after
 # REG_NEXT_SAME_DAY_UTC): tonight at most this, past the practising and return news (handoff 932, findings 4664: Nov 1-16
 # last pre-puck runs 207 rows shown 12.75 in all, 3 dressed; the 25 shown above .05 all sat; Brier .0295 -> .0148), and
@@ -4695,7 +4699,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if out_tomorrow:
                 per_game[0] = min(per_game[0], OUT_TOMORROW_CAP)
                 dress_next = per_game[0]
-            dfo_absent = p.get("dfo_out") is True and bool(gl) and bool(tg) and not sat_last and not p.get("injury")  # handoff 696; a team yet to play has no last game (710)
+            dfo_absent = p.get("dfo_out") is True and bool(gl) and bool(tg) and not p.get("injury") and (
+                not sat_last  # handoff 696; a team yet to play has no last game (710)
+                or ((now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC and not (p.get("dfo_src") or "").startswith("Last Game")))  # 942
             dfo_in = p.get("dfo_out") is False and bool(gl) and bool(tg) and not sat_last and not p.get("injury")  # handoff 721
             if dfo_absent and per_game and \
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):

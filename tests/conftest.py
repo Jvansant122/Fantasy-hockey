@@ -16,9 +16,10 @@ def no_retry_waits(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _rating_files_in_tmp(monkeypatch, tmp_path):
-    """add_ratings writes data/injury_notes.json: tests write a temporary copy instead; never wait between roster retries."""
+    """add_ratings writes data/injury_notes.json and data/injury_log.jsonl: tests write a temporary copy instead; never wait between roster retries."""
     import rating
     monkeypatch.setattr(rating, "INJURY_NOTES", tmp_path / "injury_notes.json")
+    monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")  # a test calling add_ratings directly (942)
     monkeypatch.setattr(rating, "ROSTER_WAITS", (0, 0, 0))
 
 
