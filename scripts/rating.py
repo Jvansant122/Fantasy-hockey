@@ -4981,7 +4981,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 why["dtd_news_z"] = dtd_z  # day-to-day next-game shift from Daily Faceoff news or its absence (handoff 846)
             if dtd_age:
                 why["dtd_age"] = dtd_age  # day-to-day by the news's age or the flag's (handoff 881)
-            if ir_lines:
+            if ir_lines and not (lc and lc["cap"]):  # Daily Faceoff's out call wins over the floor (Barkov, Nov 21)
                 why["ir_lines"] = ir_lines  # ESPN out or IR, but in Daily Faceoff's lines (handoffs 816, 911)
             if dtd_lines:
                 why["dtd_lines"] = DTD_IN_LINES_NEXT  # day-to-day, but back in Daily Faceoff's lines (815, 912)

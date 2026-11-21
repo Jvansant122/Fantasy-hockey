@@ -4513,6 +4513,9 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     assert matthews(src="DFO Projections")["cr_dress_next"] == pytest.approx(0.7, abs=0.005)
     assert matthews(src="Jane Reporter", news=prac)["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005  # news tier kept
     assert matthews(src="Jane Reporter", start=None)["cr_dress_next"] < 0.7 - 0.05  # no game today
+    called = matthews(src="Jane Reporter", news={**base_news, "line-matches": {"1": {"ts": "2026-10-09T15:00:00", "lc": "out"}}})
+    assert called["cr_why"].get("line_change") == "out" and called["cr_dress_next"] < 0.2
+    assert "ir_lines" not in called["cr_why"]  # Daily Faceoff's out call wins, and the details don't claim the floor
     # handoff 947: practice lines the day before his next game, his team idle today, get the same floor
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 10, 21, tzinfo=timezone.utc))
 
