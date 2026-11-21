@@ -4731,11 +4731,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 dress_next = per_game[0]
             # handoff 932: IR, out of Daily Faceoff's lines for a game today, the day's lines in
             # ... no game of his own this season counts too (handoff 934, findings 4674: 111 rows shown 6.43, 1 dressed)
-            ir_absent = p.get("injury") == "INJURY_RESERVE" and p.get("dfo_out") is True and bool(tg) \
-                and not skip and bool(p.get("today_start")) and not game_started(p) \
-                and (now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC
+            # ... and before then (the morning runs) when a reporter or DFO Projections posted the lines, at most 0.07
+            # (handoff 950, findings 4968: 6 AM, 21 rows shown above .05, 4.02 in all, 1 dressed)
+            ir_absent = None
+            if p.get("injury") == "INJURY_RESERVE" and p.get("dfo_out") is True and bool(tg) \
+                    and not skip and bool(p.get("today_start")) and not game_started(p):
+                if (now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC:
+                    ir_absent = IR_ABSENT_TODAY_CAP
+                elif p.get("dfo_src") and not p["dfo_src"].startswith("Last Game"):
+                    ir_absent = IR_RESTED_TODAY_CAP
             if ir_absent and per_game:
-                per_game[0] = min(per_game[0], IR_ABSENT_TODAY_CAP)
+                per_game[0] = min(per_game[0], ir_absent)
                 dress_next = per_game[0]
             if game_caps == "ir":
                 game_caps = None if practising else [
@@ -4906,8 +4912,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     caps = [min(c, q) for c, q in zip(caps, per_game)] if lc["cap"] else [max(c, q) for c, q in zip(caps, per_game)]
                 elif later_floor:
                     caps = [max(c, q) for c, q in zip(caps, per_game)]
-                if ir_absent and caps:  # past every news floor above (932)
-                    caps[0] = min(caps[0], IR_ABSENT_TODAY_CAP)
+                if ir_absent and caps:  # past every news floor above (932, 950)
+                    caps[0] = min(caps[0], ir_absent)
                 if out_tomorrow and caps:  # ... and the day before (933)
                     caps[0] = min(caps[0], OUT_TOMORROW_CAP)
                 lead_caps = [min(cap, inj, c) for c in (lead_game_caps or [1.0] * len(out_idx))]

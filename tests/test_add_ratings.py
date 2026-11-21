@@ -4817,10 +4817,10 @@ def test_ir_skater_left_out_of_todays_lines_capped_once_lines_are_in(monkeypatch
     news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {},
             "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
 
-    def run(hour, injury="INJURY_RESERVE", start="2026-10-09T23:00:00Z"):
+    def run(hour, injury="INJURY_RESERVE", start="2026-10-09T23:00:00Z", src=None):
         monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
         p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=True,
-                 **({"today_start": start} if start else {}))
+                 **({"today_start": start} if start else {}), **({"dfo_src": src} if src else {}))
         return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news)["Auston Matthews"]
     noon = run(17)
     assert noon["cr_dress_next"] <= rating.IR_ABSENT_TODAY_CAP + 1e-9
@@ -4832,6 +4832,11 @@ def test_ir_skater_left_out_of_todays_lines_capped_once_lines_are_in(monkeypatch
     if uncapped["cr_dress_next"] > 0.05:  # the cap is what holds him down
         assert noon["cr_games"] < uncapped["cr_games"]
         assert run(11)["cr_dress_next"] == pytest.approx(uncapped["cr_dress_next"], abs=0.01)
+        # handoff 950: on a morning run a reporter's lines (not a "Last Game" copy) cap him at IR_RESTED_TODAY_CAP
+        assert run(11, src="Last Game (Oct 8)")["cr_dress_next"] == pytest.approx(uncapped["cr_dress_next"], abs=0.01)
+        morning = run(11, src="Jane Reporter")
+        assert morning["cr_dress_next"] == pytest.approx(min(rating.IR_RESTED_TODAY_CAP, run(11)["cr_dress_next"]), abs=0.005)
+        assert morning["cr"] == pytest.approx(morning["cr_fpg"] * morning["cr_games"], abs=0.02)
     dtd = run(17, injury="DAY_TO_DAY")
     monkeypatch.setattr(rating, "IR_ABSENT_TODAY_CAP", 1.0)
     assert dtd["cr_dress_next"] == pytest.approx(run(17, injury="DAY_TO_DAY")["cr_dress_next"], abs=1e-9)
