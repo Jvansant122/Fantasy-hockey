@@ -4487,8 +4487,9 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     base_news = {"fetched": "2026-10-09T15:30Z", "roster-moves": {}, "injuries": {}}
     prac = {**base_news, "recent": {"1": [{"ts": "2026-10-09T15:00:00", "cat": "inj", "f": ["full"]}]}}
 
-    def matthews(dfo_out=False, news=base_news, injuries=None):
-        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=status), dfo_out=dfo_out, today_start="2026-10-09T23:00:00Z")
+    def matthews(dfo_out=False, news=base_news, injuries=None, src="Last Game (Oct 8)", start="2026-10-09T23:00:00Z"):
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=status), dfo_out=dfo_out, dfo_src=src,
+                 **({"today_start": start} if start else {}))
         return rate(monkeypatch, tmp_path, [p], fake=fake(), dfo_news=news, injuries=injuries)["Auston Matthews"]
     off = matthews(dfo_out=None)
     assert off["sat_last"] and off["cr_dress_next"] < 0.4 and "ir_lines" not in off["cr_why"]
@@ -4504,6 +4505,14 @@ def test_out_or_ir_in_daily_faceoff_lines_floors_next_game(monkeypatch, tmp_path
     assert tl["cr_dress_next"] < rating.OUT_IR_IN_LINES_NEXT[0] - 0.05
     surgery = [{"athlete_id": 101, "short": "Matthews will undergo surgery.", "long": "", "date": "2026-10-08T12:00Z"}]
     assert "ir_lines" not in matthews(injuries=surgery)["cr_why"]
+    # handoff 946: a reporter's lines for a game today raise the no-news floor to 0.7; not for a later game
+    rep = matthews(src="Jane Reporter")
+    assert rep["cr_dress_next"] == pytest.approx(rating.OUT_IR_IN_REPORTER_LINES_TODAY, abs=0.005)
+    assert rep["cr_why"]["ir_lines"] == {"floor": 0.7, "news": False}
+    assert rep["cr"] == pytest.approx(rep["cr_fpg"] * rep["cr_games"], abs=0.02)
+    assert matthews(src="DFO Projections")["cr_dress_next"] == pytest.approx(0.7, abs=0.005)
+    assert matthews(src="Jane Reporter", news=prac)["cr_dress_next"] >= rating.OUT_IR_IN_LINES_NEXT[0] - 0.005  # news tier kept
+    assert matthews(src="Jane Reporter", start=None)["cr_dress_next"] < 0.7 - 0.05  # no game today
 
 
 def test_day_to_day_in_lines_floor_and_scratch_left_out(monkeypatch, tmp_path):

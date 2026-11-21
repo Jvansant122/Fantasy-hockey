@@ -96,6 +96,10 @@ DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
 # 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
 OUT_IR_IN_LINES_NEXT = (0.8, 0.4)
+# ... the no-news tier for a game today when a reporter or DFO Projections posted the lines (not a "Last Game" copy): IR in
+# reporter lines dressed 26 of 32 rows (20 of 23 player-games) vs 9.66 shown, Oct 12-Nov 19 at 6 AM and 12:40; Brier sums
+# Oct 6.85 -> 3.66, Nov 7.19 -> 1.35 (handoff 946, findings 4964)
+OUT_IR_IN_REPORTER_LINES_TODAY = 0.7
 # a day-to-day skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.85 next game, over fresh
 # day-to-day news (handoffs 815, 912: 9 of 9 dressed at 0.41 shown Oct 20-Nov 11; Brier .366 -> .023)
 DTD_IN_LINES_NEXT = 0.85
@@ -4755,6 +4759,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 # practising, but out three weeks from Nov 4)
                 fl = OUT_IR_IN_LINES_NEXT[0] if set(OUT_IR_RETURN_WHY) & set(wk_why) \
                     and not {"timeline", "long absence"} & set(wk_why) else OUT_IR_IN_LINES_NEXT[1]
+                if fl == OUT_IR_IN_LINES_NEXT[1] and wk_dates and wk_dates[0] == today.isoformat() and p.get("today_start") \
+                        and not game_started(p) and not (p.get("dfo_src") or "").startswith("Last Game"):
+                    fl = OUT_IR_IN_REPORTER_LINES_TODAY  # a reporter's lines for a game today (946)
                 if per_game[0] < fl:
                     per_game = [fl] + per_game[1:]
                     dress_next = news_floor = fl
