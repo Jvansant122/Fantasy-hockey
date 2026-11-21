@@ -92,6 +92,7 @@ IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.07, 2
 # findings 4946, 4956: Oct 12-Nov 19, 6 AM reporter lines 23 of 29 dressed, Brier sum 8.01 -> 5.37; 12:40 7.41 -> 5.16; under
 # Last Game copies the lift hurt, 6.67 -> 8.04 and 2.40 -> 4.49; each the same way in both halves, split at Nov 4)
 DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
+DTD_OUT_OF_REPORTER_LINES = 0.75  # 948: day-to-day, left out of a reporter's fresh lines (findings 4966: 22.3 shown, 13 dressed)
 # an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
 # 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
@@ -5167,7 +5168,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             p["cr_why"]["pp_d_out"] = top
 
     def lift_next(p, q, nxt):
-        """Raise his next game's chance to play from q to nxt, and the Week with it when that game is in this matchup."""
+        """Move his next game's chance to play from q to nxt, and the Week with it when that game is in this matchup."""
         if p.get("games_left") and p.get("cr_games"):
             games = p["cr_games"] + nxt - q
             p["cr_games"] = round(games, 2)
@@ -5215,6 +5216,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt > q:
             lift_next(p, q, nxt)
             w["dtd_morning"] = round(nxt - q, 2)
+    # day-to-day and left out of a reporter's or DFO's fresh lines (not a "Last Game" copy): his next game x 0.75 (948)
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p.get("injury") != "DAY_TO_DAY" or q is None or q <= 0.001 or w is None \
+                or p.get("dfo_out") is not True or game_started(p) or w.get("line_change") \
+                or not p.get("dfo_src") or p["dfo_src"].startswith("Last Game"):
+            continue  # Daily Faceoff's own call on his next game (850-859) keeps its number
+        nxt = round(q * DTD_OUT_OF_REPORTER_LINES, 3)
+        if nxt < q:
+            lift_next(p, q, nxt)
+            w["dtd_absent"] = round(q - nxt, 2)
 
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
