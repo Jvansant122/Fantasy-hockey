@@ -4967,6 +4967,7 @@ def test_day_to_day_in_reporter_lines_raised(monkeypatch, tmp_path):
     from datetime import datetime, timezone
     assert (rating.DTD_MORNING_MID, rating.DTD_MORNING_K) == (0.75, 0.4)
     monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.0)
+    monkeypatch.setattr(rating, "DTD_IN_REPORTER_LINES_FLOOR", 0.0)  # 954's floor has its own test
     monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: 0.5)  # a chance well under 0.75
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
 
@@ -4993,6 +4994,43 @@ def test_day_to_day_in_reporter_lines_raised(monkeypatch, tmp_path):
     assert called["cr_dress_next"] <= 0.05 and "dtd_morning" not in called["cr_why"]  # Daily Faceoff's call keeps its number
     monkeypatch.setattr(rating, "DTD_MORNING_K", 0.4)
     assert rating.DTD_MORNING_MID + 0.4 * (0.9 - rating.DTD_MORNING_MID) < 0.9  # a lift only: 0.9 would stay 0.9
+
+
+def test_day_to_day_in_reporter_lines_floored(monkeypatch, tmp_path):
+    """Handoff 954 (findings 4974): an ESPN day-to-day skater in a reporter's or DFO Projections' fresh lines shows at least
+    0.75 for that game, on game day and the day before when his team is idle today; a 'Last Game' copy, no source, out of
+    the lines, a team that plays today with no game in sight, or another status keep the number."""
+    from datetime import datetime, timezone
+    assert rating.DTD_IN_REPORTER_LINES_FLOOR == 0.75
+    monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.0)
+    monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: 0.2)  # a chance well under 0.75
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
+    news = {"fetched": "2026-10-10T20:30Z", "roster-moves": {}, "injuries": {}}
+
+    def run(floor, injury="DAY_TO_DAY", dfo=False, src="Jane Reporter", day=10, today_start=None):
+        monkeypatch.setattr(rating, "DTD_IN_REPORTER_LINES_FLOOR", floor)
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, day, 21 if not today_start else 11, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury, games_left=1), dfo_out=dfo, dfo_src=src,
+                 **({"today_start": today_start} if today_start else {}))
+        fake = FakeSession()
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        (tmp_path / "injury_log.jsonl").unlink(missing_ok=True)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        rating.add_ratings([p], 2027, date(2026, 10, day), MONDAY, [], dfo_news=news)
+        return p
+    on, off = run(0.75), run(0.0)  # the day before (Oct 10, team idle, plays Oct 11)
+    q = off["cr_dress_next"]
+    assert 0.001 < q < 0.6, "the fake day-to-day skater should start well under the floor"
+    assert on["cr_dress_next"] == pytest.approx(0.75, abs=0.006)
+    assert on["cr_why"]["dtd_in_lines_tomorrow"] == pytest.approx(0.75 - q, abs=0.011)
+    assert "dtd_in_lines_tomorrow" not in off["cr_why"] and "dtd_morning" not in on["cr_why"]
+    assert on["cr_games"] == pytest.approx(off["cr_games"] + 0.75 - q, abs=0.02)
+    assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    gd_on, gd_off = run(0.75, day=9, today_start="2026-10-09T23:00:00Z"), run(0.0, day=9, today_start="2026-10-09T23:00:00Z")
+    assert gd_off["cr_dress_next"] < 0.75 - 0.01 and gd_on["cr_dress_next"] == pytest.approx(0.75, abs=0.006)  # game day
+    assert gd_on["cr_why"]["dtd_morning"] == pytest.approx(0.75 - gd_off["cr_dress_next"] + gd_off["cr_why"].get("dtd_morning", 0), abs=0.011)
+    for kw in ({"src": "Last Game (Oct 9)"}, {"src": ""}, {"dfo": True}, {"dfo": None}, {"injury": "OUT"}, {"injury": None}, {"day": 9}):
+        assert run(0.75, **kw)["cr_dress_next"] == pytest.approx(run(0.0, **kw)["cr_dress_next"], abs=1e-9), kw
 
 
 def test_healthy_scratch_left_out_of_midday_lines_capped(monkeypatch, tmp_path):

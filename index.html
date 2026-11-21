@@ -616,6 +616,7 @@ function why(p) {
   if (p.cr_why?.pp_d_out) wk.push(`top power-play defenseman ${p.cr_why.pp_d_out} is out: more power-play time (+0.15 pts/game this week)`);
   if (p.cr_why?.newcomer) wk.push(`His team just added ${p.cr_why.newcomer} at his position, so he may sit (he had the least ice time at his position last game)`);
   if (p.cr_why?.dtd_morning) wk.push(`day-to-day but in a reporter's lines on Daily Faceoff for today's game: that game raised ${Math.round(p.cr_why.dtd_morning * 100)} points (day-to-day players in those lines have dressed about four times in five)`);
+  if (p.cr_why?.dtd_in_lines_tomorrow) wk.push(`day-to-day but in a reporter's lines on Daily Faceoff for tomorrow's game, his team idle today: at least 75% for that game (22 of 26 such players dressed)`); // 954
   if (p.cr_why?.back_in_lines) wk.push(`just back from an injury listing and in Daily Faceoff's lines for today's game: that game raised ${Math.round(p.cr_why.back_in_lines * 100)} points`);
   if (p.cr_why?.reg_next) wk.push(`a regular who played his team's last game with no injury listing or news: his next game raised ${Math.round(p.cr_why.reg_next * 100)} points`);
   if (p.cr_why?.d_departed) wk.push(`${p.cr_why.d_departed} has left his team's defense, so he is more likely back in the lineup`);
