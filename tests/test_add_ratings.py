@@ -5133,3 +5133,26 @@ def test_regular_left_out_of_reporter_lines_day_before_scaled(monkeypatch, tmp_p
     for kw in ({"src": "Last Game (Oct 9)"}, {"src": ""}, {"dfo": False}, {"dfo": None}, {"injury": "DAY_TO_DAY"},
                {"sat": True}, {"day": 9}):
         assert run(0.5, **kw)["cr_dress_next"] == pytest.approx(run(1.0, **kw)["cr_dress_next"], abs=1e-9), kw
+
+
+def test_regular_left_out_of_reporter_lines_on_a_morning_run_halved(monkeypatch, tmp_path):
+    """Handoff 952 (findings 4972): before 16:30 UTC a regular (no ESPN status, played the last game) whom a reporter's or
+    DFO Projections' lines leave out of tonight's game gets his chance x 0.5 instead of the 0.15 cap; a 'Last Game' copy,
+    or no source, keeps the cap; from 16:30 UTC the cap applies whatever the source."""
+    from datetime import datetime, timezone
+
+    def run(src="Jane Reporter", hour=11, dfo=True):
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C"), today_start="2026-10-09T23:00:00Z", dfo_out=dfo, dfo_src=src)
+        return rate(monkeypatch, tmp_path, [p])["Auston Matthews"]
+    q = run(dfo=None)["cr_dress_next"]
+    assert q > 0.5
+    rep = run()
+    assert rep["sat_last"] is False
+    assert rep["cr_dress_next"] == pytest.approx(rating.REG_OUT_OF_REPORTER_LINES_TOMORROW * q, abs=0.006)
+    assert rep["cr_why"]["reg_absent_morning"] == pytest.approx(q - rep["cr_dress_next"], abs=0.011)
+    assert rep["cr"] == pytest.approx(rep["cr_fpg"] * rep["cr_games"], abs=0.02)
+    assert run(src="DFO Projections")["cr_dress_next"] == pytest.approx(rep["cr_dress_next"], abs=1e-9)
+    for kw in ({"src": "Last Game (Oct 8)"}, {"src": ""}, {"hour": 17}, {"src": "Last Game (Oct 8)", "hour": 17}):
+        r = run(**kw)
+        assert r["cr_dress_next"] <= rating.DFO_ABSENT_TODAY_CAP + 1e-9 and "reg_absent_morning" not in r["cr_why"], kw
