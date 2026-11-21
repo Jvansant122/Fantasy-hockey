@@ -92,6 +92,9 @@ IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.07, 2
 # findings 4946, 4956: Oct 12-Nov 19, 6 AM reporter lines 23 of 29 dressed, Brier sum 8.01 -> 5.37; 12:40 7.41 -> 5.16; under
 # Last Game copies the lift hurt, 6.67 -> 8.04 and 2.40 -> 4.49; each the same way in both halves, split at Nov 4)
 DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
+# ... and when a reporter or DFO Projections named the lines, at least this for that game, also the day before a game when his
+# team is idle today (954, findings 4974: Oct 12-Nov 19, 83 rows shown 47.07, dressed 68; Brier Oct 4.95 -> 2.95, Nov 10.16 -> 9.56)
+DTD_IN_REPORTER_LINES_FLOOR = 0.75
 DTD_OUT_OF_REPORTER_LINES = 0.75  # 948: day-to-day, left out of a reporter's fresh lines (findings 4966: 22.3 shown, 13 dressed)
 IR_OUT_OF_REPORTER_LINES_TOMORROW = 0.6  # 949: IR, team idle today, out of a reporter's lines for tomorrow (findings 4967: 13.69 shown, 5 dressed)
 REG_OUT_OF_REPORTER_LINES_TOMORROW = 0.5  # 951: healthy, played last game, team idle today, out of a reporter's lines for tomorrow (findings 4969)
@@ -5217,17 +5220,29 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt > q:
             lift_next(p, q, nxt)
             w["back_in_lines"] = round(nxt - q, 2)
-    # day-to-day, in a reporter's or DFO's lines (not a "Last Game" copy) for a game today: raised toward 0.75 (940, 943)
+    tomorrow = (today + timedelta(days=1)).isoformat()
+    # day-to-day, in a reporter's or DFO's lines (not a "Last Game" copy) for a game today: raised toward 0.75 (940, 943), and
+    # with a named source at least 0.75, also for tomorrow's game when his team is idle today (954)
     for p in players:
         w, q = p.get("cr_why"), p.get("cr_dress_next")
         if p["pos"] == "G" or p.get("injury") != "DAY_TO_DAY" or q is None or q <= 0.001 or w is None \
-                or not p.get("today_start") or p.get("dfo_out") is not False or game_started(p) or w.get("line_change") \
+                or p.get("dfo_out") is not False or game_started(p) or w.get("line_change") \
                 or (p.get("dfo_src") or "").startswith("Last Game"):
             continue  # Daily Faceoff's own call on tonight's game (850-859) keeps its number
-        nxt = max(q, round(DTD_MORNING_MID + DTD_MORNING_K * (q - DTD_MORNING_MID), 2))
+        named = bool(p.get("dfo_src"))
+        if not p.get("today_start"):
+            dates = sched.get(ESPN_TO_NHL.get(p["team"], p["team"]), [])
+            if not named or today.isoformat() in dates \
+                    or min((d for d in dates if d > today.isoformat()), default=None) != tomorrow:
+                continue
+            nxt = q
+        else:
+            nxt = max(q, round(DTD_MORNING_MID + DTD_MORNING_K * (q - DTD_MORNING_MID), 2))
+        if named:
+            nxt = max(nxt, DTD_IN_REPORTER_LINES_FLOOR)
         if nxt > q:
             lift_next(p, q, nxt)
-            w["dtd_morning"] = round(nxt - q, 2)
+            w["dtd_morning" if p.get("today_start") else "dtd_in_lines_tomorrow"] = round(nxt - q, 2)
     # day-to-day and left out of a reporter's or DFO's fresh lines (not a "Last Game" copy): his next game x 0.75 (948)
     for p in players:
         w, q = p.get("cr_why"), p.get("cr_dress_next")
@@ -5241,7 +5256,6 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             w["dtd_absent"] = round(q - nxt, 2)
     # IR, his team idle today and playing tomorrow, left out of a reporter's or DFO's fresh lines (not a "Last Game" copy):
     # tomorrow's game x 0.6 (949)
-    tomorrow = (today + timedelta(days=1)).isoformat()
     for p in players:
         w, q = p.get("cr_why"), p.get("cr_dress_next")
         if p["pos"] == "G" or p.get("injury") != "INJURY_RESERVE" or q is None or q <= 0.001 or w is None \
