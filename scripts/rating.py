@@ -4722,9 +4722,12 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if out_tomorrow:
                 per_game[0] = min(per_game[0], OUT_TOMORROW_CAP)
                 dress_next = per_game[0]
+            named_src = bool(p.get("dfo_src")) and not p["dfo_src"].startswith("Last Game")
+            same_day = (now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC
             dfo_absent = p.get("dfo_out") is True and bool(gl) and bool(tg) and not p.get("injury") and (
-                not sat_last  # handoff 696; a team yet to play has no last game (710)
-                or ((now_utc.hour, now_utc.minute) >= REG_NEXT_SAME_DAY_UTC and not (p.get("dfo_src") or "").startswith("Last Game")))  # 942
+                (not sat_last and (same_day or not named_src))  # handoff 696; a team yet to play has no last game (710)
+                # ... a regular left out of a reporter's lines on a morning run is halved below instead (952)
+                or (same_day and named_src))  # 942
             dfo_in = p.get("dfo_out") is False and bool(gl) and bool(tg) and not sat_last and not p.get("injury")  # handoff 721
             if dfo_absent and per_game and \
                     ((p.get("today_start") and not game_started(p)) if not skip else (wk_dates[0] == today.isoformat() and tonight_ahead)):
@@ -5265,6 +5268,19 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt < q:
             lift_next(p, q, nxt)
             w["reg_absent_tomorrow"] = round(q - nxt, 2)
+    # ... and on a morning run (before 16:30 UTC) for a game today: the reporter's lines are usually the last practice's,
+    # so x 0.5 rather than the 0.15 cap (952)
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p.get("injury") or p.get("sat_last") is not False or q is None or q <= 0.001 or w is None \
+                or p.get("dfo_out") is not True or w.get("line_change") or same_day_lines \
+                or not p.get("dfo_src") or p["dfo_src"].startswith("Last Game") \
+                or not p.get("today_start") or game_started(p):
+            continue
+        nxt = round(q * REG_OUT_OF_REPORTER_LINES_TOMORROW, 3)
+        if nxt < q:
+            lift_next(p, q, nxt)
+            w["reg_absent_morning"] = round(q - nxt, 2)
 
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
