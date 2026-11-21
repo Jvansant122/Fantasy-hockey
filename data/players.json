@@ -1,10 +1,10 @@
 {
- "updated": "Sat Nov 21, 10:51 AM ET",
+ "updated": "Sat Nov 21, 10:52 AM ET",
  "updated_date": "2026-11-21",
  "first_start": "2026-11-21T18:00:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-21T15:50:57Z",
+ "updated_utc": "2026-11-21T15:51:51Z",
  "team": "New York Mess",
  "matchup_period": 8,
  "matchup_weeks": 1,
@@ -4445,7 +4445,7 @@
     "p_home": 0.41,
     "inputs": {
      "pts": [
-      7.77,
+      7.78,
       10.08
      ],
      "gd": [
@@ -52544,6 +52544,99 @@
    "cr_season_pct": 17
   },
   {
+   "id": 4378683,
+   "name": "Sean Durzi",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    49,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 3.2,
+   "adp": 230.2,
+   "gp": 14,
+   "ppg": 1.47,
+   "cur_ppg": 1.44,
+   "last_ppg": 1.5,
+   "last_gp": 60,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "Mollie Walker",
+   "dfo_out": true,
+   "cr": 0.2,
+   "cr_fpg": 1.32,
+   "cr_season": 0.82,
+   "proj_gp": 53,
+   "cr_games": 0.15,
+   "cr_dress": 0.15,
+   "cr_dress_next": 0.15,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8480434,
+   "cr_why": {
+    "toi5": 18.38,
+    "toi": 19.87,
+    "pp5": 0.86,
+    "sog": 0.86,
+    "blk": 1.5,
+    "gp": 14,
+    "last_fpg": 1.51,
+    "xfp": {
+     "gp": 14,
+     "fpg": 1.44,
+     "xfpg": 1.36
+    },
+    "season_fpg": 1.26,
+    "opp_last": {
+     "ga": -0.057,
+     "move": -0.005
+    },
+    "team_move": "up",
+    "week_news": {
+     "shift": 2.09,
+     "move": 0.0,
+     "why": [
+      "practising",
+      "could return",
+      "timeline up"
+     ]
+    },
+    "boost_week": 1.49,
+    "boost_week_move": 0.11,
+    "season_pts": 1.32,
+    "boost_dress": 0.62,
+    "boost_fpg": 1.41,
+    "season_range": [
+     0.44,
+     1.28
+    ],
+    "back": {
+     "games": "10"
+    },
+    "drift": -0.01,
+    "missing_regs_pp": -0.008,
+    "lineup_slack": 0.3,
+    "missing_regs": -0.04,
+    "week_slack": 0.5
+   },
+   "cr_pct": 21,
+   "cr_season_pct": 28
+  },
+  {
    "id": 5216868,
    "name": "Carter Yakemchuk",
    "team": "OTT",
@@ -53428,7 +53521,7 @@
     "missing_regs": -0.09,
     "week_slack": 0.9
    },
-   "cr_pct": 20,
+   "cr_pct": 19,
    "cr_season_pct": 30
   },
   {
@@ -53697,100 +53790,6 @@
    },
    "cr_pct": 19,
    "cr_season_pct": 12
-  },
-  {
-   "id": 4378683,
-   "name": "Sean Durzi",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    49,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 3.2,
-   "adp": 230.2,
-   "gp": 14,
-   "ppg": 1.47,
-   "cur_ppg": 1.44,
-   "last_ppg": 1.5,
-   "last_gp": 60,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Mollie Walker",
-   "dfo_out": true,
-   "cr": 0.12,
-   "cr_fpg": 1.32,
-   "cr_season": 0.82,
-   "proj_gp": 53,
-   "cr_games": 0.09,
-   "cr_dress": 0.09,
-   "cr_dress_next": 0.09,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8480434,
-   "cr_why": {
-    "toi5": 18.38,
-    "toi": 19.87,
-    "pp5": 0.86,
-    "sog": 0.86,
-    "blk": 1.5,
-    "gp": 14,
-    "last_fpg": 1.51,
-    "xfp": {
-     "gp": 14,
-     "fpg": 1.44,
-     "xfpg": 1.36
-    },
-    "season_fpg": 1.26,
-    "opp_last": {
-     "ga": -0.057,
-     "move": -0.005
-    },
-    "team_move": "up",
-    "week_news": {
-     "shift": 2.09,
-     "move": 0.0,
-     "why": [
-      "practising",
-      "could return",
-      "timeline up"
-     ]
-    },
-    "boost_week": 1.49,
-    "boost_week_move": 0.11,
-    "season_pts": 1.32,
-    "boost_dress": 0.62,
-    "boost_fpg": 1.41,
-    "season_range": [
-     0.44,
-     1.28
-    ],
-    "back": {
-     "games": "10"
-    },
-    "drift": -0.01,
-    "missing_regs_pp": -0.008,
-    "lineup_slack": 0.3,
-    "missing_regs": -0.04,
-    "week_slack": 0.5,
-    "ir_absent_tomorrow": 0.06
-   },
-   "cr_pct": 19,
-   "cr_season_pct": 28
   },
   {
    "id": 5080155,
@@ -56776,6 +56775,108 @@
    "cr_season_pct": 16
   },
   {
+   "id": 5334662,
+   "name": "Alberts Smits",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    49,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 0.5,
+   "adp": 230.0,
+   "gp": 17,
+   "ppg": 0.44,
+   "cur_ppg": 0.44,
+   "last_ppg": null,
+   "last_gp": 0,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "Mollie Walker",
+   "dfo_out": true,
+   "cr": 0.04,
+   "cr_fpg": 0.74,
+   "cr_season": 0.35,
+   "proj_gp": 42,
+   "cr_games": 0.05,
+   "cr_dress": 0.05,
+   "cr_dress_next": 0.05,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8485957,
+   "cr_why": {
+    "toi5": 13.59,
+    "toi": 14.48,
+    "pp5": 0.0,
+    "sog": 0.47,
+    "blk": 0.59,
+    "gp": 17,
+    "last_fpg": null,
+    "xfp": {
+     "gp": 17,
+     "fpg": 0.44,
+     "xfpg": 0.65,
+     "luck": "cold"
+    },
+    "season_fpg": 0.77,
+    "opp_last": {
+     "ga": -0.057,
+     "move": -0.005
+    },
+    "week_news": {
+     "shift": -0.91,
+     "move": -0.066,
+     "why": [
+      "week-to-week",
+      "long absence"
+     ]
+    },
+    "boost_week": 0.06,
+    "season_pts": 0.89,
+    "boost_dress": 0.39,
+    "boost_fpg": 1.0,
+    "season_news": [
+     "indefinite"
+    ],
+    "season_out_games": 5,
+    "age_adj": 0.05,
+    "season_range": [
+     0.01,
+     0.87
+    ],
+    "exp": "rookie",
+    "back": {
+     "games": "16"
+    },
+    "rust": {
+     "m": 0.93,
+     "fpg": 0.79,
+     "back": true
+    },
+    "drift": -0.01,
+    "missing_regs_pp": -0.009,
+    "lineup_slack": 0.3,
+    "missing_regs": -0.04,
+    "week_slack": 0.5
+   },
+   "cr_pct": 14,
+   "cr_season_pct": 14
+  },
+  {
    "id": 2993474,
    "name": "Colton Sissons",
    "team": "TOR",
@@ -57821,109 +57922,6 @@
    },
    "cr_pct": 12,
    "cr_season_pct": 10
-  },
-  {
-   "id": 5334662,
-   "name": "Alberts Smits",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    49,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 0.5,
-   "adp": 230.0,
-   "gp": 17,
-   "ppg": 0.44,
-   "cur_ppg": 0.44,
-   "last_ppg": null,
-   "last_gp": 0,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Mollie Walker",
-   "dfo_out": true,
-   "cr": 0.02,
-   "cr_fpg": 0.74,
-   "cr_season": 0.35,
-   "proj_gp": 42,
-   "cr_games": 0.03,
-   "cr_dress": 0.03,
-   "cr_dress_next": 0.03,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8485957,
-   "cr_why": {
-    "toi5": 13.59,
-    "toi": 14.48,
-    "pp5": 0.0,
-    "sog": 0.47,
-    "blk": 0.59,
-    "gp": 17,
-    "last_fpg": null,
-    "xfp": {
-     "gp": 17,
-     "fpg": 0.44,
-     "xfpg": 0.65,
-     "luck": "cold"
-    },
-    "season_fpg": 0.77,
-    "opp_last": {
-     "ga": -0.057,
-     "move": -0.005
-    },
-    "week_news": {
-     "shift": -0.91,
-     "move": -0.066,
-     "why": [
-      "week-to-week",
-      "long absence"
-     ]
-    },
-    "boost_week": 0.06,
-    "season_pts": 0.89,
-    "boost_dress": 0.39,
-    "boost_fpg": 1.0,
-    "season_news": [
-     "indefinite"
-    ],
-    "season_out_games": 5,
-    "age_adj": 0.05,
-    "season_range": [
-     0.01,
-     0.87
-    ],
-    "exp": "rookie",
-    "back": {
-     "games": "16"
-    },
-    "rust": {
-     "m": 0.93,
-     "fpg": 0.79,
-     "back": true
-    },
-    "drift": -0.01,
-    "missing_regs_pp": -0.009,
-    "lineup_slack": 0.3,
-    "missing_regs": -0.04,
-    "week_slack": 0.5,
-    "ir_absent_tomorrow": 0.02
-   },
-   "cr_pct": 12,
-   "cr_season_pct": 14
   },
   {
    "id": 5149192,
