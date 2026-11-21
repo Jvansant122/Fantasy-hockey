@@ -342,6 +342,11 @@ NO1_AFTER_OTHER_RUN_LOGIT = -0.2
 # every goalie of 2021-26 night-2 team-nights, opponents passed: Brier -1.09%, leave-one-season-out -0.95%, 4 of 5 seasons
 # better and 2024-25 flat (0.88 was worse in 2023-25)
 NIGHT2_CAP = 0.90
+# any game Daily Faceoff hasn't tagged him Confirmed or Likely for (no pick, a plain pick of him, a pick of his partner): his
+# start chance at most this, the cut to the team's other goalies in proportion (handoff 944, findings 4960: Nov 1-19 live
+# untagged .75+ calls 383.2 shown vs 354 started, tagged 168.6 vs 170; Brier sums improve at the day-ahead, 6 AM, 9 AM and
+# 12:40 runs in both halves, more than at .90)
+UNTAGGED_START_CAP = 0.85
 # early season, each skater's Season moves toward ESPN's draft market: x exp(C x E x (ADP pct - Season pct)), E fading to 0
 # at K team games; off when ESPN's ADP has under MIN distinct values (its stored 2025-26 ADP is all 230). Held out
 # Spearman +0.014 / +0.010 (2023-24 / 2024-25) at the Oct 20 Monday, 0.6 in both folds (findings 556, handoff 757)
@@ -3516,6 +3521,12 @@ def goalie_starts(model, team, goalies, starts_by_team, prev_starts, game_dates,
         if d not in confirmed and lk not in q:  # room for a goalie not on the list (897); a Likely tag is its own calibration (617)
             r = UNLISTED_RESERVE[min(max((day - today).days, 0), len(UNLISTED_RESERVE) - 1)]  # by days ahead
             q = {gid: v * r for gid, v in q.items()}
+        if d not in confirmed and len(q) > 1:  # no Confirmed or Likely tag for him (handoff 944)
+            top = max(q, key=q.get)
+            if top != lk and q[top] > UNTAGGED_START_CAP:  # the cut to the others by their chances; the team's total kept
+                cut, rest = q[top] - UNTAGGED_START_CAP, sum(v for g, v in q.items() if g != top)
+                q = {g: UNTAGGED_START_CAP if g == top else v + cut * (v / rest if rest else 1 / (len(q) - 1))
+                     for g, v in q.items()}
         if d in confirmed:
             p = q = {gid: float(gid == confirmed[d]) for gid in cands}
             if confirmed[d] == shift_gid:  # confirmed back in net: his last result no longer says anything
