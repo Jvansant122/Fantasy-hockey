@@ -1,10 +1,10 @@
 {
- "updated": "Sat Nov 21, 10:52 AM ET",
+ "updated": "Sat Nov 21, 10:57 AM ET",
  "updated_date": "2026-11-21",
  "first_start": "2026-11-21T18:00:00Z",
  "stats_missing": 0,
  "g_unlisted": {},
- "updated_utc": "2026-11-21T15:51:51Z",
+ "updated_utc": "2026-11-21T15:57:12Z",
  "team": "New York Mess",
  "matchup_period": 8,
  "matchup_weeks": 1,
@@ -4270,7 +4270,7 @@
     "p_home": 0.54,
     "inputs": {
      "pts": [
-      8.23,
+      8.24,
       7.26
      ],
      "gd": [
@@ -4445,7 +4445,7 @@
     "p_home": 0.41,
     "inputs": {
      "pts": [
-      7.78,
+      7.77,
       10.08
      ],
      "gd": [
@@ -4619,10 +4619,10 @@
      "id": 9,
      "name": "I'm In Agony.. Robert.",
      "now": 45.9,
-     "rest": 45.6,
-     "total": 91.5
+     "rest": 45.5,
+     "total": 91.4
     },
-    "p_home": 0.453,
+    "p_home": 0.456,
     "sd": 10.9
    },
    {
@@ -8088,7 +8088,7 @@
    "owner": "other",
    "team_id": 4,
    "ir": false,
-   "bench": false,
+   "bench": true,
    "injury": null,
    "owned": 34.7,
    "adp": 227.5,
@@ -8795,7 +8795,7 @@
    "last_gp": 60,
    "proj_ppg": 2.48,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "proj_ppg_pre": 2.48,
    "cr": 2.75,
@@ -16809,7 +16809,7 @@
    "last_gp": 65,
    "proj_ppg": 2.26,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "proj_ppg_pre": 2.26,
    "cr": 2.01,
@@ -16864,97 +16864,6 @@
    },
    "cr_pct": 80,
    "cr_season_pct": 91
-  },
-  {
-   "id": 2563036,
-   "name": "Vincent Trocheck",
-   "team": "UTA",
-   "games": 3,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 0,
-   "nights": [
-    49,
-    51,
-    54
-   ],
-   "games_next2": 8,
-   "today_start": "2026-11-22T02:00:00Z",
-   "pos": "C",
-   "slots": [
-    "C",
-    "F"
-   ],
-   "owner": "other",
-   "team_id": 9,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 81.8,
-   "adp": 89.2,
-   "gp": 23,
-   "ppg": 1.9,
-   "cur_ppg": 1.64,
-   "last_ppg": 1.99,
-   "last_gp": 67,
-   "proj_ppg": 2.29,
-   "clears": null,
-   "dfo_src": "Brogan Houston",
-   "dfo_out": false,
-   "proj_ppg_pre": 2.29,
-   "cr": 2.01,
-   "cr_fpg": 2.03,
-   "cr_season": 1.7,
-   "proj_gp": 79,
-   "cr_games": 0.99,
-   "cr_dress": 0.99,
-   "cr_dress_next": 0.99,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476389,
-   "cr_why": {
-    "toi5": 22.85,
-    "toi": 18.59,
-    "pp5": 4.29,
-    "sog": 1.96,
-    "blk": 0.65,
-    "gp": 23,
-    "last_fpg": 1.99,
-    "xfp": {
-     "gp": 23,
-     "fpg": 1.64,
-     "xfpg": 1.85,
-     "luck": "cold"
-    },
-    "season_fpg": 1.84,
-    "opp_last": {
-     "ga": 0.11,
-     "move": 0.009
-    },
-    "boost_week": -0.68,
-    "season_pts": 1.83,
-    "boost_dress": 0.91,
-    "boost_fpg": 1.77,
-    "espn_blend": 0.08,
-    "espn_proj": 2.29,
-    "age_adj": -0.04,
-    "season_range": [
-     1.13,
-     2.2
-    ],
-    "line": {
-     "win_prob": 0.59,
-     "m": 1.04,
-     "pps": 2.03
-    },
-    "drift": 0.005,
-    "missing_regs_pp": -0.002,
-    "lineup_slack": 0.5,
-    "missing_regs": -0.02,
-    "week_slack": 0.2
-   },
-   "cr_pct": 80,
-   "cr_season_pct": 85
   },
   {
    "id": 4063449,
@@ -17208,6 +17117,97 @@
    },
    "cr_pct": 79,
    "cr_season_pct": 37
+  },
+  {
+   "id": 2563036,
+   "name": "Vincent Trocheck",
+   "team": "UTA",
+   "games": 3,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 0,
+   "nights": [
+    49,
+    51,
+    54
+   ],
+   "games_next2": 8,
+   "today_start": "2026-11-22T02:00:00Z",
+   "pos": "C",
+   "slots": [
+    "C",
+    "F"
+   ],
+   "owner": "other",
+   "team_id": 9,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 81.8,
+   "adp": 89.2,
+   "gp": 23,
+   "ppg": 1.9,
+   "cur_ppg": 1.64,
+   "last_ppg": 1.99,
+   "last_gp": 67,
+   "proj_ppg": 2.29,
+   "clears": null,
+   "dfo_src": "Brogan Houston",
+   "dfo_out": false,
+   "proj_ppg_pre": 2.29,
+   "cr": 2.0,
+   "cr_fpg": 2.02,
+   "cr_season": 1.69,
+   "proj_gp": 79,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476389,
+   "cr_why": {
+    "toi5": 22.85,
+    "toi": 18.59,
+    "pp5": 4.29,
+    "sog": 1.96,
+    "blk": 0.65,
+    "gp": 23,
+    "last_fpg": 1.99,
+    "xfp": {
+     "gp": 23,
+     "fpg": 1.64,
+     "xfpg": 1.85,
+     "luck": "cold"
+    },
+    "season_fpg": 1.83,
+    "opp_last": {
+     "ga": 0.11,
+     "move": 0.009
+    },
+    "boost_week": -0.68,
+    "season_pts": 1.83,
+    "boost_dress": 0.91,
+    "boost_fpg": 1.77,
+    "espn_blend": 0.08,
+    "espn_proj": 2.29,
+    "age_adj": -0.04,
+    "season_range": [
+     1.12,
+     2.19
+    ],
+    "line": {
+     "win_prob": 0.59,
+     "m": 1.04,
+     "pps": 2.02
+    },
+    "drift": 0.005,
+    "missing_regs_pp": -0.002,
+    "lineup_slack": 0.5,
+    "missing_regs": -0.02,
+    "week_slack": 0.2
+   },
+   "cr_pct": 80,
+   "cr_season_pct": 85
   },
   {
    "id": 5188366,
@@ -18672,6 +18672,94 @@
    "cr_season_pct": 90
   },
   {
+   "id": 3149843,
+   "name": "Darren Raddysh",
+   "team": "TOR",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    52,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-22T00:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 5,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 92.9,
+   "adp": 97.8,
+   "gp": 24,
+   "ppg": 1.87,
+   "cur_ppg": 1.74,
+   "last_ppg": 2.29,
+   "last_gp": 73,
+   "proj_ppg": 2.07,
+   "clears": null,
+   "dfo_src": "David Alter",
+   "dfo_out": false,
+   "proj_ppg_pre": 2.07,
+   "cr": 1.93,
+   "cr_fpg": 1.95,
+   "cr_season": 1.72,
+   "proj_gp": 78,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8478178,
+   "cr_why": {
+    "toi5": 23.36,
+    "toi": 23.88,
+    "pp5": 2.81,
+    "sog": 2.38,
+    "blk": 1.21,
+    "gp": 24,
+    "last_fpg": 2.29,
+    "xfp": {
+     "gp": 24,
+     "fpg": 1.72,
+     "xfpg": 1.81
+    },
+    "season_fpg": 1.94,
+    "opp_last": {
+     "ga": -0.012,
+     "move": -0.001
+    },
+    "boost_week": -0.69,
+    "season_pts": 1.92,
+    "boost_dress": 0.87,
+    "boost_fpg": 1.92,
+    "espn_blend": 0.07,
+    "espn_proj": 2.07,
+    "season_range": [
+     1.16,
+     2.12
+    ],
+    "line": {
+     "win_prob": 0.52,
+     "m": 1.001,
+     "pps": 1.95
+    },
+    "drift": -0.01,
+    "missing_regs_pp": -0.006,
+    "lineup_slack": -0.0,
+    "missing_regs": -0.06,
+    "week_slack": 0.4
+   },
+   "cr_pct": 76,
+   "cr_season_pct": 91
+  },
+  {
    "id": 4588004,
    "name": "Connor Dewar",
    "team": "PIT",
@@ -18940,94 +19028,6 @@
    "cr_season_pct": 87
   },
   {
-   "id": 3149843,
-   "name": "Darren Raddysh",
-   "team": "TOR",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    52,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-22T00:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 5,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 92.9,
-   "adp": 97.8,
-   "gp": 24,
-   "ppg": 1.87,
-   "cur_ppg": 1.74,
-   "last_ppg": 2.29,
-   "last_gp": 73,
-   "proj_ppg": 2.07,
-   "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
-   "dfo_out": false,
-   "proj_ppg_pre": 2.07,
-   "cr": 1.91,
-   "cr_fpg": 1.95,
-   "cr_season": 1.72,
-   "proj_gp": 78,
-   "cr_games": 0.98,
-   "cr_dress": 0.98,
-   "cr_dress_next": 0.98,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8478178,
-   "cr_why": {
-    "toi5": 23.36,
-    "toi": 23.88,
-    "pp5": 2.81,
-    "sog": 2.38,
-    "blk": 1.21,
-    "gp": 24,
-    "last_fpg": 2.29,
-    "xfp": {
-     "gp": 24,
-     "fpg": 1.72,
-     "xfpg": 1.81
-    },
-    "season_fpg": 1.94,
-    "opp_last": {
-     "ga": -0.012,
-     "move": -0.001
-    },
-    "boost_week": -0.69,
-    "season_pts": 1.92,
-    "boost_dress": 0.87,
-    "boost_fpg": 1.92,
-    "espn_blend": 0.07,
-    "espn_proj": 2.07,
-    "season_range": [
-     1.16,
-     2.12
-    ],
-    "line": {
-     "win_prob": 0.52,
-     "m": 1.001,
-     "pps": 1.95
-    },
-    "drift": -0.01,
-    "missing_regs_pp": -0.006,
-    "lineup_slack": -0.0,
-    "missing_regs": -0.06,
-    "week_slack": -0.4
-   },
-   "cr_pct": 76,
-   "cr_season_pct": 91
-  },
-  {
    "id": 2555315,
    "name": "Charlie Coyle",
    "team": "CBJ",
@@ -19204,7 +19204,7 @@
     "week_slack": -0.4
    },
    "cr_pct": 76,
-   "cr_season_pct": 85
+   "cr_season_pct": 86
   },
   {
    "id": 2562625,
@@ -21772,7 +21772,7 @@
    "last_gp": 82,
    "proj_ppg": 1.91,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "proj_ppg_pre": 1.91,
    "cr": 1.75,
@@ -25967,7 +25967,7 @@
    "last_gp": 69,
    "proj_ppg": 1.19,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "proj_ppg_pre": 1.19,
    "cr": 1.54,
@@ -26325,7 +26325,7 @@
    "last_gp": 66,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 1.52,
    "cr_fpg": 1.54,
@@ -27709,7 +27709,7 @@
     "lineup_slack": 0.2,
     "week_slack": 0.3
    },
-   "cr_pct": 62,
+   "cr_pct": 61,
    "cr_season_pct": 70
   },
   {
@@ -27804,6 +27804,90 @@
    },
    "cr_pct": 61,
    "cr_season_pct": 15
+  },
+  {
+   "id": 3020803,
+   "name": "Jake McCabe",
+   "team": "TOR",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    52,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-22T00:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "mine",
+   "team_id": 12,
+   "ir": false,
+   "bench": true,
+   "injury": null,
+   "owned": 26.6,
+   "adp": 223.7,
+   "gp": 24,
+   "ppg": 1.53,
+   "cur_ppg": 1.4,
+   "last_ppg": 1.79,
+   "last_gp": 80,
+   "proj_ppg": 1.72,
+   "clears": null,
+   "dfo_src": "David Alter",
+   "dfo_out": false,
+   "proj_ppg_pre": 1.72,
+   "cr": 1.48,
+   "cr_fpg": 1.5,
+   "cr_season": 1.33,
+   "proj_gp": 78,
+   "cr_games": 0.99,
+   "cr_dress": 0.99,
+   "cr_dress_next": 0.99,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476931,
+   "cr_why": {
+    "toi5": 20.14,
+    "toi": 20.04,
+    "pp5": 0.07,
+    "sog": 1.08,
+    "blk": 2.12,
+    "gp": 24,
+    "last_fpg": 1.79,
+    "xfp": {
+     "gp": 24,
+     "fpg": 1.4,
+     "xfpg": 1.5
+    },
+    "season_fpg": 1.52,
+    "opp_last": {
+     "ga": -0.012,
+     "move": -0.001
+    },
+    "boost_week": 0.04,
+    "season_pts": 1.48,
+    "boost_dress": 0.9,
+    "boost_fpg": 1.45,
+    "espn_blend": 0.07,
+    "espn_proj": 1.72,
+    "age_adj": -0.04,
+    "season_range": [
+     0.86,
+     1.71
+    ],
+    "drift": -0.01,
+    "missing_regs_pp": -0.006,
+    "lineup_slack": -0.0,
+    "missing_regs": -0.06,
+    "week_slack": 0.4
+   },
+   "cr_pct": 61,
+   "cr_season_pct": 76
   },
   {
    "id": 3036851,
@@ -28142,90 +28226,6 @@
    },
    "cr_pct": 61,
    "cr_season_pct": 70
-  },
-  {
-   "id": 3020803,
-   "name": "Jake McCabe",
-   "team": "TOR",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    52,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-22T00:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "mine",
-   "team_id": 12,
-   "ir": false,
-   "bench": true,
-   "injury": null,
-   "owned": 26.6,
-   "adp": 223.7,
-   "gp": 24,
-   "ppg": 1.53,
-   "cur_ppg": 1.4,
-   "last_ppg": 1.79,
-   "last_gp": 80,
-   "proj_ppg": 1.72,
-   "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
-   "dfo_out": false,
-   "proj_ppg_pre": 1.72,
-   "cr": 1.47,
-   "cr_fpg": 1.5,
-   "cr_season": 1.33,
-   "proj_gp": 78,
-   "cr_games": 0.98,
-   "cr_dress": 0.98,
-   "cr_dress_next": 0.98,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476931,
-   "cr_why": {
-    "toi5": 20.14,
-    "toi": 20.04,
-    "pp5": 0.07,
-    "sog": 1.08,
-    "blk": 2.12,
-    "gp": 24,
-    "last_fpg": 1.79,
-    "xfp": {
-     "gp": 24,
-     "fpg": 1.4,
-     "xfpg": 1.5
-    },
-    "season_fpg": 1.52,
-    "opp_last": {
-     "ga": -0.012,
-     "move": -0.001
-    },
-    "boost_week": 0.04,
-    "season_pts": 1.48,
-    "boost_dress": 0.9,
-    "boost_fpg": 1.45,
-    "espn_blend": 0.07,
-    "espn_proj": 1.72,
-    "age_adj": -0.04,
-    "season_range": [
-     0.86,
-     1.71
-    ],
-    "drift": -0.01,
-    "missing_regs_pp": -0.006,
-    "lineup_slack": -0.0,
-    "missing_regs": -0.06,
-    "week_slack": -0.4
-   },
-   "cr_pct": 61,
-   "cr_season_pct": 76
   },
   {
    "id": 4024833,
@@ -32252,6 +32252,91 @@
    "cr_season_pct": 63
   },
   {
+   "id": 2976833,
+   "name": "Morgan Rielly",
+   "team": "TOR",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    52,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-22T00:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "other",
+   "team_id": 1,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 70.0,
+   "adp": 167.5,
+   "gp": 20,
+   "ppg": 1.51,
+   "cur_ppg": 1.35,
+   "last_ppg": 1.6,
+   "last_gp": 78,
+   "proj_ppg": 1.74,
+   "clears": null,
+   "dfo_src": "David Alter",
+   "dfo_out": false,
+   "proj_ppg_pre": 1.74,
+   "cr": 1.32,
+   "cr_fpg": 1.35,
+   "cr_season": 1.13,
+   "proj_gp": 70,
+   "cr_games": 0.98,
+   "cr_dress": 0.98,
+   "cr_dress_next": 0.98,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8476853,
+   "cr_why": {
+    "toi5": 17.41,
+    "toi": 19.14,
+    "pp5": 1.09,
+    "sog": 1.1,
+    "blk": 1.15,
+    "gp": 20,
+    "last_fpg": 1.6,
+    "xfp": {
+     "gp": 20,
+     "fpg": 1.35,
+     "xfpg": 1.2,
+     "luck": "hot"
+    },
+    "season_fpg": 1.3,
+    "opp_last": {
+     "ga": -0.012,
+     "move": -0.001
+    },
+    "boost_week": -0.01,
+    "season_pts": 1.34,
+    "boost_dress": 0.86,
+    "boost_fpg": 1.36,
+    "espn_blend": 0.09,
+    "espn_proj": 1.74,
+    "age_adj": -0.03,
+    "season_range": [
+     0.66,
+     1.51
+    ],
+    "drift": -0.01,
+    "missing_regs_pp": -0.009,
+    "lineup_slack": -0.0,
+    "missing_regs": -0.06,
+    "week_slack": 0.4
+   },
+   "cr_pct": 53,
+   "cr_season_pct": 57
+  },
+  {
    "id": 4392072,
    "name": "Owen Tippett",
    "team": "PHI",
@@ -32421,7 +32506,7 @@
     "missing_regs": -0.03,
     "week_slack": -0.3
    },
-   "cr_pct": 52,
+   "cr_pct": 51,
    "cr_season_pct": 69
   },
   {
@@ -32590,7 +32675,7 @@
     "missing_regs": -0.08,
     "week_slack": -0.2
    },
-   "cr_pct": 52,
+   "cr_pct": 51,
    "cr_season_pct": 55
   },
   {
@@ -32670,7 +32755,7 @@
     "missing_regs": -0.06,
     "week_slack": 0.1
    },
-   "cr_pct": 52,
+   "cr_pct": 51,
    "cr_season_pct": 61
   },
   {
@@ -32752,7 +32837,7 @@
     "missing_regs": -0.04,
     "week_slack": 0.5
    },
-   "cr_pct": 52,
+   "cr_pct": 51,
    "cr_season_pct": 68
   },
   {
@@ -32834,91 +32919,6 @@
    },
    "cr_pct": 50,
    "cr_season_pct": 67
-  },
-  {
-   "id": 2976833,
-   "name": "Morgan Rielly",
-   "team": "TOR",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    52,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-22T00:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "other",
-   "team_id": 1,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 70.0,
-   "adp": 167.5,
-   "gp": 20,
-   "ppg": 1.51,
-   "cur_ppg": 1.35,
-   "last_ppg": 1.6,
-   "last_gp": 78,
-   "proj_ppg": 1.74,
-   "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
-   "dfo_out": false,
-   "proj_ppg_pre": 1.74,
-   "cr": 1.3,
-   "cr_fpg": 1.35,
-   "cr_season": 1.13,
-   "proj_gp": 70,
-   "cr_games": 0.96,
-   "cr_dress": 0.96,
-   "cr_dress_next": 0.96,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8476853,
-   "cr_why": {
-    "toi5": 17.41,
-    "toi": 19.14,
-    "pp5": 1.09,
-    "sog": 1.1,
-    "blk": 1.15,
-    "gp": 20,
-    "last_fpg": 1.6,
-    "xfp": {
-     "gp": 20,
-     "fpg": 1.35,
-     "xfpg": 1.2,
-     "luck": "hot"
-    },
-    "season_fpg": 1.3,
-    "opp_last": {
-     "ga": -0.012,
-     "move": -0.001
-    },
-    "boost_week": -0.01,
-    "season_pts": 1.34,
-    "boost_dress": 0.86,
-    "boost_fpg": 1.36,
-    "espn_blend": 0.09,
-    "espn_proj": 1.74,
-    "age_adj": -0.03,
-    "season_range": [
-     0.66,
-     1.51
-    ],
-    "drift": -0.01,
-    "missing_regs_pp": -0.009,
-    "lineup_slack": -0.0,
-    "missing_regs": -0.06,
-    "week_slack": -0.4
-   },
-   "cr_pct": 50,
-   "cr_season_pct": 57
   },
   {
    "id": 2564164,
@@ -33031,7 +33031,7 @@
    "owner": "other",
    "team_id": 4,
    "ir": false,
-   "bench": true,
+   "bench": false,
    "injury": null,
    "owned": 51.5,
    "adp": 190.9,
@@ -39217,7 +39217,7 @@
    "last_gp": 51,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 1.13,
    "cr_fpg": 1.15,
@@ -41637,7 +41637,7 @@
    "last_gp": 0,
    "proj_ppg": 1.63,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "proj_ppg_pre": 1.63,
    "cr": 1.06,
@@ -41781,6 +41781,88 @@
    },
    "cr_pct": 36,
    "cr_season_pct": 36
+  },
+  {
+   "id": 5592,
+   "name": "Chris Tanev",
+   "team": "TOR",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    52,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-21T18:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 0.8,
+   "adp": 229.7,
+   "gp": 13,
+   "ppg": 1.09,
+   "cur_ppg": 1.32,
+   "last_ppg": 0.95,
+   "last_gp": 11,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "David Alter",
+   "dfo_out": false,
+   "cr": 1.05,
+   "cr_fpg": 1.15,
+   "cr_season": 0.7,
+   "proj_gp": 52,
+   "cr_games": 0.91,
+   "cr_dress": 0.91,
+   "cr_dress_next": 0.91,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8475690,
+   "cr_why": {
+    "toi5": 18.76,
+    "toi": 18.1,
+    "pp5": 0.04,
+    "sog": 0.31,
+    "blk": 2.31,
+    "gp": 13,
+    "last_fpg": 0.95,
+    "xfp": {
+     "gp": 13,
+     "fpg": 1.32,
+     "xfpg": 1.36
+    },
+    "season_fpg": 1.14,
+    "opp_last": {
+     "ga": -0.012,
+     "move": -0.001
+    },
+    "boost_week": -0.54,
+    "boost_week_move": -0.06,
+    "season_pts": 1.09,
+    "boost_dress": 0.64,
+    "boost_fpg": 1.12,
+    "age_adj": -0.07,
+    "season_range": [
+     0.32,
+     1.16
+    ],
+    "drift": -0.01,
+    "missing_regs_pp": -0.015,
+    "lineup_slack": -0.0,
+    "missing_regs": -0.06,
+    "week_slack": 0.4
+   },
+   "cr_pct": 35,
+   "cr_season_pct": 23
   },
   {
    "id": 4419638,
@@ -42125,91 +42207,6 @@
    },
    "cr_pct": 35,
    "cr_season_pct": 44
-  },
-  {
-   "id": 5488,
-   "name": "Oliver Ekman-Larsson",
-   "team": "TOR",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    52,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-21T18:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 5.3,
-   "adp": 229.0,
-   "gp": 24,
-   "ppg": 0.87,
-   "cur_ppg": 0.62,
-   "last_ppg": 1.37,
-   "last_gp": 78,
-   "proj_ppg": 1.24,
-   "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
-   "dfo_out": false,
-   "proj_ppg_pre": 1.24,
-   "cr": 1.04,
-   "cr_fpg": 1.07,
-   "cr_season": 0.94,
-   "proj_gp": 76,
-   "cr_games": 0.97,
-   "cr_dress": 0.97,
-   "cr_dress_next": 0.97,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475171,
-   "cr_why": {
-    "toi5": 20.35,
-    "toi": 18.52,
-    "pp5": 1.27,
-    "sog": 1.0,
-    "blk": 0.58,
-    "gp": 24,
-    "last_fpg": 1.37,
-    "xfp": {
-     "gp": 24,
-     "fpg": 0.62,
-     "xfpg": 0.89,
-     "luck": "cold"
-    },
-    "season_fpg": 1.08,
-    "opp_last": {
-     "ga": -0.012,
-     "move": -0.001
-    },
-    "boost_week": -0.31,
-    "season_pts": 1.08,
-    "boost_dress": 0.86,
-    "boost_fpg": 1.16,
-    "espn_blend": 0.07,
-    "espn_proj": 1.24,
-    "age_adj": -0.06,
-    "season_range": [
-     0.47,
-     1.32
-    ],
-    "drift": -0.01,
-    "missing_regs_pp": -0.007,
-    "lineup_slack": -0.0,
-    "missing_regs": -0.06,
-    "week_slack": -0.4
-   },
-   "cr_pct": 35,
-   "cr_season_pct": 40
   },
   {
    "id": 4233575,
@@ -42746,88 +42743,6 @@
    "cr_season_pct": 24
   },
   {
-   "id": 5592,
-   "name": "Chris Tanev",
-   "team": "TOR",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    52,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-21T18:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": null,
-   "owned": 0.8,
-   "adp": 229.7,
-   "gp": 13,
-   "ppg": 1.09,
-   "cur_ppg": 1.32,
-   "last_ppg": 0.95,
-   "last_gp": 11,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
-   "dfo_out": false,
-   "cr": 1.02,
-   "cr_fpg": 1.15,
-   "cr_season": 0.7,
-   "proj_gp": 52,
-   "cr_games": 0.89,
-   "cr_dress": 0.89,
-   "cr_dress_next": 0.89,
-   "sat_last": false,
-   "cr_matched": true,
-   "nhl_id": 8475690,
-   "cr_why": {
-    "toi5": 18.76,
-    "toi": 18.1,
-    "pp5": 0.04,
-    "sog": 0.31,
-    "blk": 2.31,
-    "gp": 13,
-    "last_fpg": 0.95,
-    "xfp": {
-     "gp": 13,
-     "fpg": 1.32,
-     "xfpg": 1.36
-    },
-    "season_fpg": 1.14,
-    "opp_last": {
-     "ga": -0.012,
-     "move": -0.001
-    },
-    "boost_week": -0.54,
-    "boost_week_move": -0.06,
-    "season_pts": 1.09,
-    "boost_dress": 0.64,
-    "boost_fpg": 1.12,
-    "age_adj": -0.07,
-    "season_range": [
-     0.32,
-     1.16
-    ],
-    "drift": -0.01,
-    "missing_regs_pp": -0.015,
-    "lineup_slack": -0.0,
-    "missing_regs": -0.06,
-    "week_slack": -0.4
-   },
-   "cr_pct": 32,
-   "cr_season_pct": 23
-  },
-  {
    "id": 5188582,
    "name": "Anton Johansson",
    "team": "DET",
@@ -42904,7 +42819,7 @@
     "missing_regs": -0.07,
     "week_slack": -0.5
    },
-   "cr_pct": 32,
+   "cr_pct": 33,
    "cr_season_pct": 27
   },
   {
@@ -44009,7 +43924,7 @@
    "last_gp": 64,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 0.97,
    "cr_fpg": 1.02,
@@ -44061,7 +43976,7 @@
     "missing_regs_pp": -0.009,
     "lineup_slack": -0.0,
     "missing_regs": -0.06,
-    "week_slack": -0.4
+    "week_slack": 0.4
    },
    "cr_pct": 30,
    "cr_season_pct": 29
@@ -45473,7 +45388,7 @@
     "missing_regs": -0.08,
     "week_slack": -0.2
    },
-   "cr_pct": 29,
+   "cr_pct": 30,
    "cr_season_pct": 19
   },
   {
@@ -45901,7 +45816,7 @@
     },
     "week_news": {
      "shift": 1.17,
-     "move": 0.129,
+     "move": 0.099,
      "why": [
       "practising",
       "could return",
@@ -45909,8 +45824,8 @@
       "timeline"
      ]
     },
-    "boost_week": 0.9,
-    "boost_week_move": 0.18,
+    "boost_week": 1.02,
+    "boost_week_move": 0.21,
     "season_pts": 1.91,
     "boost_dress": 0.78,
     "boost_fpg": 1.95,
@@ -46880,7 +46795,7 @@
    "last_gp": 82,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 0.85,
    "cr_fpg": 0.87,
@@ -47159,7 +47074,7 @@
    "last_gp": 55,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 0.83,
    "cr_fpg": 0.93,
@@ -47347,7 +47262,7 @@
    "last_gp": 35,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 0.81,
    "cr_fpg": 0.83,
@@ -47443,7 +47358,7 @@
    "last_gp": 3,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": false,
    "cr": 0.8,
    "cr_fpg": 0.88,
@@ -48971,7 +48886,7 @@
     "lineup_slack": 0.3,
     "week_slack": 0.4
    },
-   "cr_pct": 28,
+   "cr_pct": 29,
    "cr_season_pct": 43
   },
   {
@@ -49411,7 +49326,7 @@
     "missing_regs": -0.04,
     "week_slack": 0.2
    },
-   "cr_pct": 27,
+   "cr_pct": 28,
    "cr_season_pct": 14
   },
   {
@@ -49993,7 +49908,7 @@
     "missing_regs": -0.12,
     "week_slack": 0.3
    },
-   "cr_pct": 26,
+   "cr_pct": 27,
    "cr_season_pct": 16
   },
   {
@@ -51023,7 +50938,7 @@
     "missing_regs": -0.1,
     "week_slack": 0.7
    },
-   "cr_pct": 25,
+   "cr_pct": 26,
    "cr_season_pct": 26
   },
   {
@@ -51304,7 +51219,7 @@
     "missing_regs": -0.03,
     "week_slack": 0.1
    },
-   "cr_pct": 24,
+   "cr_pct": 25,
    "cr_season_pct": 43
   },
   {
@@ -51965,7 +51880,7 @@
     "week_slack": -0.5,
     "dtd_absent": 0.07
    },
-   "cr_pct": 23,
+   "cr_pct": 24,
    "cr_season_pct": 21
   },
   {
@@ -52068,7 +51983,7 @@
     "week_slack": 0.7
    },
    "cr_pct": 18,
-   "cr_season_pct": 85
+   "cr_season_pct": 86
   },
   {
    "id": 4392260,
@@ -52451,7 +52366,7 @@
     "missing_regs": -0.02,
     "week_slack": 0.4
    },
-   "cr_pct": 22,
+   "cr_pct": 23,
    "cr_season_pct": 21
   },
   {
@@ -52542,99 +52457,6 @@
    },
    "cr_pct": 22,
    "cr_season_pct": 17
-  },
-  {
-   "id": 4378683,
-   "name": "Sean Durzi",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    49,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 3.2,
-   "adp": 230.2,
-   "gp": 14,
-   "ppg": 1.47,
-   "cur_ppg": 1.44,
-   "last_ppg": 1.5,
-   "last_gp": 60,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Mollie Walker",
-   "dfo_out": true,
-   "cr": 0.2,
-   "cr_fpg": 1.32,
-   "cr_season": 0.82,
-   "proj_gp": 53,
-   "cr_games": 0.15,
-   "cr_dress": 0.15,
-   "cr_dress_next": 0.15,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8480434,
-   "cr_why": {
-    "toi5": 18.38,
-    "toi": 19.87,
-    "pp5": 0.86,
-    "sog": 0.86,
-    "blk": 1.5,
-    "gp": 14,
-    "last_fpg": 1.51,
-    "xfp": {
-     "gp": 14,
-     "fpg": 1.44,
-     "xfpg": 1.36
-    },
-    "season_fpg": 1.26,
-    "opp_last": {
-     "ga": -0.057,
-     "move": -0.005
-    },
-    "team_move": "up",
-    "week_news": {
-     "shift": 2.09,
-     "move": 0.0,
-     "why": [
-      "practising",
-      "could return",
-      "timeline up"
-     ]
-    },
-    "boost_week": 1.49,
-    "boost_week_move": 0.11,
-    "season_pts": 1.32,
-    "boost_dress": 0.62,
-    "boost_fpg": 1.41,
-    "season_range": [
-     0.44,
-     1.28
-    ],
-    "back": {
-     "games": "10"
-    },
-    "drift": -0.01,
-    "missing_regs_pp": -0.008,
-    "lineup_slack": 0.3,
-    "missing_regs": -0.04,
-    "week_slack": 0.5
-   },
-   "cr_pct": 21,
-   "cr_season_pct": 28
   },
   {
    "id": 5216868,
@@ -52991,7 +52813,7 @@
     "missing_regs": -0.08,
     "week_slack": 0.1
    },
-   "cr_pct": 20,
+   "cr_pct": 21,
    "cr_season_pct": 44
   },
   {
@@ -53078,7 +52900,7 @@
     "missing_regs": -0.05,
     "week_slack": -0.1
    },
-   "cr_pct": 20,
+   "cr_pct": 21,
    "cr_season_pct": 16
   },
   {
@@ -53445,6 +53267,91 @@
    "cr_season_pct": 34
   },
   {
+   "id": 5488,
+   "name": "Oliver Ekman-Larsson",
+   "team": "TOR",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    52,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-21T18:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": null,
+   "owned": 5.3,
+   "adp": 229.0,
+   "gp": 24,
+   "ppg": 0.87,
+   "cur_ppg": 0.62,
+   "last_ppg": 1.37,
+   "last_gp": 78,
+   "proj_ppg": 1.24,
+   "clears": null,
+   "dfo_src": "David Alter",
+   "dfo_out": true,
+   "proj_ppg_pre": 1.24,
+   "cr": 0.16,
+   "cr_fpg": 1.07,
+   "cr_season": 0.94,
+   "proj_gp": 76,
+   "cr_games": 0.15,
+   "cr_dress": 0.15,
+   "cr_dress_next": 0.15,
+   "sat_last": false,
+   "cr_matched": true,
+   "nhl_id": 8475171,
+   "cr_why": {
+    "toi5": 20.35,
+    "toi": 18.52,
+    "pp5": 1.27,
+    "sog": 1.0,
+    "blk": 0.58,
+    "gp": 24,
+    "last_fpg": 1.37,
+    "xfp": {
+     "gp": 24,
+     "fpg": 0.62,
+     "xfpg": 0.89,
+     "luck": "cold"
+    },
+    "season_fpg": 1.08,
+    "opp_last": {
+     "ga": -0.012,
+     "move": -0.001
+    },
+    "boost_week": -0.31,
+    "season_pts": 1.08,
+    "boost_dress": 0.86,
+    "boost_fpg": 1.16,
+    "espn_blend": 0.07,
+    "espn_proj": 1.24,
+    "age_adj": -0.06,
+    "season_range": [
+     0.47,
+     1.32
+    ],
+    "drift": -0.01,
+    "missing_regs_pp": -0.007,
+    "lineup_slack": -0.0,
+    "missing_regs": -0.06,
+    "week_slack": 0.4
+   },
+   "cr_pct": 20,
+   "cr_season_pct": 40
+  },
+  {
    "id": 4331604,
    "name": "Michael Kesselring",
    "team": "SJ",
@@ -53521,7 +53428,7 @@
     "missing_regs": -0.09,
     "week_slack": 0.9
    },
-   "cr_pct": 19,
+   "cr_pct": 20,
    "cr_season_pct": 30
   },
   {
@@ -53790,6 +53697,100 @@
    },
    "cr_pct": 19,
    "cr_season_pct": 12
+  },
+  {
+   "id": 4378683,
+   "name": "Sean Durzi",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    49,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 3.2,
+   "adp": 230.2,
+   "gp": 14,
+   "ppg": 1.47,
+   "cur_ppg": 1.44,
+   "last_ppg": 1.5,
+   "last_gp": 60,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "Mollie Walker",
+   "dfo_out": true,
+   "cr": 0.12,
+   "cr_fpg": 1.32,
+   "cr_season": 0.82,
+   "proj_gp": 53,
+   "cr_games": 0.09,
+   "cr_dress": 0.09,
+   "cr_dress_next": 0.09,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8480434,
+   "cr_why": {
+    "toi5": 18.38,
+    "toi": 19.87,
+    "pp5": 0.86,
+    "sog": 0.86,
+    "blk": 1.5,
+    "gp": 14,
+    "last_fpg": 1.51,
+    "xfp": {
+     "gp": 14,
+     "fpg": 1.44,
+     "xfpg": 1.36
+    },
+    "season_fpg": 1.26,
+    "opp_last": {
+     "ga": -0.057,
+     "move": -0.005
+    },
+    "team_move": "up",
+    "week_news": {
+     "shift": 2.09,
+     "move": 0.0,
+     "why": [
+      "practising",
+      "could return",
+      "timeline up"
+     ]
+    },
+    "boost_week": 1.49,
+    "boost_week_move": 0.11,
+    "season_pts": 1.32,
+    "boost_dress": 0.62,
+    "boost_fpg": 1.41,
+    "season_range": [
+     0.44,
+     1.28
+    ],
+    "back": {
+     "games": "10"
+    },
+    "drift": -0.01,
+    "missing_regs_pp": -0.008,
+    "lineup_slack": 0.3,
+    "missing_regs": -0.04,
+    "week_slack": 0.5,
+    "ir_absent_tomorrow": 0.06
+   },
+   "cr_pct": 19,
+   "cr_season_pct": 28
   },
   {
    "id": 5080155,
@@ -55222,7 +55223,7 @@
      "xfpg": 1.9,
      "luck": "hot"
     },
-    "season_fpg": 1.86,
+    "season_fpg": 1.85,
     "opp_last": {
      "ga": 0.11,
      "move": 0.009
@@ -55764,7 +55765,7 @@
    "last_gp": 76,
    "proj_ppg": 2.15,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": true,
    "proj_ppg_pre": 2.15,
    "cr": 0.06,
@@ -56198,6 +56199,97 @@
    },
    "cr_pct": 11,
    "cr_season_pct": 3
+  },
+  {
+   "id": 4419778,
+   "name": "Marshall Rifai",
+   "team": "TOR",
+   "games": 3,
+   "games_left": 1,
+   "light": 0,
+   "light_left": 0,
+   "nights": [
+    50,
+    52,
+    54
+   ],
+   "games_next2": 6,
+   "today_start": "2026-11-21T18:00:00Z",
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 0.2,
+   "adp": 230.0,
+   "gp": 2,
+   "ppg": 0.73,
+   "cur_ppg": 2.85,
+   "last_ppg": 0.6,
+   "last_gp": 1,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "David Alter",
+   "dfo_out": true,
+   "cr": 0.05,
+   "cr_fpg": 0.99,
+   "cr_season": 0.16,
+   "proj_gp": 12,
+   "cr_games": 0.05,
+   "cr_dress": 0.05,
+   "cr_dress_next": 0.05,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8483546,
+   "cr_why": {
+    "toi5": 14.15,
+    "toi": 14.15,
+    "pp5": 0.07,
+    "sog": 1.0,
+    "blk": 3.5,
+    "gp": 2,
+    "last_fpg": 0.6,
+    "xfp": {
+     "gp": 2,
+     "fpg": 2.85,
+     "xfpg": 2.03
+    },
+    "season_fpg": 1.07,
+    "opp_last": {
+     "ga": -0.012,
+     "move": -0.001
+    },
+    "week_news": {
+     "shift": 0.16,
+     "move": 0.015,
+     "why": [
+      "could return",
+      "week-to-week"
+     ]
+    },
+    "boost_week": 0.29,
+    "season_pts": 0.95,
+    "boost_dress": 0.18,
+    "boost_fpg": 0.88,
+    "season_range": [
+     0.0,
+     0.62
+    ],
+    "back": {
+     "games": "10"
+    },
+    "drift": -0.01,
+    "missing_regs_pp": -0.009,
+    "lineup_slack": -0.0,
+    "missing_regs": -0.06,
+    "week_slack": 0.4
+   },
+   "cr_pct": 15,
+   "cr_season_pct": 9
   },
   {
    "id": 3891952,
@@ -56775,108 +56867,6 @@
    "cr_season_pct": 16
   },
   {
-   "id": 5334662,
-   "name": "Alberts Smits",
-   "team": "NYR",
-   "games": 2,
-   "games_left": 1,
-   "light": 2,
-   "light_left": 1,
-   "nights": [
-    49,
-    55
-   ],
-   "games_next2": 6,
-   "today_start": null,
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 0.5,
-   "adp": 230.0,
-   "gp": 17,
-   "ppg": 0.44,
-   "cur_ppg": 0.44,
-   "last_ppg": null,
-   "last_gp": 0,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Mollie Walker",
-   "dfo_out": true,
-   "cr": 0.04,
-   "cr_fpg": 0.74,
-   "cr_season": 0.35,
-   "proj_gp": 42,
-   "cr_games": 0.05,
-   "cr_dress": 0.05,
-   "cr_dress_next": 0.05,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8485957,
-   "cr_why": {
-    "toi5": 13.59,
-    "toi": 14.48,
-    "pp5": 0.0,
-    "sog": 0.47,
-    "blk": 0.59,
-    "gp": 17,
-    "last_fpg": null,
-    "xfp": {
-     "gp": 17,
-     "fpg": 0.44,
-     "xfpg": 0.65,
-     "luck": "cold"
-    },
-    "season_fpg": 0.77,
-    "opp_last": {
-     "ga": -0.057,
-     "move": -0.005
-    },
-    "week_news": {
-     "shift": -0.91,
-     "move": -0.066,
-     "why": [
-      "week-to-week",
-      "long absence"
-     ]
-    },
-    "boost_week": 0.06,
-    "season_pts": 0.89,
-    "boost_dress": 0.39,
-    "boost_fpg": 1.0,
-    "season_news": [
-     "indefinite"
-    ],
-    "season_out_games": 5,
-    "age_adj": 0.05,
-    "season_range": [
-     0.01,
-     0.87
-    ],
-    "exp": "rookie",
-    "back": {
-     "games": "16"
-    },
-    "rust": {
-     "m": 0.93,
-     "fpg": 0.79,
-     "back": true
-    },
-    "drift": -0.01,
-    "missing_regs_pp": -0.009,
-    "lineup_slack": 0.3,
-    "missing_regs": -0.04,
-    "week_slack": 0.5
-   },
-   "cr_pct": 14,
-   "cr_season_pct": 14
-  },
-  {
    "id": 2993474,
    "name": "Colton Sissons",
    "team": "TOR",
@@ -56910,7 +56900,7 @@
    "last_gp": 66,
    "proj_ppg": null,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": true,
    "cr": 0.04,
    "cr_fpg": 0.87,
@@ -57116,14 +57106,14 @@
     },
     "week_news": {
      "shift": -0.91,
-     "move": -0.105,
+     "move": -0.109,
      "why": [
       "week-to-week",
       "long absence"
      ]
     },
-    "boost_week": -0.81,
-    "boost_week_move": -0.16,
+    "boost_week": -0.76,
+    "boost_week_move": -0.15,
     "season_pts": 1.46,
     "boost_dress": 0.77,
     "boost_fpg": 1.45,
@@ -57545,7 +57535,7 @@
    "last_gp": 80,
    "proj_ppg": 1.05,
    "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
+   "dfo_src": "David Alter",
    "dfo_out": true,
    "proj_ppg_pre": 1.05,
    "cr": 0.03,
@@ -57592,97 +57582,6 @@
    },
    "cr_pct": 9,
    "cr_season_pct": 4
-  },
-  {
-   "id": 4419778,
-   "name": "Marshall Rifai",
-   "team": "TOR",
-   "games": 3,
-   "games_left": 1,
-   "light": 0,
-   "light_left": 0,
-   "nights": [
-    50,
-    52,
-    54
-   ],
-   "games_next2": 6,
-   "today_start": "2026-11-21T18:00:00Z",
-   "pos": "D",
-   "slots": [
-    "D"
-   ],
-   "owner": "freeagent",
-   "team_id": null,
-   "ir": false,
-   "bench": false,
-   "injury": "INJURY_RESERVE",
-   "owned": 0.2,
-   "adp": 230.0,
-   "gp": 2,
-   "ppg": 0.73,
-   "cur_ppg": 2.85,
-   "last_ppg": 0.6,
-   "last_gp": 1,
-   "proj_ppg": null,
-   "clears": null,
-   "dfo_src": "Last Game (2026-11-19)",
-   "dfo_out": true,
-   "cr": 0.03,
-   "cr_fpg": 0.99,
-   "cr_season": 0.16,
-   "proj_gp": 12,
-   "cr_games": 0.03,
-   "cr_dress": 0.03,
-   "cr_dress_next": 0.03,
-   "sat_last": true,
-   "cr_matched": true,
-   "nhl_id": 8483546,
-   "cr_why": {
-    "toi5": 14.15,
-    "toi": 14.15,
-    "pp5": 0.07,
-    "sog": 1.0,
-    "blk": 3.5,
-    "gp": 2,
-    "last_fpg": 0.6,
-    "xfp": {
-     "gp": 2,
-     "fpg": 2.85,
-     "xfpg": 2.03
-    },
-    "season_fpg": 1.07,
-    "opp_last": {
-     "ga": -0.012,
-     "move": -0.001
-    },
-    "week_news": {
-     "shift": 0.16,
-     "move": 0.015,
-     "why": [
-      "could return",
-      "week-to-week"
-     ]
-    },
-    "boost_week": 0.29,
-    "season_pts": 0.95,
-    "boost_dress": 0.18,
-    "boost_fpg": 0.88,
-    "season_range": [
-     0.0,
-     0.62
-    ],
-    "back": {
-     "games": "10"
-    },
-    "drift": -0.01,
-    "missing_regs_pp": -0.009,
-    "lineup_slack": -0.0,
-    "missing_regs": -0.06,
-    "week_slack": -0.4
-   },
-   "cr_pct": 14,
-   "cr_season_pct": 9
   },
   {
    "id": 4271575,
@@ -57922,6 +57821,109 @@
    },
    "cr_pct": 12,
    "cr_season_pct": 10
+  },
+  {
+   "id": 5334662,
+   "name": "Alberts Smits",
+   "team": "NYR",
+   "games": 2,
+   "games_left": 1,
+   "light": 2,
+   "light_left": 1,
+   "nights": [
+    49,
+    55
+   ],
+   "games_next2": 6,
+   "today_start": null,
+   "pos": "D",
+   "slots": [
+    "D"
+   ],
+   "owner": "freeagent",
+   "team_id": null,
+   "ir": false,
+   "bench": false,
+   "injury": "INJURY_RESERVE",
+   "owned": 0.5,
+   "adp": 230.0,
+   "gp": 17,
+   "ppg": 0.44,
+   "cur_ppg": 0.44,
+   "last_ppg": null,
+   "last_gp": 0,
+   "proj_ppg": null,
+   "clears": null,
+   "dfo_src": "Mollie Walker",
+   "dfo_out": true,
+   "cr": 0.02,
+   "cr_fpg": 0.74,
+   "cr_season": 0.35,
+   "proj_gp": 42,
+   "cr_games": 0.03,
+   "cr_dress": 0.03,
+   "cr_dress_next": 0.03,
+   "sat_last": true,
+   "cr_matched": true,
+   "nhl_id": 8485957,
+   "cr_why": {
+    "toi5": 13.59,
+    "toi": 14.48,
+    "pp5": 0.0,
+    "sog": 0.47,
+    "blk": 0.59,
+    "gp": 17,
+    "last_fpg": null,
+    "xfp": {
+     "gp": 17,
+     "fpg": 0.44,
+     "xfpg": 0.65,
+     "luck": "cold"
+    },
+    "season_fpg": 0.77,
+    "opp_last": {
+     "ga": -0.057,
+     "move": -0.005
+    },
+    "week_news": {
+     "shift": -0.91,
+     "move": -0.066,
+     "why": [
+      "week-to-week",
+      "long absence"
+     ]
+    },
+    "boost_week": 0.06,
+    "season_pts": 0.89,
+    "boost_dress": 0.39,
+    "boost_fpg": 1.0,
+    "season_news": [
+     "indefinite"
+    ],
+    "season_out_games": 5,
+    "age_adj": 0.05,
+    "season_range": [
+     0.01,
+     0.87
+    ],
+    "exp": "rookie",
+    "back": {
+     "games": "16"
+    },
+    "rust": {
+     "m": 0.93,
+     "fpg": 0.79,
+     "back": true
+    },
+    "drift": -0.01,
+    "missing_regs_pp": -0.009,
+    "lineup_slack": 0.3,
+    "missing_regs": -0.04,
+    "week_slack": 0.5,
+    "ir_absent_tomorrow": 0.02
+   },
+   "cr_pct": 12,
+   "cr_season_pct": 14
   },
   {
    "id": 5149192,
