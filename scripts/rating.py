@@ -93,6 +93,7 @@ IR_RESTED_TODAY_CAP, IR_RESTED_DAYS_OFF = 0.07, 2
 # Last Game copies the lift hurt, 6.67 -> 8.04 and 2.40 -> 4.49; each the same way in both halves, split at Nov 4)
 DTD_MORNING_MID, DTD_MORNING_K = 0.75, 0.4
 DTD_OUT_OF_REPORTER_LINES = 0.75  # 948: day-to-day, left out of a reporter's fresh lines (findings 4966: 22.3 shown, 13 dressed)
+IR_OUT_OF_REPORTER_LINES_TOMORROW = 0.6  # 949: IR, team idle today, out of a reporter's lines for tomorrow (findings 4967: 13.69 shown, 5 dressed)
 # an ESPN OUT or IR skater who sat his last game but is in Daily Faceoff's fresh lines: at least 0.8 next game with this
 # week's news saying practising, set to return or could return, else 0.4 (handoffs 816, 911; findings 4543: 15 of 16 and
 # 3 of 8 dressed, Brier .505 -> .128). Not with ESPN long wording (surgery, season)
@@ -5227,6 +5228,22 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if nxt < q:
             lift_next(p, q, nxt)
             w["dtd_absent"] = round(q - nxt, 2)
+    # IR, his team idle today and playing tomorrow, left out of a reporter's or DFO's fresh lines (not a "Last Game" copy):
+    # tomorrow's game x 0.6 (949)
+    tomorrow = (today + timedelta(days=1)).isoformat()
+    for p in players:
+        w, q = p.get("cr_why"), p.get("cr_dress_next")
+        if p["pos"] == "G" or p.get("injury") != "INJURY_RESERVE" or q is None or q <= 0.001 or w is None \
+                or p.get("dfo_out") is not True or w.get("line_change") \
+                or not p.get("dfo_src") or p["dfo_src"].startswith("Last Game"):
+            continue
+        dates = sched.get(ESPN_TO_NHL.get(p["team"], p["team"]), [])
+        if today.isoformat() in dates or min((d for d in dates if d > today.isoformat()), default=None) != tomorrow:
+            continue
+        nxt = round(q * IR_OUT_OF_REPORTER_LINES_TOMORROW, 3)
+        if nxt < q:
+            lift_next(p, q, nxt)
+            w["ir_absent_tomorrow"] = round(q - nxt, 2)
 
     # no NHL match (on no current NHL roster, no NHL game this season), no ESPN games this season or last and no projection:
     # retired and minor-league names ESPN still lists with a team (Gorges, Suter, Fleury) aren't rated on its games (handoff 453)
