@@ -5103,3 +5103,33 @@ def test_ir_left_out_of_reporter_lines_day_before_scaled(monkeypatch, tmp_path):
     for kw in ({"src": "Last Game (Oct 9)"}, {"src": ""}, {"dfo": False}, {"dfo": None}, {"injury": "DAY_TO_DAY"},
                {"day": 9}):  # Oct 9 is a TOR game day
         assert run(0.6, **kw)["cr_dress_next"] == pytest.approx(run(1.0, **kw)["cr_dress_next"], abs=1e-9), kw
+
+
+def test_regular_left_out_of_reporter_lines_day_before_scaled(monkeypatch, tmp_path):
+    """Handoff 951 (findings 4969): a healthy skater who played his team's last game, his team idle today and playing
+    tomorrow, left out of a reporter's or DFO Projections' fresh lines, has tomorrow's game x 0.5; a 'Last Game' copy, in
+    the lines, an injury listing, sitting the last game or a team that plays today keep the number."""
+    from datetime import datetime, timezone
+    assert rating.REG_OUT_OF_REPORTER_LINES_TOMORROW == 0.5
+    base_news = {"fetched": "2026-10-10T20:30Z", "roster-moves": {}, "injuries": {}}
+
+    def run(scale, injury=None, dfo=True, src="Jane Reporter", day=10, sat=False):
+        monkeypatch.setattr(rating, "REG_OUT_OF_REPORTER_LINES_TOMORROW", scale)
+        monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, day, 21, tzinfo=timezone.utc))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury, games_left=1), dfo_out=dfo, dfo_src=src)
+        fake = FakeSession(missed={1: {len(PAST) - 1}} if sat else {})
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        (tmp_path / "injury_log.jsonl").unlink(missing_ok=True)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        rating.add_ratings([p], 2027, date(2026, 10, day), MONDAY, [], dfo_news=base_news)
+        return p
+    on, off = run(0.5), run(1.0)
+    q = off["cr_dress_next"]
+    assert off["sat_last"] is False and q > 0.2
+    assert on["cr_dress_next"] == pytest.approx(0.5 * q, abs=0.006)
+    assert on["cr_why"]["reg_absent_tomorrow"] == pytest.approx(q - on["cr_dress_next"], abs=0.011)
+    assert on["cr_games"] == pytest.approx(off["cr_games"] - (q - on["cr_dress_next"]), abs=0.02)
+    assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
+    for kw in ({"src": "Last Game (Oct 9)"}, {"src": ""}, {"dfo": False}, {"dfo": None}, {"injury": "DAY_TO_DAY"},
+               {"sat": True}, {"day": 9}):
+        assert run(0.5, **kw)["cr_dress_next"] == pytest.approx(run(1.0, **kw)["cr_dress_next"], abs=1e-9), kw
