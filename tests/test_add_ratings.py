@@ -4888,29 +4888,33 @@ def test_ir_cap_raised_after_team_days_off_on_morning_runs(monkeypatch, tmp_path
     assert run(0, dfo_out=False)["cr_dress_next"] != pytest.approx(0.07, abs=0.005)  # in the lines: their own rules
 
 
-def test_day_to_day_in_morning_lines_raised(monkeypatch, tmp_path):
-    """Handoff 940 (findings 4946, re-measured): an ESPN day-to-day skater in Daily Faceoff's lines for a game today, on a
-    run before 16:30 UTC, has tonight's chance raised to 0.75 + 0.4 x (chance - 0.75) when higher; out of the lines, no
-    lines read, a midday run, no game today, another status or Daily Faceoff's own call keep the number."""
+def test_day_to_day_in_reporter_lines_raised(monkeypatch, tmp_path):
+    """Handoffs 940, 943 (findings 4946, 4956): an ESPN day-to-day skater in Daily Faceoff's lines for a game today, posted
+    by a reporter or DFO Projections, has tonight's chance raised to 0.75 + 0.4 x (chance - 0.75) when higher, morning or
+    midday; a 'Last Game' copy, out of the lines, no lines read, no game today, another status or Daily Faceoff's own call
+    keep the number."""
     from datetime import datetime, timezone
     assert (rating.DTD_MORNING_MID, rating.DTD_MORNING_K) == (0.75, 0.4)
     monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.0)
     monkeypatch.setattr(rating.Model, "dress_logit", lambda self, f: 0.5)  # a chance well under 0.75
     monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)
 
-    def run(k, hour=11, injury="DAY_TO_DAY", start="2026-10-09T23:00:00Z", dfo=False, news=None):
+    def run(k, hour=11, injury="DAY_TO_DAY", start="2026-10-09T23:00:00Z", dfo=False, news=None, src="Jane Reporter"):
         monkeypatch.setattr(rating, "DTD_MORNING_K", k)
         monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, hour, tzinfo=timezone.utc))
-        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=dfo, **({"today_start": start} if start else {}))
+        p = dict(espn(101, "Auston Matthews", "TOR", "C", injury=injury), dfo_out=dfo, dfo_src=src,
+                 **({"today_start": start} if start else {}))
         return rate(monkeypatch, tmp_path, [p], **({"dfo_news": news} if news else {}))["Auston Matthews"]
     on, off = run(0.4), run(1.0)
+    midday, midday_off = run(0.4, hour=17), run(1.0, hour=17)
+    assert midday["cr_dress_next"] > midday_off["cr_dress_next"] + 0.01  # every run before the game (943)
     q = off["cr_dress_next"]
     assert 0.001 < q < 0.6, "the fake day-to-day skater should start well under 0.75"
     assert on["cr_dress_next"] == pytest.approx(0.75 + 0.4 * (q - 0.75), abs=0.006)
     assert on["cr_why"]["dtd_morning"] == pytest.approx(on["cr_dress_next"] - q, abs=0.006)
     assert on["cr_games"] == pytest.approx(off["cr_games"] + on["cr_dress_next"] - q, abs=0.02)
     assert on["cr"] == pytest.approx(on["cr_fpg"] * on["cr_games"], abs=0.02)
-    for kw in ({"hour": 17}, {"dfo": None}, {"dfo": True}, {"start": None}, {"injury": "OUT"}, {"injury": None}):
+    for kw in ({"src": "Last Game (Oct 8)"}, {"src": "Last Game (Oct 8)", "hour": 17}, {"dfo": None}, {"dfo": True}, {"start": None}, {"injury": "OUT"}, {"injury": None}):
         assert run(0.4, **kw)["cr_dress_next"] == pytest.approx(run(1.0, **kw)["cr_dress_next"], abs=1e-9), kw
     news = {"fetched": "2026-10-09T10:30Z", "injuries": {}, "roster-moves": {},
             "line-matches": {"1": {"ts": "2026-10-09T10:00:00", "lc": "out"}}}
