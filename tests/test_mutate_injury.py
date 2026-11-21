@@ -29,6 +29,7 @@ def test_day_to_day_goalie_keeps_part_of_his_starts(monkeypatch, tmp_path):
     """A day-to-day goalie starts with INJURY_DRESS['DAY_TO_DAY'] (0.5) of his chance, an OUT one never.
     Kills: zero:INJURY_DRESS, R39 (DTD goalie at 1.0)."""
     monkeypatch.setattr(rating, "UNTAGGED_START_CAP", 1.0)  # the untagged-goalie cap (944) has its own test
+    monkeypatch.setattr(rating, "UNTAGGED_ONE_DAY_OFF_CAP", 1.0)
     def woll(injury):
         players = [espn(111, "Joseph Woll", "TOR", "G", injury=injury), espn(112, "Anthony Stolarz", "TOR", "G")]
         return _rate(monkeypatch, tmp_path, players)["Joseph Woll"]
