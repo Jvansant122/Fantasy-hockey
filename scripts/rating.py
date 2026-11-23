@@ -3953,6 +3953,8 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
 
     team_games, starts_by_team, last_start, start_wins, team_dates = team_history(goalie_games)
 
+    all_starts = starts or {}  # its own name: the goalie loop below reuses `starts` for a float
+
     def last_game_start(gl):
         """His last game's start (UTC ISO), for "news newer than his last game": this week's schedule, else fetch's every-game
         starts, else 23:00 UTC on its date. This week's schedule alone missed a game last week, so on Mondays stale Daily
@@ -3960,7 +3962,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if not gl:
             return None
         k = (gl[-1]["team"], gl[-1]["date"][:10])
-        return week_starts.get(k) or (starts or {}).get(k) or f"{k[1]}T23:00:00Z"
+        return week_starts.get(k) or all_starts.get(k) or f"{k[1]}T23:00:00Z"
     # Daily Faceoff lines count for the next game unless posted before the last game in the history loaded here, not the
     # last game that started 4+ hours ago: overnight the NHL posts last night's stats late (findings 543, handoff 752)
     if relineup is not None:
@@ -4137,9 +4139,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if not (pid and t):
             return False
         day = t.astimezone(ET).date().isoformat()
-        return any(game_after(t, day, g["date"][:10], week_starts.get((g["team"], g["date"][:10])) or (starts or {}).get((g["team"], g["date"][:10])))
+        return any(game_after(t, day, g["date"][:10], week_starts.get((g["team"], g["date"][:10])) or all_starts.get((g["team"], g["date"][:10])))
                    for g in by_player.get(pid, [])) \
-            or any(game_after(t, day, d, week_starts.get((tm, d)) or (starts or {}).get((tm, d))) for d, tm in goalie_dates.get(pid, []))
+            or any(game_after(t, day, d, week_starts.get((tm, d)) or all_starts.get((tm, d))) for d, tm in goalie_dates.get(pid, []))
     carried = carry_injury_notes(notes, stored_notes, {p["id"]: p.get("injury") for p in players}, played_since, today)
     if carried:
         print(f"Kept the last real injury note for {len(carried)} players whose note is now a bare status word")

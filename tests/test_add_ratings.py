@@ -5050,7 +5050,10 @@ def test_daily_faceoff_item_older_than_last_weeks_game_ignored(monkeypatch, tmp_
         monkeypatch.setattr(rating.requests, "Session", lambda: fake)
         (tmp_path / "injury_log.jsonl").unlink(missing_ok=True)
         monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
-        rating.add_ratings([p], 2027, date(2026, 10, 9), MONDAY, [], dfo_news=news, starts=starts)
+        # a goalie first: the goalie loop reuses the name `starts` for a float (the first try crashed the rating)
+        rating.add_ratings([espn(111, "Joseph Woll", "TOR", "G"), p], 2027, date(2026, 10, 9), MONDAY, [], dfo_news=news,
+                           starts=starts)
+        assert "cr" in p, "the rating ran"
         return p
     base = run()["cr_dress_next"]
     assert base > 0.5
