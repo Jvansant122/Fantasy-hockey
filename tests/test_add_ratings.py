@@ -5033,6 +5033,37 @@ def test_day_to_day_in_reporter_lines_floored(monkeypatch, tmp_path):
         assert run(0.75, **kw)["cr_dress_next"] == pytest.approx(run(0.0, **kw)["cr_dress_next"], abs=1e-9), kw
 
 
+def test_daily_faceoff_item_older_than_last_weeks_game_ignored(monkeypatch, tmp_path):
+    """Handoff 955 (findings 5119): "newer than his last game" needs his last game's start even when that game is outside
+    this week's schedule (Mondays): a "left" item posted before a game he then played no longer caps his next game, with
+    the start from fetch's every-game starts or, failing that, 23:00 UTC on its date; one posted after it still does."""
+    from datetime import datetime, timezone
+    monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 11, tzinfo=timezone.utc))
+    monkeypatch.setattr(rating, "BOOST_WEEK_W", 0.0)  # the boosted Week model reads injury items its own way (413)
+
+    def run(ts=None, starts=None):
+        news = {"fetched": "2026-10-09T10:30Z", "roster-moves": {}, "general": {},
+                "injuries": {"1": {"ts": ts, "left": True}} if ts else {}}
+        p = espn(101, "Auston Matthews", "TOR", "C")
+        # he played every past game, the last on Oct 7; this week's schedule gives only the coming games' starts
+        fake = FakeSession(starts={"2026-10-09": "2026-10-09T23:00:00Z", "2026-10-11": "2026-10-11T23:00:00Z"})
+        monkeypatch.setattr(rating.requests, "Session", lambda: fake)
+        (tmp_path / "injury_log.jsonl").unlink(missing_ok=True)
+        monkeypatch.setattr(rating, "INJURY_LOG", tmp_path / "injury_log.jsonl")
+        # a goalie first: the goalie loop reuses the name `starts` for a float (the first try crashed the rating)
+        rating.add_ratings([espn(111, "Joseph Woll", "TOR", "G"), p], 2027, date(2026, 10, 9), MONDAY, [], dfo_news=news,
+                           starts=starts)
+        assert "cr" in p, "the rating ran"
+        return p
+    base = run()["cr_dress_next"]
+    assert base > 0.5
+    stale = run("2026-10-07T20:00:00")  # before his Oct 7 game (23:00 UTC when no start is known)
+    assert stale["cr_dress_next"] == pytest.approx(base, abs=1e-9) and not stale["cr_why"].get("lc")
+    early = run("2026-10-07T20:00:00", starts={("TOR", "2026-10-07"): "2026-10-07T19:00:00Z"})  # a matinee: posted in it
+    assert early["cr_dress_next"] <= rating.LEFT_GAME_CAPS[0] + 1e-9
+    assert run("2026-10-08T03:00:00")["cr_dress_next"] <= rating.LEFT_GAME_CAPS[0] + 1e-9  # after that game: still a cap
+
+
 def test_healthy_scratch_left_out_of_midday_lines_capped(monkeypatch, tmp_path):
     """Handoff 942 (findings 4954): a healthy skater who sat his team's last game and is left out of the day's fresh lines
     for a game today is capped at DFO_ABSENT_TODAY_CAP from 16:30 UTC when a reporter or DFO Projections posted the lines;

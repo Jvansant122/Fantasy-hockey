@@ -71,12 +71,17 @@ def _thursday(data, run_hour=10):
     confirmations cleared, moves_used 3 of 7 (4 left)."""
     d = json.loads(json.dumps(data))
     nights = d["nights"][-7:]
+    # a week whose Thursday has no games (Thanksgiving, Nov 26) plays the fixture on its next night with games, labelled
+    # Thursday Oct 15 like any other week's
+    played = {sp for p in d["players"] for sp in p.get("nights") or []}
+    thu = next((i for i in range(THU_SP_INDEX, len(nights)) if nights[i]["sp"] in played), THU_SP_INDEX)
     for i, n in enumerate(nights):
-        n["date"] = f"{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]} {12 + i}"
-        n["past"] = i < THU_SP_INDEX
+        k = i - thu + THU_SP_INDEX
+        n["date"] = f"{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][k % 7]} {12 + k}"
+        n["past"] = i < thu
     for n in d["nights"][:-7]:
         n["past"] = True
-    tonight = nights[THU_SP_INDEX]["sp"]
+    tonight = nights[thu]["sp"]
     ahead = [n["sp"] for n in nights if not n["past"]]
     d.update(updated_date="2026-10-15", updated=f"Thu Oct 15, {run_hour}:00 AM ET", updated_utc=f"2026-10-15T{run_hour + 4:02d}:00:00Z",
              first_start="2026-10-15T23:00:00Z", final_matchup=False, move_limit=7, matchup_weeks=1, season_over=False)

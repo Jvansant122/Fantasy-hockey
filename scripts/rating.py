@@ -3952,6 +3952,17 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
     forms = team_form(goalie_games)  # streaks and last margin, for the lineup shifts (handoffs 340-342)
 
     team_games, starts_by_team, last_start, start_wins, team_dates = team_history(goalie_games)
+
+    all_starts = starts or {}  # its own name: the goalie loop below reuses `starts` for a float
+
+    def last_game_start(gl):
+        """His last game's start (UTC ISO), for "news newer than his last game": this week's schedule, else fetch's every-game
+        starts, else 23:00 UTC on its date. This week's schedule alone missed a game last week, so on Mondays stale Daily
+        Faceoff items still capped healthy regulars who had played since (handoff 955, findings 5119: Sergachev, Horvat)."""
+        if not gl:
+            return None
+        k = (gl[-1]["team"], gl[-1]["date"][:10])
+        return week_starts.get(k) or all_starts.get(k) or f"{k[1]}T23:00:00Z"
     # Daily Faceoff lines count for the next game unless posted before the last game in the history loaded here, not the
     # last game that started 4+ hours ago: overnight the NHL posts last night's stats late (findings 543, handoff 752)
     if relineup is not None:
@@ -4128,9 +4139,9 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if not (pid and t):
             return False
         day = t.astimezone(ET).date().isoformat()
-        return any(game_after(t, day, g["date"][:10], week_starts.get((g["team"], g["date"][:10])))
+        return any(game_after(t, day, g["date"][:10], week_starts.get((g["team"], g["date"][:10])) or all_starts.get((g["team"], g["date"][:10])))
                    for g in by_player.get(pid, [])) \
-            or any(game_after(t, day, d, week_starts.get((tm, d))) for d, tm in goalie_dates.get(pid, []))
+            or any(game_after(t, day, d, week_starts.get((tm, d)) or all_starts.get((tm, d))) for d, tm in goalie_dates.get(pid, []))
     carried = carry_injury_notes(notes, stored_notes, {p["id"]: p.get("injury") for p in players}, played_since, today)
     if carried:
         print(f"Kept the last real injury note for {len(carried)} players whose note is now a bare status word")
@@ -4626,7 +4637,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             # no game yet this season: news since the season's first game counts (handoff 427)
             wk_news, wk_down, practising, wk_why = week_news_logit(dfo_news, pid, gl[-1]["date"] if gl else season_open, sat_last,
                                                           p.get("injury"), wk_dates,
-                                                          week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
+                                                          last_game_start(gl))
             if practising and p.get("injury") in ("OUT", "INJURY_RESERVE") and not (note and note["long"]):
                 inj = max(inj, SKATER_INJURY_CAP["DAY_TO_DAY"])  # practising: day-to-day's cap (handoff 406)
             p_dress = min(p_dress, inj)
@@ -4791,7 +4802,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 shift = (sum(wk_news) / len(wk_news) if wk_news else 0.0) + wk_down
                 bare = set(wk_why) == {"day-to-day"}
                 age_h = dtd_item_hours(dfo_news, pid, week_starts.get((espn_team, wk_dates[0])) if wk_dates else None,
-                                       week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None) if bare else None
+                                       last_game_start(gl)) if bare else None
                 age_cap = next((c for h, c in DTD_AGE_CAPS if age_h is not None and age_h < h), None)
                 dtd_z = DTD_NEWS_UP_LOGIT if bare and age_cap is None and shift > 0 and 1 <= missed <= 4 \
                     else DTD_QUIET_LOGIT if not wk_why and missed <= 1 and p["pos"] != "D" else 0.0  # forwards only (847)
@@ -4823,7 +4834,7 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
             if per_game and not skip and p.get("pos") != "G" and wk_dates:
                 lc = next_game_call(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                     or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), wk_dates[0], now_utc,
-                                    week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None,
+                                    last_game_start(gl),
                                     wk_dates[1] if len(wk_dates) > 1 else None, missed, fpg,
                                     sum(g in {x["game"] for x in gl} for g in tg[-20:]) / len(tg[-20:]) if tg and gl else None)
             if lc:
@@ -4835,14 +4846,14 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                 trip = trip_caps(dfo_news, pid, wk_dates, venue.get(espn_team, {}),
                                  {d: week_starts.get((espn_team, d)) or (p.get("today_start") if d == today.isoformat() else None)
                                   for d in wk_dates[:1]}, now_utc,
-                                 week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
+                                 last_game_start(gl))
             if trip:
                 per_game = [q if c is None else min(q, c) for q, c in zip(per_game, trip)]
                 dress_next = per_game[0]
             if per_game and not skip and p.get("pos") != "G" and wk_dates:  # playing through it (handoff 866)
                 rust = rust_factor(dfo_news, pid, week_starts.get((espn_team, wk_dates[0]))
                                    or (p.get("today_start") if wk_dates[0] == today.isoformat() else None), now_utc,
-                                   week_starts.get((gl[-1]["team"], gl[-1]["date"][:10])) if gl else None)
+                                   last_game_start(gl))
             # a fresh injured-reserve placement: his games in the next 4 days (handoff 876)
             ir_new = ir_new_caps(dfo_news, pid, wk_dates, now_utc) if per_game and p.get("pos") != "G" else None
             if ir_new:
