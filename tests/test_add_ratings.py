@@ -4797,13 +4797,13 @@ def test_regular_lift_goes_to_cap_once_the_days_lines_are_in(monkeypatch, tmp_pa
     assert noon["cr_dress_next"] == pytest.approx(0.97, abs=0.005)
     assert morning["cr_dress_next"] < 0.965 and later["cr_dress_next"] < 0.965
     # handoff 931: any skater in Daily Faceoff's lines for a game today, on those runs, at least 0.95 (the regulars' 0.97 kept)
-    assert rating.IN_LINES_SAME_DAY_FLOOR == 0.95
+    assert rating.IN_LINES_SAME_DAY_FLOOR == 0.98
     monkeypatch.setattr(rating, "REG_NEXT_MIN_BOOST", 1.1)  # out of the 928 group
     monkeypatch.setattr(rating, "dfo_in_lines_floor", lambda b: 0.5)  # a depth player's lower in-lines floor (844)
     monkeypatch.setattr(rating, "utcnow", lambda: datetime(2026, 10, 9, 17, tzinfo=timezone.utc))
     lined = lambda dfo, start="2026-10-09T23:00:00Z": rate(monkeypatch, tmp_path, [{**me(start)[0], "dfo_out": dfo}],
                                                            fake=gaps())["Auston Matthews"]
-    assert lined(False)["cr_dress_next"] == pytest.approx(0.95, abs=0.005)
+    assert lined(False)["cr_dress_next"] == pytest.approx(0.98, abs=0.005)
     assert lined(None)["cr_dress_next"] < 0.94 and lined(False, None)["cr_dress_next"] < 0.94
 
 
@@ -4910,7 +4910,7 @@ def test_just_activated_skater_in_todays_lines_floored(monkeypatch, tmp_path, ta
     back = run()
     old = run(day="2026-10-06")
     assert old["cr_dress_next"] < 0.94, "the fake league's skater who sat should start under the floor"
-    assert back["cr_dress_next"] == pytest.approx(0.95, abs=0.005) and back["cr_why"]["back_in_lines"] > 0
+    assert back["cr_dress_next"] == pytest.approx(rating.IN_LINES_SAME_DAY_FLOOR, abs=0.005) and back["cr_why"]["back_in_lines"] > 0
     assert back["cr"] == pytest.approx(back["cr_fpg"] * back["cr_games"], abs=0.02)
     assert run(status="SUSPENSION")["cr_dress_next"] < 0.94
     for kw in ({"dfo": None}, {"dfo": True}, {"hour": 11}, {"start": None}):

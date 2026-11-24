@@ -2163,9 +2163,15 @@ def test_details_explain_week_fit_goalie_season_and_game_dates(browser, server, 
     a, b = sk[0], sk[1]
     a["cr_why"].update(week_slack=-1.0, lineup_slack=1.0, missing_regs=-0.1, missing_regs_pp=-0.004)
     b["cr_why"].update(week_slack=0.2, missing_regs=-0.3, missing_regs_pp=-0.023)
-    g = next(p for p in d["players"] if p["pos"] == "G" and p.get("cr_matched") and p.get("cr_season") and p["games_left"])
+    tonight = next((n for n in d["nights"] if not n["past"]), None)
+    started = lambda p: bool(p.get("today_start") and p["today_start"] <= d["updated_utc"])
+    # a night still ahead for him: an overnight run keeps the day's night unpast after his game started (Nov 24 1:57 AM)
+    ahead = lambda p: [n for n in d["nights"] if not n["past"] and n["sp"] in (p.get("nights") or [])
+                       and not (n is tonight and started(p))]
+    g = next(p for p in d["players"] if p["pos"] == "G" and p.get("cr_matched") and p.get("cr_season") and p["games_left"]
+             and ahead(p))
     g["cr_why"].update(g_season_share=0.42, own_pps=2.5, mover_pps=2.7, season_pps=2.7)
-    nt = next(n for n in d["nights"] if not n["past"] and n["sp"] in g["nights"])
+    nt = ahead(g)[0]
     g["cr_g_nights"] = {str(nt["sp"]): 0.18}
     u = next(p for p in d["players"] if p["pos"] == "G" and p is not g)
     u.update(cr_matched=False)
