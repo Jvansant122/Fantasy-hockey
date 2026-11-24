@@ -611,7 +611,9 @@ def test_publish_check_keeps_daily_faceoffs_floors(data):
     next-game floor and it reached the live site. P9 catches it and blocks publishing (a warning until
     every run of Oct 19 kept it, handoff 743)."""
     import rating
-    assert check_data.DFO_FLOORS == (rating.DFO_LINEUP_NEXT, rating.DFO_IN_LINES_NEXT)
+    # a raised rating floor lands first and check_data follows once main's committed data carries it (handoff 956):
+    # the check may trail the rating, never lead it
+    assert check_data.DFO_FLOORS[0] == rating.DFO_LINEUP_NEXT and check_data.DFO_FLOORS[1] <= rating.DFO_IN_LINES_NEXT
     assert check_data.DFO_IN_LINES_BANDS == rating.DFO_IN_LINES_BANDS
     assert set(check_data.IDLE_CAPS) == {c for _, c in rating.IDLE_DRESS} | {rating.NOT_PLAYING_DRESS}
     if not data.get("rated"):

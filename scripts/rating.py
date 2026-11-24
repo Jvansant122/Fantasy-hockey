@@ -532,8 +532,9 @@ REG_NEXT_LOGIT, REG_NEXT_CAP, REG_NEXT_MIN_BOOST, REG_NEXT_RANGE = 0.8, 0.97, 0.
 REG_NEXT_SAME_DAY_UTC = (16, 30)
 # ... and any skater with no ESPN status or week news who dressed his team's last game and is in Daily Faceoff's lines for
 # a game today, on those runs: at least this (handoff 931, findings 4652: Oct 20-Nov 15, 670 rows shown under .945, shown
-# .879, dressed .984; depth players 256 rows shown .837, dressed .965)
-IN_LINES_SAME_DAY_FLOOR = 0.95
+# .879, dressed .984; depth players 256 rows shown .837, dressed .965); 0.98 since handoff 956 (findings 5130: Nov 10-23,
+# last run before each puck, skaters shown exactly .95 dressed 463 of 470, Brier .0159 -> .0147, both halves)
+IN_LINES_SAME_DAY_FLOOR = 0.98
 # ... and for a skater ESPN tagged day-to-day, out or IR today or yesterday who has no tag now, whether or not he dressed
 # last game or has news: 89 rows Oct 20-Nov 16 shown 82.99, 88 dressed; the 46 under .95 dressed .978 (findings 4676,
 # handoff 935)
@@ -871,8 +872,9 @@ STOP_WINDOW = (75, 10)  # seconds before / after the stoppage
 OUT_LEFT_EARLY_CAP = 0.15  # OUT and dressed for the last game but under 0.55 of his TOI: 0.17-0.21 actual (findings 176)
 DFO_LINEUP_NEXT = 0.9  # sat the last game, no ESPN status, in Daily Faceoff's lines: next-game floor (findings 174)
 # dressed the last game, no ESPN status, in his team's fresh Daily Faceoff lines: next-game floor. Live Oct 9-18, 1,172 of
-# 1,185 dressed (site 0.96); held out Oct 16-18 Brier 0.0154 -> 0.0133 on those rows (findings 521, handoff 721)
-DFO_IN_LINES_NEXT = 0.95
+# 1,185 dressed (site 0.96); held out Oct 16-18 Brier 0.0154 -> 0.0133 on those rows (findings 521, handoff 721); 0.98
+# since handoff 956 (findings 5130: Nov 10-23 rows shown exactly .95 dressed 98.5%, 155/157 and 308/313 by half)
+DFO_IN_LINES_NEXT = 0.98
 # ... lower for a player the Season model doubts: boosted dress share (cr_why.boost_dress, rounded) under 0.5 -> 0.65, under
 # 0.7 -> 0.89. Live 6 AM runs Oct 9-Nov 8 at the 0.95 floor dressed 0.652 (46 rows) and 0.888 (267); held out Oct 24-Nov 8
 # 0.67 / 0.91, Brier 0.0684 -> 0.0658 (findings 4477, handoff 844). check_data P9 keeps the same bands
@@ -5211,13 +5213,13 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
         if p["pos"] == "G" or p["id"] not in dressed_last or q is None or q <= 0.001 or w is None or p.get("injury") \
                 or w.get("week_news") or p.get("dfo_out") is True or game_started(p):
             continue
-        lifted = 0.0
+        lifted, top = 0.0, REG_NEXT_CAP
         if (w.get("boost_dress") or 0.0) >= REG_NEXT_MIN_BOOST and REG_NEXT_RANGE[0] <= q < REG_NEXT_RANGE[1]:
             lifted = REG_NEXT_CAP if same_day_lines and p.get("today_start") \
                 else 1 / (1 + math.exp(-(logit(q) + REG_NEXT_LOGIT)))  # his next game today, the day's lines in (930)
         if same_day_lines and p.get("today_start") and p.get("dfo_out") is False:  # in tonight's lines, any skater (931)
-            lifted = max(lifted, IN_LINES_SAME_DAY_FLOOR)
-        nxt = max(q, min(REG_NEXT_CAP, next_caps.get(p.get("nhl_id"), 1.0), lifted))
+            lifted, top = max(lifted, IN_LINES_SAME_DAY_FLOOR), max(top, IN_LINES_SAME_DAY_FLOOR)  # 0.98 over the 0.97 (956)
+        nxt = max(q, min(top, next_caps.get(p.get("nhl_id"), 1.0), lifted))
         if nxt > q:
             lift_next(p, q, nxt)
             w["reg_next"] = round(nxt - q, 2)
