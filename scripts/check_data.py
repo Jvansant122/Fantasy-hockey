@@ -29,7 +29,7 @@ SEASON_GAMES = 84  # NHL games a team plays
 SP1 = date(2026, 9, 29)
 # rating.py's DFO_LINEUP_NEXT / DFO_IN_LINES_NEXT and the idle caps (IDLE_DRESS, NOT_PLAYING_DRESS) that may sit under
 # them; a test keeps them in step (the in-lines one may trail a raised rating floor until main's data has it, handoff 956)
-DFO_FLOORS = (0.9, 0.95)
+DFO_FLOORS = (0.9, 0.98)
 DFO_IN_LINES_BANDS = ((0.5, 0.65), (0.7, 0.89))  # boosted dress share under x: the played floor is f (handoff 844)
 IDLE_CAPS = (0.5, 0.2, 0.1)
 # rules that only warn until a run at every time of day has kept them (P9 blocks since Oct 19, every run clean, handoff 743)
