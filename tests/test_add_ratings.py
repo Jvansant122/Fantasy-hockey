@@ -2509,6 +2509,18 @@ def test_week_slack_fits_each_game_to_the_lineup_spots():
     assert "cr_games" not in few[0]["p"]
 
 
+def test_week_slack_skips_a_row_with_no_chances_for_its_games():
+    """Handoff 957 (Kaiser, Fri Nov 27): a suspended free agent after tonight's puck reached the Week step with a game left
+    but no chances for it, and dividing by his empty week took the Claude Rating off the page. Such a row stays in the
+    sums and keeps its numbers; everyone else is still fitted."""
+    def row(pid, chances, dates=("2026-11-27", "2026-11-29")):
+        return {"p": {"name": f"p{pid}", "cr_fpg": 2.0, "cr_why": {}}, "pid": pid, "team": "CHI", "isD": True,
+                "dates": list(dates), "per_game": list(chances), "caps": [1.0] * len(chances)}
+    rows = [row(k, (0.9, 0.9)) for k in range(6)] + [row(6, (), dates=("2026-11-29",))]
+    rating.week_slack(rows, {}, None)
+    assert "cr_games" not in rows[6]["p"] and rows[0]["p"]["cr_games"] > 0
+
+
 def test_a_fresh_call_up_with_no_game_yet_plays_one_game_in_four(monkeypatch, tmp_path):
     """Yet to play this season, no ESPN status, and Daily Faceoff's latest move a call-up this week: 0.25 a game, not the
     0.10 for a player who isn't playing (handoff 502). A call-up two weeks old, or with an ESPN status, keeps the old cap."""

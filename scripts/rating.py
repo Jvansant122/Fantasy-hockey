@@ -4780,6 +4780,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     game_caps[0] = max(game_caps[0], IR_RESTED_TODAY_CAP)  # rested team, a morning run (939, 941)
             elif game_caps == "long":
                 game_caps = [long_caps[0] if (date.fromisoformat(d) - today).days <= 1 else long_caps[1] for d in wk_dates]
+            elif game_caps and p.get("injury") == "SUSPENSION" and len(game_caps) != len(wk_dates):
+                # one cap per team game ahead, as per_game has: a free agent's games_left leaves out tonight's started
+                # game, and the short list cut his own games off (Kaiser, Nov 27: no rating on the page, handoff 957)
+                game_caps = suspension_caps(notes[p["id"]], team_dates.get(team, ()), len(wk_dates),
+                                            {d: st for (tm, d), st in week_starts.items() if tm == team})
             if game_caps and per_game:
                 per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
                 dress_next = per_game[0]
