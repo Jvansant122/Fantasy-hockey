@@ -9,6 +9,7 @@ scoring settings, so no stat-ID mapping is needed here.
 import json
 import os
 import sys
+import traceback
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -781,6 +782,7 @@ def main():
         rated = True
     except Exception as e:  # noqa: BLE001 - never let the rating break the daily update
         print(f"Claude Rating failed, publishing without it: {e!r}", file=sys.stderr)
+        traceback.print_exc()  # the repr alone hides where it broke (handoff 957)
         rated = False
     finally:
         rating.RUN_CLOCK = None

@@ -2789,6 +2789,11 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         p = r["p"]
         if not r["dates"]:  # no game of his own left (a free agent after the first puck): in the sums only
             continue
+        if not (len(r["per_game"]) == len(r["dates"]) == len(r["caps"])):  # handoff 957: never divide by an empty week
+            print(f"week_slack: {p.get('name')} dates {r['dates']} per_game {r['per_game']} caps {r['caps']} j0 {r.get('j0')}",
+                  file=sys.stderr)
+            if not r["per_game"] or not r["caps"]:
+                continue
         # handoffs 355 and 356, not in the sums above
         reg = (HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0) \
             + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch")) \
@@ -4775,6 +4780,11 @@ def add_ratings(players, espn_season, today, monday, starters=(), odds=None, inj
                     game_caps[0] = max(game_caps[0], IR_RESTED_TODAY_CAP)  # rested team, a morning run (939, 941)
             elif game_caps == "long":
                 game_caps = [long_caps[0] if (date.fromisoformat(d) - today).days <= 1 else long_caps[1] for d in wk_dates]
+            elif game_caps and p.get("injury") == "SUSPENSION" and len(game_caps) != len(wk_dates):
+                # one cap per team game ahead, as per_game has: a free agent's games_left leaves out tonight's started
+                # game, and the short list cut his own games off (Kaiser, Nov 27: no rating on the page, handoff 957)
+                game_caps = suspension_caps(notes[p["id"]], team_dates.get(team, ()), len(wk_dates),
+                                            {d: st for (tm, d), st in week_starts.items() if tm == team})
             if game_caps and per_game:
                 per_game = [min(q, c) for q, c in zip(per_game, game_caps)]
                 dress_next = per_game[0]
