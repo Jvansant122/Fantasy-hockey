@@ -2789,6 +2789,11 @@ def week_slack(rows, boost_x, boost_week, missing=None):
         p = r["p"]
         if not r["dates"]:  # no game of his own left (a free agent after the first puck): in the sums only
             continue
+        if not (len(r["per_game"]) == len(r["dates"]) == len(r["caps"])):  # handoff 957: never divide by an empty week
+            print(f"week_slack: {p.get('name')} dates {r['dates']} per_game {r['per_game']} caps {r['caps']} j0 {r.get('j0')}",
+                  file=sys.stderr)
+            if not r["per_game"] or not r["caps"]:
+                continue
         # handoffs 355 and 356, not in the sums above
         reg = (HEALTHY_REG_LOGIT if r.get("regular") else FIGHT_LOGIT if r.get("fought") else 0.0) \
             + ST_ROLE_LOGIT.get(r.get("st_role"), 0.0) + PP_SCRATCH_LOGIT * bool(r.get("pp_scratch")) \
